@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Wealth Desk - Add Market Asset</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#003824",
+            "surface-container-low": "#1b1b23",
+            "on-surface-variant": "#c7c4d7",
+            "inverse-surface": "#e4e1ed",
+            "on-primary-fixed": "#07006c",
+            "border-subtle": "#222F3E",
+            "surface-container-highest": "#34343d",
+            "on-tertiary-container": "#452000",
+            "profit-emerald": "#10B981",
+            "on-tertiary-fixed-variant": "#703700",
+            "inverse-on-surface": "#303038",
+            "surface-container-lowest": "#0d0d15",
+            "secondary-container": "#00a572",
+            "text-secondary": "#94A3B8",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-primary-container": "#0d0096",
+            "error-container": "#93000a",
+            "on-background": "#e4e1ed",
+            "surface-tint": "#c0c1ff",
+            "outline": "#908fa0",
+            "tertiary": "#ffb783",
+            "on-secondary-fixed-variant": "#005236",
+            "secondary": "#4edea3",
+            "text-muted": "#64748B",
+            "tertiary-container": "#d97721",
+            "surface-layer-1": "#151C28",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-tertiary": "#4f2500",
+            "surface-container": "#1f1f27",
+            "on-error": "#690005",
+            "tertiary-fixed-dim": "#ffb783",
+            "on-tertiary-fixed": "#301400",
+            "background": "#13131b",
+            "on-secondary-fixed": "#002113",
+            "error": "#ffb4ab",
+            "surface-layer-2": "#1E293B",
+            "surface": "#13131b",
+            "background-root": "#0B0F17",
+            "warning-amber": "#F59E0B",
+            "surface-container-high": "#292932",
+            "liability-rose": "#F43F5E",
+            "on-secondary-container": "#00311f",
+            "surface-bright": "#393841",
+            "outline-variant": "#464554",
+            "inverse-primary": "#494bd6",
+            "secondary-fixed-dim": "#4edea3",
+            "primary": "#c0c1ff",
+            "on-surface": "#e4e1ed",
+            "surface-variant": "#34343d",
+            "secondary-fixed": "#6ffbbe",
+            "primary-container": "#8083ff",
+            "tertiary-fixed": "#ffdcc5",
+            "surface-dim": "#13131b",
+            "primary-fixed": "#e1e0ff",
+            "border-prominent": "#334155",
+            "on-primary": "#1000a9",
+            "text-primary": "#F8FAFC",
+            "on-error-container": "#ffdad6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "space-xl": "32px",
+            "margin": "16px",
+            "space-lg": "24px",
+            "gutter": "12px",
+            "space-sm": "8px",
+            "space-md": "16px"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "display-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Hide scrollbar for clean native app appearance */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-root text-text-primary min-h-screen flex justify-center items-start selection:bg-primary selection:text-on-primary">
+<!-- Mobile Viewport Mock (393px × 852px baseline) -->
+<main class="w-full max-w-[393px] bg-background-root border-x border-border-subtle min-h-screen flex flex-col relative pb-10">
+<!-- Modal Drag Handle / Safe Area Spacer -->
+<div class="w-full pt-3 pb-1 flex justify-center items-center">
+<div class="w-12 h-1 rounded-full bg-border-prominent"></div>
+</div>
+<!-- Modal Header -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-space-md py-space-sm border-b border-border-subtle">
+<div class="flex items-center justify-between">
+<a class="text-text-secondary hover:text-text-primary text-body-md font-body-md transition-colors active:scale-95 duration-150 py-1" href="screen_02_dashboard.html" type="button">
+          Cancel
+        </a>
+<h1 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">
+          Add Market Asset
+        </h1>
+<button class="bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md px-4 py-1.5 rounded-lg transition-transform active:scale-95 font-semibold" type="button">
+          Save
+        </button>
+</div>
+<!-- Institutional Verification Sub-badge Pill -->
+<div class="mt-2.5 flex items-center gap-1.5 bg-surface-layer-1 border border-border-subtle rounded-full px-2.5 py-1">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-profit-emerald opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-profit-emerald"></span>
+</span>
+<p class="text-label-sm font-label-sm text-text-secondary truncate">
+          AMFI &amp; NSE/BSE Indexed • FIFO Capital Gains Auto-Taxed • Nominee Linked
+        </p>
+</div>
+</header>
+<!-- Modal Body Content -->
+<div class="px-space-md py-space-md flex flex-col gap-space-lg">
+<!-- Field Group 1: Security Identification & Demat -->
+<section class="flex flex-col gap-space-sm">
+<h2 class="text-label-sm font-label-sm uppercase tracking-wider text-text-muted">Security Identification &amp; Demat</h2>
+<!-- Segmented Control Tabs -->
+<div class="grid grid-cols-4 gap-1 p-1 bg-surface-layer-1 border border-border-subtle rounded-lg">
+<button class="py-1.5 px-1 rounded-md text-label-sm font-label-sm bg-primary/10 text-primary border border-primary/30 text-center truncate font-medium" type="button">
+            Mutual Fund
+          </button>
+<button class="py-1.5 px-1 rounded-md text-label-sm font-label-sm text-text-secondary hover:text-text-primary text-center truncate" type="button">
+            Direct Stock
+          </button>
+<button class="py-1.5 px-1 rounded-md text-label-sm font-label-sm text-text-secondary hover:text-text-primary text-center truncate" type="button">
+            ETF
+          </button>
+<button class="py-1.5 px-1 rounded-md text-label-sm font-label-sm text-text-secondary hover:text-text-primary text-center truncate" type="button">
+            SGB
+          </button>
+</div>
+<!-- Auto-Lookup Search Input -->
+<div class="flex flex-col gap-1 mt-1">
+<label class="text-label-md font-label-md text-text-secondary">Search Scheme / Stock Ticker</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-text-muted text-[18px]">search</span>
+<input class="w-full pl-9 pr-8 py-2.5 bg-surface-layer-1 border border-border-prominent rounded-lg text-text-primary font-body-sm text-body-sm focus:outline-none focus:border-primary truncate" readonly="" type="text" value="122639 - Parag Parikh Flexi Cap Fund - Direct Plan Growth"/>
+<span class="material-symbols-outlined absolute right-2.5 text-profit-emerald text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex items-center gap-1.5 px-1">
+<span class="material-symbols-outlined text-[14px] text-profit-emerald">verified</span>
+<span class="text-label-sm font-label-sm text-profit-emerald font-medium">AMFI Code Verified (NAV EOD Synced)</span>
+</div>
+</div>
+<!-- 2-Column Row: Folio ID & Depository Platform -->
+<div class="grid grid-cols-2 gap-space-gutter mt-1">
+<div class="flex flex-col gap-1">
+<label class="text-label-md font-label-md text-text-secondary">Folio / Demat Client ID</label>
+<input class="w-full px-3 py-2 bg-surface-layer-1 border border-border-subtle rounded-lg text-text-primary font-body-sm text-body-sm font-mono tabular-nums focus:outline-none focus:border-primary" type="text" value="10482910/22"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-label-md font-label-md text-text-secondary">Depository / Platform</label>
+<div class="relative">
+<select class="w-full appearance-none pl-3 pr-8 py-2 bg-surface-layer-1 border border-border-subtle rounded-lg text-text-primary font-body-sm text-body-sm focus:outline-none focus:border-primary truncate">
+<option selected="">Zerodha (Coin) / MFCentral</option>
+<option>Groww Demat</option>
+<option>CAMS Karvy Direct</option>
+<option>ICICI Direct</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-text-muted text-[18px] pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Field Group 2: Lot-Level Purchase Repeater (FIFO Tax Tracking) -->
+<section class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<h2 class="text-label-md font-label-md text-text-primary font-semibold">Purchase Lots (FIFO Capital Gains Engine)</h2>
+<span class="px-1.5 py-0.5 rounded text-label-sm font-label-sm bg-surface-layer-2 border border-border-prominent text-text-secondary">2 Lots</span>
+</div>
+<button class="flex items-center gap-1 text-primary hover:text-text-primary border border-primary/30 rounded-lg text-label-sm font-label-sm py-1 px-2 transition-colors active:scale-95" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span>Add Lot</span>
+</button>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted">
+          Automated holding period classification under Indian Income Tax Act (Section 112A / 111A).
+        </p>
+<!-- Lot Card #1: LTCG -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-lg p-space-sm flex flex-col gap-2.5 relative overflow-hidden">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">receipt</span>
+<span class="text-body-sm font-body-sm font-medium text-text-primary">Lot #1 • Regular SIP</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/30 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+              LTCG (Sec 112A)
+            </span>
+</div>
+<div class="grid grid-cols-4 gap-2 text-left">
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Date</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">15-Jan-2023</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Units</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">850.120</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Buy NAV</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">₹52.40</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Outflow</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">₹44,546</p>
+</div>
+</div>
+<div class="bg-surface-layer-2/60 rounded px-2 py-1.5 flex items-center justify-between border border-border-subtle">
+<span class="text-label-sm font-label-sm text-text-secondary truncate">
+              Holding &gt; 12m (12.5% Tax over ₹1.25L)
+            </span>
+<span class="text-label-sm font-label-sm text-profit-emerald font-semibold tabular-nums">
+              +₹27,043 (+60.7%)
+            </span>
+</div>
+</article>
+<!-- Lot Card #2: STCG -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-lg p-space-sm flex flex-col gap-2.5 relative overflow-hidden">
+<div class="flex items-center justify-between border-b border-border-subtle pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">receipt</span>
+<span class="text-body-sm font-body-sm font-medium text-text-primary">Lot #2 • Lumpsum Addition</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-warning-amber/15 text-warning-amber border border-warning-amber/30 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-warning-amber"></span>
+              STCG (Sec 111A)
+            </span>
+</div>
+<div class="grid grid-cols-4 gap-2 text-left">
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Date</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">10-Jun-2026</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Units</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">990.000</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Buy NAV</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">₹68.10</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Outflow</p>
+<p class="text-body-sm font-body-sm text-text-primary tabular-nums font-medium mt-0.5">₹67,419</p>
+</div>
+</div>
+<div class="bg-surface-layer-2/60 rounded px-2 py-1.5 flex items-center justify-between border border-border-subtle">
+<span class="text-label-sm font-label-sm text-text-secondary truncate">
+              Holding &lt; 12m (20% Flat Rate)
+            </span>
+<span class="text-label-sm font-label-sm text-profit-emerald font-semibold tabular-nums">
+              +₹15,948 (+23.6%)
+            </span>
+</div>
+</article>
+</section>
+<!-- Field Group 3: Live Valuation & Sync Settings -->
+<section class="flex flex-col gap-space-sm">
+<h2 class="text-label-sm font-label-sm uppercase tracking-wider text-text-muted">Live Valuation &amp; Sync Settings</h2>
+<!-- Automated EOD Sync Card -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-lg p-3 flex items-center justify-between">
+<div class="flex items-start gap-2.5 max-w-[260px]">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-prominent flex items-center justify-center shrink-0 text-primary mt-0.5">
+<span class="material-symbols-outlined text-[18px]">cloud_sync</span>
+</div>
+<div>
+<p class="text-body-sm font-body-sm font-medium text-text-primary leading-tight">
+                Automated End-of-Day Sync
+              </p>
+<p class="text-label-sm font-label-sm text-text-muted mt-0.5">
+                Updates NAV daily at 9:00 PM IST via MFAPI / AMFI.
+              </p>
+</div>
+</div>
+<!-- Custom Toggle Switch (Active ON) -->
+<button aria-checked="true" class="w-11 h-6 bg-primary-container rounded-full relative flex items-center transition-colors px-0.5" role="switch" type="button">
+<span class="w-5 h-5 bg-text-primary rounded-full shadow-md transform translate-x-5 transition-transform duration-150"></span>
+</button>
+</div>
+<!-- Calculated Summary Box with Emerald Border Accent -->
+<div class="bg-surface-layer-1 border border-profit-emerald/40 rounded-xl p-space-sm relative overflow-hidden shadow-lg">
+<div class="absolute top-0 right-0 w-24 h-24 bg-profit-emerald/5 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between pb-2 border-b border-border-subtle">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-profit-emerald text-[16px]">monitoring</span>
+<span class="text-label-md font-label-md text-text-secondary font-medium">Consolidated Valuation</span>
+</div>
+<span class="text-label-sm font-label-sm text-profit-emerald bg-profit-emerald/10 border border-profit-emerald/20 px-2 py-0.5 rounded font-mono">
+              Live NAV: ₹84.21 (+0.84%)
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-3 pt-2.5">
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Total Units Accumulated</p>
+<p class="text-headline-sm font-headline-sm font-semibold text-text-primary tabular-nums mt-0.5">
+                1,840.120
+              </p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-text-muted">Current Portfolio Value</p>
+<p class="text-headline-sm font-headline-sm font-semibold text-text-primary tabular-nums mt-0.5">
+                ₹1,54,956
+              </p>
+</div>
+</div>
+<div class="mt-2.5 pt-2 border-t border-border-subtle/80 flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-text-muted">Total Invested: <span class="text-text-secondary tabular-nums">₹1,11,965</span></span>
+<span class="text-profit-emerald font-semibold tabular-nums">Net Profit: +₹42,991 (+38.4%)</span>
+</div>
+</div>
+</section>
+<!-- Field Group 4: Depository Nominee & Succession Records -->
+<section class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-sm flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">shield</span>
+<h2 class="text-label-md font-label-md text-text-primary font-semibold">Succession &amp; Nominee Record</h2>
+</div>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-surface-layer-2 border border-border-prominent text-primary font-medium">
+            Family Safe Linked
+          </span>
+</div>
+<div class="flex items-center justify-between bg-surface-layer-2/60 border border-border-subtle rounded-lg p-2.5">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<div>
+<p class="text-body-sm font-body-sm font-medium text-text-primary">Spouse (Priya Sharma)</p>
+<p class="text-label-sm font-label-sm text-text-muted">100% Beneficial Allocation</p>
+</div>
+</div>
+<span class="text-label-sm font-label-sm text-profit-emerald flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+            Matched
+          </span>
+</div>
+<div class="flex items-start gap-1.5 px-1">
+<span class="material-symbols-outlined text-[14px] text-text-muted mt-0.5">info</span>
+<p class="text-label-sm font-label-sm text-text-muted leading-tight">
+            ICE Dossier will automatically index Folio <span class="font-mono text-text-secondary">#10482910/22</span> for legal transmission filing.
+          </p>
+</div>
+</section>
+<!-- Primary Full-Width Action -->
+<div class="flex flex-col gap-2 mt-2">
+<button class="w-full h-12 bg-primary hover:bg-primary-container text-on-primary font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[20px]">bookmark_added</span>
+<span class="text-body-md font-body-md font-semibold">Save to Equities &amp; MF Ledger</span>
+</button>
+<p class="text-label-sm font-label-sm text-text-muted text-center flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[13px]">lock</span>
+<span>AES-256 encrypted local ledger sync • Zero cloud leakage</span>
+</p>
+</div>
+</div>
+</main>
+</body></html>

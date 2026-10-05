@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Net Worth Manager - Cashflow &amp; Spends</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Play CDN with required plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-container": "#452000",
+            "tertiary-fixed": "#ffdcc5",
+            "surface-container-highest": "#34343d",
+            "surface-container-low": "#1b1b23",
+            "profit-emerald": "#10B981",
+            "on-tertiary-fixed": "#301400",
+            "secondary": "#4edea3",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-tint": "#c0c1ff",
+            "primary": "#c0c1ff",
+            "secondary-fixed": "#6ffbbe",
+            "tertiary": "#ffb783",
+            "surface-container-lowest": "#0d0d15",
+            "surface-bright": "#393841",
+            "primary-fixed": "#e1e0ff",
+            "inverse-on-surface": "#303038",
+            "secondary-container": "#00a572",
+            "on-surface-variant": "#c7c4d7",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "on-primary-fixed": "#07006c",
+            "inverse-primary": "#494bd6",
+            "surface-dim": "#13131b",
+            "tertiary-container": "#d97721",
+            "surface": "#13131b",
+            "surface-container": "#1f1f27",
+            "on-secondary": "#003824",
+            "primary-fixed-dim": "#c0c1ff",
+            "background-root": "#0B0F17",
+            "on-primary": "#1000a9",
+            "outline-variant": "#464554",
+            "on-secondary-container": "#00311f",
+            "text-muted": "#64748B",
+            "text-primary": "#F8FAFC",
+            "background": "#13131b",
+            "on-primary-container": "#0d0096",
+            "border-subtle": "#222F3E",
+            "surface-variant": "#34343d",
+            "on-error": "#690005",
+            "on-tertiary": "#4f2500",
+            "border-prominent": "#334155",
+            "on-secondary-fixed-variant": "#005236",
+            "warning-amber": "#F59E0B",
+            "on-surface": "#e4e1ed",
+            "inverse-surface": "#e4e1ed",
+            "surface-layer-2": "#1E293B",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-background": "#e4e1ed",
+            "error": "#ffb4ab",
+            "text-secondary": "#94A3B8",
+            "primary-container": "#8083ff",
+            "on-secondary-fixed": "#002113",
+            "liability-rose": "#F43F5E",
+            "surface-layer-1": "#151C28",
+            "on-tertiary-fixed-variant": "#703700",
+            "surface-container-high": "#292932",
+            "outline": "#908fa0",
+            "tertiary-fixed-dim": "#ffb783"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "margin": "16px",
+            "gutter": "12px",
+            "space-xl": "32px",
+            "space-xs": "4px",
+            "space-md": "16px",
+            "space-lg": "24px"
+          },
+          "fontFamily": {
+            "body-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Hide scrollbars cleanly */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-root text-text-primary min-h-screen flex justify-center selection:bg-primary-container selection:text-text-primary antialiased font-body-md text-body-md">
+<!-- Mobile Viewport Container (393px reference) -->
+<div class="w-full max-w-[393px] min-h-screen bg-background-root flex flex-col relative pb-24 shadow-2xl">
+<!-- Top App Bar (Shared Components Mapping) -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-space-md pt-3 pb-space-sm">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary font-headline-sm text-headline-sm">
+            RK
+          </div>
+<div>
+<div class="flex items-center space-x-1.5">
+<h1 class="text-headline-sm font-headline-sm font-bold text-text-primary tracking-tight">Wealth Desk</h1>
+<span class="text-text-muted font-body-sm text-body-sm">• Cashflow</span>
+</div>
+</div>
+</div>
+<button class="flex items-center space-x-1 px-2.5 py-1.5 bg-surface-layer-2 hover:bg-surface-container active:scale-95 transition-transform duration-150 rounded-full border border-border-subtle text-primary">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+<span class="text-label-md font-label-md font-semibold text-text-primary">+ Log Cash</span>
+</button>
+</div>
+<!-- Month Selector Pill & Sync Badge Sub-bar -->
+<div class="mt-3 flex items-center justify-between gap-2">
+<button class="flex items-center space-x-1.5 px-3 py-1 bg-surface-layer-1 hover:bg-surface-layer-2 border border-border-subtle rounded-full text-text-primary active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[15px] text-text-secondary">calendar_month</span>
+<span class="text-label-md font-label-md font-medium">September 2026</span>
+<span class="material-symbols-outlined text-[15px] text-text-muted">arrow_drop_down</span>
+</button>
+<div class="flex items-center space-x-1.5 px-2.5 py-1 bg-surface-layer-1 border border-border-subtle rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-pulse"></span>
+<span class="text-label-sm font-label-sm text-text-secondary">SMS Sync: HDFC, ICICI, SBI</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-space-md pt-2 space-y-4">
+<!-- Hero Monthly Cash Flow Ribbon -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md relative overflow-hidden">
+<div class="absolute -right-10 -bottom-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+<span class="text-label-md font-label-md text-text-secondary">Net Cash Position</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-profit-emerald/10 text-profit-emerald border border-profit-emerald/20 font-semibold">
+            69.4% Saved
+          </span>
+</div>
+<!-- Metric Grid -->
+<div class="grid grid-cols-3 gap-2 pt-3.5 pb-2 text-left">
+<!-- Inflow -->
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-text-muted">Monthly Inflow</span>
+<span class="text-headline-sm font-headline-sm font-bold text-profit-emerald tabular-nums mt-0.5">₹2,10,000</span>
+<span class="text-label-sm font-label-sm text-text-secondary mt-0.5 flex items-center">
+<span class="material-symbols-outlined text-[12px] text-profit-emerald mr-0.5">south_west</span> +12.4%
+            </span>
+</div>
+<!-- Outflow -->
+<div class="flex flex-col border-l border-border-subtle pl-2.5">
+<span class="text-label-sm font-label-sm text-text-muted">Net Spends</span>
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary tabular-nums mt-0.5">₹64,200</span>
+<span class="text-label-sm font-label-sm text-liability-rose mt-0.5 flex items-center">
+<span class="material-symbols-outlined text-[12px] text-liability-rose mr-0.5">north_east</span> Spends
+            </span>
+</div>
+<!-- Net Saved -->
+<div class="flex flex-col border-l border-border-subtle pl-2.5">
+<span class="text-label-sm font-label-sm text-text-muted">Net Surplus</span>
+<span class="text-headline-sm font-headline-sm font-bold text-profit-emerald tabular-nums mt-0.5">₹1,45,800</span>
+<span class="text-label-sm font-label-sm text-text-secondary mt-0.5 flex items-center">
+<span class="material-symbols-outlined text-[12px] text-profit-emerald mr-0.5">savings</span> To Safe
+            </span>
+</div>
+</div>
+<!-- Savings Ratio Progress Bar -->
+<div class="mt-3">
+<div class="w-full h-1.5 bg-surface-layer-2 rounded-full overflow-hidden flex">
+<div class="h-full bg-profit-emerald rounded-full" style="width: 69.4%"></div>
+<div class="h-full bg-liability-rose/70" style="width: 30.6%"></div>
+</div>
+<div class="flex justify-between items-center mt-1.5 text-label-sm font-label-sm text-text-muted">
+<span>Surplus Ratio</span>
+<span class="tabular-nums">₹1.45L retained of ₹2.10L</span>
+</div>
+</div>
+</div>
+<!-- Pending Verification Inbox (Collapsible Card with Amber Border) -->
+<section class="bg-surface-layer-1 border border-warning-amber/40 rounded-xl p-3.5 relative overflow-hidden">
+<div class="flex items-center justify-between pb-2 border-b border-border-subtle">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded-md bg-warning-amber/15 flex items-center justify-center text-warning-amber">
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+</div>
+<div>
+<h2 class="text-label-md font-label-md font-semibold text-text-primary">2 Transactions Need Verification</h2>
+<p class="text-label-sm font-label-sm text-text-muted">Auto-parsed via device SMS permission</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-warning-amber/15 text-warning-amber font-semibold border border-warning-amber/30">
+            Action Required
+          </span>
+</div>
+<!-- Actionable Verification Item 1 -->
+<div class="mt-3 bg-surface-layer-2/80 rounded-lg p-3 border border-border-subtle">
+<div class="flex items-start justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-[15px] text-text-muted">credit_card</span>
+<span class="text-headline-sm font-headline-sm text-text-primary">POS BLR XX2019</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-secondary">Today, 2:15 PM • Axis Card XX8810</p>
+</div>
+<span class="text-headline-sm font-headline-sm font-bold text-liability-rose tabular-nums">-₹3,200</span>
+</div>
+<!-- Raw SMS Snippet -->
+<div class="mt-2 py-1.5 px-2 bg-background-root/70 rounded border border-border-subtle flex items-start space-x-1.5 text-text-muted text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[13px] text-text-secondary mt-0.5">sms</span>
+<p class="truncate font-mono">"Txn ₹3,200.00 at BLR*RET on 14-Sep. Avl lmt..."</p>
+</div>
+<!-- Quick Action Chips -->
+<div class="mt-2.5 flex flex-wrap gap-1.5">
+<button class="px-2.5 py-1 bg-surface-layer-1 hover:bg-border-prominent active:scale-95 border border-border-subtle rounded-md text-label-sm font-label-sm text-text-primary transition-all flex items-center space-x-1">
+<span>🛒</span>
+<span>Groceries</span>
+</button>
+<button class="px-2.5 py-1 bg-surface-layer-1 hover:bg-border-prominent active:scale-95 border border-border-subtle rounded-md text-label-sm font-label-sm text-text-primary transition-all flex items-center space-x-1">
+<span>🛍️</span>
+<span>Shopping</span>
+</button>
+<button class="px-2.5 py-1 bg-surface-layer-1 hover:bg-border-prominent active:scale-95 border border-border-subtle rounded-md text-label-sm font-label-sm text-text-primary transition-all flex items-center space-x-1">
+<span>🔧</span>
+<span>Hardware</span>
+</button>
+<button class="px-2.5 py-1 bg-surface-layer-1 hover:bg-liability-rose/10 active:scale-95 border border-border-subtle hover:border-liability-rose/40 rounded-md text-label-sm font-label-sm text-liability-rose transition-all flex items-center space-x-1">
+<span class="material-symbols-outlined text-[12px]">block</span>
+<span>Ignore / Not Expense</span>
+</button>
+</div>
+</div>
+<!-- Actionable Verification Item 2 Mini row -->
+<div class="mt-2.5 pt-2 border-t border-border-subtle flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-warning-amber text-[16px]">help_center</span>
+<div class="truncate">
+<span class="text-label-md font-label-md text-text-primary font-medium">UPI: Rahul Sharma</span>
+<span class="text-label-sm font-label-sm text-text-muted ml-1">• ₹1,500</span>
+</div>
+</div>
+<button class="px-2.5 py-1 text-label-sm font-label-sm bg-surface-layer-2 hover:bg-surface-container rounded-md text-primary font-medium border border-border-subtle active:scale-95 transition-all">
+            Clarify: Split or Loan?
+          </button>
+</div>
+</section>
+<!-- Chronological Transaction Stream -->
+<section class="space-y-3">
+<!-- Search & Filter Controls -->
+<div class="space-y-2">
+<div class="relative">
+<span class="material-symbols-outlined text-[18px] text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
+<input class="w-full bg-surface-layer-1 border border-border-subtle focus:border-primary-container focus:ring-0 rounded-lg pl-9 pr-8 py-2 text-label-md font-body-md text-text-primary placeholder:text-text-muted" placeholder="Search merchant, tag, or bank..." type="text"/>
+<button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</button>
+</div>
+<!-- Category Filter Pills -->
+<div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1">
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-primary text-on-primary shadow-sm flex-shrink-0">
+              All Records
+            </button>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm font-medium bg-surface-layer-1 hover:bg-surface-layer-2 text-text-secondary border border-border-subtle flex-shrink-0">
+              Spends (₹64,200)
+            </button>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm font-medium bg-surface-layer-1 hover:bg-surface-layer-2 text-text-secondary border border-border-subtle flex-shrink-0">
+              Transfers
+            </button>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm font-medium bg-surface-layer-1 hover:bg-surface-layer-2 text-text-secondary border border-border-subtle flex-shrink-0">
+              Cash Logs
+            </button>
+</div>
+</div>
+<!-- Section: Today -->
+<div class="space-y-2.5">
+<div class="flex items-center justify-between text-label-sm font-label-sm text-text-muted uppercase tracking-wider px-1">
+<span>Today, 14 Sep</span>
+<span class="tabular-nums font-mono">3 Events</span>
+</div>
+<!-- Card 1: Standard Expense (Swiggy) -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 hover:border-border-prominent transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-3">
+<div class="w-10 h-10 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-liability-rose">
+<span class="material-symbols-outlined text-[20px]">restaurant</span>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-semibold">Swiggy</h3>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-sm bg-surface-layer-2 text-text-secondary border border-border-subtle">
+                      Dining
+                    </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">Food &amp; Dining</p>
+<p class="text-label-sm font-label-sm text-text-muted mt-1 flex items-center space-x-1">
+<span>HDFC Bank XX4091</span>
+<span>•</span>
+<span>Self</span>
+<span>•</span>
+<span>8:15 PM</span>
+</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-liability-rose tabular-nums">-₹1,450</span>
+<div class="flex items-center justify-end space-x-1 mt-1 text-label-sm font-label-sm text-profit-emerald">
+<span class="material-symbols-outlined text-[13px]">sms</span>
+<span class="text-[10px]">Auto SMS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Detected Internal Self-Transfer (Dashed outline & neutral color) -->
+<div class="bg-surface-layer-1/50 border border-dashed border-border-prominent rounded-xl p-3.5 relative">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-3">
+<div class="w-10 h-10 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-secondary">
+<span class="material-symbols-outlined text-[20px]">sync_alt</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-medium">HDFC Savings ➔ ICICI Credit Card</h3>
+<div class="mt-1 flex items-center space-x-1.5">
+<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-surface-layer-2 text-text-secondary border border-border-subtle">
+<span class="material-symbols-outlined text-[12px] text-profit-emerald">check_circle</span>
+<span>Self-Payment / Transfer</span>
+</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted mt-1.5 leading-relaxed">
+                    Auto-suppressed from spends calculation to prevent double counting.
+                  </p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-text-secondary tabular-nums">₹45,000</span>
+<span class="block text-label-sm font-label-sm text-text-muted mt-1">Excluded</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Split Transaction (Supermarket Mart) -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-3">
+<div class="w-10 h-10 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-primary">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-semibold">Smart Supermarket Mart</h3>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-primary/10 text-primary border border-primary/20">
+                      Split (2)
+                    </span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted mt-1">
+                    ICICI Card XX1004 • 11:30 AM
+                  </p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-liability-rose tabular-nums">-₹10,000</span>
+</div>
+</div>
+<!-- Nested Sub-Elements Breakdown Box -->
+<div class="ml-4 pl-3 border-l-2 border-primary-container/40 space-y-2 bg-surface-layer-2/50 p-2.5 rounded-r-lg">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<div class="flex items-center space-x-1.5 text-text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Groceries &amp; Essentials</span>
+</div>
+<span class="tabular-nums font-semibold text-text-primary">₹7,000</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<div class="flex items-center space-x-1.5 text-text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Home Cleaning &amp; Supplies</span>
+</div>
+<span class="tabular-nums font-semibold text-text-primary">₹3,000</span>
+</div>
+<div class="pt-1 flex justify-end">
+<button class="text-label-sm font-label-sm text-primary hover:underline flex items-center space-x-1">
+<span class="material-symbols-outlined text-[13px]">edit</span>
+<span>Edit Split</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Yesterday -->
+<div class="space-y-2.5 pt-2">
+<div class="flex items-center justify-between text-label-sm font-label-sm text-text-muted uppercase tracking-wider px-1">
+<span>Yesterday, 13 Sep</span>
+<span class="tabular-nums font-mono">2 Events</span>
+</div>
+<!-- Card 4: Cash Spend Logged (Manual) -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-3">
+<div class="w-10 h-10 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-warning-amber">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-semibold">Local Maid Salary</h3>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-warning-amber/10 text-warning-amber border border-warning-amber/20">
+                      Manual Log
+                    </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">Household Services</p>
+<p class="text-label-sm font-label-sm text-text-muted mt-1">
+                    Cash Payment • Logged Manually • 01-Sep cycle
+                  </p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-liability-rose tabular-nums">-₹8,000</span>
+<span class="block text-label-sm font-label-sm text-text-muted mt-1">Receipt Filed</span>
+</div>
+</div>
+</div>
+<!-- Card 5: Investment Outflow (Broker Transfer / Capital Asset Entry) -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<h3 class="text-headline-sm font-headline-sm text-text-primary font-semibold">Zerodha Demat Funds Add</h3>
+</div>
+<div class="mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-primary-container/15 text-primary border border-primary-container/30">
+                      Investment Outflow (Asset Conversion)
+                    </span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted mt-1.5">
+                    Detected Broker Transfer • Capital Asset Entry Created
+                  </p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary tabular-nums">₹50,000</span>
+<span class="block text-label-sm font-label-sm text-profit-emerald mt-1">Equity Ledger</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Safety Spacing for Bottom Bar -->
+<div class="h-6"></div>
+</main>
+<!-- Bottom Navigation Bar (Shared Components JSON Compliant) -->
+<!-- Active Destination determined autonomously: Cashflow -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 border-t border-border-subtle max-w-[393px] mx-auto right-0">
+<!-- Tab 1: Dashboard -->
+<a class="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary py-1 active:scale-95 transition-transform duration-150" href="screen_02_dashboard.html">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</a>
+<!-- Tab 2: Portfolio -->
+<a class="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[22px]">account_balance</span>
+<span class="text-label-sm font-label-sm mt-0.5">Portfolio</span>
+</a>
+<!-- Tab 3: Cashflow (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary font-medium py-1 active:scale-95 transition-transform duration-150 relative" href="screen_05_cashflow.html">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5 text-text-primary font-semibold">Cashflow</span>
+<span class="w-1 h-1 rounded-full bg-primary absolute -bottom-0.5"></span>
+</a>
+<!-- Tab 4: Family Safe -->
+<a class="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary py-1 active:scale-95 transition-transform duration-150" href="screen_07_family_safe.html">
+<span class="material-symbols-outlined text-[22px]">shield</span>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</a>
+</nav>
+</div>
+</body></html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wealth Desk - Family Safe &amp; Emergency Succession Hub</title>
+<!-- Tailwind CSS CDN with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Inter Google Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#e1e0ff",
+            "on-tertiary": "#4f2500",
+            "primary-container": "#8083ff",
+            "profit-emerald": "#10B981",
+            "surface-bright": "#393841",
+            "surface-layer-2": "#1E293B",
+            "primary": "#c0c1ff",
+            "inverse-surface": "#e4e1ed",
+            "text-primary": "#F8FAFC",
+            "outline": "#908fa0",
+            "tertiary-fixed": "#ffdcc5",
+            "secondary": "#4edea3",
+            "on-primary-container": "#0d0096",
+            "on-secondary-fixed": "#002113",
+            "tertiary-container": "#d97721",
+            "tertiary-fixed-dim": "#ffb783",
+            "on-tertiary-container": "#452000",
+            "error": "#ffb4ab",
+            "surface-container-highest": "#34343d",
+            "on-surface-variant": "#c7c4d7",
+            "secondary-fixed-dim": "#4edea3",
+            "on-primary": "#1000a9",
+            "surface-container-low": "#1b1b23",
+            "liability-rose": "#F43F5E",
+            "on-primary-fixed": "#07006c",
+            "surface": "#13131b",
+            "error-container": "#93000a",
+            "background": "#13131b",
+            "on-secondary-fixed-variant": "#005236",
+            "surface-container-high": "#292932",
+            "on-tertiary-fixed-variant": "#703700",
+            "on-error-container": "#ffdad6",
+            "tertiary": "#ffb783",
+            "secondary-fixed": "#6ffbbe",
+            "surface-tint": "#c0c1ff",
+            "secondary-container": "#00a572",
+            "background-root": "#0B0F17",
+            "on-background": "#e4e1ed",
+            "border-prominent": "#334155",
+            "warning-amber": "#F59E0B",
+            "on-surface": "#e4e1ed",
+            "text-secondary": "#94A3B8",
+            "inverse-on-surface": "#303038",
+            "on-error": "#690005",
+            "text-muted": "#64748B",
+            "on-secondary-container": "#00311f",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-variant": "#34343d",
+            "border-subtle": "#222F3E",
+            "surface-dim": "#13131b",
+            "inverse-primary": "#494bd6",
+            "surface-layer-1": "#151C28",
+            "outline-variant": "#464554",
+            "on-secondary": "#003824",
+            "primary-fixed-dim": "#c0c1ff",
+            "surface-container-lowest": "#0d0d15",
+            "on-tertiary-fixed": "#301400",
+            "surface-container": "#1f1f27"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "margin": "16px",
+            "gutter": "12px",
+            "space-xs": "4px",
+            "space-lg": "24px",
+            "space-md": "16px",
+            "space-xl": "32px"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "display-lg": ["Inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Tabular figures for financial numbers */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Smooth hiding of scrollbars for mobile feel */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-root text-text-primary antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex justify-center">
+<!-- Mobile Native Simulation Shell (393px width reference) -->
+<div class="w-full max-w-[440px] bg-background-root border-x border-border-subtle min-h-screen flex flex-col relative pb-28">
+<!-- Top Navigation Anchor (Shared Component: TopAppBar) -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-space-md py-space-sm bg-background-root border-b border-border-subtle">
+<!-- Leading: Family Avatar & Title Anchor -->
+<div class="flex items-center gap-3">
+<div class="relative cursor-pointer active:scale-95 transition-transform duration-150">
+<div class="w-10 h-10 rounded-full bg-surface-layer-2 border border-border-prominent flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-primary text-[22px]" data-icon="shield">shield</span>
+</div>
+<div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-profit-emerald border-2 border-background-root rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<h1 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">Family Safe</h1>
+<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-label-sm font-medium bg-primary-container/20 text-primary border border-primary/30">LOCKED</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-secondary">Net Worth Manager Succession Ledger</p>
+</div>
+</div>
+<!-- Trailing Action: Privacy Toggle & Lock status -->
+<div class="flex items-center gap-1">
+<button aria-label="Toggle Vault Privacy Masking" class="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 active:scale-95 transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility_off">visibility_off</span>
+</button>
+<button aria-label="Security Status" class="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 active:scale-95 transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="lock">lock</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin pt-4 flex flex-col gap-5">
+<!-- MASTER SUCCESSION HEALTH BANNER -->
+<section class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md relative overflow-hidden">
+<!-- Background subtle glow -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between gap-4">
+<!-- Textual Status & Warnings -->
+<div class="flex flex-col gap-1.5 flex-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-profit-emerald animate-pulse"></span>
+<span class="text-label-sm font-label-sm text-secondary font-medium uppercase tracking-wider">Audit Protocol Active</span>
+</div>
+<h2 class="text-headline-md font-headline-md font-semibold text-text-primary">92% Ready</h2>
+<p class="text-body-sm font-body-sm text-text-secondary leading-snug">Succession clarity score across real estate, equity, and banking vaults.</p>
+</div>
+<!-- Circular Metric Progress Gauge (SVG) -->
+<div class="relative w-18 h-18 shrink-0 flex items-center justify-center">
+<svg class="w-18 h-18 -rotate-90" viewbox="0 0 72 72">
+<circle cx="36" cy="36" fill="transparent" r="30" stroke="#1E293B" stroke-width="6"></circle>
+<circle cx="36" cy="36" fill="transparent" r="30" stroke="#10B981" stroke-dasharray="188.4" stroke-dashoffset="15.07" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary tabular-nums">92%</span>
+</div>
+</div>
+</div>
+<!-- Warning Pill Alert Bar -->
+<div class="mt-3.5 pt-3 border-t border-border-subtle/80 flex items-center justify-between bg-surface-layer-2/50 -mx-4 -mb-4 px-4 py-2.5">
+<div class="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
+<span class="material-symbols-outlined text-warning-amber text-[18px] shrink-0" data-icon="warning">warning</span>
+<span class="text-label-sm font-label-sm text-text-secondary truncate">1 Account Missing Nominee • 1 Locker Key Undocumented</span>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[16px] shrink-0" data-icon="chevron_right">chevron_right</span>
+</div>
+</section>
+<!-- PRIMARY PROMINENT ACTION CARD: MASTER EMERGENCY DOSSIER (ICE KIT) -->
+<section class="relative group">
+<div class="absolute -inset-0.5 bg-gradient-to-r from-primary-container/80 via-primary/50 to-primary-container/80 rounded-xl blur-xs opacity-70 group-hover:opacity-100 transition duration-300"></div>
+<div class="relative bg-surface-layer-1 border border-primary/40 rounded-xl p-space-md flex flex-col gap-3">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-layer-2 border border-primary/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[24px]" data-icon="lock">lock</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-2">
+<h3 class="text-headline-sm font-headline-sm font-semibold text-text-primary">Master Emergency Dossier (ICE Kit)</h3>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary leading-relaxed">
+                Compiles a secure, 256-bit encrypted PDF containing all folio IDs, bank accounts, locker locations, and claim contacts for your spouse or executor.
+              </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2 text-text-muted text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[15px] text-profit-emerald" data-icon="check_circle">check_circle</span>
+<span>Updated 3 days ago</span>
+</div>
+<a class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-container text-on-primary-container font-label-md font-semibold text-label-md hover:brightness-110 active:scale-95 transition-all shadow-md" href="screen_08_ice_modal.html" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+<span>Export Master ICE Kit</span>
+</a>
+</div>
+</div>
+</section>
+<!-- SECTION 1: NOMINATION AUDIT MATRIX -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-0.5">
+<div class="flex items-center gap-2">
+<h3 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">Nomination Audit Matrix</h3>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-sm font-medium bg-surface-layer-2 text-text-secondary border border-border-subtle">3 Categories</span>
+</div>
+<button class="text-label-md font-label-md text-primary hover:underline" type="button">Manage All</button>
+</div>
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl divide-y divide-border-subtle overflow-hidden">
+<!-- Row 1: Mutual Funds -->
+<div class="p-3.5 flex items-center justify-between hover:bg-surface-layer-2/30 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="analytics">analytics</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-body-md font-medium text-text-primary">Mutual Fund Folios</span>
+<span class="text-body-sm font-body-sm text-text-secondary tabular-nums">14 Active Folios across CAMS/KFin</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-medium bg-profit-emerald/10 text-profit-emerald border border-profit-emerald/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="check">check</span>
+                Spouse 100%
+              </span>
+</div>
+</div>
+<!-- Row 2: Real Estate Deeds -->
+<div class="p-3.5 flex items-center justify-between hover:bg-surface-layer-2/30 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="domain">domain</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-body-md font-medium text-text-primary">Real Estate Deeds</span>
+<span class="text-body-sm font-body-sm text-text-secondary tabular-nums">2 Partition &amp; Title Deeds</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-medium bg-profit-emerald/10 text-profit-emerald border border-profit-emerald/20">
+<span class="material-symbols-outlined text-[13px]" data-icon="verified">verified</span>
+                Documented
+              </span>
+</div>
+</div>
+<!-- Row 3: Fixed Deposits (Action Required) -->
+<div class="p-3.5 flex items-center justify-between bg-liability-rose/5 hover:bg-liability-rose/10 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-liability-rose/10 border border-liability-rose/20 flex items-center justify-center text-liability-rose shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="account_balance">account_balance</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="text-body-md font-body-md font-medium text-text-primary">Fixed Deposits</span>
+<span class="text-[11px] font-label-sm text-liability-rose font-medium">1 Missing</span>
+</div>
+<span class="text-body-sm font-body-sm text-text-muted tabular-nums">Dad's SBI FD #9402 • ₹15,00,000</span>
+</div>
+</div>
+<a class="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-label-md font-label-md font-semibold bg-liability-rose text-text-primary hover:bg-liability-rose/90 active:scale-95 transition-all" href="screen_10_fixed_deposit.html" type="button">
+<span class="material-symbols-outlined text-[14px]" data-icon="add">add</span>
+<span>Assign</span>
+</a>
+</div>
+</div>
+</section>
+<!-- SECTION 2: PROTECTION & INSURANCE REGISTRY -->
+<section class="flex flex-col gap-2.5">
+<div class="flex flex-col px-0.5">
+<div class="flex items-center justify-between">
+<h3 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">Protection &amp; Insurance Registry</h3>
+<span class="text-label-sm font-label-sm text-secondary flex items-center gap-1 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              2 Policies Active
+            </span>
+</div>
+<p class="text-label-md font-label-md text-text-secondary">Emergency Claim Helplines &amp; Policy Deeds</p>
+</div>
+<div class="grid grid-cols-1 gap-3">
+<!-- Policy Card 1: HDFC Ergo Health -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-primary-container/15 text-primary border border-primary/20">Health Floater (₹25L Sum Assured)</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm font-semibold text-text-primary">HDFC Ergo Optima Restore</h4>
+<p class="text-body-sm font-body-sm text-text-secondary font-mono">Policy #2819-0019-2810</p>
+</div>
+<div class="w-9 h-9 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-profit-emerald">
+<span class="material-symbols-outlined text-[20px]" data-icon="health_and_safety">health_and_safety</span>
+</div>
+</div>
+<!-- Details Row -->
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-border-subtle text-body-sm font-body-sm">
+<div class="flex flex-col">
+<span class="text-text-muted text-label-sm font-label-sm">Primary Nominee</span>
+<span class="text-text-primary font-medium">Spouse (100%)</span>
+</div>
+<div class="flex flex-col">
+<span class="text-text-muted text-label-sm font-label-sm">TPA Helpline</span>
+<span class="text-text-primary tabular-nums font-mono font-medium">1800-2666-00</span>
+</div>
+</div>
+<!-- Card Actions -->
+<div class="flex items-center gap-2 pt-1">
+<a class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-surface-layer-2 border border-border-prominent text-text-primary text-label-md font-label-md font-medium hover:bg-surface-layer-2/80 active:scale-95 transition-all" href="tel:1800266600">
+<span class="material-symbols-outlined text-profit-emerald text-[16px]" data-icon="call">call</span>
+<span>Direct Dial Claim</span>
+</a>
+<button class="flex-1 inline-flex items-center justify-center gap-1 py-2 px-3 rounded-lg bg-surface-layer-2/50 border border-border-subtle text-text-secondary hover:text-text-primary text-label-md font-label-md font-medium active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="local_hospital">local_hospital</span>
+<span>Network Hospitals</span>
+</button>
+</div>
+</div>
+<!-- Policy Card 2: Tata AIA Term Life -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-primary-container/15 text-primary border border-primary/20">Term Life (₹2.0 Cr Sum Assured)</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm font-semibold text-text-primary">Tata AIA Life Sampoorna Raksha</h4>
+<p class="text-body-sm font-body-sm text-text-secondary font-mono">Policy #0192837482</p>
+</div>
+<div class="w-9 h-9 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="security">security</span>
+</div>
+</div>
+<!-- Details Row -->
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-border-subtle text-body-sm font-body-sm">
+<div class="flex flex-col">
+<span class="text-text-muted text-label-sm font-label-sm">Nominee</span>
+<span class="text-text-primary font-medium">Spouse (100%)</span>
+</div>
+<div class="flex flex-col">
+<span class="text-text-muted text-label-sm font-label-sm">Claim Contact</span>
+<span class="text-text-primary tabular-nums font-mono font-medium">1860-266-9966</span>
+</div>
+</div>
+<!-- Card Actions -->
+<div class="flex items-center gap-2 pt-1">
+<a class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-surface-layer-2 border border-border-prominent text-text-primary text-label-md font-label-md font-medium hover:bg-surface-layer-2/80 active:scale-95 transition-all" href="tel:18602669966">
+<span class="material-symbols-outlined text-profit-emerald text-[16px]" data-icon="call">call</span>
+<span>Dial 24x7 Priority Support</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: PHYSICAL VAULT & LEGAL DOCUMENT DIRECTORY -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-0.5">
+<div>
+<h3 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">Physical Vault &amp; Legal Directory</h3>
+<p class="text-label-md font-label-md text-text-secondary">Physical key logs, locker access &amp; legal deeds</p>
+</div>
+</div>
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl divide-y divide-border-subtle overflow-hidden">
+<!-- Directory Card A: Bank Locker -->
+<div class="p-space-md flex flex-col gap-2.5 hover:bg-surface-layer-2/30 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span>
+</div>
+<div>
+<h4 class="text-body-lg font-body-lg font-medium text-text-primary">Bank of Baroda Safe Deposit Locker #42</h4>
+<p class="text-body-sm font-body-sm text-text-secondary">Bandra West Branch, Mumbai</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-sm bg-surface-layer-2 text-text-secondary border border-border-subtle">Either or Survivor</span>
+</div>
+<!-- Key Location Highlight Box -->
+<div class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-layer-2/60 border border-border-prominent/40 text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-warning-amber text-[18px] shrink-0" data-icon="key">key</span>
+<div class="text-text-primary leading-tight">
+<span class="text-text-muted text-label-sm font-label-sm block">Physical Key Location</span>
+                Master Godrej Safe (Bedroom), Locker #2, Silver Key Tag
+              </div>
+</div>
+</div>
+<!-- Directory Card B: Original Land Titles & Deeds -->
+<div class="p-space-md flex flex-col gap-2 hover:bg-surface-layer-2/30 transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="description">description</span>
+</div>
+<div>
+<h4 class="text-body-lg font-body-lg font-medium text-text-primary">Original Land Titles &amp; Deeds</h4>
+<p class="text-body-sm font-body-sm text-text-secondary">Khata #412/9B &amp; Apartment Sale Deed</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-profit-emerald text-[18px]" data-icon="verified_user">verified_user</span>
+</div>
+<div class="ml-10 text-body-sm font-body-sm text-text-muted flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]" data-icon="folder">folder</span>
+<span>Stored in: <strong class="text-text-primary font-normal">Blue Waterproof Folder in Home Safe</strong></span>
+</div>
+</div>
+<!-- Directory Card C: Registered Will -->
+<div class="p-space-md flex flex-col gap-2 hover:bg-surface-layer-2/30 transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="gavel">gavel</span>
+</div>
+<div>
+<h4 class="text-body-lg font-body-lg font-medium text-text-primary">Registered Physical Will</h4>
+<p class="text-body-sm font-body-sm text-text-secondary">Dated: 12-Feb-2024 • Sub-Registrar Office Bandra</p>
+</div>
+</div>
+<a class="p-1.5 rounded-lg bg-surface-layer-2 border border-border-subtle text-primary hover:text-text-primary active:scale-95 transition-all" href="tel:+919820000000">
+<span class="material-symbols-outlined text-[18px]" data-icon="call">call</span>
+</a>
+</div>
+<div class="ml-10 text-body-sm font-body-sm text-text-muted flex items-center justify-between">
+<span>Custodian: <span class="text-text-primary font-medium">Adv. S. Deshmukh (CA/Legal)</span></span>
+<span class="font-mono text-label-sm font-label-sm text-text-secondary">+91 98200 XXXXX</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: PENDING RECEIVABLES & REIMBURSEMENTS -->
+<section class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between px-0.5">
+<h3 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">Pending Claims &amp; Receivables</h3>
+<span class="text-label-sm font-label-sm text-warning-amber tabular-nums font-medium">1 In Process</span>
+</div>
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md flex flex-col gap-3">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-0.5">
+<h4 class="text-body-lg font-body-lg font-medium text-text-primary">Corporate Health Claim Reimbursement</h4>
+<p class="text-body-sm font-body-sm text-text-secondary font-mono">TPA Token: MedAssist #84920</p>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary tabular-nums">₹42,500</span>
+<span class="block text-[11px] font-label-sm text-text-muted">Awaiting NEFT</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-border-subtle">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-medium bg-warning-amber/10 text-warning-amber border border-warning-amber/20">
+<span class="w-1.5 h-1.5 rounded-full bg-warning-amber animate-pulse"></span>
+<span>Pending Hospital Query Resolution</span>
+</div>
+<button class="text-label-md font-label-md text-primary hover:underline inline-flex items-center gap-0.5" type="button">
+<span>View Query</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Shared Component: BottomNavBar) -->
+<!-- Destination count: 4, Labels: ["Dashboard", "Portfolio", "Cashflow", "Family Safe"] -->
+<!-- Current active destination: "Family Safe" (matches exact screen intent) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 border-t border-border-subtle shadow-2xl md:max-w-[440px] md:left-1/2 md:-translate-x-1/2">
+<!-- Tab 1: Dashboard (Inactive) -->
+<button class="flex flex-col items-center justify-center text-text-secondary py-1 flex-1 hover:text-text-primary active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="dashboard">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</button>
+<!-- Tab 2: Portfolio (Inactive) -->
+<button class="flex flex-col items-center justify-center text-text-secondary py-1 flex-1 hover:text-text-primary active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="account_balance">account_balance</span>
+<span class="text-label-sm font-label-sm mt-0.5">Portfolio</span>
+</button>
+<!-- Tab 3: Cashflow (Inactive) -->
+<button class="flex flex-col items-center justify-center text-text-secondary py-1 flex-1 hover:text-text-primary active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[24px]" data-icon="receipt_long">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Cashflow</span>
+</button>
+<!-- Tab 4: Family Safe (Active Intent Match) -->
+<button class="flex flex-col items-center justify-center text-primary font-medium py-1 flex-1 active:scale-95 transition-transform duration-150 relative" type="button">
+<div class="relative">
+<span class="material-symbols-outlined text-[24px]" data-icon="shield" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span class="absolute top-0 right-0 w-1.5 h-1.5 bg-warning-amber rounded-full"></span>
+</div>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</button>
+</nav>
+</div>
+</body></html>

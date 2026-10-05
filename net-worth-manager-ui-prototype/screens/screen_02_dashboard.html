@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Wealth Desk - Master Family Office</title>
+<!-- Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-container": "#00311f",
+            "text-muted": "#64748B",
+            "surface": "#13131b",
+            "inverse-on-surface": "#303038",
+            "surface-container-lowest": "#0d0d15",
+            "on-surface-variant": "#c7c4d7",
+            "on-primary": "#1000a9",
+            "tertiary-fixed": "#ffdcc5",
+            "surface-tint": "#c0c1ff",
+            "surface-container-highest": "#34343d",
+            "on-primary-container": "#0d0096",
+            "primary-fixed-dim": "#c0c1ff",
+            "primary-fixed": "#e1e0ff",
+            "inverse-primary": "#494bd6",
+            "surface-layer-1": "#151C28",
+            "warning-amber": "#F59E0B",
+            "outline": "#908fa0",
+            "secondary-fixed": "#6ffbbe",
+            "secondary-fixed-dim": "#4edea3",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "inverse-surface": "#e4e1ed",
+            "surface-container-high": "#292932",
+            "error": "#ffb4ab",
+            "tertiary-fixed-dim": "#ffb783",
+            "primary": "#c0c1ff",
+            "profit-emerald": "#10B981",
+            "background-root": "#0B0F17",
+            "on-tertiary-container": "#452000",
+            "surface-layer-2": "#1E293B",
+            "on-primary-fixed": "#07006c",
+            "error-container": "#93000a",
+            "text-secondary": "#94A3B8",
+            "on-tertiary-fixed-variant": "#703700",
+            "on-secondary": "#003824",
+            "on-secondary-fixed": "#002113",
+            "tertiary": "#ffb783",
+            "on-tertiary-fixed": "#301400",
+            "on-surface": "#e4e1ed",
+            "border-prominent": "#334155",
+            "outline-variant": "#464554",
+            "surface-dim": "#13131b",
+            "surface-bright": "#393841",
+            "tertiary-container": "#d97721",
+            "secondary": "#4edea3",
+            "on-tertiary": "#4f2500",
+            "secondary-container": "#00a572",
+            "background": "#13131b",
+            "border-subtle": "#222F3E",
+            "on-error": "#690005",
+            "on-error-container": "#ffdad6",
+            "on-background": "#e4e1ed",
+            "text-primary": "#F8FAFC",
+            "primary-container": "#8083ff",
+            "surface-container": "#1f1f27",
+            "surface-variant": "#34343d",
+            "surface-container-low": "#1b1b23",
+            "on-secondary-fixed-variant": "#005236",
+            "liability-rose": "#F43F5E"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "space-xl": "32px",
+            "space-xs": "4px",
+            "margin": "16px",
+            "gutter": "12px",
+            "space-md": "16px",
+            "space-lg": "24px"
+          },
+          "fontFamily": {
+            "display-lg": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "headline-lg": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "headline-sm": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"],
+            "headline-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"]
+          },
+          "fontSize": {
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-root text-text-primary antialiased selection:bg-primary-container selection:text-text-primary min-h-screen flex justify-center">
+<!-- Mobile Frame Container (393px width constraint) -->
+<div class="w-full max-w-[393px] min-h-screen bg-background-root relative flex flex-col pb-24 shadow-2xl">
+<!-- 1. TopAppBar (Shared Component Implementation) -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-space-md py-space-sm bg-background-root dark:bg-background-root border-b border-border-subtle dark:border-border-subtle">
+<!-- Leading: Avatar + Family Picker -->
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary font-headline-sm text-label-md cursor-pointer hover:border-primary transition-colors">
+          RK
+        </div>
+<!-- Family Picker Dropdown Trigger -->
+<button class="flex items-center gap-1 px-2 py-1 rounded bg-surface-layer-1 border border-border-subtle text-text-primary font-label-md text-label-md hover:bg-surface-layer-2 active:scale-95 transition-all" id="familyPickerBtn">
+<span id="selectedFamilyLabel">All Family (Combined)</span>
+<span class="material-symbols-outlined text-[16px] text-text-secondary" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<!-- Trailing Actions: Privacy Mask & Notifications -->
+<div class="flex items-center gap-1">
+<!-- Privacy Mask Toggle -->
+<button aria-label="Toggle Privacy Mask" class="p-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 active:scale-95 transition-transform duration-150" id="privacyMaskToggle">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility_off" id="privacyIcon">visibility_off</span>
+</button>
+<!-- Notification Bell -->
+<button aria-label="Notifications" class="p-2 relative rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-warning-amber text-[#0B0F17] font-bold text-[9px] flex items-center justify-center">3</span>
+</button>
+</div>
+</header>
+<!-- Family Picker Dropdown Menu (Overlay Dropdown) -->
+<div class="hidden absolute top-12 left-4 z-50 w-52 bg-surface-layer-2 border border-border-prominent rounded-xl shadow-xl py-1.5 backdrop-blur-md" id="familyMenu">
+<div class="px-3 py-1.5 text-label-sm font-label-sm text-text-muted border-b border-border-subtle">SELECT PORTFOLIO SCOPE</div>
+<button class="w-full text-left px-3 py-2 text-label-md font-label-md text-text-primary hover:bg-surface-layer-1 flex items-center justify-between" onclick="selectScope('All Family (Combined)')">
+        All Family (Combined) <span class="material-symbols-outlined text-primary text-[14px]" data-icon="check">check</span>
+</button>
+<button class="w-full text-left px-3 py-2 text-label-md font-label-md text-text-secondary hover:text-text-primary hover:bg-surface-layer-1" onclick="selectScope('Self (Rahul K.)')">
+        Self (Rahul K.)
+      </button>
+<button class="w-full text-left px-3 py-2 text-label-md font-label-md text-text-secondary hover:text-text-primary hover:bg-surface-layer-1" onclick="selectScope('Spouse (Pooja K.)')">
+        Spouse (Pooja K.)
+      </button>
+<button class="w-full text-left px-3 py-2 text-label-md font-label-md text-text-secondary hover:text-text-primary hover:bg-surface-layer-1" onclick="selectScope('Parents Trust')">
+        Parents Trust
+      </button>
+<button class="w-full text-left px-3 py-2 text-label-md font-label-md text-text-secondary hover:text-text-primary hover:bg-surface-layer-1" onclick="selectScope('Minors (Aarav &amp; Meera)')">
+        Minors (Aarav &amp; Meera)
+      </button>
+</div>
+<!-- Main Content Area -->
+<main class="px-space-md pt-4 space-y-4">
+<!-- 2. Consolidated Hero Card -->
+<section class="bg-surface-layer-1 border border-border-subtle rounded-2xl p-5 shadow-lg relative overflow-hidden">
+<!-- Subdued ambient glow in corner -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md text-text-muted tracking-wider uppercase font-semibold">Consolidated Family Net Worth</span>
+<span class="material-symbols-outlined text-text-muted text-[16px]" data-icon="lock">lock</span>
+</div>
+<!-- Big Hero Balance -->
+<div class="mt-2 flex items-baseline gap-2">
+<h1 class="masked-value font-display-lg text-display-lg text-text-primary tabular-nums tracking-tight font-extrabold" data-raw="₹4,82,45,000">₹4,82,45,000</h1>
+</div>
+<!-- Trend Indicator -->
+<div class="mt-2 flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-profit-emerald/10 text-profit-emerald font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+<span class="masked-value tabular-nums" data-raw="+₹1,24,000 (+2.6%)">+₹1,24,000 (+2.6%)</span>
+</span>
+<span class="text-text-muted font-body-sm text-body-sm">this month</span>
+</div>
+<!-- Multi-segmented Asset Allocation Bar -->
+<div class="mt-5">
+<div class="w-full h-2 rounded-full flex overflow-hidden bg-surface-layer-2 gap-[1px]">
+<div class="bg-[#6366F1] h-full" style="width: 40%;" title="Equities 40%"></div>
+<div class="bg-[#14B8A6] h-full" style="width: 35%;" title="Real Estate 35%"></div>
+<div class="bg-warning-amber h-full" style="width: 15%;" title="Bullion 15%"></div>
+<div class="bg-profit-emerald h-full" style="width: 10%;" title="Cash &amp; FD 10%"></div>
+</div>
+<!-- Allocation Legend Grid -->
+<div class="grid grid-cols-2 gap-y-2 gap-x-2 mt-3 pt-2 border-t border-border-subtle/50">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#6366F1] shrink-0"></span>
+<span class="text-text-secondary font-label-sm text-label-sm">Equity:</span>
+<span class="masked-value font-label-sm text-label-sm text-text-primary tabular-nums font-semibold" data-raw="₹1.92 Cr">₹1.92 Cr</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#14B8A6] shrink-0"></span>
+<span class="text-text-secondary font-label-sm text-label-sm">Property:</span>
+<span class="masked-value font-label-sm text-label-sm text-text-primary tabular-nums font-semibold" data-raw="₹1.70 Cr">₹1.70 Cr</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-warning-amber shrink-0"></span>
+<span class="text-text-secondary font-label-sm text-label-sm">Gold:</span>
+<span class="masked-value font-label-sm text-label-sm text-text-primary tabular-nums font-semibold" data-raw="₹72.4 L">₹72.4 L</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-profit-emerald shrink-0"></span>
+<span class="text-text-secondary font-label-sm text-label-sm">Cash/FD:</span>
+<span class="masked-value font-label-sm text-label-sm text-text-primary tabular-nums font-semibold" data-raw="₹47.5 L">₹47.5 L</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Analytics & Runway Widgets (2-Column Grid) -->
+<section class="grid grid-cols-2 gap-3">
+<!-- Buffer & Drag Card -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div>
+<span class="text-text-muted font-label-sm text-label-sm uppercase tracking-wide">Liquid Buffer &amp; Drag</span>
+<div class="mt-1 masked-value font-headline-md text-headline-md text-text-primary tabular-nums font-bold" data-raw="₹18.50 L">₹18.50 L</div>
+<div class="text-text-secondary font-body-sm text-body-sm mt-0.5">14.2 Mos Runway</div>
+</div>
+<div class="mt-3 pt-2 border-t border-border-subtle">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-warning-amber/10 border border-warning-amber/20 text-warning-amber font-label-sm text-[9px] leading-tight">
+<span class="material-symbols-outlined text-[12px]" data-icon="warning">warning</span>
+              4.2% Cash Drag
+            </span>
+</div>
+</div>
+<!-- Cashflow Card -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div>
+<span class="text-text-muted font-label-sm text-label-sm uppercase tracking-wide">Sep 2026 Cashflow</span>
+<div class="mt-1 masked-value font-headline-md text-headline-md text-liability-rose tabular-nums font-bold" data-raw="-₹64,200 Spent">-₹64,200 Spent</div>
+<div class="masked-value text-profit-emerald font-body-sm text-body-sm mt-0.5 tabular-nums" data-raw="Inflow: ₹2,10,000">Inflow: ₹2,10,000</div>
+</div>
+<div class="mt-3 pt-2 border-t border-border-subtle">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-profit-emerald/10 border border-profit-emerald/20 text-profit-emerald font-label-sm text-[9px] leading-tight">
+<span class="material-symbols-outlined text-[12px]" data-icon="savings">savings</span>
+              69.4% Savings Rate
+            </span>
+</div>
+</div>
+</section>
+<!-- 4. Priority Action Required Carousel ("Action Inbox") -->
+<section class="space-y-2">
+<div class="flex items-center justify-between px-0.5">
+<div class="flex items-center gap-1.5">
+<h2 class="text-text-primary font-headline-sm text-headline-sm font-semibold">Action Inbox</h2>
+<span class="px-1.5 py-0.2 rounded-full bg-liability-rose/20 text-liability-rose font-label-sm text-label-sm font-bold">3 Pending</span>
+</div>
+<span class="text-text-muted font-label-sm text-label-sm">Swipe →</span>
+</div>
+<!-- Horizontal Swipe Container -->
+<div class="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
+<!-- Card 1: Missing Nomination (Critical Red) -->
+<div class="snap-start shrink-0 w-[270px] bg-surface-layer-1 border border-liability-rose/40 rounded-xl p-3.5 relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="p-1.5 rounded-lg bg-liability-rose/10 text-liability-rose flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="shield">shield</span>
+</span>
+<span class="text-[10px] uppercase font-bold text-liability-rose tracking-wider">Legal Risk</span>
+</div>
+<h3 class="text-text-primary font-headline-sm text-headline-sm mt-2 font-semibold">Nomination Missing</h3>
+<p class="text-text-secondary font-body-sm text-body-sm mt-0.5 line-clamp-1">Dad's SBI FD #9402</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between">
+<span class="text-text-muted font-label-sm text-label-sm tabular-nums">Val: ₹15,00,000</span>
+<button class="px-3 py-1.5 rounded bg-liability-rose text-white font-label-sm text-label-sm font-semibold hover:opacity-90 active:scale-95 transition-all">
+                Fix Nominee
+              </button>
+</div>
+</div>
+<!-- Card 2: SMS Parser Unclassified (Amber) -->
+<div class="snap-start shrink-0 w-[270px] bg-surface-layer-1 border border-warning-amber/40 rounded-xl p-3.5 relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="p-1.5 rounded-lg bg-warning-amber/10 text-warning-amber flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="receipt_long">receipt_long</span>
+</span>
+<span class="text-[10px] uppercase font-bold text-warning-amber tracking-wider">SMS Inbox</span>
+</div>
+<h3 class="text-text-primary font-headline-sm text-headline-sm mt-2 font-semibold">3 Unreviewed SMS</h3>
+<p class="text-text-secondary font-body-sm text-body-sm mt-0.5 line-clamp-1">Swiggy ₹1,450, BESCOM ₹2,340</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between">
+<span class="text-text-muted font-label-sm text-label-sm">HDFC Bank debit</span>
+<button class="px-3 py-1.5 rounded bg-warning-amber text-[#0B0F17] font-label-sm text-label-sm font-semibold hover:opacity-90 active:scale-95 transition-all">
+                Review
+              </button>
+</div>
+</div>
+<!-- Card 3: Insurance Premium Due (Indigo) -->
+<div class="snap-start shrink-0 w-[270px] bg-surface-layer-1 border border-primary-container/40 rounded-xl p-3.5 relative flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="p-1.5 rounded-lg bg-primary-container/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+</span>
+<span class="text-[10px] uppercase font-bold text-primary tracking-wider">Renewal Due</span>
+</div>
+<h3 class="text-text-primary font-headline-sm text-headline-sm mt-2 font-semibold">Health Floater Premium</h3>
+<p class="text-text-secondary font-body-sm text-body-sm mt-0.5 line-clamp-1">HDFC Ergo ₹28,400 in 7 days</p>
+</div>
+<div class="mt-3 pt-2 flex items-center justify-between">
+<span class="text-text-muted font-label-sm text-label-sm">₹1 Cr Family Base</span>
+<button class="px-3 py-1.5 rounded bg-primary-container text-text-primary font-label-sm text-label-sm font-semibold hover:opacity-90 active:scale-95 transition-all">
+                Pay &amp; Log
+              </button>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Asset Class Breakdown List -->
+<section class="space-y-2.5">
+<div class="flex items-center justify-between px-0.5">
+<h2 class="text-text-primary font-headline-sm text-headline-sm font-semibold">Asset Breakdown</h2>
+<button class="flex items-center gap-1 px-2 py-0.5 rounded bg-surface-layer-1 border border-border-subtle text-text-secondary font-label-sm text-label-sm hover:text-text-primary">
+<span>By Asset Class</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+<div class="space-y-2">
+<!-- Item 1: Market Investments -->
+<a class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex items-center justify-between hover:border-border-prominent transition-all cursor-pointer block cursor-pointer" href="screen_11_equities.html">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-[#6366F1]/10 border border-[#6366F1]/20 flex items-center justify-center text-[#6366F1]">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+</div>
+<div>
+<div class="text-text-primary font-headline-sm text-headline-sm font-medium">Market Investments</div>
+<div class="text-text-muted font-body-sm text-body-sm">14 Schemes (Equities &amp; MFs)</div>
+</div>
+</div>
+<div class="text-right">
+<div class="masked-value text-text-primary font-headline-sm text-headline-sm tabular-nums font-bold" data-raw="₹1,92,50,000">₹1,92,50,000</div>
+<div class="text-profit-emerald font-body-sm text-[11px] tabular-nums flex items-center justify-end gap-0.5">
+<span>+1.4% today</span>
+<span class="text-[9px] text-text-muted">(AMFI sync)</span>
+</div>
+</div>
+</a>
+<!-- Item 2: Physical Bullion -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex items-center justify-between hover:border-border-prominent transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-warning-amber/10 border border-warning-amber/20 flex items-center justify-center text-warning-amber">
+<span class="material-symbols-outlined" data-icon="gold">drive_file_rename_outline</span>
+</div>
+<div>
+<div class="text-text-primary font-headline-sm text-headline-sm font-medium">Physical Bullion</div>
+<div class="text-text-muted font-body-sm text-body-sm">500g 24K, 420g 22K</div>
+</div>
+</div>
+<div class="text-right">
+<div class="masked-value text-text-primary font-headline-sm text-headline-sm tabular-nums font-bold" data-raw="₹72,40,000">₹72,40,000</div>
+<div class="text-text-secondary font-body-sm text-[11px] tabular-nums">
+                24K Spot: ₹7,450/g
+              </div>
+</div>
+</div>
+<!-- Item 3: Real Estate & Land -->
+<a class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex items-center justify-between hover:border-border-prominent transition-all cursor-pointer block cursor-pointer" href="screen_09_real_estate.html">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/20 flex items-center justify-center text-[#14B8A6]">
+<span class="material-symbols-outlined" data-icon="home_work">home_work</span>
+</div>
+<div>
+<div class="text-text-primary font-headline-sm text-headline-sm font-medium">Real Estate &amp; Land</div>
+<div class="text-text-muted font-body-sm text-body-sm">3 Properties (Plot, 2 Flats)</div>
+</div>
+</div>
+<div class="text-right">
+<div class="masked-value text-text-primary font-headline-sm text-headline-sm tabular-nums font-bold" data-raw="₹1,70,00,000">₹1,70,00,000</div>
+<div class="text-text-muted font-body-sm text-[11px]">
+                Indexation applied
+              </div>
+</div>
+</a>
+<!-- Item 4: Fixed Income & Bank Deposits -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex items-center justify-between hover:border-border-prominent transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-profit-emerald/10 border border-profit-emerald/20 flex items-center justify-center text-profit-emerald">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<div class="text-text-primary font-headline-sm text-headline-sm font-medium">Fixed Income &amp; Banks</div>
+<div class="text-text-muted font-body-sm text-body-sm">3 FDs, 4 Savings Accounts</div>
+</div>
+</div>
+<div class="text-right">
+<div class="masked-value text-text-primary font-headline-sm text-headline-sm tabular-nums font-bold" data-raw="₹47,55,000">₹47,55,000</div>
+<div class="text-text-secondary font-body-sm text-[11px] tabular-nums">
+                Avg Yield: 7.1% p.a.
+              </div>
+</div>
+</div>
+<!-- Item 5: Liabilities & Debt -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex items-center justify-between hover:border-border-prominent transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-liability-rose/10 border border-liability-rose/20 flex items-center justify-center text-liability-rose">
+<span class="material-symbols-outlined" data-icon="credit_card">credit_card</span>
+</div>
+<div>
+<div class="text-text-primary font-headline-sm text-headline-sm font-medium">Liabilities &amp; Debt</div>
+<div class="text-text-muted font-body-sm text-body-sm">HDFC Home Loan + 2 Cards</div>
+</div>
+</div>
+<div class="text-right">
+<div class="masked-value text-liability-rose font-headline-sm text-headline-sm tabular-nums font-bold" data-raw="-₹40,00,000">-₹40,00,000</div>
+<div class="text-text-muted font-body-sm text-[11px] tabular-nums">
+                EMI ₹42,500 on 5th
+              </div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- 6. BottomNavBar (Shared Component Implementation) -->
+<!-- Destination Rule: Dashboard is active -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 dark:bg-surface-layer-1 border-t border-border-subtle dark:border-border-subtle max-w-[393px] mx-auto right-0">
+<!-- Tab 1: Dashboard (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary font-medium py-1 active:scale-95 transition-transform duration-150" href="screen_02_dashboard.html">
+<span class="material-symbols-outlined text-[22px]" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm mt-0.5">Dashboard</span>
+</a>
+<!-- Tab 2: Portfolio -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="account_balance">account_balance</span>
+<span class="font-label-sm text-label-sm mt-0.5">Portfolio</span>
+</a>
+<!-- Tab 3: Cashflow -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="screen_05_cashflow.html">
+<span class="material-symbols-outlined text-[22px]" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-label-sm mt-0.5">Cashflow</span>
+</a>
+<!-- Tab 4: Family Safe -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="screen_07_family_safe.html">
+<div class="relative">
+<span class="material-symbols-outlined text-[22px]" data-icon="shield">shield</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-warning-amber"></span>
+</div>
+<span class="font-label-sm text-label-sm mt-0.5">Family Safe</span>
+</a>
+</nav>
+</div>
+<!-- Inline Micro-interactions JavaScript -->
+<script>
+    // Family Picker Interactive Toggle
+    const pickerBtn = document.getElementById('familyPickerBtn');
+    const familyMenu = document.getElementById('familyMenu');
+    const selectedLabel = document.getElementById('selectedFamilyLabel');
+
+    pickerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      familyMenu.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!familyMenu.contains(e.target) && !pickerBtn.contains(e.target)) {
+        familyMenu.classList.add('hidden');
+      }
+    });
+
+    function selectScope(name) {
+      selectedLabel.textContent = name;
+      familyMenu.classList.add('hidden');
+    }
+
+    // Privacy Mask Toggle Simulation
+    const privacyToggle = document.getElementById('privacyMaskToggle');
+    const privacyIcon = document.getElementById('privacyIcon');
+    let isMasked = false;
+
+    privacyToggle.addEventListener('click', () => {
+      isMasked = !isMasked;
+      const values = document.querySelectorAll('.masked-value');
+      
+      if (isMasked) {
+        privacyIcon.textContent = 'visibility';
+        values.forEach(el => {
+          el.setAttribute('data-stored-text', el.innerText);
+          el.innerText = '••••••••';
+        });
+      } else {
+        privacyIcon.textContent = 'visibility_off';
+        values.forEach(el => {
+          const raw = el.getAttribute('data-raw');
+          if (raw) el.innerText = raw;
+        });
+      }
+    });
+  </script>
+</body></html>

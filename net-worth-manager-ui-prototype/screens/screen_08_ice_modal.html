@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Export Net Worth Manager Dossier (ICE) - Family Safe</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts Inter -->
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#13131b",
+            "on-error": "#690005",
+            "text-secondary": "#94A3B8",
+            "secondary": "#4edea3",
+            "secondary-fixed-dim": "#4edea3",
+            "secondary-container": "#00a572",
+            "background-root": "#0B0F17",
+            "inverse-surface": "#e4e1ed",
+            "text-primary": "#F8FAFC",
+            "error-container": "#93000a",
+            "primary-fixed": "#e1e0ff",
+            "error": "#ffb4ab",
+            "outline-variant": "#464554",
+            "on-error-container": "#ffdad6",
+            "primary-fixed-dim": "#c0c1ff",
+            "border-subtle": "#222F3E",
+            "surface-tint": "#c0c1ff",
+            "surface-container-high": "#292932",
+            "surface-container-low": "#1b1b23",
+            "on-primary-fixed": "#07006c",
+            "profit-emerald": "#10B981",
+            "on-tertiary-fixed-variant": "#703700",
+            "secondary-fixed": "#6ffbbe",
+            "tertiary-fixed": "#ffdcc5",
+            "on-background": "#e4e1ed",
+            "on-surface": "#e4e1ed",
+            "tertiary-container": "#d97721",
+            "inverse-on-surface": "#303038",
+            "background": "#13131b",
+            "surface-variant": "#34343d",
+            "surface-layer-1": "#151C28",
+            "surface-layer-2": "#1E293B",
+            "liability-rose": "#F43F5E",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "warning-amber": "#F59E0B",
+            "on-primary": "#1000a9",
+            "on-tertiary": "#4f2500",
+            "surface-container": "#1f1f27",
+            "border-prominent": "#334155",
+            "on-secondary-container": "#00311f",
+            "text-muted": "#64748B",
+            "on-tertiary-container": "#452000",
+            "surface-container-lowest": "#0d0d15",
+            "on-surface-variant": "#c7c4d7",
+            "surface-container-highest": "#34343d",
+            "surface": "#13131b",
+            "tertiary-fixed-dim": "#ffb783",
+            "tertiary": "#ffb783",
+            "on-tertiary-fixed": "#301400",
+            "on-secondary-fixed": "#002113",
+            "on-secondary": "#003824",
+            "on-primary-container": "#0d0096",
+            "on-secondary-fixed-variant": "#005236",
+            "surface-bright": "#393841",
+            "primary-container": "#8083ff",
+            "outline": "#908fa0",
+            "inverse-primary": "#494bd6",
+            "primary": "#c0c1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "32px",
+            "space-lg": "24px",
+            "space-md": "16px",
+            "space-xs": "4px",
+            "space-sm": "8px",
+            "margin": "16px",
+            "gutter": "12px"
+          },
+          "fontFamily": {
+            "display-lg": ["Inter", "sans-serif"],
+            "headline-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "headline-sm": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"],
+            "headline-lg": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"]
+          },
+          "fontSize": {
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      line-height: 1;
+      display: inline-block;
+    }
+    /* Hide scrollbars for crisp native feel */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-root text-text-primary min-h-screen flex justify-center items-end sm:items-center p-0 selection:bg-primary-container selection:text-text-primary">
+<!-- Mobile Viewport Container: 393px width constraint -->
+<div class="relative w-full max-w-[393px] h-[852px] bg-background-root overflow-hidden flex flex-col shadow-2xl">
+<!-- Dimmed Backdrop Simulation representing the parent "Family Safe" screen -->
+<div class="absolute inset-0 bg-background-root z-0 opacity-40 pointer-events-none p-space-md">
+<!-- Simulated Family Safe background cards -->
+<div class="flex items-center justify-between py-space-sm border-b border-border-subtle">
+<div class="h-6 w-28 bg-surface-layer-2 rounded"></div>
+<div class="h-8 w-8 rounded-full bg-surface-layer-2"></div>
+</div>
+<div class="mt-space-lg space-y-3">
+<div class="h-28 rounded-xl bg-surface-layer-1 border border-border-subtle p-3">
+<div class="h-4 w-32 bg-surface-layer-2 rounded mb-2"></div>
+<div class="h-8 w-44 bg-surface-layer-2 rounded"></div>
+</div>
+<div class="h-36 rounded-xl bg-surface-layer-1 border border-border-subtle"></div>
+</div>
+</div>
+<!-- Semi-transparent Modal Scrim / Backdrop overlay -->
+<div class="absolute inset-0 bg-background-root/80 backdrop-blur-sm z-10"></div>
+<!-- Active Modal Sheet Canvas (Task-focused journey: BottomNavBar suppressed per Semantic Shell rules) -->
+<section class="relative z-20 w-full h-[810px] mt-auto bg-surface-layer-1 rounded-t-[28px] border-t border-x border-border-prominent flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.85)]">
+<!-- Top Grabber Handle -->
+<div class="w-full pt-3 pb-1 flex justify-center items-center cursor-grab">
+<div class="w-12 h-1.5 bg-border-prominent rounded-full"></div>
+</div>
+<!-- Modal Sheet Header -->
+<div class="px-space-md pt-2 pb-space-sm border-b border-border-subtle">
+<div class="flex items-start justify-between">
+<div class="flex-1 pr-2">
+<h1 class="text-headline-md font-headline-md text-text-primary tracking-tight">
+              Export Net Worth Manager Dossier (ICE)
+            </h1>
+<p class="text-label-md font-label-md text-text-secondary mt-0.5 flex items-center gap-1.5">
+<span>In Case of Emergency</span>
+<span class="inline-block w-1 h-1 rounded-full bg-text-muted"></span>
+<span class="text-profit-emerald font-medium">Succession Vault</span>
+</p>
+</div>
+<button aria-label="Dismiss Modal" class="p-2 -mr-1 text-text-secondary hover:text-text-primary hover:bg-surface-layer-2 rounded-full transition-transform active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Security Badges Row -->
+<div class="flex items-center gap-2 mt-3">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-layer-2 border border-border-subtle">
+<span class="w-2 h-2 rounded-full bg-profit-emerald animate-pulse"></span>
+<span class="material-symbols-outlined text-[14px] text-profit-emerald">lock</span>
+<span class="text-label-sm font-label-sm text-text-primary">Zero-Knowledge Local</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-layer-2 border border-border-subtle">
+<span class="material-symbols-outlined text-[14px] text-primary">security</span>
+<span class="text-label-sm font-label-sm text-text-secondary">Client-Side AES-256</span>
+</div>
+</div>
+</div>
+<!-- Scrollable Form Canvas -->
+<div class="flex-1 overflow-y-auto px-space-md py-space-md space-y-space-lg overscroll-contain">
+<!-- Security Advisory Banner -->
+<div class="p-3.5 rounded-xl bg-surface-layer-2 border border-border-prominent flex items-start gap-3">
+<div class="p-2 rounded-lg bg-background-root text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+</div>
+<div class="flex-1">
+<h4 class="text-label-md font-label-md font-semibold text-text-primary">Strict Client-Side Encryption</h4>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5 leading-snug">
+              PDF compilation occurs strictly in local device volatile memory. No unencrypted ledger balances, folios, or deeds ever touch cloud servers.
+            </p>
+</div>
+</div>
+<!-- STEP 1: Entity Inclusion Checklist -->
+<div class="space-y-space-sm">
+<div class="flex items-baseline justify-between">
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Step 1: Entity Inclusion</h2>
+<span class="text-label-sm font-label-sm text-profit-emerald font-semibold uppercase tracking-wider">All Selected</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary -mt-1">
+            Select family portfolios to compile into this export
+          </p>
+<div class="space-y-2 mt-2">
+<!-- Option 1: Master (Selected) -->
+<label class="relative flex items-start p-3 rounded-xl bg-surface-layer-2 border-2 border-primary cursor-pointer select-none transition-all">
+<input checked="" class="mt-0.5 h-4 w-4 text-primary bg-background-root border-border-prominent rounded focus:ring-0 focus:ring-offset-0 accent-indigo-500" name="entity_scope" type="radio"/>
+<div class="ml-3 flex-1">
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md font-semibold text-text-primary">Entire Family (Consolidated Master)</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-profit-emerald/10 text-profit-emerald border border-profit-emerald/20">₹4.82 Cr</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5 leading-tight">
+                  Consolidates Self, Spouse, 2 Children &amp; Parents (18 asset vaults)
+                </p>
+</div>
+</label>
+<!-- Option 2: Self Only -->
+<label class="relative flex items-start p-3 rounded-xl bg-surface-layer-2/60 border border-border-subtle hover:border-border-prominent cursor-pointer select-none transition-all">
+<input class="mt-0.5 h-4 w-4 text-primary bg-background-root border-border-prominent rounded focus:ring-0 focus:ring-offset-0" name="entity_scope" type="radio"/>
+<div class="ml-3 flex-1">
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md font-medium text-text-primary">Self Only</span>
+<span class="text-body-sm font-body-sm text-text-secondary">₹2.45 Cr</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted mt-0.5">Rahul Sharma (Primary Portfolio)</p>
+</div>
+</label>
+<!-- Option 3: Spouse & Kids Only -->
+<label class="relative flex items-start p-3 rounded-xl bg-surface-layer-2/60 border border-border-subtle hover:border-border-prominent cursor-pointer select-none transition-all">
+<input class="mt-0.5 h-4 w-4 text-primary bg-background-root border-border-prominent rounded focus:ring-0 focus:ring-offset-0" name="entity_scope" type="radio"/>
+<div class="ml-3 flex-1">
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md font-medium text-text-primary">Spouse &amp; Kids Only</span>
+<span class="text-body-sm font-body-sm text-text-secondary">₹1.62 Cr</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted mt-0.5">Priya Sharma &amp; Minors (Sukanya &amp; Mutual Funds)</p>
+</div>
+</label>
+<!-- Option 4: Parents Only -->
+<label class="relative flex items-start p-3 rounded-xl bg-surface-layer-2/60 border border-border-subtle hover:border-border-prominent cursor-pointer select-none transition-all">
+<input class="mt-0.5 h-4 w-4 text-primary bg-background-root border-border-prominent rounded focus:ring-0 focus:ring-offset-0" name="entity_scope" type="radio"/>
+<div class="ml-3 flex-1">
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md font-medium text-text-primary">Parents Only</span>
+<span class="text-body-sm font-body-sm text-text-secondary">₹75.45 L</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-muted mt-0.5">Senior Citizen FDs, Post Office, Deeds</p>
+</div>
+</label>
+</div>
+</div>
+<!-- STEP 2: Information Sensitivity & Masking -->
+<div class="space-y-space-sm">
+<div class="flex items-baseline justify-between">
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Step 2: Information Sensitivity &amp; Masking</h2>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary -mt-1">
+            Controls how account and folio numbers appear on paper/PDF
+          </p>
+<div class="space-y-3 mt-2">
+<!-- Radio 1: Standard Masking (Active) -->
+<div class="p-3.5 rounded-xl bg-surface-layer-2 border-2 border-primary/90 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="flex items-center gap-2.5 cursor-pointer">
+<div class="w-4 h-4 rounded-full border-2 border-primary flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<span class="text-label-md font-label-md font-semibold text-text-primary">Standard Masking</span>
+</label>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/30">
+                  Recommended for Executors
+                </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary leading-snug pl-6">
+                Shows masked accounts like <code class="text-text-primary bg-background-root px-1 rounded">HDFC XX4091</code>, lists bank branch, locker key locations, and deed registers. Protects against casual eyes.
+              </p>
+<!-- Mini Preview Chip -->
+<div class="ml-6 mt-1 px-2.5 py-1.5 rounded-lg bg-background-root border border-border-subtle flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-text-muted">Dossier Sample:</span>
+<span class="text-label-sm font-label-sm font-medium text-text-primary">HDFC Bank •••• 4091 | SBI Locker #42</span>
+</div>
+</div>
+<!-- Radio 2: Full Unmasked Mode -->
+<div class="p-3.5 rounded-xl bg-surface-layer-2/50 border border-border-subtle flex flex-col gap-2 opacity-85">
+<div class="flex items-center justify-between">
+<label class="flex items-center gap-2.5 cursor-pointer">
+<div class="w-4 h-4 rounded-full border border-border-prominent flex items-center justify-center"></div>
+<span class="text-label-md font-label-md font-medium text-text-primary">Full Unmasked Mode</span>
+</label>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-liability-rose/15 text-liability-rose border border-liability-rose/30">
+                  High Risk • Keep Sealed
+                </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary leading-snug pl-6">
+                Reveals full 16-digit account numbers, customer IDs, and demat DP IDs for immediate legal settlement.
+              </p>
+</div>
+</div>
+</div>
+<!-- STEP 3: Security & Passphrase Setup -->
+<div class="space-y-space-sm">
+<div class="flex items-baseline justify-between">
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Step 3: Security &amp; Master Passphrase</h2>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary -mt-1 leading-snug">
+            Set a master decryption password for this PDF. Give this passphrase to your spouse, trusted executor, or store in a physical sealed envelope.
+          </p>
+<div class="space-y-3 mt-2">
+<!-- Input Field 1: Master Passphrase -->
+<div>
+<label class="block text-label-sm font-label-sm uppercase tracking-wider text-text-secondary mb-1">
+                Master Passphrase
+              </label>
+<div class="relative flex items-center">
+<input class="w-full bg-background-root border border-border-prominent rounded-xl px-3.5 py-2.5 text-body-md font-body-md text-text-primary focus:outline-none focus:border-primary pr-10 tracking-widest" readonly="" type="password" value="V@u1t_K3y_982#L0ck"/>
+<button aria-label="Toggle password visibility" class="absolute right-3 text-text-secondary hover:text-text-primary">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Input Field 2: Re-enter Passphrase -->
+<div>
+<label class="block text-label-sm font-label-sm uppercase tracking-wider text-text-secondary mb-1">
+                Re-enter Passphrase
+              </label>
+<div class="relative flex items-center">
+<input class="w-full bg-background-root border border-border-prominent rounded-xl px-3.5 py-2.5 text-body-md font-body-md text-text-primary focus:outline-none focus:border-profit-emerald pr-10 tracking-widest" readonly="" type="password" value="V@u1t_K3y_982#L0ck"/>
+<div class="absolute right-3 text-profit-emerald flex items-center">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Password Strength Meter -->
+<div class="p-3 rounded-xl bg-surface-layer-2 border border-border-subtle space-y-2">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm font-medium text-profit-emerald">Strong (16 characters, alphanumeric + symbols)</span>
+<span class="text-label-sm font-label-sm text-text-muted">100% Entropy</span>
+</div>
+<div class="grid grid-cols-4 gap-1.5">
+<div class="h-1.5 rounded-full bg-profit-emerald"></div>
+<div class="h-1.5 rounded-full bg-profit-emerald"></div>
+<div class="h-1.5 rounded-full bg-profit-emerald"></div>
+<div class="h-1.5 rounded-full bg-profit-emerald"></div>
+</div>
+<div class="flex items-center gap-1.5 text-label-sm font-label-sm text-warning-amber pt-0.5">
+<span class="material-symbols-outlined text-[14px]">lightbulb</span>
+<span>Tip: Write this on the ICE Vault envelope.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Export Format Options: Physical Binder Switch -->
+<div class="p-3.5 rounded-xl bg-surface-layer-2 border border-border-subtle flex items-start justify-between gap-3">
+<div class="flex items-start gap-3">
+<div class="p-2 rounded-lg bg-background-root text-secondary flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</div>
+<div>
+<h4 class="text-label-md font-label-md font-semibold text-text-primary">Printable Physical Binder Mode</h4>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5 leading-snug">
+                Optimizes PDF layout with clean high-contrast black-and-white tables suitable for home A4 printing and notary physical binding.
+              </p>
+</div>
+</div>
+<!-- Styled Toggle Switch (Active) -->
+<div class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-primary after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-profit-emerald"></div>
+</div>
+</div>
+</div>
+<!-- Fixed Bottom Modal Footer & CTA -->
+<div class="p-space-md bg-surface-layer-1 border-t border-border-subtle space-y-2">
+<!-- Primary Action Button -->
+<button class="w-full min-h-[48px] py-3 px-4 bg-primary text-on-primary-fixed font-headline-sm text-headline-sm rounded-xl flex items-center justify-center gap-2 hover:bg-primary-fixed active:scale-[0.98] transition-all duration-150 shadow-lg shadow-indigo-950/40">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span>Compile &amp; Generate Encrypted PDF (ICE Kit)</span>
+</button>
+<!-- Microcopy Advisory below CTA -->
+<p class="text-center text-label-sm font-label-sm text-text-muted leading-tight flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-text-secondary">offline_bolt</span>
+<span>256-bit encrypted • Decryptable offline with standard PDF readers (Adobe Acrobat, Preview)</span>
+</p>
+</div>
+</section>
+</div>
+</body></html>
