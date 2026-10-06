@@ -41,10 +41,10 @@ module.exports = () => {
       extra: {
         env: IS_UAT ? 'uat' : 'prod',
         eas: {
-          projectId: "YOUR_EAS_PROJECT_ID"
+          projectId: "f1189fd3-3878-4806-b9ae-d358674e80d2"
         }
       },
-      owner: "nozelrosario"
+      owner: "nozelrosario.org"
     }
   };
 };
