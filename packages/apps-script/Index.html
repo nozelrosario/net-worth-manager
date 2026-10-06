@@ -554,7 +554,7 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
             <span class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ease-in-out dark:translate-x-6"></span>
           </button>
         </div>
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between dark:border-slate-700 dark:bg-slate-800 mt-2">
+        <div id="debugToggleContainer" class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between dark:border-slate-700 dark:bg-slate-800 mt-2 hidden">
           <div>
             <strong class="text-slate-800 dark:text-slate-200">Debug Mode</strong>
             <p class="text-[10px] text-slate-500 dark:text-slate-400">Show diagnostic banner</p>
@@ -2614,6 +2614,16 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
           bookActionBtns.classList.add('hidden');
         }
       }
+      var debugToggleContainer = document.getElementById('debugToggleContainer');
+      if (debugToggleContainer) {
+        if (isAdmin) {
+          debugToggleContainer.classList.remove('hidden');
+        } else {
+          debugToggleContainer.classList.add('hidden');
+          var debugBanner = document.getElementById('debug-banner');
+          if (debugBanner) debugBanner.style.display = 'none';
+        }
+      }
     }
 
     function updateReadOnlyUI() {
@@ -3130,7 +3140,7 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
         }
         debugBanner.innerText = 'Auth: ' + data.isAuthorized + ' | Status: ' + data.status + ' | HasModal: ' + !!document.getElementById('accessDeniedModal');
         
-        if (localStorage.getItem('debug-preference') !== 'enabled') {
+        if (localStorage.getItem('debug-preference') !== 'enabled' || !isAdmin) {
           debugBanner.style.display = 'none';
         } else {
           debugBanner.style.display = 'block';
@@ -5856,7 +5866,7 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
       // but let's hide/show if it's already there
       const debugBanner = document.getElementById('debug-banner');
       if (debugBanner) {
-        debugBanner.style.display = isEnabled ? 'block' : 'none';
+        debugBanner.style.display = (isEnabled && typeof isAdmin !== 'undefined' && isAdmin) ? 'block' : 'none';
       }
     }
 
@@ -5868,7 +5878,7 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
       
       const debugBanner = document.getElementById('debug-banner');
       if (debugBanner) {
-        debugBanner.style.display = newState ? 'block' : 'none';
+        debugBanner.style.display = (newState && typeof isAdmin !== 'undefined' && isAdmin) ? 'block' : 'none';
       }
     }
 
