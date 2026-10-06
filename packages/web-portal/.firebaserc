@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "net-worth-manager-aff0b"
+  },
+  "targets": {
+    "net-worth-manager-aff0b": {
+      "hosting": {
+        "prod": [
+          "net-worth-manager-aff0b"
+        ],
+        "uat": [
+          "net-worth-manager-uat"
+        ]
+      }
+    }
   }
 }
