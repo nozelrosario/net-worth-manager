@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Net Worth Manager</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+       // Mock for local dev when outside Apps Script
+       if (typeof google === 'undefined') {
+         window.google = {
+           script: {
+             run: {
+               withSuccessHandler: (fn) => { window.__successFn = fn; return window.google.script.run; },
+               withFailureHandler: (fn) => { window.__failFn = fn; return window.google.script.run; },
+               getFormData: () => { setTimeout(() => window.__successFn({ status: 'success', isAuthorized: true, activeEmail: 'local@dev.com', ownerEmail: 'owner@dev.com', isAdmin: true, userRole: 'admin', team: [], teamEmails: {}, teamRoles: {} }), 500); },
+               getDashboardData: () => { setTimeout(() => window.__successFn({ status: 'success', assets: [], transactions: [], familyProfiles: [], events: [], settings: [] }), 500); }
+             }
+           }
+         }
+       }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        background-color: #0B0F17;
+        color: #F8FAFC;
+        font-family: 'Inter', sans-serif;
+      }
+      * {
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -387,7 +387,11 @@ function setupDatabaseSheets() {
   var sheets = {
     'Team': ['Member Name', 'Google Account Emails', 'Role'],
     'Settings': ['Setting Key', 'Setting Value'],
-    'Audit': ['Audit ID', 'Timestamp', 'Action', 'User', 'Details']
+    'Audit': ['Audit ID', 'Timestamp', 'Action', 'User', 'Details'],
+    'Assets': ['Asset ID', 'Type', 'Name', 'Category', 'Owner', 'Status', 'Acquisition Date', 'Cost', 'Current Value', 'Institution/Location', 'Identifiers', 'Nominee', 'Nominee %', 'Details JSON'],
+    'Transactions': ['Txn ID', 'Date', 'Type', 'Amount', 'Category', 'Account/Card', 'Merchant/Description', 'Tags', 'Is Transfer', 'Split JSON'],
+    'FamilyProfiles': ['Profile ID', 'Name', 'Relation', 'Ownership %', 'Notes'],
+    'Events': ['Event ID', 'Date', 'Type', 'Title', 'Amount', 'Status', 'Details JSON']
   };
 
   for (var name in sheets) {
@@ -617,6 +621,185 @@ function getFormData(targetBookId, idToken) {
       team: team,
       teamEmails: teamEmailsMap,
       teamRoles: teamRolesMap
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+/**
+ * Generic Read All records from a sheet
+ */
+function getSheetData(sheetName, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    // Allowing readonly users to view data
+    if (!getCurrentUserInfo(idToken).isAuthorized) {
+      return { status: 'error', message: 'Unauthorized' };
+    }
+    
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { status: 'success', data: [] };
+    
+    var headers = data[0];
+    var rows = [];
+    for (var i = 1; i < data.length; i++) {
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        obj[headers[j]] = data[i][j];
+      }
+      rows.push(obj);
+    }
+    return { status: 'success', data: rows };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Generic Add record to a sheet
+ */
+function addRecord(sheetName, recordData, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+    
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var newRow = [];
+    
+    // Generate an ID if needed
+    if (headers[0].indexOf('ID') !== -1 && !recordData[headers[0]]) {
+       recordData[headers[0]] = Utilities.getUuid();
+    }
+    
+    for (var i = 0; i < headers.length; i++) {
+      var val = recordData[headers[i]];
+      if (typeof val === 'object' && val !== null) {
+        val = JSON.stringify(val);
+      }
+      newRow.push(val !== undefined ? val : '');
+    }
+    
+    sheet.appendRow(newRow);
+    
+    // Audit
+    logAudit(ss, auth.userInfo.activeEmail, 'ADD_' + sheetName.toUpperCase(), newRow[0], JSON.stringify(recordData));
+    
+    return { status: 'success', message: 'Record added successfully', id: newRow[0] };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Generic Update record in a sheet
+ */
+function updateRecord(sheetName, idField, idValue, updateData, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+    
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idColIndex = headers.indexOf(idField);
+    
+    if (idColIndex === -1) return { status: 'error', message: 'ID field not found in headers' };
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idColIndex]) === String(idValue)) {
+        // Update the row
+        for (var key in updateData) {
+          var colIndex = headers.indexOf(key);
+          if (colIndex !== -1) {
+             var val = updateData[key];
+             if (typeof val === 'object' && val !== null) {
+               val = JSON.stringify(val);
+             }
+             sheet.getRange(i + 1, colIndex + 1).setValue(val);
+          }
+        }
+        
+        // Audit
+        logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_' + sheetName.toUpperCase(), idValue, JSON.stringify(updateData));
+        return { status: 'success', message: 'Record updated successfully' };
+      }
+    }
+    return { status: 'error', message: 'Record not found' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Generic Delete record from a sheet
+ */
+function deleteRecord(sheetName, idField, idValue, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+    
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    var idColIndex = data[0].indexOf(idField);
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idColIndex]) === String(idValue)) {
+        sheet.deleteRow(i + 1);
+        
+        // Audit
+        logAudit(ss, auth.userInfo.activeEmail, 'DELETE_' + sheetName.toUpperCase(), idValue, '');
+        return { status: 'success', message: 'Record deleted successfully' };
+      }
+    }
+    return { status: 'error', message: 'Record not found' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+function logAudit(ss, user, action, itemId, details) {
+  try {
+    var sheet = ss.getSheetByName('Audit');
+    if (sheet) {
+      sheet.appendRow([Utilities.getUuid(), new Date(), action, user, details]);
+    }
+  } catch(e) {}
+}
+
+/**
+ * Gets all dashboard data in one call to optimize loading
+ */
+function getDashboardData(idToken) {
+  try {
+    var auth = assertWriteAccess(idToken); // Checks if valid session, not necessarily write
+    
+    var assets = getSheetData('Assets', idToken);
+    var txns = getSheetData('Transactions', idToken);
+    var profiles = getSheetData('FamilyProfiles', idToken);
+    var events = getSheetData('Events', idToken);
+    var settings = getSheetData('Settings', idToken);
+    
+    return {
+      status: 'success',
+      assets: assets.status === 'success' ? assets.data : [],
+      transactions: txns.status === 'success' ? txns.data : [],
+      familyProfiles: profiles.status === 'success' ? profiles.data : [],
+      events: events.status === 'success' ? events.data : [],
+      settings: settings.status === 'success' ? settings.data : []
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };
