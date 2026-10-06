@@ -10,8 +10,10 @@ export default function App() {
   const [canGoBack, setCanGoBack] = useState(false);
 
   const IS_UAT = Constants.expoConfig.extra?.env === 'uat';
-  // Point to the correct web wrapper domain
-  const BASE_URL = `https://net-worth-manager-aff0b.web.app/${IS_UAT ? '?env=uat' : ''}`;
+  // Point to the correct web wrapper domain (Multi-site configuration)
+  const BASE_URL = IS_UAT 
+    ? `https://net-worth-manager-uat.web.app/?env=uat` 
+    : `https://net-worth-manager-aff0b.web.app/`;
 
   useEffect(() => {
     checkNetwork();
