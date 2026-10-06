@@ -11,7 +11,7 @@ export default function App() {
 
   const IS_UAT = Constants.expoConfig.extra?.env === 'uat';
   // Point to the correct web wrapper domain
-  const BASE_URL = `https://${projectSlug}.web.app/${IS_UAT ? '?env=uat' : ''}`;
+  const BASE_URL = `https://net-worth-manager-aff0b.web.app/${IS_UAT ? '?env=uat' : ''}`;
 
   useEffect(() => {
     checkNetwork();
