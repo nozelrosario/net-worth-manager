@@ -554,6 +554,15 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
             <span class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ease-in-out dark:translate-x-6"></span>
           </button>
         </div>
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between dark:border-slate-700 dark:bg-slate-800 mt-2">
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200">Debug Mode</strong>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400">Show diagnostic banner</p>
+          </div>
+          <button type="button" onclick="toggleDebug()" id="debugToggleBtn" class="w-12 h-6 rounded-full bg-slate-300 relative transition-colors cursor-pointer">
+            <span class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ease-in-out"></span>
+          </button>
+        </div>
 
         <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <button type="button" onclick="googleSignOut()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold rounded-xl text-xs cursor-pointer transition flex items-center gap-1.5 shadow-xs dark:shadow-slate-900/50 dark:bg-rose-900/30">
@@ -3116,10 +3125,16 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
         if (!debugBanner) {
           debugBanner = document.createElement('div');
           debugBanner.id = 'debug-banner';
-          debugBanner.className = 'fixed top-0 left-0 right-0 bg-yellow-400 text-black text-[10px] font-mono z-[9999] p-1';
+          debugBanner.className = 'fixed bottom-0 left-0 right-0 bg-yellow-400 text-black text-[10px] font-mono z-[9999] p-1 shadow-lg border-t border-yellow-500';
           document.body.appendChild(debugBanner);
         }
         debugBanner.innerText = 'Auth: ' + data.isAuthorized + ' | Status: ' + data.status + ' | HasModal: ' + !!document.getElementById('accessDeniedModal');
+        
+        if (localStorage.getItem('debug-preference') !== 'enabled') {
+          debugBanner.style.display = 'none';
+        } else {
+          debugBanner.style.display = 'block';
+        }
       } catch(e) {}
 
 
@@ -5833,8 +5848,51 @@ html.dark, html.dark body { background-color: #0f172a !important; color: #f8fafc
       }
     }
 
-    // Initialize theme on load
-    document.addEventListener('DOMContentLoaded', initTheme);
+    // --- DEBUG PREFERENCE LOGIC ---
+    function initDebug() {
+      const isEnabled = localStorage.getItem('debug-preference') === 'enabled';
+      updateDebugToggleUI(isEnabled);
+      // Banner visibility is updated in refreshData based on localStorage, 
+      // but let's hide/show if it's already there
+      const debugBanner = document.getElementById('debug-banner');
+      if (debugBanner) {
+        debugBanner.style.display = isEnabled ? 'block' : 'none';
+      }
+    }
+
+    function toggleDebug() {
+      const currentlyEnabled = localStorage.getItem('debug-preference') === 'enabled';
+      const newState = !currentlyEnabled;
+      localStorage.setItem('debug-preference', newState ? 'enabled' : 'disabled');
+      updateDebugToggleUI(newState);
+      
+      const debugBanner = document.getElementById('debug-banner');
+      if (debugBanner) {
+        debugBanner.style.display = newState ? 'block' : 'none';
+      }
+    }
+
+    function updateDebugToggleUI(isEnabled) {
+      const btn = document.getElementById('debugToggleBtn');
+      const knob = btn ? btn.querySelector('span') : null;
+      if (btn && knob) {
+        if (isEnabled) {
+          btn.classList.remove('bg-slate-300');
+          btn.classList.add('bg-blue-600');
+          knob.classList.add('translate-x-6');
+        } else {
+          btn.classList.add('bg-slate-300');
+          btn.classList.remove('bg-blue-600');
+          knob.classList.remove('translate-x-6');
+        }
+      }
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      initDebug();
+    });
 
   </script>
 
