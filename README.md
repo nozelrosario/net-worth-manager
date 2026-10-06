@@ -78,6 +78,19 @@ To allow GitHub Actions to automatically deploy your backend on every push, you 
    ```
    *(Follow the interactive prompts and say "Yes" to generating a new Android Keystore. Once the keystore is saved to your EAS account, you can safely cancel the build in your terminal).*
 
+## 4. UI Development (React + Vite)
+Because the Apps Script environment only allows single HTML files, we use a custom Vite pipeline with `vite-plugin-singlefile`.
+1. Make all UI changes inside `packages/apps-script/ui/src/`.
+2. To test and build the changes into the monolithic `Index.html` required by Apps Script:
+   ```bash
+   cd packages/apps-script
+   # We use a scratch directory or external environment for node_modules to avoid Google Drive sync issues
+   cp -R ui/ /tmp/scratch-ui/
+   cd /tmp/scratch-ui
+   npm install && npm run build
+   cp dist/index.html /path/to/repo/packages/apps-script/Index.html
+   ```
+
 ### CI/CD App Versioning & Workflows
 This repository includes a unified `build-mobile-app.yml` GitHub Actions workflow that handles semantic versioning and artifact releases automatically!
 - **Cloud vs Local Builds:** You can trigger builds manually via the GitHub Actions UI and select `cloud` (EAS) or `local` (GitHub Runner).
