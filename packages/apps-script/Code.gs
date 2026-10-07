@@ -136,9 +136,9 @@ function validateSession(token) {
       if (rowToken === token.trim()) {
         var expiresAt = new Date(row[3]).getTime();
         if (!isNaN(expiresAt) && expiresAt > now) {
-          try {
-            sheet.getRange(i + 2, 5).setValue(new Date().toISOString());
-          } catch (e) {}
+          // try {
+          //   sheet.getRange(i + 2, 5).setValue(new Date().toISOString());
+          // } catch (e) {}
           return String(row[1]).toLowerCase().trim();
         } else {
           try { sheet.deleteRow(i + 2); } catch (e) {}
@@ -179,7 +179,12 @@ function revokeSession(token) {
  * 1. Native Session.getActiveUser().getEmail()
  * 2. 90-day Session Token stored in _Sessions sheet (from OTP verification)
  */
+var _requestCache = {};
+
 function getCurrentUserInfo(sessionToken) {
+  var cacheKey = 'userInfo_' + (sessionToken || 'anon');
+  if (_requestCache[cacheKey]) return _requestCache[cacheKey];
+
   var activeUser = "";
   var effectiveUser = "";
   try { activeUser = Session.getActiveUser().getEmail(); } catch (e) {}
@@ -241,7 +246,7 @@ function getCurrentUserInfo(sessionToken) {
     userRole = teamRoles[currentEmail] || 'editor';
   }
 
-  return {
+  var result = {
     activeEmail: verifiedEmail || activeUser || '',
     ownerEmail: ownerEmail,
     isOwner: isOwner,
@@ -251,6 +256,9 @@ function getCurrentUserInfo(sessionToken) {
     teamEmails: teamEmails,
     userRole: userRole
   };
+  
+  _requestCache[cacheKey] = result;
+  return result;
 }
 
 /**
@@ -789,27 +797,44 @@ function logAudit(ss, user, action, itemId, details) {
   } catch(e) {}
 }
 
-/**
- * Gets all dashboard data in one call to optimize loading
- */
 function getDashboardData(idToken) {
   try {
-    var auth = assertWriteAccess(idToken); // Checks if valid session, not necessarily write
+    var userInfo = getCurrentUserInfo(idToken);
+    if (!userInfo.isAuthorized) {
+       return { status: 'error', message: 'Unauthorized' };
+    }
     
-    var assets = getSheetData('Assets', idToken);
-    var txns = getSheetData('Transactions', idToken);
-    var profiles = getSheetData('FamilyProfiles', idToken);
-    var events = getSheetData('Events', idToken);
-    var settings = getSheetData('Settings', idToken);
+    var ss = getSpreadsheet();
+    
+    function fetchSheet(sheetName) {
+      var sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return [];
+      var data = sheet.getDataRange().getValues();
+      if (data.length <= 1) return [];
+      var headers = data[0];
+      var rows = [];
+      for (var i = 1; i < data.length; i++) {
+        var obj = {};
+        for (var j = 0; j < headers.length; j++) {
+          var val = data[i][j];
+          if (val instanceof Date) {
+            val = val.toISOString();
+          }
+          obj[headers[j]] = val;
+        }
+        rows.push(obj);
+      }
+      return rows;
+    }
     
     return {
       status: 'success',
-      assets: assets.status === 'success' ? assets.data : [],
-      transactions: txns.status === 'success' ? txns.data : [],
-      familyProfiles: profiles.status === 'success' ? profiles.data : [],
-      events: events.status === 'success' ? events.data : [],
-      settings: settings.status === 'success' ? settings.data : [],
-      userInfo: getCurrentUserInfo(idToken)
+      assets: fetchSheet('Assets'),
+      transactions: fetchSheet('Transactions'),
+      familyProfiles: fetchSheet('FamilyProfiles'),
+      events: fetchSheet('Events'),
+      settings: fetchSheet('Settings'),
+      userInfo: userInfo
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };

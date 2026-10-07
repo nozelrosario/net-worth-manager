@@ -1,7 +1,7 @@
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 
-export default function AssetsTab({ formatCurrency, data, onRefresh }) {
+export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [filter, setFilter] = useState('All Assets');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAsset, setNewAsset] = useState({ Name: '', Category: 'Equity', 'Current Value': '', Owner: '' });

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Shield, Save, Settings as SettingsIcon } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 
-export default function SettingsTab({ data }) {
+export default function SettingsTab({ data, onRefresh, showMessage }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
   const [memberName, setMemberName] = useState('');

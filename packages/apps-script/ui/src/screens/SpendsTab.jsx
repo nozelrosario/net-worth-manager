@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { getSafeStorage } from '../utils/storage';
 
-export default function SpendsTab({ formatCurrency, data, onRefresh }) {
+export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showLogModal, setShowLogModal] = useState(false);
   const [newTxn, setNewTxn] = useState({ 
     Date: new Date().toISOString().split('T')[0], 
