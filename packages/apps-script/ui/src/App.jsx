@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon } from 'lucide-react';
+import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
 import AssetsTab from './screens/AssetsTab';
@@ -20,6 +20,9 @@ export default function App() {
   const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
+  const [darkMode, setDarkMode] = useState(true);
+  const [debugMode, setDebugMode] = useState(false);
+  const [debugLog, setDebugLog] = useState('');
 
   const refreshData = (tokenToUse = sessionToken) => {
     setIsSyncing(true);
@@ -30,7 +33,8 @@ export default function App() {
           setIsSyncing(false);
           setLoading(false);
         })
-        .withFailureHandler(() => {
+        .withFailureHandler((err) => {
+          setDebugLog('App Sync Error: ' + err.message);
           setIsSyncing(false);
           setLoading(false);
         })
@@ -50,7 +54,10 @@ export default function App() {
           setData(res);
           setLoading(false);
         })
-        .withFailureHandler(() => setLoading(false))
+        .withFailureHandler((err) => {
+          setDebugLog('Initial Load Error: ' + err.message);
+          setLoading(false);
+        })
         .getDashboardData(sessionToken);
     } else {
       setTimeout(() => {
@@ -174,6 +181,14 @@ export default function App() {
               <button className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-text-primary hover:bg-surface-layer2 transition-colors">
                 <User size={18} className="text-text-secondary" /> Profile Settings
               </button>
+              <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
+                <div className="flex items-center gap-3"><Moon size={18} className="text-text-secondary" /> Dark Mode</div>
+                <div className={`w-8 h-4 rounded-full flex items-center p-0.5 ${darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full"></div></div>
+              </div>
+              <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDebugMode(!debugMode)}>
+                <div className="flex items-center gap-3"><Bug size={18} className="text-text-secondary" /> Debug Mode</div>
+                <div className={`w-8 h-4 rounded-full flex items-center p-0.5 ${debugMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full"></div></div>
+              </div>
               <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-liability-rose hover:bg-liability-rose/10 transition-colors mt-1">
                 <LogOut size={18} /> Sign Out (Device)
               </button>
@@ -193,6 +208,13 @@ export default function App() {
         {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
         {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} />}
       </main>
+
+      {/* Debug Bar */}
+      {debugMode && debugLog && (
+        <div className="fixed bottom-16 left-0 right-0 bg-red-900 text-white p-2 text-xs font-mono z-50 max-h-32 overflow-y-auto border-t border-red-700 shadow-xl">
+          <strong>Debug Log:</strong> <br /> {debugLog}
+        </div>
+      )}
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface-layer1/95 backdrop-blur-md border-t border-border-subtle flex items-center justify-around px-2 z-40 pb-safe">
