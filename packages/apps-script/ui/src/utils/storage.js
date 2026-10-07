@@ -1,12 +1,17 @@
+let memoryStorage = {};
+
 export const getSafeStorage = (key, defaultValue = '') => {
   try {
-    return localStorage.getItem(key) || defaultValue;
+    const val = localStorage.getItem(key);
+    if (val !== null) return val;
   } catch (e) {
-    return defaultValue;
+    // Ignore
   }
+  return memoryStorage[key] !== undefined ? memoryStorage[key] : defaultValue;
 };
 
 export const setSafeStorage = (key, value) => {
+  memoryStorage[key] = value;
   try {
     localStorage.setItem(key, value);
   } catch (e) {
@@ -15,6 +20,7 @@ export const setSafeStorage = (key, value) => {
 };
 
 export const removeSafeStorage = (key) => {
+  delete memoryStorage[key];
   try {
     localStorage.removeItem(key);
   } catch (e) {

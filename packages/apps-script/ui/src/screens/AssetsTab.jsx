@@ -1,3 +1,4 @@
+import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 
 export default function AssetsTab({ formatCurrency, data }) {
@@ -33,7 +34,8 @@ export default function AssetsTab({ formatCurrency, data }) {
            ...newAsset,
            'Asset ID': '',
            'Acquisition Date': new Date().toISOString().split('T')[0]
-        });
+        }, getSafeStorage('nwm_session_token'));
+
     } else {
       setTimeout(() => {
         setIsSubmitting(false);

@@ -1,0 +1,57 @@
+--- packages/apps-script/ui/src/App.jsx
++++ packages/apps-script/ui/src/App.jsx
+@@ -75,6 +75,19 @@
+     window.location.reload();
+   };
+ 
++  const handleSwipe = (dir) => {
++    const currentIndex = TABS.indexOf(activeTab);
++    if (dir === 'Left' && currentIndex < TABS.length - 1) {
++      setActiveTab(TABS[currentIndex + 1]);
++    } else if (dir === 'Right' && currentIndex > 0) {
++      setActiveTab(TABS[currentIndex - 1]);
++    }
++  };
++
++  const swipeHandlers = useSwipeable({
++    onSwipedLeft: () => handleSwipe('Left'),
++    onSwipedRight: () => handleSwipe('Right'),
++    trackMouse: true,
++  });
++
+   if (loading) {
+     return (
+       <div className="flex h-screen items-center justify-center bg-background-root">
+@@ -97,32 +110,6 @@
+     return '₹' + Number(val).toLocaleString('en-IN');
+   };
+ 
+-  const handleSwipe = (dir) => {
+-    const currentIndex = TABS.indexOf(activeTab);
+-    if (dir === 'Left' && currentIndex < TABS.length - 1) {
+-      setActiveTab(TABS[currentIndex + 1]);
+-    } else if (dir === 'Right' && currentIndex > 0) {
+-      setActiveTab(TABS[currentIndex - 1]);
+-    }
+-  };
+-
+-  const swipeHandlers = useSwipeable({
+-    onSwipedLeft: () => handleSwipe('Left'),
+-    onSwipedRight: () => handleSwipe('Right'),
+-    trackMouse: true,
+-  });
+-
+-  if (loading) {
+-    return (
+-      <div className="flex h-screen items-center justify-center bg-background-root">
+-        <div className="flex flex-col items-center gap-4">
+-          <div className="w-10 h-10 border-4 border-surface-layer2 border-t-wealth-emerald rounded-full animate-spin"></div>
+-          <p className="text-text-secondary text-sm">Synchronizing Ledger...</p>
+-        </div>
+-      </div>
+-    );
+-  }
+-
+   const userInitial = data?.userInfo?.activeEmail ? data.userInfo.activeEmail.charAt(0).toUpperCase() : 'U';
+ 
+   return (
