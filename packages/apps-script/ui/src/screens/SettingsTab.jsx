@@ -23,7 +23,7 @@ export default function SettingsTab({ data }) {
              setTeamMembers(membersList);
           }
         })
-        .getTeamConfig();
+        .getFormData(null, localStorage.getItem('nwm_session_token'));
     } else {
       // Mock data
       setTeamMembers([
@@ -57,7 +57,7 @@ export default function SettingsTab({ data }) {
           setIsSubmitting(false);
           alert('Error: ' + err.message);
         })
-        .updateTeamMemberEmails(memberName, teamEmailsText, teamRole);
+        .updateTeamMemberEmails(memberName, teamEmailsText, teamRole, localStorage.getItem('nwm_session_token'));
     } else {
       setTimeout(() => {
         setIsSubmitting(false);

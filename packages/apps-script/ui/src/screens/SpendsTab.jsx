@@ -41,7 +41,7 @@ export default function SpendsTab({ formatCurrency, data }) {
            ...newTxn,
            'Txn ID': '',
            Amount: Number(newTxn.Amount)
-        });
+        }, localStorage.getItem('nwm_session_token'));
     } else {
       setTimeout(() => {
         setIsSubmitting(false);

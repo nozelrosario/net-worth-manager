@@ -517,8 +517,12 @@ function assertWriteAccess(sessionToken) {
 /**
  * Updates or adds Google Emails (and optionally Role) for a Team Member
  */
-function updateTeamMemberEmails(memberName, emailsRaw, rolesRaw) {
+function updateTeamMemberEmails(memberName, emailsRaw, rolesRaw, idToken) {
   try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed || auth.userInfo.userRole !== 'admin') {
+      return { status: 'error', message: 'Unauthorized: Only admins can update team members.' };
+    }
     setupDatabaseSheets();
     var ss = getSpreadsheet();
     if (!ss) return { status: 'error', message: 'Spreadsheet database not found' };

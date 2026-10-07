@@ -6,6 +6,7 @@ import AssetsTab from './screens/AssetsTab';
 import SpendsTab from './screens/SpendsTab';
 import SafeTab from './screens/SafeTab';
 import SettingsTab from './screens/SettingsTab';
+import LoginScreen from './screens/LoginScreen';
 
 const TABS = ['home', 'assets', 'spends', 'safe', 'settings'];
 
@@ -17,19 +18,27 @@ export default function App() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [sessionToken, setSessionToken] = useState(() => localStorage.getItem('nwm_session_token') || '');
 
-  const refreshData = () => {
+  const refreshData = (tokenToUse = sessionToken) => {
     setIsSyncing(true);
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
           setData(res);
           setIsSyncing(false);
+          setLoading(false);
         })
-        .withFailureHandler(() => setIsSyncing(false))
-        .getDashboardData();
+        .withFailureHandler(() => {
+          setIsSyncing(false);
+          setLoading(false);
+        })
+        .getDashboardData(tokenToUse);
     } else {
-      setTimeout(() => setIsSyncing(false), 1000);
+      setTimeout(() => {
+        setIsSyncing(false);
+        setLoading(false);
+      }, 1000);
     }
   };
 
@@ -41,17 +50,45 @@ export default function App() {
           setLoading(false);
         })
         .withFailureHandler(() => setLoading(false))
-        .getDashboardData();
+        .getDashboardData(sessionToken);
     } else {
       setTimeout(() => {
          setData({
-           userInfo: { activeEmail: 'demo@family.com', userRole: 'admin', isOwner: true },
+           userInfo: { activeEmail: 'demo@family.com', userRole: 'admin', isOwner: true, isAuthorized: true },
            assets: [], transactions: [], familyProfiles: [], events: [], settings: []
          });
          setLoading(false);
       }, 1000);
     }
   }, []);
+
+  const handleLoginSuccess = (newToken) => {
+    setSessionToken(newToken);
+    setLoading(true);
+    refreshData(newToken);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('nwm_session_token');
+    setSessionToken('');
+    window.location.reload();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background-root">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-surface-layer2 border-t-wealth-emerald rounded-full animate-spin"></div>
+          <p className="text-text-secondary text-sm">Synchronizing Ledger...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If we have data but user is not authorized, show login screen
+  if (data && data.userInfo && data.userInfo.isAuthorized === false) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
 
   const formatCurrency = (val) => {
     if (isPrivacyMode) return '₹ ••••••';
@@ -146,7 +183,7 @@ export default function App() {
               <button className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-text-primary hover:bg-surface-layer2 transition-colors">
                 <User size={18} className="text-text-secondary" /> Profile Settings
               </button>
-              <button className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-liability-rose hover:bg-liability-rose/10 transition-colors mt-1">
+              <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-liability-rose hover:bg-liability-rose/10 transition-colors mt-1">
                 <LogOut size={18} /> Sign Out (Device)
               </button>
             </div>
