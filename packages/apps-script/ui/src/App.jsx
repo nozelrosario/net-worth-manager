@@ -35,8 +35,7 @@ export default function App() {
     if (debugMode) {
       const timestamp = new Date().toLocaleTimeString();
       setDebugLog(prev => `[${timestamp}] ${isError ? 'ERROR' : 'INFO'}: ${msg}\n` + prev);
-    }
-    if (!debugMode) { // If debug mode is off, just use toast. If on, debug bar handles it. Actually, show toast anyway
+    } else { 
       setToast({ msg, isError });
       setTimeout(() => setToast(null), 3000);
     }
@@ -228,9 +227,13 @@ export default function App() {
       </main>
 
       {/* Debug Bar */}
-      {debugMode && debugLog && (
-        <div className="fixed bottom-16 left-0 right-0 bg-red-900 text-white p-2 text-xs font-mono z-50 max-h-32 overflow-y-auto border-t border-red-700 shadow-xl whitespace-pre-wrap break-words">
-          <strong>Debug Log:</strong> <br /> {debugLog}
+      {debugMode && (
+        <div className="fixed bottom-16 left-0 right-0 bg-surface-layer2 text-text-primary p-2 text-xs font-mono z-50 max-h-48 overflow-y-auto border-t border-border-prominent shadow-xl whitespace-pre-wrap break-words flex flex-col">
+          <div className="flex justify-between items-center border-b border-border-subtle pb-1 mb-1">
+            <strong className="text-primary-accent">Debug Bar</strong>
+            <button onClick={() => setDebugLog('')} className="text-text-muted hover:text-text-primary">Clear</button>
+          </div>
+          {debugLog || <span className="text-text-muted italic">No logs yet...</span>}
         </div>
       )}
 
