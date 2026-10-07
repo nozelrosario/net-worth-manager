@@ -187,11 +187,11 @@ export default function App() {
 
       {/* Main Content Area with Swiping */}
       <main {...swipeHandlers} className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 touch-pan-y">
-        {activeTab === 'home' && <HomeTab formatCurrency={formatCurrency} data={data} />}
-        {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} />}
-        {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} />}
-        {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} />}
-        {activeTab === 'settings' && <SettingsTab data={data} />}
+        {activeTab === 'home' && <HomeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
+        {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
+        {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
+        {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
+        {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} />}
       </main>
 
       {/* Bottom Nav */}

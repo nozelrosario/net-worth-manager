@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { getSafeStorage } from '../utils/storage';
 
-export default function SpendsTab({ formatCurrency, data }) {
+export default function SpendsTab({ formatCurrency, data, onRefresh }) {
   const [showLogModal, setShowLogModal] = useState(false);
   const [newTxn, setNewTxn] = useState({ 
     Date: new Date().toISOString().split('T')[0], 
@@ -31,7 +31,8 @@ export default function SpendsTab({ formatCurrency, data }) {
             alert('Error: ' + res.message);
           } else {
             setShowLogModal(false);
-            alert('Record added successfully! (Refresh page to see changes)');
+            if (onRefresh) onRefresh();
+            alert('Record added successfully!');
           }
         })
         .withFailureHandler((err) => {
