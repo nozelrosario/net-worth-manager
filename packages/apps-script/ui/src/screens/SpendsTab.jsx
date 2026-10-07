@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { getSafeStorage } from '../utils/storage';
+import { ArrowRightLeft, CheckCircle, ArrowDownLeft, Banknote, CreditCard, PlusCircle, AlertCircle, Search } from 'lucide-react';
 
 export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showLogModal, setShowLogModal] = useState(false);
@@ -112,13 +113,13 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3">
               <div className="w-10 h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center text-text-secondary">
-                <span className="material-symbols-outlined text-[20px]">sync_alt</span>
+                <ArrowRightLeft size={20} />
               </div>
               <div>
                 <h3 className="text-base font-semibold text-text-primary">{txn['Merchant/Description'] || 'Internal Transfer'}</h3>
                 <div className="mt-1 flex items-center space-x-1.5">
                   <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle">
-                    <span className="material-symbols-outlined text-[12px] text-wealth-emerald">check_circle</span>
+                    <CheckCircle size={12} className="text-wealth-emerald" />
                     <span>Self-Payment / Transfer</span>
                   </span>
                 </div>
@@ -141,7 +142,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3">
             <div className={`w-10 h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
-              <span className="material-symbols-outlined text-[20px]">{isIncome ? 'south_west' : (String(txn['Account/Card']||'').toLowerCase().includes('cash') ? 'payments' : 'credit_card')}</span>
+              {isIncome ? <ArrowDownLeft size={20} /> : (String(txn['Account/Card']||'').toLowerCase().includes('cash') ? <Banknote size={20} /> : <CreditCard size={20} />)}
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -191,8 +192,8 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold text-text-primary">Cashflow & Spends</h2>
         <button onClick={() => setShowLogModal(true)} className="flex items-center space-x-1 px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-full text-primary-accent transition-transform active:scale-95">
-          <span className="material-symbols-outlined text-[16px]">add_circle</span>
-          <span className="text-sm font-semibold">+ Log</span>
+          <PlusCircle size={16} />
+          <span className="text-sm font-semibold">Log</span>
         </button>
       </div>
 
@@ -237,7 +238,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 rounded-md bg-bullion-amber/15 flex items-center justify-center text-bullion-amber">
-                <span className="material-symbols-outlined text-[16px]">priority_high</span>
+                <AlertCircle size={16} />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-text-primary">{pendingVerifications.length} Verifications Pending</h2>
@@ -268,7 +269,9 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         {/* Search & Filter Controls */}
         <div className="space-y-2">
           <div className="relative">
-            <span className="material-symbols-outlined text-[18px] text-text-muted absolute left-3 top-1/2 -translate-y-1/2">search</span>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted flex items-center">
+              <Search size={18} />
+            </div>
             <input 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
