@@ -8,6 +8,14 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
   const [memberName, setMemberName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamMembers, setTeamMembers] = useState([]);
+  
+  const defaultCategories = 'Equity, Real Estate, Gold, Cash/FD, Liabilities';
+  const savedCategories = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
+  const [assetCategoriesText, setAssetCategoriesText] = useState(savedCategories);
+
+  useEffect(() => {
+    setAssetCategoriesText(savedCategories);
+  }, [savedCategories]);
 
   useEffect(() => {
     // Fetch team config from backend
@@ -72,6 +80,46 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold text-text-primary">Admin Settings</h2>
       </div>
+
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+         <div className="flex items-center gap-2 mb-4 text-text-primary">
+            <SettingsIcon size={20} className="text-primary-accent" />
+            <h3 className="font-semibold">App Configuration</h3>
+         </div>
+         
+         <form onSubmit={(e) => {
+           e.preventDefault();
+           if (!assetCategoriesText.trim()) return;
+           setIsSubmitting(true);
+           if (window.google?.script?.run) {
+             window.google.script.run
+               .withSuccessHandler((res) => {
+                 setIsSubmitting(false);
+                 showMessage(res.message);
+                 if (onRefresh) onRefresh();
+               })
+               .withFailureHandler((err) => {
+                 setIsSubmitting(false);
+                 showMessage('Error: ' + err.message, true);
+               })
+               .upsertSetting('AssetCategories', assetCategoriesText, getSafeStorage('nwm_session_token'));
+           } else {
+             setTimeout(() => {
+               setIsSubmitting(false);
+               showMessage('Categories updated (preview)');
+             }, 1000);
+           }
+         }} className="space-y-4 border-b border-border-subtle pb-6 mb-4">
+           <div>
+             <label className="block text-xs text-text-secondary mb-1">Asset Categories (Comma separated)</label>
+             <input required value={assetCategoriesText} onChange={e => setAssetCategoriesText(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Equity, Real Estate, Gold, Cash/FD, Liabilities" />
+           </div>
+           <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 mt-2">
+             <Save size={16} />
+             {isSubmitting ? 'Saving...' : 'Update Categories'}
+           </button>
+         </form>
+      </section>
 
       <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
          <div className="flex items-center gap-2 mb-4 text-text-primary">

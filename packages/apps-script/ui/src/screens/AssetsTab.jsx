@@ -9,7 +9,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   const assets = data?.assets || [];
   
-  const filters = ['All Assets', 'Equity', 'Real Estate', 'Gold', 'Cash/FD', 'Liabilities'];
+  const defaultCategories = 'Equity, Real Estate, Gold, Cash/FD, Liabilities';
+  const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
+  const categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  
+  const filters = ['All Assets', ...categoriesList];
   
   const filteredAssets = filter === 'All Assets' 
     ? assets 
@@ -96,12 +100,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                </div>
                <div>
                  <label className="block text-xs text-text-secondary mb-1">Category</label>
-                 <select value={newAsset.Category} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
-                   <option>Equity</option>
-                   <option>Real Estate</option>
-                   <option>Gold</option>
-                   <option>Cash/FD</option>
-                   <option>Liabilities</option>
+                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
+                   {categoriesList.map(cat => (
+                     <option key={cat} value={cat}>{cat}</option>
+                   ))}
                  </select>
                </div>
                <div>

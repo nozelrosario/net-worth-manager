@@ -788,6 +788,45 @@ function deleteRecord(sheetName, idField, idValue, idToken) {
   }
 }
 
+/**
+ * Upserts a setting into the Settings sheet
+ */
+function upsertSetting(key, value, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+    
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Settings');
+    if (!sheet) return { status: 'error', message: 'Settings sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    var keyCol = data[0].indexOf('Setting Key');
+    var valCol = data[0].indexOf('Setting Value');
+    
+    if (keyCol === -1 || valCol === -1) return { status: 'error', message: 'Invalid Settings sheet format' };
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][keyCol]) === String(key)) {
+        sheet.getRange(i + 1, valCol + 1).setValue(value);
+        logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_SETTING', key, value);
+        return { status: 'success', message: 'Setting updated successfully' };
+      }
+    }
+    
+    // Not found, append
+    var newRow = [];
+    newRow[keyCol] = key;
+    newRow[valCol] = value;
+    sheet.appendRow(newRow);
+    logAudit(ss, auth.userInfo.activeEmail, 'ADD_SETTING', key, value);
+    return { status: 'success', message: 'Setting saved successfully' };
+    
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
 function logAudit(ss, user, action, itemId, details) {
   try {
     var sheet = ss.getSheetByName('Audit');
