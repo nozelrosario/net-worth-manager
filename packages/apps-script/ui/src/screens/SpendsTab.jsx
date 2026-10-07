@@ -4,6 +4,7 @@ import { ArrowRightLeft, CheckCircle, ArrowDownLeft, Banknote, CreditCard, PlusC
 
 export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showLogModal, setShowLogModal] = useState(false);
+  const [editingTxnId, setEditingTxnId] = useState(null);
   const [newTxn, setNewTxn] = useState({ 
     Date: new Date().toISOString().split('T')[0], 
     'Merchant/Description': '', 
@@ -20,12 +21,55 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
   const txns = data?.transactions || [];
 
-  const handleLogTxn = (e) => {
+  const openAddModal = () => {
+    setEditingTxnId(null);
+    setNewTxn({ 
+      Date: new Date().toISOString().split('T')[0], 
+      'Merchant/Description': '', 
+      Category: 'Groceries', 
+      Amount: '', 
+      Type: 'Expense', 
+      'Account/Card': '',
+      'Is Transfer': false,
+      Tags: ''
+    });
+    setShowLogModal(true);
+  };
+
+  const openEditModal = (txn) => {
+    setEditingTxnId(txn['Txn ID']);
+    setNewTxn({ ...txn, Amount: Math.abs(txn.Amount) }); // Amount usually stored/handled depending on type, abs for form
+    setShowLogModal(true);
+  };
+
+  const handleDelete = (id) => {
+    if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+    setIsSubmitting(true);
+    if (window.google?.script?.run) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSubmitting(false);
+          setShowLogModal(false);
+          if (onRefresh) onRefresh();
+          showMessage(res.message);
+        })
+        .withFailureHandler((err) => {
+          setIsSubmitting(false);
+          showMessage('Error: ' + err.message, true);
+        })
+        .deleteRecord('Transactions', 'Txn ID', id, getSafeStorage('nwm_session_token'));
+    } else {
+      setTimeout(() => { setIsSubmitting(false); setShowLogModal(false); showMessage('Deleted (preview)'); }, 1000);
+    }
+  };
+
+  const handleSaveTxn = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     if (window.google?.script?.run) {
-      window.google.script.run
+      const token = getSafeStorage('nwm_session_token');
+      const handler = window.google.script.run
         .withSuccessHandler((res) => {
           setIsSubmitting(false);
           if (res && res.status === 'error') {
@@ -33,23 +77,30 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           } else {
             setShowLogModal(false);
             if (onRefresh) onRefresh();
-            showMessage('Record added successfully!');
+            showMessage(res.message || 'Record saved successfully!');
           }
         })
         .withFailureHandler((err) => {
           setIsSubmitting(false);
           showMessage('Network/Server Error: ' + err.message, true);
-        })
-        .addRecord('Transactions', {
-           ...newTxn,
-           'Txn ID': '',
-           Amount: Number(newTxn.Amount)
-        }, getSafeStorage('nwm_session_token'));
+        });
+
+      const payload = {
+        ...newTxn,
+        Amount: Number(newTxn.Amount)
+      };
+
+      if (editingTxnId) {
+         handler.updateRecord('Transactions', 'Txn ID', editingTxnId, payload, token);
+      } else {
+         payload['Txn ID'] = '';
+         handler.addRecord('Transactions', payload, token);
+      }
     } else {
       setTimeout(() => {
         setIsSubmitting(false);
         setShowLogModal(false);
-        showMessage('Transaction logged (preview)');
+        showMessage(editingTxnId ? 'Transaction updated (preview)' : 'Transaction logged (preview)');
       }, 1000);
     }
   };
@@ -109,14 +160,18 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
     if (isTransfer) {
       return (
-        <div key={txn['Txn ID']} className="bg-surface-layer1/50 border border-dashed border-border-prominent rounded-xl p-3.5 relative">
+        <div 
+          key={txn['Txn ID']} 
+          onClick={() => openEditModal(txn)}
+          className="bg-surface-layer1/50 border border-dashed border-border-prominent rounded-xl p-3.5 relative cursor-pointer hover:border-primary-accent/50 transition-colors group"
+        >
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3">
               <div className="w-10 h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center text-text-secondary">
                 <ArrowRightLeft size={20} />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-text-primary">{txn['Merchant/Description'] || 'Internal Transfer'}</h3>
+                <h3 className="text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors">{txn['Merchant/Description'] || 'Internal Transfer'}</h3>
                 <div className="mt-1 flex items-center space-x-1.5">
                   <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle">
                     <CheckCircle size={12} className="text-wealth-emerald" />
@@ -128,9 +183,10 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex flex-col items-end">
               <span className="text-base font-bold text-text-secondary tabular-nums">{formatCurrency(txn.Amount)}</span>
               <span className="block text-xs text-text-muted mt-1">Excluded</span>
+              <span className="text-primary-accent/70 text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Edit</span>
             </div>
           </div>
         </div>
@@ -138,7 +194,11 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     }
 
     return (
-      <div key={txn['Txn ID']} className="bg-surface-layer1 border border-border-subtle rounded-xl p-3.5 hover:border-border-prominent transition-colors">
+      <div 
+        key={txn['Txn ID']} 
+        onClick={() => openEditModal(txn)}
+        className="bg-surface-layer1 border border-border-subtle rounded-xl p-3.5 hover:border-primary-accent/50 cursor-pointer transition-colors group"
+      >
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3">
             <div className={`w-10 h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
@@ -146,7 +206,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-base font-semibold text-text-primary">{txn['Merchant/Description'] || txn.Category}</h3>
+                <h3 className="text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors">{txn['Merchant/Description'] || txn.Category}</h3>
                 {hasSplits && (
                   <span className="px-2 py-0.5 rounded-full text-xs bg-primary-accent/10 text-primary-accent border border-primary-accent/20">
                     Split ({splits.length})
@@ -164,10 +224,11 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               )}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end">
             <span className={`text-base font-bold tabular-nums ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
               {isIncome ? '+' : '-'}{formatCurrency(txn.Amount)}
             </span>
+            <span className="text-primary-accent/70 text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Edit</span>
           </div>
         </div>
         {hasSplits && splits.length > 0 && (
@@ -191,7 +252,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     <div className="space-y-4 pb-20">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold text-text-primary">Cashflow & Spends</h2>
-        <button onClick={() => setShowLogModal(true)} className="flex items-center space-x-1 px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-full text-primary-accent transition-transform active:scale-95">
+        <button onClick={openAddModal} className="flex items-center space-x-1 px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-full text-primary-accent transition-transform active:scale-95">
           <PlusCircle size={16} />
           <span className="text-sm font-semibold">Log</span>
         </button>
@@ -314,8 +375,8 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       {showLogModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowLogModal(false)}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
-             <h3 className="text-lg font-bold mb-4 text-white">Log Transaction</h3>
-             <form onSubmit={handleLogTxn} className="space-y-4">
+             <h3 className="text-lg font-bold mb-4 text-white">{editingTxnId ? 'Edit Transaction' : 'Log Transaction'}</h3>
+             <form onSubmit={handleSaveTxn} className="space-y-4">
                <div className="flex gap-2">
                  <div className="flex-1">
                    <label className="block text-xs text-text-secondary mb-1">Type</label>
@@ -347,9 +408,16 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                   <input type="checkbox" id="isTransfer" checked={newTxn['Is Transfer']} onChange={e => setNewTxn({...newTxn, 'Is Transfer': e.target.checked})} className="rounded bg-surface-layer2 border-border-subtle text-primary-accent focus:ring-0" />
                   <label htmlFor="isTransfer" className="text-xs text-text-secondary">Mark as Internal Transfer</label>
                </div>
-               <div className="pt-2 flex gap-3">
-                 <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Cancel</button>
-                 <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+               <div className="pt-2 flex flex-col gap-3">
+                 <div className="flex gap-3">
+                   <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Cancel</button>
+                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+                 </div>
+                 {editingTxnId && (
+                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50">
+                     {isSubmitting ? 'Deleting...' : 'Delete Transaction'}
+                   </button>
+                 )}
                </div>
              </form>
            </div>
