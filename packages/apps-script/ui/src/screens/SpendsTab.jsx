@@ -26,12 +26,16 @@ export default function SpendsTab({ formatCurrency, data }) {
       window.google.script.run
         .withSuccessHandler((res) => {
           setIsSubmitting(false);
-          setShowLogModal(false);
-          // Ideally fetch data again or rely on polling/cache
+          if (res && res.status === 'error') {
+            alert('Error: ' + res.message);
+          } else {
+            setShowLogModal(false);
+            alert('Record added successfully! (Refresh page to see changes)');
+          }
         })
         .withFailureHandler((err) => {
           setIsSubmitting(false);
-          alert('Error: ' + err.message);
+          alert('Network/Server Error: ' + err.message);
         })
         .addRecord('Transactions', {
            ...newTxn,

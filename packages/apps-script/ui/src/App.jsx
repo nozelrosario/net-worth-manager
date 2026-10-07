@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw } from 'lucide-react';
+import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
 import AssetsTab from './screens/AssetsTab';
 import SpendsTab from './screens/SpendsTab';
 import SafeTab from './screens/SafeTab';
+import SettingsTab from './screens/SettingsTab';
 
-const TABS = ['home', 'assets', 'spends', 'safe'];
+const TABS = ['home', 'assets', 'spends', 'safe', 'settings'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -162,6 +163,7 @@ export default function App() {
         {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} />}
         {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} />}
         {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} />}
+        {activeTab === 'settings' && <SettingsTab data={data} />}
       </main>
 
       {/* Bottom Nav */}
@@ -170,6 +172,9 @@ export default function App() {
         <NavButton icon={PieChart} label="Assets" active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} />
         <NavButton icon={Receipt} label="Spends" active={activeTab === 'spends'} onClick={() => setActiveTab('spends')} />
         <NavButton icon={Shield} label="Family Safe" active={activeTab === 'safe'} onClick={() => setActiveTab('safe')} />
+        {data?.userInfo?.userRole === 'admin' && (
+           <NavButton icon={SettingsIcon} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+        )}
       </nav>
     </div>
   );
