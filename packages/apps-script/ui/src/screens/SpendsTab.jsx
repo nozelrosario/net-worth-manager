@@ -36,7 +36,9 @@ export default function SpendsTab({ formatCurrency, data }) {
     }
   };
 
-  const totalExpense = txns.filter(t => t.Type === 'Expense').reduce((sum, t) => sum + Number(t.Amount || 0), 0) || 64200;
+  const totalExpense = txns.filter(t => t.Type === 'Expense').reduce((sum, t) => sum + Number(t.Amount || 0), 0);
+  const budget = 80000; // Will be configurable in settings later
+  const percentLeft = budget > 0 ? Math.max(0, Math.round(((budget - totalExpense) / budget) * 100)) : 0;
 
   return (
     <div className="space-y-4">
@@ -46,12 +48,12 @@ export default function SpendsTab({ formatCurrency, data }) {
       </div>
 
       <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-5 text-center">
-        <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">September Spends</p>
+        <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">This Month's Spends</p>
         <p className="text-3xl font-bold text-liability-rose tabular-nums">{formatCurrency(totalExpense)}</p>
         <div className="mt-3 inline-flex items-center gap-1.5 bg-surface-layer2 text-text-secondary px-3 py-1 rounded-full text-xs">
-           <span>Budget: {formatCurrency(80000)}</span>
+           <span>Budget: {formatCurrency(budget)}</span>
            <span className="w-1 h-1 rounded-full bg-border-subtle mx-1"></span>
-           <span className="text-wealth-emerald">{Math.round(((80000-totalExpense)/80000)*100)}% Left</span>
+           <span className="text-wealth-emerald">{percentLeft}% Left</span>
         </div>
       </div>
 
