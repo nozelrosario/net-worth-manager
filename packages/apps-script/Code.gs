@@ -799,7 +799,8 @@ function getDashboardData(idToken) {
       transactions: txns.status === 'success' ? txns.data : [],
       familyProfiles: profiles.status === 'success' ? profiles.data : [],
       events: events.status === 'success' ? events.data : [],
-      settings: settings.status === 'success' ? settings.data : []
+      settings: settings.status === 'success' ? settings.data : [],
+      userInfo: auth.userInfo
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };

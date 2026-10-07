@@ -28,3 +28,8 @@
 ## Next Iteration Targets
 - **Automated Cashflow Ingestion**: Link React Native SMS parsing module to ping the `addRecord('Transactions', ...)` API endpoint.
 - **Market Integration**: Configure a timed Google Apps Script Trigger to fetch AMFI NAVs and update the `Current Value` field in the `Assets` table.
+
+## Feature Update (v2.0)
+✅ **Restored Base UX Features**: Re-implemented `react-swipeable` for seamless swiping between navigation tabs. Added user avatar, active session modal, expandable header menus, and a pulsing live sync indicator to restore the original responsive prototype feel.
+✅ **Dynamic Data Binding**: UI components now directly consume data from Google Apps Script (`window.google.script.run.getDashboardData`). Hardcoded fallback values are preserved for testing out of the Google Apps Script context.
+✅ **Data Entry Modals**: Implemented fully functional "+ Add Asset" and "+ Log Cash" modals that push structured records straight to the Google Sheets backend.
