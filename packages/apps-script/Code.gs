@@ -804,7 +804,7 @@ function getDashboardData(idToken) {
       familyProfiles: profiles.status === 'success' ? profiles.data : [],
       events: events.status === 'success' ? events.data : [],
       settings: settings.status === 'success' ? settings.data : [],
-      userInfo: auth.userInfo
+      userInfo: getCurrentUserInfo(idToken)
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };

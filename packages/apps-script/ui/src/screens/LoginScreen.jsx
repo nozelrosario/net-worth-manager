@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield } from 'lucide-react';
+import { setSafeStorage } from '../utils/storage';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -51,7 +52,7 @@ export default function LoginScreen({ onLoginSuccess }) {
             setError(res.message);
           } else {
             // Save token
-            localStorage.setItem('nwm_session_token', res.sessionToken);
+            setSafeStorage('nwm_session_token', res.sessionToken);
             onLoginSuccess(res.sessionToken);
           }
         })
@@ -63,7 +64,7 @@ export default function LoginScreen({ onLoginSuccess }) {
     } else {
       setTimeout(() => {
         setIsLoading(false);
-        localStorage.setItem('nwm_session_token', 'mock_token');
+        setSafeStorage('nwm_session_token', 'mock_token');
         onLoginSuccess('mock_token');
       }, 1000);
     }

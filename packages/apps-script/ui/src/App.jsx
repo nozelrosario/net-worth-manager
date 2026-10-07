@@ -7,6 +7,7 @@ import SpendsTab from './screens/SpendsTab';
 import SafeTab from './screens/SafeTab';
 import SettingsTab from './screens/SettingsTab';
 import LoginScreen from './screens/LoginScreen';
+import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
 
 const TABS = ['home', 'assets', 'spends', 'safe', 'settings'];
 
@@ -18,7 +19,7 @@ export default function App() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [sessionToken, setSessionToken] = useState(() => localStorage.getItem('nwm_session_token') || '');
+  const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
 
   const refreshData = (tokenToUse = sessionToken) => {
     setIsSyncing(true);
@@ -69,7 +70,7 @@ export default function App() {
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('nwm_session_token');
+    removeSafeStorage('nwm_session_token');
     setSessionToken('');
     window.location.reload();
   };

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getSafeStorage } from '../utils/storage';
 
 export default function SpendsTab({ formatCurrency, data }) {
   const [showLogModal, setShowLogModal] = useState(false);
@@ -41,7 +42,7 @@ export default function SpendsTab({ formatCurrency, data }) {
            ...newTxn,
            'Txn ID': '',
            Amount: Number(newTxn.Amount)
-        }, localStorage.getItem('nwm_session_token'));
+        }, getSafeStorage('nwm_session_token'));
     } else {
       setTimeout(() => {
         setIsSubmitting(false);

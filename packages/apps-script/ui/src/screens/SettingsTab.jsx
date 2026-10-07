@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Shield, Save, Settings as SettingsIcon } from 'lucide-react';
+import { getSafeStorage } from '../utils/storage';
 
 export default function SettingsTab({ data }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
@@ -23,7 +24,7 @@ export default function SettingsTab({ data }) {
              setTeamMembers(membersList);
           }
         })
-        .getFormData(null, localStorage.getItem('nwm_session_token'));
+        .getFormData(null, getSafeStorage('nwm_session_token'));
     } else {
       // Mock data
       setTeamMembers([
@@ -57,7 +58,7 @@ export default function SettingsTab({ data }) {
           setIsSubmitting(false);
           alert('Error: ' + err.message);
         })
-        .updateTeamMemberEmails(memberName, teamEmailsText, teamRole, localStorage.getItem('nwm_session_token'));
+        .updateTeamMemberEmails(memberName, teamEmailsText, teamRole, getSafeStorage('nwm_session_token'));
     } else {
       setTimeout(() => {
         setIsSubmitting(false);
