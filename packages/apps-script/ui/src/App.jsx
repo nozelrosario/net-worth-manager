@@ -23,6 +23,24 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
   const [debugLog, setDebugLog] = useState('');
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [darkMode]);
+
+  const showMessage = (msg, isError = false) => {
+    if (debugMode) {
+      const timestamp = new Date().toLocaleTimeString();
+      setDebugLog(prev => `[${timestamp}] ${isError ? 'ERROR' : 'INFO'}: ${msg}\n` + prev);
+    }
+    if (!debugMode) { // If debug mode is off, just use toast. If on, debug bar handles it. Actually, show toast anyway
+      setToast({ msg, isError });
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
 
   const refreshData = (tokenToUse = sessionToken) => {
     setIsSyncing(true);
@@ -202,17 +220,24 @@ export default function App() {
 
       {/* Main Content Area with Swiping */}
       <main {...swipeHandlers} className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 touch-pan-y">
-        {activeTab === 'home' && <HomeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
-        {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
-        {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
-        {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} />}
-        {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} />}
+        {activeTab === 'home' && <HomeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
+        {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
+        {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
+        {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
+        {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} showMessage={showMessage} />}
       </main>
 
       {/* Debug Bar */}
       {debugMode && debugLog && (
-        <div className="fixed bottom-16 left-0 right-0 bg-red-900 text-white p-2 text-xs font-mono z-50 max-h-32 overflow-y-auto border-t border-red-700 shadow-xl">
+        <div className="fixed bottom-16 left-0 right-0 bg-red-900 text-white p-2 text-xs font-mono z-50 max-h-32 overflow-y-auto border-t border-red-700 shadow-xl whitespace-pre-wrap break-words">
           <strong>Debug Log:</strong> <br /> {debugLog}
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full shadow-lg text-sm font-medium whitespace-nowrap transition-all animate-bounce ${toast.isError ? 'bg-liability-rose text-white' : 'bg-wealth-emerald text-white'}`}>
+          {toast.msg}
         </div>
       )}
 

@@ -37,7 +37,7 @@ export default function SettingsTab({ data }) {
   const handleUpdateTeam = (e) => {
     e.preventDefault();
     if (!memberName.trim() || !teamEmailsText.trim()) {
-       alert("Please provide both a member name and at least one email.");
+       showMessage("Please provide both a member name and at least one email.", true);
        return;
     }
     
@@ -46,7 +46,7 @@ export default function SettingsTab({ data }) {
       window.google.script.run
         .withSuccessHandler((res) => {
           setIsSubmitting(false);
-          alert(res.message);
+          showMessage(res.message);
           if (res.status === 'success') {
             setMemberName('');
             setTeamEmailsText('');
@@ -56,13 +56,13 @@ export default function SettingsTab({ data }) {
         })
         .withFailureHandler((err) => {
           setIsSubmitting(false);
-          alert('Error: ' + err.message);
+          showMessage('Error: ' + err.message, true);
         })
         .updateTeamMemberEmails(memberName, teamEmailsText, teamRole, getSafeStorage('nwm_session_token'));
     } else {
       setTimeout(() => {
         setIsSubmitting(false);
-        alert('Team updated (preview)');
+        showMessage('Team updated (preview)');
       }, 1000);
     }
   };

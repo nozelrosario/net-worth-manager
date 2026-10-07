@@ -25,11 +25,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh }) {
           setIsSubmitting(false);
           setShowAddModal(false);
           if (onRefresh) onRefresh();
-          alert(res.message);
+          showMessage(res.message);
         })
         .withFailureHandler((err) => {
           setIsSubmitting(false);
-          alert('Error: ' + err.message);
+          showMessage('Error: ' + err.message, true);
         })
         .addRecord('Assets', {
            ...newAsset,
@@ -41,7 +41,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh }) {
       setTimeout(() => {
         setIsSubmitting(false);
         setShowAddModal(false);
-        alert('Asset added (preview)');
+        showMessage('Asset added (preview)');
       }, 1000);
     }
   };

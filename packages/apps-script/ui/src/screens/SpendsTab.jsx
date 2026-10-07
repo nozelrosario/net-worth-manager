@@ -28,16 +28,16 @@ export default function SpendsTab({ formatCurrency, data, onRefresh }) {
         .withSuccessHandler((res) => {
           setIsSubmitting(false);
           if (res && res.status === 'error') {
-            alert('Error: ' + res.message);
+            showMessage('Error: ' + res.message, true);
           } else {
             setShowLogModal(false);
             if (onRefresh) onRefresh();
-            alert('Record added successfully!');
+            showMessage('Record added successfully!');
           }
         })
         .withFailureHandler((err) => {
           setIsSubmitting(false);
-          alert('Network/Server Error: ' + err.message);
+          showMessage('Network/Server Error: ' + err.message, true);
         })
         .addRecord('Transactions', {
            ...newTxn,
@@ -48,7 +48,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh }) {
       setTimeout(() => {
         setIsSubmitting(false);
         setShowLogModal(false);
-        alert('Transaction logged (preview)');
+        showMessage('Transaction logged (preview)');
       }, 1000);
     }
   };
