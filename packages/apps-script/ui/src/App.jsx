@@ -75,28 +75,6 @@ export default function App() {
     window.location.reload();
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background-root">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-surface-layer2 border-t-wealth-emerald rounded-full animate-spin"></div>
-          <p className="text-text-secondary text-sm">Synchronizing Ledger...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If we have data but user is not authorized, show login screen
-  if (data && data.userInfo && data.userInfo.isAuthorized === false) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
-  }
-
-  const formatCurrency = (val) => {
-    if (isPrivacyMode) return '₹ ••••••';
-    if (!val) return '₹0';
-    return '₹' + Number(val).toLocaleString('en-IN');
-  };
-
   const handleSwipe = (dir) => {
     const currentIndex = TABS.indexOf(activeTab);
     if (dir === 'Left' && currentIndex < TABS.length - 1) {
@@ -122,6 +100,18 @@ export default function App() {
       </div>
     );
   }
+
+  // If we have data but user is not authorized, show login screen
+  if (data && data.userInfo && data.userInfo.isAuthorized === false) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  const formatCurrency = (val) => {
+    if (isPrivacyMode) return '₹ ••••••';
+    if (!val) return '₹0';
+    return '₹' + Number(val).toLocaleString('en-IN');
+  };
+
 
   const userInitial = data?.userInfo?.activeEmail ? data.userInfo.activeEmail.charAt(0).toUpperCase() : 'U';
 
