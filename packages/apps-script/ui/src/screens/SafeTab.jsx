@@ -55,7 +55,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
     setAttachedFiles(prev => prev.filter(f => f.id !== id));
   };
 
-  const uploadFilesSequential = async (filesToUpload, token) => {
+  const uploadFilesSequential = async (filesToUpload, category, token) => {
     const uploaded = [];
     for (let i = 0; i < filesToUpload.length; i++) {
       const f = filesToUpload[i];
@@ -65,7 +65,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
         window.google.script.run
           .withSuccessHandler(resolve)
           .withFailureHandler(reject)
-          .uploadFileToDrive(f.base64, f.name, f.mimeType, token);
+          .uploadFileToDrive(f.base64, f.name, f.mimeType, category, token);
       });
       
       if (result.status === 'success') {
@@ -99,7 +99,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
         
         let uploadedFiles = [];
         if (filesToUpload.length > 0) {
-          uploadedFiles = await uploadFilesSequential(filesToUpload, token);
+          uploadedFiles = await uploadFilesSequential(filesToUpload, newEntry.Category, token);
         }
         
         const finalFilesJSON = JSON.stringify([...uploadedFiles, ...links]);

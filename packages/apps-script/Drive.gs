@@ -1,19 +1,30 @@
-function getFamilySafeFolder() {
-  var folderName = "Family Safe";
-  var folders = DriveApp.getFoldersByName(folderName);
-  if (folders.hasNext()) {
-    return folders.next();
-  } else {
-    return DriveApp.createFolder(folderName);
+function getFolderByPath(pathArray) {
+  var folder = DriveApp.getRootFolder();
+  for (var i = 0; i < pathArray.length; i++) {
+    var folders = folder.getFoldersByName(pathArray[i]);
+    if (folders.hasNext()) {
+      folder = folders.next();
+    } else {
+      folder = folder.createFolder(pathArray[i]);
+    }
   }
+  return folder;
 }
 
-function uploadFileToDrive(base64Data, fileName, mimeType, idToken) {
+function uploadFileToDrive(base64Data, fileName, mimeType, category, idToken) {
   try {
     var auth = assertWriteAccess(idToken);
     if (!auth.allowed) return { status: 'error', message: auth.message };
     
-    var folder = getFamilySafeFolder();
+    // Determine environment based on the connected Spreadsheet name
+    var ss = getSpreadsheet();
+    var ssName = ss.getName();
+    var env = ssName.toUpperCase().indexOf('UAT') !== -1 ? 'UAT' : 'PROD';
+    var safeCategory = category || 'Uncategorized';
+    
+    // Folder Structure: Drive Root -> Net Worth Manager -> [PROD|UAT] -> Family Safe -> [Category]
+    var path = ['Net Worth Manager', env, 'Family Safe', safeCategory];
+    var folder = getFolderByPath(path);
     
     var base64Str = base64Data;
     if (base64Data.indexOf(',') !== -1) {
@@ -22,9 +33,6 @@ function uploadFileToDrive(base64Data, fileName, mimeType, idToken) {
     
     var blob = Utilities.newBlob(Utilities.base64Decode(base64Str), mimeType, fileName);
     var file = folder.createFile(blob);
-    
-    // Allow anyone with the link to view the file
-    // file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
     return {
       status: 'success',
