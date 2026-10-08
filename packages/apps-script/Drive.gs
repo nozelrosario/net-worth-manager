@@ -45,3 +45,4 @@ function uploadFileToDrive(base64Data, fileName, mimeType, category, idToken) {
     return { status: 'error', message: err.toString() };
   }
 }
+// redeploy after auth
