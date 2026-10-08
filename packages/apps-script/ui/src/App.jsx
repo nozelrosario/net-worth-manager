@@ -20,16 +20,21 @@ export default function App() {
   const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
-  const [darkMode, setDarkMode] = useState(true);
-  const [debugMode, setDebugMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => getSafeStorage('nwm_dark_mode', 'true') === 'true');
+  const [debugMode, setDebugMode] = useState(() => getSafeStorage('nwm_debug_mode', 'false') === 'true');
   const [debugLog, setDebugLog] = useState('');
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    setSafeStorage('nwm_dark_mode', darkMode.toString());
     const root = document.documentElement;
     if (darkMode) root.classList.add('dark');
     else root.classList.remove('dark');
   }, [darkMode]);
+
+  useEffect(() => {
+    setSafeStorage('nwm_debug_mode', debugMode.toString());
+  }, [debugMode]);
 
   const showMessage = (msg, isError = false) => {
     if (debugMode) {
