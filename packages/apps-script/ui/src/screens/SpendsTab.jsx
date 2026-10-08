@@ -347,7 +347,13 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
             />
           </div>
           
-          <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1">
+          <div 
+            className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1"
+            onTouchStart={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+            onMouseMove={e => e.stopPropagation()}
+          >
             {filters.map(tab => (
               <button 
                 key={tab}

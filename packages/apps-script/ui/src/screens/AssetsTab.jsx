@@ -96,7 +96,13 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         <h2 className="text-xl font-bold">Assets & Liabilities</h2>
         <button onClick={openAddModal} className="text-primary-accent text-sm font-medium bg-primary-accent/10 px-3 py-1.5 rounded-lg">+ Add Asset</button>
       </div>
-      <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+      <div 
+        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide"
+        onTouchStart={e => e.stopPropagation()}
+        onTouchMove={e => e.stopPropagation()}
+        onMouseDown={e => e.stopPropagation()}
+        onMouseMove={e => e.stopPropagation()}
+      >
         {filters.map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${f === filter ? 'bg-primary-accent text-white' : 'bg-surface-layer2 text-text-secondary border border-border-subtle hover:bg-surface-layer1'}`}>
             {f}
