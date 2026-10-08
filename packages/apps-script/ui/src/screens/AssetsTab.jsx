@@ -1,5 +1,6 @@
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
+import DynamicForm from "../components/DynamicForm";
 
 export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [filter, setFilter] = useState('All Assets');
@@ -137,39 +138,28 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
              <h3 className="text-lg font-bold mb-4 text-white">{editingAssetId ? 'Edit Asset' : 'Add New Asset'}</h3>
-             <form onSubmit={handleSaveAsset} className="space-y-4">
-               <div>
-                 <label className="block text-xs text-text-secondary mb-1">Asset Name</label>
-                 <input required value={newAsset.Name} onChange={e => setNewAsset({...newAsset, Name: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. SBI Fixed Deposit" />
-               </div>
-               <div>
-                 <label className="block text-xs text-text-secondary mb-1">Category</label>
+             
+             {!editingAssetId && (
+               <div className="mb-4">
+                 <label className="block text-xs text-text-secondary mb-1">Asset Category</label>
                  <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
                    {categoriesList.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
                    ))}
                  </select>
                </div>
-               <div>
-                 <label className="block text-xs text-text-secondary mb-1">Current Value (₹)</label>
-                 <input required value={newAsset['Current Value']} onChange={e => setNewAsset({...newAsset, 'Current Value': e.target.value})} type="number" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="100000" />
-               </div>
-               <div>
-                 <label className="block text-xs text-text-secondary mb-1">Owner</label>
-                 <input value={newAsset.Owner} onChange={e => setNewAsset({...newAsset, Owner: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Self, Spouse, Combined" />
-               </div>
-               <div className="pt-2 flex flex-col gap-3">
-                 <div className="flex gap-3">
-                   <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Cancel</button>
-                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save Asset'}</button>
-                 </div>
-                 {editingAssetId && (
-                   <button type="button" onClick={() => handleDelete(editingAssetId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50">
-                     {isSubmitting ? 'Deleting...' : 'Delete Asset'}
-                   </button>
-                 )}
-               </div>
-             </form>
+             )}
+
+             <DynamicForm 
+               category={newAsset.Category || categoriesList[0] || ''}
+               formData={newAsset}
+               setFormData={setNewAsset}
+               onSubmit={handleSaveAsset}
+               onCancel={() => setShowAddModal(false)}
+               isSubmitting={isSubmitting}
+               isEditing={!!editingAssetId}
+               onDelete={() => handleDelete(editingAssetId)}
+             />
            </div>
         </div>
       )}
