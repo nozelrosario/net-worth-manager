@@ -399,7 +399,8 @@ function setupDatabaseSheets() {
     'Assets': ['Asset ID', 'Type', 'Name', 'Category', 'Owner', 'Status', 'Acquisition Date', 'Cost', 'Current Value', 'Institution/Location', 'Identifiers', 'Nominee', 'Nominee %', 'Details JSON'],
     'Transactions': ['Txn ID', 'Date', 'Type', 'Amount', 'Category', 'Account/Card', 'Merchant/Description', 'Tags', 'Is Transfer', 'Split JSON'],
     'FamilyProfiles': ['Profile ID', 'Name', 'Relation', 'Ownership %', 'Notes'],
-    'Events': ['Event ID', 'Date', 'Type', 'Title', 'Amount', 'Status', 'Details JSON']
+    'Events': ['Event ID', 'Date', 'Type', 'Title', 'Amount', 'Status', 'Details JSON'],
+    'Safe': ['Document ID', 'Name', 'Category', 'Owner', 'Description', 'Files JSON', 'Date Added']
   };
 
   for (var name in sheets) {
@@ -872,6 +873,7 @@ function getDashboardData(idToken) {
       transactions: fetchSheet('Transactions'),
       familyProfiles: fetchSheet('FamilyProfiles'),
       events: fetchSheet('Events'),
+      safe: fetchSheet('Safe'),
       settings: fetchSheet('Settings'),
       userInfo: userInfo
     };
