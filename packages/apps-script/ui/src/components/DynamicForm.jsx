@@ -53,6 +53,8 @@ export default function DynamicForm({ category, formData, setFormData, onSubmit,
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[65vh] overflow-y-auto px-1 pb-2 scrollbar-hide">
         {schema.fields.map(field => {
+          if (field.condition && !field.condition(formData)) return null;
+          
           const value = getNestedValue(formData, field.name) || '';
           
           if (field.type === 'checkbox') {

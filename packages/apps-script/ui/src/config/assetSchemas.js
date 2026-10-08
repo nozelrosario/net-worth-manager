@@ -38,7 +38,7 @@ export const assetSchemas = {
       { name: 'Cost', label: 'Total Invested Amount', type: 'number' },
       { name: 'Current Value', label: 'Current Value', type: 'number', required: true },
       { name: 'Details JSON.SIP Active', label: 'SIP Active', type: 'checkbox' },
-      { name: 'Details JSON.SIP Amount', label: 'SIP Amount', type: 'number' },
+      { name: 'Details JSON.SIP Amount', label: 'SIP Amount', type: 'number', condition: (fd) => fd['Details JSON']?.['SIP Active'] === true },
       { name: 'Owner', label: 'Owner', type: 'text' }
     ]
   },
@@ -50,10 +50,11 @@ export const assetSchemas = {
       { name: 'Institution/Location', label: 'Full Address / Location', type: 'text' },
       { name: 'Acquisition Date', label: 'Purchase Date', type: 'date' },
       { name: 'Cost', label: 'Purchase Price (incl. Registration)', type: 'number' },
-      { name: 'Current Value', label: 'Current Estimated Market Value', type: 'number', required: true },
+      { name: 'Current Value', label: 'Current Estimated Market Value', type: 'number' },
+      { name: 'Details JSON.7/12 Extract', label: '7/12 Extract Number', type: 'text', condition: (fd) => fd['Details JSON']?.['Property Type'] === 'Agricultural' },
       { name: 'Details JSON.Loan Linked', label: 'Linked Home Loan', type: 'checkbox' },
       { name: 'Details JSON.Rented Out', label: 'Is Rented Out?', type: 'checkbox' },
-      { name: 'Details JSON.Monthly Rent', label: 'Monthly Rent Amount', type: 'number' },
+      { name: 'Details JSON.Monthly Rent', label: 'Monthly Rent Amount', type: 'number', condition: (fd) => fd['Details JSON']?.['Rented Out'] === true },
       { name: 'Owner', label: 'Ownership / Co-owners', type: 'text' }
     ]
   },
