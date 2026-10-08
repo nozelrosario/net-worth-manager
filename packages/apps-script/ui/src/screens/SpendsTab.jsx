@@ -21,12 +21,17 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
   const txns = data?.transactions || [];
 
+  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Other';
+  const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'SpendCategories')?.['Setting Value'] || defaultCategories;
+  const categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  const filters = ['All Records', ...categoriesList];
+
   const openAddModal = () => {
     setEditingTxnId(null);
     setNewTxn({ 
       Date: new Date().toISOString().split('T')[0], 
       'Merchant/Description': '', 
-      Category: 'Groceries', 
+      Category: categoriesList[0] || 'Groceries', 
       Amount: '', 
       Type: 'Expense', 
       'Account/Card': '',
@@ -113,9 +118,9 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       const isTransfer = txn['Is Transfer'] === 'TRUE' || txn['Is Transfer'] === true || String(txn.Category || '').toLowerCase().includes('transfer');
       const isCash = String(txn['Account/Card'] || '').toLowerCase().includes('cash');
 
-      if (filterType === 'Spends') return txn.Type === 'Expense' && !isTransfer;
-      if (filterType === 'Transfers') return isTransfer;
-      if (filterType === 'Cash Logs') return isCash;
+      if (filterType !== 'All Records') {
+         return txn.Category === filterType;
+      }
       
       return true;
     }).sort((a, b) => new Date(b.Date || 0) - new Date(a.Date || 0));
@@ -343,7 +348,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           </div>
           
           <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1">
-            {['All Records', 'Spends', 'Transfers', 'Cash Logs'].map(tab => (
+            {filters.map(tab => (
               <button 
                 key={tab}
                 onClick={() => setFilterType(tab)}
@@ -397,7 +402,11 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                <div className="flex gap-2">
                  <div className="flex-1">
                    <label className="block text-xs text-text-secondary mb-1">Category</label>
-                   <input required value={newTxn.Category} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Dining" />
+                   <select value={newTxn.Category || categoriesList[0] || ''} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
+                     {categoriesList.map(cat => (
+                       <option key={cat} value={cat}>{cat}</option>
+                     ))}
+                   </select>
                  </div>
                  <div className="flex-1">
                    <label className="block text-xs text-text-secondary mb-1">Amount (₹)</label>
