@@ -348,7 +348,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           </div>
           
           <div 
-            className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1"
+            className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1 no-swipe"
             onTouchStart={e => e.stopPropagation()}
             onTouchMove={e => e.stopPropagation()}
             onMouseDown={e => e.stopPropagation()}

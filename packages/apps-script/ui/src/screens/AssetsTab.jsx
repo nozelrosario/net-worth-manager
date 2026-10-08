@@ -97,7 +97,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         <button onClick={openAddModal} className="text-primary-accent text-sm font-medium bg-primary-accent/10 px-3 py-1.5 rounded-lg">+ Add Asset</button>
       </div>
       <div 
-        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide"
+        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide no-swipe"
         onTouchStart={e => e.stopPropagation()}
         onTouchMove={e => e.stopPropagation()}
         onMouseDown={e => e.stopPropagation()}

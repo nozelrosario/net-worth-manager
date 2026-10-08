@@ -99,7 +99,10 @@ export default function App() {
     window.location.reload();
   };
 
-  const handleSwipe = (dir) => {
+  const handleSwipe = (dir, event) => {
+    if (event && event.target && event.target.closest && event.target.closest('.no-swipe')) {
+      return;
+    }
     const currentIndex = TABS.indexOf(activeTab);
     if (dir === 'Left' && currentIndex < TABS.length - 1) {
       setActiveTab(TABS[currentIndex + 1]);
@@ -109,8 +112,8 @@ export default function App() {
   };
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => handleSwipe('Left'),
-    onSwipedRight: () => handleSwipe('Right'),
+    onSwipedLeft: (eventData) => handleSwipe('Left', eventData.event),
+    onSwipedRight: (eventData) => handleSwipe('Right', eventData.event),
     trackMouse: true,
   });
 
