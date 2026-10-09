@@ -108,7 +108,7 @@ export default function App() {
 
   const handleSwipe = (dir, event) => {
     // Prevent swipe if any modal is present
-    if (document.querySelector('.fixed.inset-0.z-50, .fixed.inset-0.z-\\[60\\]')) {
+    if (document.body.classList.contains('has-modal')) {
       return;
     }
     
