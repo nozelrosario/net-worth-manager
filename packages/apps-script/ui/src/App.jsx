@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import useModalBack from "./hooks/useModalBack";
 import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
@@ -17,6 +18,7 @@ export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
+  useModalBack(showUserModal, () => setShowUserModal(false));
   const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
@@ -193,7 +195,7 @@ export default function App() {
 
       {/* User Session Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserModal(false)}>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserModal(false)}>
           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-[85%] max-w-sm overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="p-6 flex flex-col items-center border-b border-border-subtle relative bg-gradient-to-b from-primary-accent/10 to-transparent">
               <div className="w-16 h-16 rounded-full bg-primary-accent text-white flex items-center justify-center font-bold text-2xl shadow-inner mb-3">

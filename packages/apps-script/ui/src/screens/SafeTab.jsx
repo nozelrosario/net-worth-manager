@@ -1,10 +1,13 @@
+import useModalBack from "../hooks/useModalBack";
 import React, { useState } from 'react';
 import { Lock, FileText, User, PlusCircle, Link as LinkIcon, Upload, Trash2, ExternalLink, X, File } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 
 export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showAddModal, setShowAddModal] = useState(false);
+  useModalBack(showAddModal, () => setShowAddModal(false));
   const [previewDoc, setPreviewDoc] = useState(null);
+  useModalBack(!!previewDoc, () => setPreviewDoc(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   
@@ -255,7 +258,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
       {/* Add Document Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
              <h3 className="text-lg font-bold mb-4 text-white">Add to Family Safe</h3>
              
@@ -342,7 +345,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
       {/* Preview Modal */}
       {previewDoc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setPreviewDoc(null)}>
+        <div className="fixed inset-0 z-[60] flex no-swipe items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setPreviewDoc(null)}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-3xl h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
              <div className="flex justify-between items-center p-4 border-b border-border-subtle bg-surface-layer2">
                <div className="flex items-center gap-2 overflow-hidden">

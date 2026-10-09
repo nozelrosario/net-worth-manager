@@ -1,9 +1,11 @@
+import useModalBack from "../hooks/useModalBack";
 import React, { useState, useMemo } from 'react';
 import { getSafeStorage } from '../utils/storage';
 import { ArrowRightLeft, CheckCircle, ArrowDownLeft, Banknote, CreditCard, PlusCircle, AlertCircle, Search } from 'lucide-react';
 
 export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showLogModal, setShowLogModal] = useState(false);
+  useModalBack(showLogModal, () => setShowLogModal(false));
   const [editingTxnId, setEditingTxnId] = useState(null);
   const [newTxn, setNewTxn] = useState({ 
     Date: new Date().toISOString().split('T')[0], 
@@ -390,7 +392,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       
       {/* Add Transaction Modal */}
       {showLogModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowLogModal(false)}>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowLogModal(false)}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
              <h3 className="text-lg font-bold mb-4 text-white">{editingTxnId ? 'Edit Transaction' : 'Log Transaction'}</h3>
              <form onSubmit={handleSaveTxn} className="space-y-4">

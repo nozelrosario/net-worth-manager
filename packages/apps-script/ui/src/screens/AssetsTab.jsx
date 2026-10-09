@@ -1,3 +1,4 @@
+import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 import DynamicForm from "../components/DynamicForm";
@@ -5,6 +6,7 @@ import DynamicForm from "../components/DynamicForm";
 export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [filter, setFilter] = useState('All Assets');
   const [showAddModal, setShowAddModal] = useState(false);
+  useModalBack(showAddModal, () => setShowAddModal(false));
   const [editingAssetId, setEditingAssetId] = useState(null);
   const [newAsset, setNewAsset] = useState({ Name: '', Category: 'Equity', 'Current Value': '', Owner: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,7 +144,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       
       {/* Add/Edit Asset Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
              <h3 className="text-lg font-bold mb-4 text-white">{editingAssetId ? 'Edit Asset' : 'Add New Asset'}</h3>
              
