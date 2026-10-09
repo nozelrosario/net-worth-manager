@@ -46,3 +46,44 @@ function uploadFileToDrive(base64Data, fileName, mimeType, category, idToken) {
   }
 }
 // redeploy after auth
+
+function deleteSafeDocument(documentId, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+    
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Safe');
+    if (!sheet) return { status: 'error', message: 'Safe sheet not found' };
+    
+    var data = sheet.getDataRange().getValues();
+    var idColIndex = data[0].indexOf('Document ID');
+    var filesColIndex = data[0].indexOf('Files JSON');
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idColIndex]) === String(documentId)) {
+        var filesJson = data[i][filesColIndex];
+        if (filesJson) {
+          try {
+            var files = JSON.parse(filesJson);
+            for (var j = 0; j < files.length; j++) {
+              if (files[j].id && !files[j].isLink) {
+                var driveFile = DriveApp.getFileById(files[j].id);
+                driveFile.setTrashed(true);
+              }
+            }
+          } catch(e) {
+            // Ignore parse errors or trash errors
+          }
+        }
+        
+        // Delete record using existing function
+        return deleteRecord('Safe', 'Document ID', documentId, idToken);
+      }
+    }
+    
+    return { status: 'error', message: 'Document not found' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}

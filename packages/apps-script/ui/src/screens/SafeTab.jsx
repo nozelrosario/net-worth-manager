@@ -146,6 +146,26 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
       showMessage('Upload Failed: ' + err.message, true);
     }
   };
+
+  const handleDeleteEntry = (docId) => {
+    if (!window.confirm("Are you sure you want to delete this entry? Associated Drive files will be moved to Trash.")) return;
+    setIsSubmitting(true);
+    if (window.google?.script?.run) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSubmitting(false);
+          if (onRefresh) onRefresh();
+          showMessage(res.message);
+        })
+        .withFailureHandler((err) => {
+          setIsSubmitting(false);
+          showMessage('Delete Error: ' + err.message, true);
+        })
+        .deleteSafeDocument(docId, getSafeStorage('nwm_session_token'));
+    } else {
+      setTimeout(() => { setIsSubmitting(false); showMessage('Deleted (preview)'); }, 1000);
+    }
+  };
   
   const resetForm = () => {
     setNewEntry({
@@ -196,7 +216,12 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                     <h4 className="text-sm font-semibold text-white">{doc.Name}</h4>
                     <p className="text-xs text-text-secondary mt-0.5">{doc.Category} • {doc.Owner || 'Self'}</p>
                   </div>
-                  <span className="text-[10px] text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-[10px] text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
+                    <button onClick={() => handleDeleteEntry(doc['Document ID'])} className="text-liability-rose p-1 hover:bg-liability-rose/10 rounded-lg transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
                 {doc.Description && (
                   <p className="text-xs text-text-muted mt-2 italic">"{doc.Description}"</p>
