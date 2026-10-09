@@ -687,7 +687,11 @@ function addRecord(sheetName, recordData, idToken) {
     
     var ss = getSpreadsheet();
     var sheet = ss.getSheetByName(sheetName);
-    if (!sheet) return { status: 'error', message: 'Sheet not found' };
+    if (!sheet) {
+      setupDatabaseSheets();
+      sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return { status: 'error', message: 'Sheet not found even after setup' };
+    }
     
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var newRow = [];
@@ -844,6 +848,7 @@ function getDashboardData(idToken) {
        return { status: 'error', message: 'Unauthorized' };
     }
     
+    setupDatabaseSheets();
     var ss = getSpreadsheet();
     
     function fetchSheet(sheetName) {
