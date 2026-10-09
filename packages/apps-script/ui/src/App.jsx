@@ -239,7 +239,10 @@ export default function App() {
         <div className="fixed bottom-16 left-0 right-0 bg-surface-layer2 text-text-primary p-2 text-xs font-mono z-50 max-h-48 overflow-y-auto border-t border-border-prominent shadow-xl whitespace-pre-wrap break-words flex flex-col">
           <div className="flex justify-between items-center border-b border-border-subtle pb-1 mb-1">
             <strong className="text-primary-accent">Debug Bar</strong>
-            <button onClick={() => setDebugLog('')} className="text-text-muted hover:text-text-primary">Clear</button>
+            <div className="flex gap-4">
+              <button onClick={() => { navigator.clipboard.writeText(debugLog).then(() => setToast({ msg: 'Copied to clipboard', isError: false })); setTimeout(() => setToast(null), 2000); }} className="text-text-muted hover:text-text-primary">Copy</button>
+              <button onClick={() => setDebugLog('')} className="text-text-muted hover:text-text-primary">Clear</button>
+            </div>
           </div>
           {debugLog || <span className="text-text-muted italic">No logs yet...</span>}
         </div>
