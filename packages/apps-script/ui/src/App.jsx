@@ -107,9 +107,17 @@ export default function App() {
   };
 
   const handleSwipe = (dir, event) => {
-    if (event && event.target && event.target.closest && event.target.closest('.no-swipe')) {
+    // Prevent swipe if any modal is present
+    if (document.querySelector('.fixed.inset-0.z-50, .fixed.inset-0.z-\\[60\\]')) {
       return;
     }
+    
+    let target = event?.target;
+    if (target && target.nodeType === 3) target = target.parentNode;
+    if (target && target.closest && target.closest('.no-swipe')) {
+      return;
+    }
+    
     const currentIndex = TABS.indexOf(activeTab);
     if (dir === 'Left' && currentIndex < TABS.length - 1) {
       setActiveTab(TABS[currentIndex + 1]);
