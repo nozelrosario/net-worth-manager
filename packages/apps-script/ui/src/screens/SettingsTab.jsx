@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2 } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 
 export default function SettingsTab({ data, onRefresh, showMessage }) {
@@ -11,7 +11,12 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
   const [profileName, setProfileName] = useState('');
   const [profileRelation, setProfileRelation] = useState('');
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
-  const familyProfiles = data?.familyProfiles || [];
+  
+  const [editingProfileId, setEditingProfileId] = useState(null);
+  const [editProfileName, setEditProfileName] = useState('');
+  const [editProfileRelation, setEditProfileRelation] = useState('');
+  const [isUpdateProfileSubmitting, setIsUpdateProfileSubmitting] = useState(false);
+const familyProfiles = data?.familyProfiles || [];
 
 
   useEffect(() => {
@@ -109,7 +114,53 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
     }
   };
 
-  return (
+  
+  const handleEditClick = (p) => {
+    setEditingProfileId(p['Profile ID']);
+    setEditProfileName(p.Name || '');
+    setEditProfileRelation(p.Relation || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProfileId(null);
+    setEditProfileName('');
+    setEditProfileRelation('');
+  };
+
+  const handleUpdateFamilyProfile = (e) => {
+    e.preventDefault();
+    if (!editProfileName.trim() || !editingProfileId) return;
+    
+    setIsUpdateProfileSubmitting(true);
+    const updateData = {
+      'Name': editProfileName.trim(),
+      'Relation': editProfileRelation.trim()
+    };
+
+    if (window.google?.script?.run) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsUpdateProfileSubmitting(false);
+          showMessage(res.message);
+          if (res.status === 'success') {
+            handleCancelEdit();
+            onRefresh();
+          }
+        })
+        .withFailureHandler((err) => {
+          setIsUpdateProfileSubmitting(false);
+          showMessage('Error: ' + err.message, true);
+        })
+        .updateRecord('FamilyProfiles', 'Profile ID', editingProfileId, updateData, getSafeStorage('nwm_session_token'));
+    } else {
+      setTimeout(() => {
+        setIsUpdateProfileSubmitting(false);
+        showMessage('Profile updated (preview)');
+        handleCancelEdit();
+      }, 1000);
+    }
+  };
+return (
     <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold text-text-primary">Admin Settings</h2>
@@ -214,11 +265,25 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
          <div className="space-y-3">
             <h4 className="text-sm font-semibold text-text-secondary mb-2">Current Family Profiles</h4>
             {familyProfiles.map((p, i) => (
-              <div key={i} className="flex flex-col gap-1 p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
-                 <div className="flex items-center justify-between">
-                    <span className="font-semibold text-text-primary text-sm">{p.Name}</span>
-                    {p.Relation && <span className="text-[10px] uppercase tracking-wider bg-surface-layer1 border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">{p.Relation}</span>}
-                 </div>
+              <div key={i} className="flex flex-col gap-2 p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
+                 {editingProfileId === p['Profile ID'] ? (
+                   <form onSubmit={handleUpdateFamilyProfile} className="flex flex-col gap-2">
+                     <input required value={editProfileName} onChange={e => setEditProfileName(e.target.value)} type="text" className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2 py-1 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Name" />
+                     <input value={editProfileRelation} onChange={e => setEditProfileRelation(e.target.value)} type="text" className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2 py-1 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Relation" />
+                     <div className="flex gap-2 justify-end mt-1">
+                       <button type="button" onClick={handleCancelEdit} className="px-3 py-1 bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-xs hover:bg-surface-layer1/80">Cancel</button>
+                       <button type="submit" disabled={isUpdateProfileSubmitting} className="px-3 py-1 bg-primary-accent text-white rounded-lg text-xs hover:bg-primary-accent/90 disabled:opacity-50">{isUpdateProfileSubmitting ? 'Saving...' : 'Save'}</button>
+                     </div>
+                   </form>
+                 ) : (
+                   <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-text-primary text-sm">{p.Name}</span>
+                        {p.Relation && <span className="text-[10px] uppercase tracking-wider bg-surface-layer1 border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">{p.Relation}</span>}
+                      </div>
+                      <button onClick={() => handleEditClick(p)} className="text-text-muted hover:text-primary-accent p-1"><Edit2 size={14} /></button>
+                   </div>
+                 )}
               </div>
             ))}
             {familyProfiles.length === 0 && (
