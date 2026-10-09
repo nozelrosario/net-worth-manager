@@ -320,7 +320,16 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
              </div>
              <div className="flex-1 bg-background-root/50 flex items-center justify-center p-4">
                {previewDoc.url ? (
-                  <iframe src={previewDoc.url.replace('/view', '/preview')} className="w-full h-full rounded border-none bg-white" title="Preview"></iframe>
+                  <div className="text-center text-text-secondary flex flex-col items-center max-w-sm mx-auto">
+                    <Lock size={48} className="text-primary-accent/50 mb-4" />
+                    <h4 className="text-white font-medium mb-2">Secure Document</h4>
+                    <p className="text-sm text-text-muted mb-6">
+                      For your privacy and security, embedded previews of Drive documents are disabled to prevent third-party tracking.
+                    </p>
+                    <a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary-accent text-white px-5 py-2.5 rounded-xl font-medium hover:bg-primary-accent/90 transition-transform active:scale-95">
+                      <ExternalLink size={18} /> Open in Native Viewer
+                    </a>
+                  </div>
                ) : (
                   <div className="text-center text-text-secondary">
                     <FileText size={48} className="mx-auto mb-3 opacity-20" />
