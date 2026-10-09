@@ -99,6 +99,14 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
           name: f.name, url: f.url, isLink: true
         }));
         
+        if (newEntry.linkInput && newEntry.linkInput.trim()) {
+           links.push({
+             name: newEntry.linkInput.trim().substring(0, 30) + '...',
+             url: newEntry.linkInput.trim(),
+             isLink: true
+           });
+        }
+        
         let uploadedFiles = [];
         if (filesToUpload.length > 0) {
           uploadedFiles = await uploadFilesSequential(filesToUpload, newEntry.Category, token);
@@ -308,7 +316,14 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <input value={newEntry.linkInput} onChange={e => setNewEntry({...newEntry, linkInput: e.target.value})} type="text" placeholder="Paste Google Drive URL..." className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-primary-accent" />
+                      <input 
+                        value={newEntry.linkInput} 
+                        onChange={e => setNewEntry({...newEntry, linkInput: e.target.value})} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
+                        type="text" 
+                        placeholder="Paste Google Drive URL..." 
+                        className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-primary-accent" 
+                      />
                       <button type="button" onClick={handleAddLink} className="px-3 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-lg text-xs font-medium transition-colors">Add Link</button>
                     </div>
                   </div>
