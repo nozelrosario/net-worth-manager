@@ -30,6 +30,9 @@
 - **Market Integration**: Configure a timed Google Apps Script Trigger to fetch AMFI NAVs and update the `Current Value` field in the `Assets` table.
 
 ## Feature Update (v2.0)
-✅ **Restored Base UX Features**: Re-implemented `react-swipeable` for seamless swiping between navigation tabs. Added user avatar, active session modal, expandable header menus, and a pulsing live sync indicator to restore the original responsive prototype feel.
+✅ **Restored Base UX Features**: Re-implemented `react-swipeable` for seamless swiping between navigation tabs. Added user avatar, active session modal, expandable header menus, and a pulsing live sync indicator to restore the original responsive prototype feel. Fixed gesture collision bugs by isolating scroll containers.
 ✅ **Dynamic Data Binding**: UI components now directly consume data from Google Apps Script (`window.google.script.run.getDashboardData`). Hardcoded fallback values are preserved for testing out of the Google Apps Script context.
-✅ **Data Entry Modals**: Implemented fully functional "+ Add Asset" and "+ Log Cash" modals that push structured records straight to the Google Sheets backend.
+✅ **Dynamic Asset Schemas**: Shifted from generic forms to category-specific granular entry screens (e.g., FDs require maturity dates, Real Estate requires 7/12 extracts). Granular form fields are packed into the `Details JSON` column to prevent Google Sheets column bloat.
+✅ **Family Safe & Drive API**: Transformed the Safe tab into a secure document vault. Documents are uploaded directly to the owner's Google Drive via `Drive.gs`, bypassing Apps Script storage limits.
+✅ **Dynamic Environment Routing**: The `Drive.gs` backend inspects the connected spreadsheet's name. If it contains "UAT", uploads are routed to `Net Worth Manager -> UAT -> Family Safe -> [Category]`. Otherwise, they go to `PROD`.
+✅ **CI/CD Fixes**: Modified `.claspignore` to explicitly include all `*.gs` files to ensure new backend services are deployed. `appsscript.json` explicitly declares required OAuth scopes to force permission sync across the Web App deployment.
