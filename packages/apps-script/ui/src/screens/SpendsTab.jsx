@@ -8,6 +8,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   const [newTxn, setNewTxn] = useState({ 
     Date: new Date().toISOString().split('T')[0], 
     'Merchant/Description': '', 
+    Beneficiary: '',
     Category: 'Groceries', 
     Amount: '', 
     Type: 'Expense', 
@@ -31,6 +32,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     setNewTxn({ 
       Date: new Date().toISOString().split('T')[0], 
       'Merchant/Description': '', 
+      Beneficiary: '',
       Category: categoriesList[0] || 'Groceries', 
       Amount: '', 
       Type: 'Expense', 
@@ -223,7 +225,10 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                   </span>
                 )}
               </div>
-              <p className="text-[12px] text-text-secondary mt-0.5">{txn['Account/Card'] || 'Main Account'}</p>
+              <p className="text-[12px] text-text-secondary mt-0.5">
+                {txn['Account/Card'] || 'Main Account'}
+                {txn.Beneficiary && ` • For: ${txn.Beneficiary}`}
+              </p>
               {txn.Tags && (
                 <p className="text-xs text-text-muted mt-1">{txn.Tags}</p>
               )}
@@ -404,6 +409,10 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                <div>
                  <label className="block text-xs text-text-secondary mb-1">Merchant / Description</label>
                  <input required value={newTxn['Merchant/Description']} onChange={e => setNewTxn({...newTxn, 'Merchant/Description': e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Swiggy" />
+               </div>
+               <div>
+                 <label className="block text-xs text-text-secondary mb-1">For Whom (Beneficiary)</label>
+                 <input value={newTxn.Beneficiary || ''} onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Whole Family, John, etc." />
                </div>
                <div className="flex gap-2">
                  <div className="flex-1">

@@ -397,7 +397,7 @@ function setupDatabaseSheets() {
     'Settings': ['Setting Key', 'Setting Value'],
     'Audit': ['Audit ID', 'Timestamp', 'Action', 'User', 'Details'],
     'Assets': ['Asset ID', 'Type', 'Name', 'Category', 'Owner', 'Status', 'Acquisition Date', 'Cost', 'Current Value', 'Institution/Location', 'Identifiers', 'Nominee', 'Nominee %', 'Details JSON'],
-    'Transactions': ['Txn ID', 'Date', 'Type', 'Amount', 'Category', 'Account/Card', 'Merchant/Description', 'Tags', 'Is Transfer', 'Split JSON'],
+    'Transactions': ['Txn ID', 'Date', 'Type', 'Amount', 'Category', 'Account/Card', 'Merchant/Description', 'Tags', 'Is Transfer', 'Split JSON', 'Beneficiary'],
     'FamilyProfiles': ['Profile ID', 'Name', 'Relation', 'Ownership %', 'Notes'],
     'Events': ['Event ID', 'Date', 'Type', 'Title', 'Amount', 'Status', 'Details JSON'],
     'Safe': ['Document ID', 'Name', 'Category', 'Owner', 'Description', 'Files JSON', 'Date Added']
@@ -410,6 +410,19 @@ function setupDatabaseSheets() {
       sheet.getRange(1, 1, 1, sheets[name].length).setValues([sheets[name]]);
       sheet.getRange(1, 1, 1, sheets[name].length).setFontWeight("bold").setBackground("#f3f4f6");
       sheet.setFrozenRows(1);
+    } else {
+      // Reconcile headers (append missing)
+      var existingHeaders = sheet.getLastColumn() > 0 ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] : [];
+      var expectedHeaders = sheets[name];
+      var newHeadersCount = 0;
+      for (var j = 0; j < expectedHeaders.length; j++) {
+        if (existingHeaders.indexOf(expectedHeaders[j]) === -1) {
+          var targetCol = existingHeaders.length + 1 + newHeadersCount;
+          sheet.getRange(1, targetCol).setValue(expectedHeaders[j]);
+          sheet.getRange(1, targetCol).setFontWeight("bold").setBackground("#f3f4f6");
+          newHeadersCount++;
+        }
+      }
     }
   }
 
