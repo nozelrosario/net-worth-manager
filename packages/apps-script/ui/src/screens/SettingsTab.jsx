@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 
 export default function SettingsTab({ data, onRefresh, showMessage }) {
@@ -12,13 +12,7 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
   const [profileRelation, setProfileRelation] = useState('');
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const familyProfiles = data?.familyProfiles || [];
-  const defaultCategories = 'Equity, Real Estate, Gold, Cash/FD, Liabilities';
-  const savedCategories = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
-  const [assetCategoriesText, setAssetCategoriesText] = useState(savedCategories);
 
-  useEffect(() => {
-    setAssetCategoriesText(savedCategories);
-  }, [savedCategories]);
 
   useEffect(() => {
     // Fetch team config from backend
@@ -127,38 +121,30 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
             <h3 className="font-semibold">App Configuration</h3>
          </div>
          
-         <form onSubmit={(e) => {
-           e.preventDefault();
-           if (!assetCategoriesText.trim()) return;
-           setIsSubmitting(true);
-           if (window.google?.script?.run) {
-             window.google.script.run
-               .withSuccessHandler((res) => {
-                 setIsSubmitting(false);
-                 showMessage(res.message);
-                 if (onRefresh) onRefresh();
-               })
-               .withFailureHandler((err) => {
-                 setIsSubmitting(false);
-                 showMessage('Error: ' + err.message, true);
-               })
-               .upsertSetting('AssetCategories', assetCategoriesText, getSafeStorage('nwm_session_token'));
-           } else {
-             setTimeout(() => {
-               setIsSubmitting(false);
-               showMessage('Categories updated (preview)');
-             }, 1000);
-           }
-         }} className="space-y-4 border-b border-border-subtle pb-6 mb-4">
-           <div>
-             <label className="block text-xs text-text-secondary mb-1">Asset Categories (Comma separated)</label>
-             <input required value={assetCategoriesText} onChange={e => setAssetCategoriesText(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Equity, Real Estate, Gold, Cash/FD, Liabilities" />
-           </div>
-           <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 mt-2">
-             <Save size={16} />
-             {isSubmitting ? 'Saving...' : 'Update Categories'}
-           </button>
-         </form>
+         <CategoryEditor 
+           title="Asset Categories"
+           defaultCategories="Equity, Real Estate, Gold, Cash/FD, Liabilities"
+           settingKey="AssetCategories"
+           data={data}
+           onRefresh={onRefresh}
+           showMessage={showMessage}
+         />
+         <CategoryEditor 
+           title="Spend Categories"
+           defaultCategories="Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Other"
+           settingKey="SpendCategories"
+           data={data}
+           onRefresh={onRefresh}
+           showMessage={showMessage}
+         />
+         <CategoryEditor 
+           title="Safe Document Categories"
+           defaultCategories="Identity, Finance, Property, Medical, Vehicle, Education, Tax, Other"
+           settingKey="SafeCategories"
+           data={data}
+           onRefresh={onRefresh}
+           showMessage={showMessage}
+         />
       </section>
 
       <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
@@ -251,3 +237,77 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
     </div>
   );
 }
+
+const CategoryEditor = ({ title, defaultCategories, settingKey, data, onRefresh, showMessage }) => {
+  const savedCategories = data?.settings?.find(s => s['Setting Key'] === settingKey)?.['Setting Value'] || defaultCategories;
+  const [categories, setCategories] = useState(savedCategories.split(',').map(s => s.trim()).filter(Boolean));
+  const [newCat, setNewCat] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+     setCategories(savedCategories.split(',').map(s => s.trim()).filter(Boolean));
+  }, [savedCategories]);
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    if (!newCat.trim() || categories.includes(newCat.trim())) return;
+    setCategories([...categories, newCat.trim()]);
+    setNewCat('');
+  };
+
+  const handleRemove = (cat) => {
+    setCategories(categories.filter(c => c !== cat));
+  };
+
+  const handleSave = () => {
+    setIsSubmitting(true);
+    const val = categories.join(', ');
+    if (window.google?.script?.run) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSubmitting(false);
+          showMessage(res.message);
+          if (onRefresh) onRefresh();
+        })
+        .withFailureHandler((err) => {
+          setIsSubmitting(false);
+          showMessage('Error: ' + err.message, true);
+        })
+        .upsertSetting(settingKey, val, getSafeStorage('nwm_session_token'));
+    } else {
+      setTimeout(() => {
+        setIsSubmitting(false);
+        showMessage(`${title} updated (preview)`);
+      }, 1000);
+    }
+  };
+
+  return (
+    <div className="mb-6 border-b border-border-subtle pb-6 last:border-0 last:pb-0">
+      <label className="block text-sm font-semibold text-text-primary mb-2">{title}</label>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {categories.map(cat => (
+          <div key={cat} className="flex items-center gap-1 bg-surface-layer2 text-text-primary px-3 py-1 rounded-full text-sm border border-border-subtle">
+            {cat}
+            <button type="button" onClick={() => handleRemove(cat)} className="text-text-muted hover:text-liability-rose ml-1 flex items-center justify-center p-0.5"><X size={12} /></button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input 
+          value={newCat} 
+          onChange={e => setNewCat(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleAdd(e); }}
+          type="text" 
+          placeholder="New Category" 
+          className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" 
+        />
+        <button type="button" onClick={handleAdd} className="px-4 py-2 bg-surface-layer2 border border-border-subtle text-text-primary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Add</button>
+      </div>
+      <button type="button" onClick={handleSave} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 mt-3">
+        <Save size={16} />
+        {isSubmitting ? 'Saving...' : 'Save ' + title}
+      </button>
+    </div>
+  );
+};

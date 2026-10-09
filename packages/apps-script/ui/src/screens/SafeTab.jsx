@@ -21,7 +21,9 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
   const safeDocs = data?.safe || [];
   const profiles = data?.familyProfiles || [];
   
-  const categories = ['Identity', 'Property', 'Tax', 'Insurance', 'Will & Trust', 'Investment', 'Other'];
+  const defaultSafeCategories = 'Identity, Finance, Property, Medical, Vehicle, Education, Tax, Other';
+  const customSafeCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'SafeCategories')?.['Setting Value'] || defaultSafeCategories;
+  const categoriesList = customSafeCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
   
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -169,7 +171,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
   
   const resetForm = () => {
     setNewEntry({
-      Name: '', Category: 'Identity', Owner: '', Description: '', linkInput: ''
+      Name: '', Category: categoriesList[0] || 'Identity', Owner: '', Description: '', linkInput: ''
     });
     setAttachedFiles([]);
     setShowAddModal(true);
@@ -259,7 +261,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   <div className="flex-1">
                     <label className="block text-xs text-text-secondary mb-1">Category</label>
                     <select value={newEntry.Category} onChange={e => setNewEntry({...newEntry, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
-                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                      {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div className="flex-1">
