@@ -8,7 +8,10 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
   const [memberName, setMemberName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamMembers, setTeamMembers] = useState([]);
-  
+  const [profileName, setProfileName] = useState('');
+  const [profileRelation, setProfileRelation] = useState('');
+  const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
+  const familyProfiles = data?.familyProfiles || [];
   const defaultCategories = 'Equity, Real Estate, Gold, Cash/FD, Liabilities';
   const savedCategories = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
   const [assetCategoriesText, setAssetCategoriesText] = useState(savedCategories);
@@ -71,6 +74,43 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
       setTimeout(() => {
         setIsSubmitting(false);
         showMessage('Team updated (preview)');
+      }, 1000);
+    }
+  };
+
+  const handleAddFamilyProfile = (e) => {
+    e.preventDefault();
+    if (!profileName.trim()) return;
+    
+    setIsProfileSubmitting(true);
+    const newRecord = {
+      'Profile ID': '',
+      'Name': profileName.trim(),
+      'Relation': profileRelation.trim(),
+      'Ownership %': '',
+      'Notes': ''
+    };
+
+    if (window.google?.script?.run) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsProfileSubmitting(false);
+          showMessage(res.message);
+          if (res.status === 'success') {
+            setProfileName('');
+            setProfileRelation('');
+            onRefresh();
+          }
+        })
+        .withFailureHandler((err) => {
+          setIsProfileSubmitting(false);
+          showMessage('Error: ' + err.message, true);
+        })
+        .addRecord('FamilyProfiles', newRecord, getSafeStorage('nwm_session_token'));
+    } else {
+      setTimeout(() => {
+        setIsProfileSubmitting(false);
+        showMessage('Profile added (preview)');
       }, 1000);
     }
   };
@@ -160,6 +200,44 @@ export default function SettingsTab({ data, onRefresh, showMessage }) {
                  <span className="text-xs text-text-muted">{member.emails}</span>
               </div>
             ))}
+         </div>
+      </section>
+
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+         <div className="flex items-center gap-2 mb-4 text-text-primary">
+            <Users size={20} className="text-primary-accent" />
+            <h3 className="font-semibold">Family Profiles</h3>
+         </div>
+         <p className="text-xs text-text-muted mb-4">Add family members who don't need app access but are associated with assets, safe documents, or spends.</p>
+         
+         <form onSubmit={handleAddFamilyProfile} className="space-y-4 border-b border-border-subtle pb-6 mb-4">
+           <div>
+             <label className="block text-xs text-text-secondary mb-1">Name (e.g. Son, Daughter)</label>
+             <input required value={profileName} onChange={e => setProfileName(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="John" />
+           </div>
+           <div>
+             <label className="block text-xs text-text-secondary mb-1">Relation (Optional)</label>
+             <input value={profileRelation} onChange={e => setProfileRelation(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Son" />
+           </div>
+           <button type="submit" disabled={isProfileSubmitting} className="w-full flex items-center justify-center gap-2 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 mt-2">
+             <Save size={16} />
+             {isProfileSubmitting ? 'Saving...' : 'Add Family Profile'}
+           </button>
+         </form>
+
+         <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-text-secondary mb-2">Current Family Profiles</h4>
+            {familyProfiles.map((p, i) => (
+              <div key={i} className="flex flex-col gap-1 p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
+                 <div className="flex items-center justify-between">
+                    <span className="font-semibold text-text-primary text-sm">{p.Name}</span>
+                    {p.Relation && <span className="text-[10px] uppercase tracking-wider bg-surface-layer1 border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">{p.Relation}</span>}
+                 </div>
+              </div>
+            ))}
+            {familyProfiles.length === 0 && (
+              <p className="text-xs text-text-muted">No family profiles added yet.</p>
+            )}
          </div>
       </section>
 

@@ -21,6 +21,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   const [filterType, setFilterType] = useState('All Records');
 
   const txns = data?.transactions || [];
+  const profiles = data?.familyProfiles || [];
 
   const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Other';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'SpendCategories')?.['Setting Value'] || defaultCategories;
@@ -412,7 +413,10 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                </div>
                <div>
                  <label className="block text-xs text-text-secondary mb-1">For Whom (Beneficiary)</label>
-                 <input value={newTxn.Beneficiary || ''} onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Whole Family, John, etc." />
+                 <select value={newTxn.Beneficiary || ''} onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
+                   <option value="">Whole Family</option>
+                   {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
+                 </select>
                </div>
                <div className="flex gap-2">
                  <div className="flex-1">

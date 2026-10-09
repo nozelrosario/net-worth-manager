@@ -14,6 +14,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const defaultCategories = 'Equity, Real Estate, Gold, Cash/FD, Liabilities';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
   const categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  const profiles = data?.familyProfiles || [];
   
   const filters = ['All Assets', ...categoriesList];
   
@@ -160,6 +161,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                category={newAsset.Category || categoriesList[0] || ''}
                formData={newAsset}
                setFormData={setNewAsset}
+               profiles={profiles}
                onSubmit={handleSaveAsset}
                onCancel={() => setShowAddModal(false)}
                isSubmitting={isSubmitting}

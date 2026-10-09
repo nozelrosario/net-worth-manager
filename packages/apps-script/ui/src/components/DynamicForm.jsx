@@ -27,7 +27,7 @@ const setNestedValue = (obj, path, value) => {
   return newObj;
 };
 
-export default function DynamicForm({ category, formData, setFormData, onSubmit, onCancel, isSubmitting, isEditing, onDelete }) {
+export default function DynamicForm({ category, formData, setFormData, profiles, onSubmit, onCancel, isSubmitting, isEditing, onDelete }) {
   // Use specific schema if available, else default, but Liabilities uses specific. 
   // Need to map user categories to our schemas. If exact match doesn't exist, use default.
   // We can do a loose match or exact match.
@@ -89,6 +89,26 @@ export default function DynamicForm({ category, formData, setFormData, onSubmit,
                  </select>
                </div>
              );
+          }
+
+          if (field.name === 'Owner' && profiles && profiles.length > 0) {
+            return (
+              <div key={field.name} className="md:col-span-2">
+                <label className="block text-xs text-text-secondary mb-1">{field.label}</label>
+                <select 
+                  value={value} 
+                  onChange={e => handleChange(field.name, e.target.value)} 
+                  required={field.required}
+                  className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent"
+                >
+                  <option value="">Self</option>
+                  <option value="Joint">Joint</option>
+                  {profiles.map(p => (
+                    <option key={p.Name} value={p.Name}>{p.Name}</option>
+                  ))}
+                </select>
+              </div>
+            );
           }
 
           return (
