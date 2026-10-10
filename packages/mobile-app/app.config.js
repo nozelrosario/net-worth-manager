@@ -35,7 +35,6 @@ module.exports = () => {
         },
         package: IS_UAT ? "com.nozel.networthmanager.uat" : "com.nozel.networthmanager"
       },
-      plugins: ["./withNotificationListener.js"],
       web: {
         favicon: "./assets/favicon.png"
       },

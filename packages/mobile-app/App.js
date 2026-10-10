@@ -3,8 +3,6 @@ import { StyleSheet, View, StatusBar, Platform, BackHandler, ActivityIndicator, 
 import { WebView } from 'react-native-webview';
 import Constants from 'expo-constants';
 import * as Network from 'expo-network';
-import RNAndroidNotificationListener from 'react-native-android-notification-listener';
-import { DeviceEventEmitter } from 'react-native';
 
 export default function App() {
   const webviewRef = useRef(null);
@@ -18,46 +16,6 @@ export default function App() {
 
   useEffect(() => {
     checkNetwork();
-    
-    // Check and request Notification Listener Permission
-    const checkNotificationPermission = async () => {
-      if (Platform.OS === 'android') {
-        const status = await RNAndroidNotificationListener.getPermissionStatus();
-        if (status !== 'authorized') {
-          RNAndroidNotificationListener.requestPermission();
-        }
-      }
-    };
-    checkNotificationPermission();
-
-    // Listen for new notifications
-    const listener = DeviceEventEmitter.addListener('RNAndroidNotificationListener', (notification) => {
-      if (webviewRef.current && notification) {
-        let notifData;
-        try {
-          notifData = typeof notification === 'string' ? JSON.parse(notification) : notification;
-        } catch (e) {
-          notifData = notification;
-        }
-        
-        // Only process notifications that likely contain SMS/messages
-        if (notifData.title && notifData.text) {
-          const smsMock = [{
-            address: notifData.title,
-            body: notifData.text,
-            date: Date.now()
-          }];
-          
-          const script = `
-            try {
-              window.postMessage(JSON.stringify({ type: 'SMS_SYNC', payload: ${JSON.stringify(smsMock)} }), '*');
-            } catch(e) {}
-            true;
-          `;
-          webviewRef.current.injectJavaScript(script);
-        }
-      }
-    });
 
     const backAction = () => {
       if (canGoBack && webviewRef.current) {
@@ -70,7 +28,6 @@ export default function App() {
     
     return () => {
       backHandler.remove();
-      listener.remove();
     };
   }, [canGoBack]);
 
