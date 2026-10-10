@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import useModalBack from "./hooks/useModalBack";
-import useSmsListener from "./hooks/useSmsListener";
 import { X } from "lucide-react";
 import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
@@ -24,24 +23,51 @@ export default function App() {
   
   const [showNotifications, setShowNotifications] = useState(false);
   useModalBack(showNotifications, () => setShowNotifications(false));
-  const { smsList, dismissSms } = useSmsListener();
 
-  const handleProcessSms = (sms) => {
-    const amountMatch = sms.body.match(/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d+)?)/i);
-    const amount = amountMatch ? amountMatch[1].replace(/,/g, '') : '';
+  const getUpcomingReminders = (assets) => {
+    if (!assets) return [];
+    const reminders = [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const thresholdDate = new Date(now.getTime());
+    thresholdDate.setDate(now.getDate() + 30); // Next 30 days
     
-    sessionStorage.setItem('pending_sms_expense', JSON.stringify({
-      amount,
-      notes: sms.body,
-      date: new Date(sms.date).toISOString().split('T')[0]
-    }));
-    
-    dismissSms(sms._id);
-    setShowNotifications(false);
-    setActiveTab('spends');
+    assets.forEach(asset => {
+      let details = {};
+      try {
+        details = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+      } catch(e) {}
+      
+      const maturityDateStr = details['Maturity Date'];
+      if (maturityDateStr) {
+        const maturityDate = new Date(maturityDateStr);
+        if (maturityDate >= now && maturityDate <= thresholdDate) {
+           const daysLeft = Math.ceil((maturityDate - now) / (1000 * 60 * 60 * 24));
+           reminders.push({
+             _id: 'rem_' + asset['Asset ID'],
+             title: 'Upcoming Maturity',
+             address: asset.Category,
+             body: `${asset.Name} is maturing in ${daysLeft} days (on ${maturityDate.toLocaleDateString()}). Current Value: ${formatCurrency(asset['Current Value'])}`,
+             date: maturityDate.getTime(),
+             assetId: asset['Asset ID']
+           });
+        } else if (maturityDate < now) {
+           reminders.push({
+             _id: 'rem_' + asset['Asset ID'],
+             title: 'Matured Asset',
+             address: asset.Category,
+             body: `${asset.Name} has matured on ${maturityDate.toLocaleDateString()}. Please update its status or reinvest.`,
+             date: maturityDate.getTime(),
+             assetId: asset['Asset ID'],
+             isOverdue: true
+           });
+        }
+      }
+    });
+    return reminders.sort((a, b) => a.date - b.date);
   };
 
-const [headerExpanded, setHeaderExpanded] = useState(false);
+  const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
   const [darkMode, setDarkMode] = useState(() => getSafeStorage('nwm_dark_mode', 'true') === 'true');
@@ -204,7 +230,7 @@ const [headerExpanded, setHeaderExpanded] = useState(false);
             </button>
             <div onClick={() => setShowNotifications(true)} className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
               <Bell size={20} />
-              {smsList.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full"></span>}
+              {getUpcomingReminders(data?.assets).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full animate-pulse"></span>}
             </div>
           </div>
         </div>
@@ -269,24 +295,24 @@ const [headerExpanded, setHeaderExpanded] = useState(false);
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNotifications(false)}>
           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Notifications</h3>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
               <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-white p-1"><X size={20} /></button>
             </div>
             
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
-              {smsList.length === 0 ? (
-                <p className="text-sm text-text-muted text-center py-8">No new notifications.</p>
+              {getUpcomingReminders(data?.assets).length === 0 ? (
+                <p className="text-sm text-text-muted text-center py-8">No upcoming reminders.</p>
               ) : (
-                smsList.map(sms => (
-                  <div key={sms._id} className="bg-surface-layer2 p-3 rounded-xl border border-border-subtle">
+                getUpcomingReminders(data?.assets).map(rem => (
+                  <div key={rem._id} className={`bg-surface-layer2 p-3 rounded-xl border ${rem.isOverdue ? 'border-liability-rose/50' : 'border-bullion-amber/50'}`}>
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-text-primary text-sm truncate pr-2">{sms.address}</span>
-                      <span className="text-xs text-text-muted whitespace-nowrap">{new Date(sms.date).toLocaleDateString()} {new Date(sms.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      <span className={`font-semibold text-sm truncate pr-2 ${rem.isOverdue ? 'text-liability-rose' : 'text-bullion-amber'}`}>{rem.title}</span>
+                      <span className="text-xs text-text-muted whitespace-nowrap">{new Date(rem.date).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-xs text-text-secondary mb-3 leading-relaxed">{sms.body}</p>
-                    <div className="flex gap-2 justify-end">
-                      <button onClick={() => dismissSms(sms._id)} className="px-3 py-1.5 bg-surface-layer1 text-text-secondary rounded-lg text-xs font-medium hover:text-white">Dismiss</button>
-                      <button onClick={() => handleProcessSms(sms)} className="px-3 py-1.5 bg-primary-accent text-white rounded-lg text-xs font-medium hover:bg-primary-accent/90">Add Expense</button>
+                    <p className="text-xs text-text-primary mb-2 leading-relaxed">{rem.body}</p>
+                    <div className="flex justify-between items-center mt-2">
+                       <span className="bg-surface-layer1 text-text-secondary text-[10px] px-2 py-1 rounded border border-border-subtle">{rem.address}</span>
+                       <button onClick={() => { setShowNotifications(false); setActiveTab('assets'); }} className="text-xs text-primary-accent hover:text-primary-accent/80 font-medium">View Asset &rarr;</button>
                     </div>
                   </div>
                 ))
