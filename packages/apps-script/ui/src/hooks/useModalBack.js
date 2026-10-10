@@ -1,12 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function useModalBack(isOpen, closeFn) {
+  const closeFnRef = useRef(closeFn);
+  
+  useEffect(() => {
+    closeFnRef.current = closeFn;
+  }, [closeFn]);
+
   useEffect(() => {
     if (isOpen) {
-      document.body.classList.add('has-modal');
+      window.modalCount = (window.modalCount || 0) + 1;
+      if (window.modalCount > 0) {
+        document.body.classList.add('has-modal');
+      }
       window.location.hash = 'modal';
     } else {
-      document.body.classList.remove('has-modal');
       if (window.location.hash === '#modal') {
         window.history.back();
       }
@@ -14,14 +22,20 @@ export default function useModalBack(isOpen, closeFn) {
 
     const onHashChange = () => {
       if (window.location.hash !== '#modal' && isOpen) {
-        closeFn();
+        closeFnRef.current();
       }
     };
 
     window.addEventListener('hashchange', onHashChange);
+    
     return () => {
-      document.body.classList.remove('has-modal');
       window.removeEventListener('hashchange', onHashChange);
+      if (isOpen) {
+        window.modalCount = Math.max(0, (window.modalCount || 1) - 1);
+        if (window.modalCount === 0) {
+          document.body.classList.remove('has-modal');
+        }
+      }
     };
-  }, [isOpen, closeFn]);
+  }, [isOpen]);
 }
