@@ -3,7 +3,20 @@ const { withAndroidManifest } = require('@expo/config-plugins');
 module.exports = function withNotificationListener(config) {
   return withAndroidManifest(config, async (config) => {
     const androidManifest = config.modResults;
+    
+    if (!androidManifest.manifest.$['xmlns:tools']) {
+      androidManifest.manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
+    }
+
     const app = androidManifest.manifest.application[0];
+    
+    if (app.$['tools:replace']) {
+      if (!app.$['tools:replace'].includes('android:allowBackup')) {
+        app.$['tools:replace'] += ',android:allowBackup';
+      }
+    } else {
+      app.$['tools:replace'] = 'android:allowBackup';
+    }
 
     // Define the service for the Notification Listener
     const service = {
