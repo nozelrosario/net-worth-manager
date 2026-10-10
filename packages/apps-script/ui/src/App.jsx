@@ -22,7 +22,7 @@ export default function App() {
   useModalBack(showUserModal, () => setShowUserModal(false));
   
   const [showNotifications, setShowNotifications] = useState(false);
-  useModalBack(showNotifications, () => setShowNotifications(false));
+  // removed useModalBack for notifications to prevent hashchange conflicts
 
   const getUpcomingReminders = (assets) => {
     if (!assets) return [];
@@ -228,7 +228,7 @@ export default function App() {
             <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-1.5 rounded-full hover:bg-surface-layer1 transition-colors">
               {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
-            <div onClick={() => setShowNotifications(true)} className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
+            <div onClick={(e) => { e.stopPropagation(); setShowNotifications(true); }} className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
               <Bell size={20} />
               {getUpcomingReminders(data?.assets).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full animate-pulse"></span>}
             </div>
@@ -292,7 +292,7 @@ export default function App() {
         {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} showMessage={showMessage} />}
       </main>
       {showNotifications && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNotifications(false)}>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNotifications(false)}>
           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
