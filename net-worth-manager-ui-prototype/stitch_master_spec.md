@@ -1,4 +1,65 @@
 # PROJECT SPECIFICATION: "Net Worth Manager" (Family Office, Multi-Asset Net Worth & Emergency Succession Safe)
+# Features 
+1. Automated Cashflow & Expense Ingestion
+Automates daily expense detection and categorization directly from financial alerts without manual bookkeeping friction.
+ * On-Device SMS Parser: Automatically listens to incoming bank and UPI SMS messages directly on the device using regex templates designed for Indian banking sender IDs. It extracts key transaction fields: debited/credited amount, timestamp, merchant name or UPI VPA, bank identifier, account/card last 4 digits, and reference/UTR number.
+ * Transfer & Self-Payment Auto-Detection: Intelligently identifies internal movements of funds (e.g., paying a credit card bill from savings, transferring funds to a Demat/trading account, or moving cash between self accounts) to avoid double-counting them as expenses.
+ * Smart Noise & Spam Filter: Discards non-transactional messages, such as OTPs, marketing alerts, promotional spam, and generic bank balance notifications.
+ * Category Tagging & Review Queue: Automatically maps recognized merchants to standard expense buckets (e.g., groceries, dining, utilities) while routing ambiguous or new transactions into an inbox queue for quick one-tap verification.
+ * Manual Cash Spend Ledger: Provides a fast-entry modal to record out-of-pocket physical cash spends that do not generate bank SMS alerts.
+ * Split Transaction Support: Allows users to split a single parsed debit into multiple categories (e.g., dividing a large supermarket UPI payment into groceries and household hardware).
+2. Multi-Entity Family Office Structure
+Enables managing wealth across multiple family members while preserving individual and collective financial views.
+ * Family Entity Profiles: Dedicated sub-profiles to manage assets and liabilities for Self, Spouse, Parents, and Minors.
+ * Granular Ownership Models: Supports 100% sole ownership, joint holding structures with custom ownership percentage splits (e.g., 50–50 or 70–30 co-owned real estate), and guardian-managed accounts for minor dependents.
+ * Consolidated vs. Filtered Views: Offers a one-tap toggle between the total combined family net worth balance sheet and single-member views.
+ * Member Account Mapping: Automatically attributes parsed SMS debits and credits to the correct family member by linking the detected account or card last 4 digits to their individual profile.
+3. Multi-Asset Wealth Aggregator & Detailed Entry Screens
+Provides specialized, modular entry screens and automated calculations across liquid, market-linked, physical, and illiquid holdings.
+ * Market-Linked Investments (Equities & Mutual Funds):
+   * Automatically fetches daily closing Net Asset Values (NAVs) via AMFI scheme codes (MFAPI) and daily closing stock prices for listed equities.
+   * Features a lot-level purchase repeater (Buy Date, Units, Buy NAV/Price, Outflow) supporting FIFO cost-basis tracking for Section 111A (STCG) and Section 112A (LTCG) tax calculations.
+   * Tracks Demat DP IDs, broker names, folio numbers, and AMC nominee records.
+ * Physical Precious Metals (Gold & Silver):
+   * Logs physical gold and silver by type (coins, bars, jewelry), purity (24K, 22K, 18K), and weight in grams.
+   * Multiplies purity-adjusted grams against live daily bullion spot rates to show real-time valuation, with an option for manual valuation.
+   * Records purchase invoices, making charges, and physical storage locations (e.g., home safe, bank locker).
+ * Fixed Deposits (FD) & Recurring Deposits (RD):
+   * Tracks principal amounts, interest rates, tenure, maturity dates, and payout mechanics (cumulative/reinvestment vs. periodic payouts).
+   * Dedicated input fields record annual accrued interest (YTD) and TDS deducted by the bank for seamless reconciliation with Form 26AS/AIS.
+   * Logs FDR/certificate numbers, auto-renewal flags, and physical deposit receipt locations.
+ * Real Estate & Illiquid Land:
+   * Captures property type, address, baseline acquisition cost, acquisition date, and an annual compounding appreciation model (A = P(1+r)^t) to project fair market value.
+   * Captures critical legal identifiers: Survey number, Khata, Patta, and Khasra numbers.
+   * Records physical deed storage locations, registered nominees, and PDF deed attachments, as well as stamp duty and home improvement costs for capital gains records.
+ * Retirement Schemes & Liabilities:
+   * Tracks balances and contributions for EPF, PPF, NPS, and Sukanya Samriddhi Yojana (SSY).
+   * Directly offsets total assets with liabilities, including credit card outstanding balances, home loans, vehicle loans, and personal loans.
+4. Advanced Portfolio Analytics & Allocation
+Provides high-level intelligence on asset distribution, cash drag, and risk exposure.
+ * Cash Drag vs. Inflation Monitor: Displays the percentage of total family net worth sitting idle in low-interest savings accounts compared against inflation-hedging, growth assets.
+ * Asset Class Rebalancing Visualizer: Compares actual portfolio weightings (Equities vs. Debt/FD vs. Gold vs. Real Estate) against target allocation benchmarks (e.g., 60/20/10/10) to highlight portfolio drift.
+ * Concentration Risk Monitor: Flags portfolio vulnerabilities when an individual stock holding or specific sector weighting exceeds safety thresholds.
+ * Sovereign Gold Bond (SGB) Tracker: Tracks SGB tranches independently from physical bullion, projecting semi-annual 2.5% coupon payouts and monitoring maturity dates for tax-exempt capital redemption.
+5. Proactive Event, Maturity & Renewal Reminders
+Prevents financial loss, lapse penalties, and lock-ins through a scheduled, staggered notification system.
+ * FD & RD Maturity Alerts: Fires notifications prior to deposit maturity dates (e.g., 30 days, 7 days, 1 day prior) detailing the payout amount and linked destination bank account to evaluate reinvestment options.
+ * Insurance Premium Renewals: Staggered alerts for Term Life, Health Floater, Vehicle, and Home policies with premium sums, grace period deadlines, and policyholder names to prevent coverage lapse.
+ * Physical Locker & Administrative Renewals: Tracks annual bank locker rent due dates, tenant lease agreement renewal/escalation reviews, and recurring bank/Demat re-KYC deadlines.
+ * Credit Card Statement & Due Alerts: Alerts users ahead of credit card payment due dates using parsed statement records to prevent late fees and finance charges.
+ * Unified Financial Calendar: Consolidates all upcoming cash outflows—including FD maturities, SIP auto-debits, premium payments, and loan EMIs—into a single chronological monthly view.
+6. Emergency Dossier & Succession Ledger (Family Safe)
+Ensures full continuity and administrative access for trusted family members or executors during an emergency.
+ * Central Administrative Registry: Master reference of all Demat DP IDs, mutual fund folios, bank account numbers, IFSC codes, and customer IDs.
+ * Physical Asset & Key Locator: Clear directory detailing bank locker numbers, locker branch addresses, co-signatory rules, locker key locations, and physical deed/will hiding spots.
+ * Insurance Claim Center: Consolidated directory of policy numbers, sums assured, network hospital details, Third-Party Administrator (TPA) names, and 24x7 cashless claim helpline contacts.
+ * Nomination Audit Matrix: A compliance dashboard and risk score that flags any bank account, mutual fund folio, or deposit lacking an up-to-date registered nominee or percentage allocation.
+ * Encrypted Emergency Dossier (ICE Kit) Export: Generates a secure, password-protected master PDF containing all asset locations, folios, insurance policies, and claim instructions for family members or legal executors without requiring everyday app access.
+7. Privacy, Access & Everyday Usability
+Maintains security and daily practical convenience in both private and shared environments.
+ * Privacy & Screen Masking Mode: A one-tap toggle on the home screen that instantly masks sensitive monetary balances (₹ ****) across cards and balance sheets, allowing safe usage in public settings.
+ * Role-Based Family Access / Read-Only Companion: Enables sharing a stripped-down, read-only dashboard or export for a spouse or older child that reveals emergency policies, bank account directories, and locker locations while keeping day-to-day spending and detailed valuations hidden.
+
 
 ## 1. GLOBAL DESIGN SYSTEM & TOKENS (Apply Across All Screens)
 - App Name Branding: "Net Worth Manager"

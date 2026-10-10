@@ -1,0 +1,46 @@
+--- packages/apps-script/ui/src/App.jsx
++++ packages/apps-script/ui/src/App.jsx
+@@ -23,6 +23,7 @@
+   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
+   const [darkMode, setDarkMode] = useState(true);
+   const [debugMode, setDebugMode] = useState(false);
++  const [debugLog, setDebugLog] = useState('');
+ 
+   const refreshData = (tokenToUse = sessionToken) => {
+     setIsSyncing(true);
+@@ -32,7 +33,8 @@
+           setIsSyncing(false);
+           setLoading(false);
+         })
+-        .withFailureHandler(() => {
++        .withFailureHandler((err) => {
++          setDebugLog('App Sync Error: ' + err.message);
+           setIsSyncing(false);
+           setLoading(false);
+         })
+@@ -53,7 +55,10 @@
+           setData(res);
+           setLoading(false);
+         })
+-        .withFailureHandler(() => setLoading(false))
++        .withFailureHandler((err) => {
++          setDebugLog('Initial Load Error: ' + err.message);
++          setLoading(false);
++        })
+         .getDashboardData(sessionToken);
+     } else {
+       setTimeout(() => {
+@@ -194,6 +199,13 @@
+         {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} />}
+       </main>
+ 
++      {/* Debug Bar */}
++      {debugMode && debugLog && (
++        <div className="fixed bottom-16 left-0 right-0 bg-red-900 text-white p-2 text-xs font-mono z-50 max-h-32 overflow-y-auto border-t border-red-700 shadow-xl">
++          <strong>Debug Log:</strong> <br /> {debugLog}
++        </div>
++      )}
++
+       {/* Bottom Nav */}
+       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface-layer1/95 backdrop-blur-md border-t border-border-subtle flex items-center justify-around px-2 z-40 pb-safe">
+         <NavButton icon={Home} label="Dashboard" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />

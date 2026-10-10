@@ -17,7 +17,7 @@ module.exports = () => {
       splash: {
         image: "./assets/splash.png",
         resizeMode: "contain",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#0B0F17"
       },
       ios: {
         supportsTablet: true,
@@ -31,7 +31,7 @@ module.exports = () => {
         versionCode: versionCode,
         adaptiveIcon: {
           foregroundImage: "./assets/adaptive-icon.png",
-          backgroundColor: "#ffffff"
+          backgroundColor: "#0B0F17"
         },
         package: IS_UAT ? "com.nozel.networthmanager.uat" : "com.nozel.networthmanager"
       },

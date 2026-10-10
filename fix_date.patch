@@ -1,0 +1,16 @@
+--- packages/apps-script/Code.gs
++++ packages/apps-script/Code.gs
+@@ -653,7 +653,12 @@
+     for (var i = 1; i < data.length; i++) {
+       var obj = {};
+       for (var j = 0; j < headers.length; j++) {
+-        obj[headers[j]] = data[i][j];
++        var val = data[i][j];
++        if (val instanceof Date) {
++          // Convert Date to ISO string to survive google.script.run
++          val = val.toISOString();
++        }
++        obj[headers[j]] = val;
+       }
+       rows.push(obj);
+     }
