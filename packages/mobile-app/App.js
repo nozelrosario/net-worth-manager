@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { StyleSheet, View, StatusBar, Platform, BackHandler, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, StatusBar, Platform, BackHandler, ActivityIndicator, Text, TouchableOpacity, AppState, PermissionsAndroid } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Constants from 'expo-constants';
 import * as Network from 'expo-network';
@@ -10,13 +10,13 @@ export default function App() {
   const [canGoBack, setCanGoBack] = useState(false);
 
   const IS_UAT = Constants.expoConfig.extra?.env === 'uat';
-  // Point to the correct web wrapper domain (Multi-site configuration)
   const BASE_URL = IS_UAT 
     ? `https://net-worth-manager-uat.web.app/?env=uat` 
     : `https://net-worth-manager-aff0b.web.app/`;
 
   useEffect(() => {
     checkNetwork();
+
     const backAction = () => {
       if (canGoBack && webviewRef.current) {
         webviewRef.current.goBack();
@@ -25,7 +25,10 @@ export default function App() {
       return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    return () => backHandler.remove();
+    
+    return () => {
+      backHandler.remove();
+    };
   }, [canGoBack]);
 
   const checkNetwork = async () => {

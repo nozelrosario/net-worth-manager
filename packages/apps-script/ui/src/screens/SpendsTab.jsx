@@ -7,6 +7,24 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   const [showLogModal, setShowLogModal] = useState(false);
   useModalBack(showLogModal, () => setShowLogModal(false));
   const [editingTxnId, setEditingTxnId] = useState(null);
+  
+  useEffect(() => {
+    const pending = sessionStorage.getItem('pending_sms_expense');
+    if (pending && !showLogModal) {
+      try {
+        const data = JSON.parse(pending);
+        setNewTxn(prev => ({ 
+          ...prev, 
+          Amount: data.amount, 
+          Notes: data.notes, 
+          Date: data.date 
+        }));
+        setShowLogModal(true);
+        sessionStorage.removeItem('pending_sms_expense');
+      } catch (e) {}
+    }
+  }, [showLogModal]);
+
   const [newTxn, setNewTxn] = useState({ 
     Date: new Date().toISOString().split('T')[0], 
     'Merchant/Description': '', 

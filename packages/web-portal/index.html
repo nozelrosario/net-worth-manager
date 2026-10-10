@@ -67,6 +67,16 @@
       frame.src = targetUrl;
     }
 
+    // Relay messages from React Native WebView to the inner Apps Script iframe
+    window.addEventListener('message', function(event) {
+      if (typeof event.data === 'string' && event.data.includes('SMS_SYNC')) {
+        const frame = document.getElementById('app-frame');
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.postMessage(event.data, '*');
+        }
+      }
+    });
+
     init();
   </script>
 </body>

@@ -858,7 +858,7 @@ function getDashboardData(idToken) {
   try {
     var userInfo = getCurrentUserInfo(idToken);
     if (!userInfo.isAuthorized) {
-       return { status: 'error', message: 'Unauthorized' };
+       return { status: 'success', userInfo: userInfo };
     }
     
     setupDatabaseSheets();

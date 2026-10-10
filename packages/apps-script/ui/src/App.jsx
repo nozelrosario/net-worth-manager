@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import useModalBack from "./hooks/useModalBack";
+import { X } from "lucide-react";
 import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
@@ -19,6 +20,53 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
   useModalBack(showUserModal, () => setShowUserModal(false));
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  // removed useModalBack for notifications to prevent hashchange conflicts
+
+  const getUpcomingReminders = (assets) => {
+    if (!assets) return [];
+    const reminders = [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const thresholdDate = new Date(now.getTime());
+    thresholdDate.setDate(now.getDate() + 30); // Next 30 days
+    
+    assets.forEach(asset => {
+      let details = {};
+      try {
+        details = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+      } catch(e) {}
+      
+      const maturityDateStr = details['Maturity Date'];
+      if (maturityDateStr) {
+        const maturityDate = new Date(maturityDateStr);
+        if (maturityDate >= now && maturityDate <= thresholdDate) {
+           const daysLeft = Math.ceil((maturityDate - now) / (1000 * 60 * 60 * 24));
+           reminders.push({
+             _id: 'rem_' + asset['Asset ID'],
+             title: 'Upcoming Maturity',
+             address: asset.Category,
+             body: `${asset.Name} is maturing in ${daysLeft} days (on ${maturityDate.toLocaleDateString()}). Current Value: ${formatCurrency(asset['Current Value'])}`,
+             date: maturityDate.getTime(),
+             assetId: asset['Asset ID']
+           });
+        } else if (maturityDate < now) {
+           reminders.push({
+             _id: 'rem_' + asset['Asset ID'],
+             title: 'Matured Asset',
+             address: asset.Category,
+             body: `${asset.Name} has matured on ${maturityDate.toLocaleDateString()}. Please update its status or reinvest.`,
+             date: maturityDate.getTime(),
+             assetId: asset['Asset ID'],
+             isOverdue: true
+           });
+        }
+      }
+    });
+    return reminders.sort((a, b) => a.date - b.date);
+  };
+
   const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
@@ -180,9 +228,9 @@ export default function App() {
             <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-1.5 rounded-full hover:bg-surface-layer1 transition-colors">
               {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
-            <div className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
+            <div onClick={(e) => { e.stopPropagation(); setShowNotifications(true); }} className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
               <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full"></span>
+              {getUpcomingReminders(data?.assets).length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full animate-pulse"></span>}
             </div>
           </div>
         </div>
@@ -243,6 +291,37 @@ export default function App() {
         {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
         {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} showMessage={showMessage} />}
       </main>
+      {showNotifications && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNotifications(false)}>
+          <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
+              <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-white p-1"><X size={20} /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
+              {getUpcomingReminders(data?.assets).length === 0 ? (
+                <p className="text-sm text-text-muted text-center py-8">No upcoming reminders.</p>
+              ) : (
+                getUpcomingReminders(data?.assets).map(rem => (
+                  <div key={rem._id} className={`bg-surface-layer2 p-3 rounded-xl border ${rem.isOverdue ? 'border-liability-rose/50' : 'border-bullion-amber/50'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`font-semibold text-sm truncate pr-2 ${rem.isOverdue ? 'text-liability-rose' : 'text-bullion-amber'}`}>{rem.title}</span>
+                      <span className="text-xs text-text-muted whitespace-nowrap">{new Date(rem.date).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-xs text-text-primary mb-2 leading-relaxed">{rem.body}</p>
+                    <div className="flex justify-between items-center mt-2">
+                       <span className="bg-surface-layer1 text-text-secondary text-[10px] px-2 py-1 rounded border border-border-subtle">{rem.address}</span>
+                       <button onClick={() => { setShowNotifications(false); setActiveTab('assets'); }} className="text-xs text-primary-accent hover:text-primary-accent/80 font-medium">View Asset &rarr;</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Debug Bar */}
       {debugMode && (
