@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import useModalBack from "./hooks/useModalBack";
+import useSmsListener from "./hooks/useSmsListener";
+import { X } from "lucide-react";
 import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
@@ -19,7 +21,27 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
   useModalBack(showUserModal, () => setShowUserModal(false));
-  const [headerExpanded, setHeaderExpanded] = useState(false);
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  useModalBack(showNotifications, () => setShowNotifications(false));
+  const { smsList, dismissSms } = useSmsListener();
+
+  const handleProcessSms = (sms) => {
+    const amountMatch = sms.body.match(/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d+)?)/i);
+    const amount = amountMatch ? amountMatch[1].replace(/,/g, '') : '';
+    
+    sessionStorage.setItem('pending_sms_expense', JSON.stringify({
+      amount,
+      notes: sms.body,
+      date: new Date(sms.date).toISOString().split('T')[0]
+    }));
+    
+    dismissSms(sms._id);
+    setShowNotifications(false);
+    setActiveTab('spends');
+  };
+
+const [headerExpanded, setHeaderExpanded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
   const [darkMode, setDarkMode] = useState(() => getSafeStorage('nwm_dark_mode', 'true') === 'true');
@@ -180,9 +202,9 @@ export default function App() {
             <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-1.5 rounded-full hover:bg-surface-layer1 transition-colors">
               {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
-            <div className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
+            <div onClick={() => setShowNotifications(true)} className="relative p-1.5 rounded-full hover:bg-surface-layer1 transition-colors cursor-pointer">
               <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full"></span>
+              {smsList.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-bullion-amber rounded-full"></span>}
             </div>
           </div>
         </div>
@@ -243,6 +265,37 @@ export default function App() {
         {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
         {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} showMessage={showMessage} />}
       </main>
+      {showNotifications && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNotifications(false)}>
+          <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Notifications</h3>
+              <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-white p-1"><X size={20} /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
+              {smsList.length === 0 ? (
+                <p className="text-sm text-text-muted text-center py-8">No new notifications.</p>
+              ) : (
+                smsList.map(sms => (
+                  <div key={sms._id} className="bg-surface-layer2 p-3 rounded-xl border border-border-subtle">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-semibold text-text-primary text-sm truncate pr-2">{sms.address}</span>
+                      <span className="text-xs text-text-muted whitespace-nowrap">{new Date(sms.date).toLocaleDateString()} {new Date(sms.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <p className="text-xs text-text-secondary mb-3 leading-relaxed">{sms.body}</p>
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => dismissSms(sms._id)} className="px-3 py-1.5 bg-surface-layer1 text-text-secondary rounded-lg text-xs font-medium hover:text-white">Dismiss</button>
+                      <button onClick={() => handleProcessSms(sms)} className="px-3 py-1.5 bg-primary-accent text-white rounded-lg text-xs font-medium hover:bg-primary-accent/90">Add Expense</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Debug Bar */}
       {debugMode && (

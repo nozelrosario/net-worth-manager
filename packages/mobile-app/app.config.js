@@ -34,6 +34,7 @@ module.exports = () => {
           backgroundColor: "#0B0F17"
         },
         package: IS_UAT ? "com.nozel.networthmanager.uat" : "com.nozel.networthmanager"
+        , permissions: ["RECEIVE_SMS", "READ_SMS"]
       },
       web: {
         favicon: "./assets/favicon.png"
