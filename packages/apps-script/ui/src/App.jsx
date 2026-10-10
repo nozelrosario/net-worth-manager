@@ -22,7 +22,7 @@ export default function App() {
   useModalBack(showUserModal, () => setShowUserModal(false));
   
   const [showNotifications, setShowNotifications] = useState(false);
-  useModalBack(showNotifications, () => setShowNotifications(false));
+  // useModalBack removed for notifications
 
   const getUpcomingReminders = (assets) => {
     if (!assets) return [];
@@ -120,6 +120,11 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Version check toast
+    setTimeout(() => {
+      showMessage("UI Version: " + new Date().toLocaleTimeString(), false);
+    }, 2000);
+
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
@@ -292,8 +297,8 @@ export default function App() {
         {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} showMessage={showMessage} />}
       </main>
       {showNotifications && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNotifications(false)}>
-          <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={() => setShowNotifications(false)}>
+          <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
               <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-white p-1"><X size={20} /></button>
