@@ -1,11 +1,15 @@
 import useModalBack from "../hooks/useModalBack";
 import React, { useState } from 'react';
-import { Lock, FileText, User, PlusCircle, Link as LinkIcon, Upload, Trash2, ExternalLink, X, File } from 'lucide-react';
+import { Lock, FileText, User, PlusCircle, Link as LinkIcon, Upload, Trash2, ExternalLink, X, File, Pencil } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 
 export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showAddModal, setShowAddModal] = useState(false);
-  useModalBack(showAddModal, () => setShowAddModal(false));
+  const [editingDocId, setEditingDocId] = useState(null);
+  useModalBack(showAddModal, () => {
+    setShowAddModal(false);
+    setEditingDocId(null);
+  });
   const [previewDoc, setPreviewDoc] = useState(null);
   useModalBack(!!previewDoc, () => setPreviewDoc(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +24,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
   });
   
   const [attachedFiles, setAttachedFiles] = useState([]);
+  const [filesToRemove, setFilesToRemove] = useState([]);
 
   const safeDocs = data?.safe || [];
   const profiles = data?.familyProfiles || [];
@@ -34,29 +39,34 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
       const reader = new FileReader();
       reader.onload = (ev) => {
         setAttachedFiles(prev => [...prev, {
-          id: Math.random().toString(), // temporary ID
+          id: 'new_' + Math.random().toString(36).substring(2, 9),
           name: file.name,
-          mimeType: file.type,
+          mimeType: file.type || 'application/octet-stream',
           base64: ev.target.result,
           isNewUpload: true
         }]);
       };
       reader.readAsDataURL(file);
     });
+    e.target.value = '';
   };
 
   const handleAddLink = () => {
-    if (!newEntry.linkInput) return;
+    if (!newEntry.linkInput || !newEntry.linkInput.trim()) return;
     setAttachedFiles(prev => [...prev, {
-      id: Math.random().toString(),
-      name: newEntry.linkInput.substring(0, 30) + '...',
-      url: newEntry.linkInput,
+      id: 'link_' + Math.random().toString(36).substring(2, 9),
+      name: newEntry.linkInput.trim().substring(0, 30) + '...',
+      url: newEntry.linkInput.trim(),
       isLink: true
     }]);
     setNewEntry({ ...newEntry, linkInput: '' });
   };
 
   const removeFile = (id) => {
+    const fileToRemove = attachedFiles.find(f => f.id === id);
+    if (fileToRemove && !fileToRemove.isNewUpload && !fileToRemove.isLink && fileToRemove.id) {
+      setFilesToRemove(prev => [...prev, fileToRemove.id]);
+    }
     setAttachedFiles(prev => prev.filter(f => f.id !== id));
   };
 
@@ -73,7 +83,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
           .uploadFileToDrive(f.base64, f.name, f.mimeType, category, token);
       });
       
-      if (result.status === 'success') {
+      if (result && result.status === 'success') {
         uploaded.push({
           name: result.fileName,
           url: result.fileUrl,
@@ -81,7 +91,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
           mimeType: result.mimeType
         });
       } else {
-        throw new Error(result.message);
+        throw new Error(result?.message || 'File upload failed');
       }
     }
     return uploaded;
@@ -98,12 +108,16 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
         
         // 1. Upload new files to Drive
         const filesToUpload = attachedFiles.filter(f => f.isNewUpload);
-        const links = attachedFiles.filter(f => !f.isNewUpload).map(f => ({
-          name: f.name, url: f.url, isLink: true
+        const existingFiles = attachedFiles.filter(f => !f.isNewUpload).map(f => ({
+          name: f.name,
+          url: f.url,
+          id: f.id,
+          mimeType: f.mimeType,
+          isLink: f.isLink
         }));
         
         if (newEntry.linkInput && newEntry.linkInput.trim()) {
-           links.push({
+           existingFiles.push({
              name: newEntry.linkInput.trim().substring(0, 30) + '...',
              url: newEntry.linkInput.trim(),
              isLink: true
@@ -115,48 +129,93 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
           uploadedFiles = await uploadFilesSequential(filesToUpload, newEntry.Category, token);
         }
         
-        const finalFilesJSON = JSON.stringify([...uploadedFiles, ...links]);
+        const finalFiles = [...existingFiles, ...uploadedFiles];
+        const finalFilesJSON = JSON.stringify(finalFiles);
         
-        // 2. Save record to DB
+        // 2. Trash removed Drive files if any
+        if (filesToRemove.length > 0) {
+          for (const fid of filesToRemove) {
+            try {
+              await new Promise((resolve) => {
+                window.google.script.run
+                  .withSuccessHandler(resolve)
+                  .withFailureHandler(resolve)
+                  .trashDriveFile(fid, token);
+              });
+            } catch(err) {}
+          }
+        }
+
+        // 3. Save or Update record in DB
         setUploadProgress('Saving record...');
         
         const payload = {
-          'Document ID': '',
           Name: newEntry.Name,
           Category: newEntry.Category,
           Owner: newEntry.Owner,
           Description: newEntry.Description,
-          'Files JSON': finalFilesJSON,
-          'Date Added': new Date().toISOString().split('T')[0]
+          'Files JSON': finalFilesJSON
         };
-        
-        window.google.script.run
-          .withSuccessHandler((res) => {
-            setIsSubmitting(false);
-            setUploadProgress('');
-            setShowAddModal(false);
-            if (onRefresh) onRefresh();
-            showMessage(res.message);
-          })
-          .withFailureHandler((err) => {
-            setIsSubmitting(false);
-            setUploadProgress('');
-            showMessage('Error: ' + err.message, true);
-          })
-          .addRecord('Safe', payload, token);
-          
+
+        if (editingDocId) {
+          await new Promise((resolve, reject) => {
+            window.google.script.run
+              .withSuccessHandler((res) => {
+                setIsSubmitting(false);
+                setUploadProgress('');
+                setShowAddModal(false);
+                setEditingDocId(null);
+                if (onRefresh) onRefresh();
+                showMessage(res.message || 'Document updated successfully');
+                resolve(res);
+              })
+              .withFailureHandler((err) => {
+                setIsSubmitting(false);
+                setUploadProgress('');
+                showMessage('Error: ' + err.message, true);
+                reject(err);
+              })
+              .updateRecord('Safe', 'Document ID', editingDocId, payload, token);
+          });
+        } else {
+          const addPayload = {
+            'Document ID': '',
+            ...payload,
+            'Date Added': new Date().toISOString().split('T')[0]
+          };
+          await new Promise((resolve, reject) => {
+            window.google.script.run
+              .withSuccessHandler((res) => {
+                setIsSubmitting(false);
+                setUploadProgress('');
+                setShowAddModal(false);
+                setEditingDocId(null);
+                if (onRefresh) onRefresh();
+                showMessage(res.message || 'Document saved successfully');
+                resolve(res);
+              })
+              .withFailureHandler((err) => {
+                setIsSubmitting(false);
+                setUploadProgress('');
+                showMessage('Error: ' + err.message, true);
+                reject(err);
+              })
+              .addRecord('Safe', addPayload, token);
+          });
+        }
       } else {
         setTimeout(() => {
           setIsSubmitting(false);
           setUploadProgress('');
           setShowAddModal(false);
-          showMessage('Document saved (preview)');
+          setEditingDocId(null);
+          showMessage(editingDocId ? 'Document updated (preview)' : 'Document saved (preview)');
         }, 1500);
       }
     } catch (err) {
       setIsSubmitting(false);
       setUploadProgress('');
-      showMessage('Upload Failed: ' + err.message, true);
+      showMessage('Operation Failed: ' + err.message, true);
     }
   };
 
@@ -181,10 +240,27 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
   };
   
   const resetForm = () => {
+    setEditingDocId(null);
     setNewEntry({
       Name: '', Category: categoriesList[0] || 'Identity', Owner: '', Description: '', linkInput: ''
     });
     setAttachedFiles([]);
+    setFilesToRemove([]);
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (doc) => {
+    setEditingDocId(doc['Document ID']);
+    setNewEntry({
+      Name: doc.Name || '',
+      Category: doc.Category || categoriesList[0] || 'Identity',
+      Owner: doc.Owner || '',
+      Description: doc.Description || '',
+      linkInput: ''
+    });
+    const files = getFilesList(doc['Files JSON']);
+    setAttachedFiles(Array.isArray(files) ? files.map(f => ({ ...f, id: f.id || Math.random().toString() })) : []);
+    setFilesToRemove([]);
     setShowAddModal(true);
   };
 
@@ -223,7 +299,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
           safeDocs.map((doc, i) => {
             const files = getFilesList(doc['Files JSON']);
             return (
-              <div key={doc['Document ID'] || i} className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm">
+              <div key={doc['Document ID'] || i} className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm hover:border-border-prominent transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="text-sm font-semibold text-white">{doc.Name}</h4>
@@ -231,9 +307,22 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <span className="text-[10px] text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
-                    <button onClick={() => handleDeleteEntry(doc['Document ID'])} className="text-liability-rose p-1 hover:bg-liability-rose/10 rounded-lg transition-colors">
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => openEditModal(doc)} 
+                        className="text-primary-accent p-1.5 hover:bg-primary-accent/10 rounded-lg transition-colors"
+                        title="Edit entry"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteEntry(doc['Document ID'])} 
+                        className="text-liability-rose p-1.5 hover:bg-liability-rose/10 rounded-lg transition-colors"
+                        title="Delete entry"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {doc.Description && (
@@ -256,11 +345,11 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
         )}
       </div>
 
-      {/* Add Document Modal */}
+      {/* Add / Edit Document Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => { setShowAddModal(false); setEditingDocId(null); }}>
            <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-             <h3 className="text-lg font-bold mb-4 text-white">Add to Family Safe</h3>
+             <h3 className="text-lg font-bold mb-4 text-white">{editingDocId ? 'Edit Safe Document' : 'Add to Family Safe'}</h3>
              
              <form onSubmit={handleSaveEntry} className="space-y-4">
                 <div>
@@ -290,18 +379,52 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                 </div>
 
                 <div className="pt-2 border-t border-border-subtle">
-                  <label className="block text-xs text-text-secondary mb-2">Attached Documents</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs text-text-secondary font-medium">Attached Documents</label>
+                    {attachedFiles.length > 0 && (
+                      <span className="text-[10px] text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
+                        {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'}
+                      </span>
+                    )}
+                  </div>
                   
                   {/* File List */}
                   {attachedFiles.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {attachedFiles.map(f => (
-                        <div key={f.id} className="flex justify-between items-center bg-surface-layer2 p-2 rounded-lg border border-border-subtle">
-                          <div className="flex items-center space-x-2 overflow-hidden">
+                        <div key={f.id} className="flex justify-between items-center bg-surface-layer2 p-2.5 rounded-lg border border-border-subtle hover:border-border-prominent transition-colors">
+                          <div className="flex items-center space-x-2 overflow-hidden flex-1 mr-2">
                             {f.isLink ? <LinkIcon size={14} className="text-blue-400 flex-shrink-0" /> : <File size={14} className="text-wealth-emerald flex-shrink-0" />}
-                            <span className="text-xs text-text-primary truncate">{f.name}</span>
+                            <div className="truncate flex-1">
+                              <span className="text-xs text-text-primary truncate block font-medium">{f.name}</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {f.isNewUpload ? (
+                                  <span className="text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
+                                ) : (
+                                  <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
+                                    <Lock size={9} /> Saved
+                                  </span>
+                                )}
+                                {f.url && (
+                                  <a 
+                                    href={f.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    onClick={e => e.stopPropagation()} 
+                                    className="text-[10px] text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
+                                  >
+                                    View <ExternalLink size={10} />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <button type="button" onClick={() => removeFile(f.id)} className="text-liability-rose p-1 hover:bg-liability-rose/10 rounded">
+                          <button 
+                            type="button" 
+                            onClick={() => removeFile(f.id)} 
+                            className="text-text-muted hover:text-liability-rose p-1.5 hover:bg-liability-rose/10 rounded-lg transition-colors flex-shrink-0"
+                            title="Remove file"
+                          >
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -312,9 +435,9 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   {/* Actions */}
                   <div className="flex flex-col gap-2">
                     <div className="relative w-full">
-                      <input type="file" multiple onChange={handleFileSelect} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                      <div className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-border-prominent rounded-lg text-sm text-text-primary hover:border-primary-accent transition-colors bg-surface-layer2/30">
-                        <Upload size={16} />
+                      <input type="file" multiple onChange={handleFileSelect} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                      <div className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-border-prominent rounded-lg text-sm text-text-primary hover:border-primary-accent transition-colors bg-surface-layer2/30 cursor-pointer">
+                        <Upload size={16} className="text-primary-accent" />
                         <span>Upload Files to Drive</span>
                       </div>
                     </div>
@@ -332,11 +455,40 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3 mt-4">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Cancel</button>
-                  <button type="submit" disabled={isSubmitting || (!newEntry.Name && attachedFiles.length === 0)} className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 flex justify-center items-center">
-                    {isSubmitting ? uploadProgress || 'Saving...' : 'Save Entry'}
-                  </button>
+                <div className="pt-4 flex flex-col gap-3 mt-4 border-t border-border-subtle">
+                  <div className="flex gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => { setShowAddModal(false); setEditingDocId(null); }} 
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isSubmitting || (!newEntry.Name && attachedFiles.length === 0)} 
+                      className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 flex justify-center items-center gap-2 transition-all active:scale-95"
+                    >
+                      {isSubmitting ? (uploadProgress || 'Saving...') : (editingDocId ? 'Save Changes' : 'Save Entry')}
+                    </button>
+                  </div>
+                  {editingDocId && (
+                    <button 
+                      type="button" 
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        const idToDelete = editingDocId;
+                        setShowAddModal(false);
+                        setEditingDocId(null);
+                        handleDeleteEntry(idToDelete);
+                      }}
+                      className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Trash2 size={14} />
+                      <span>Delete Document Entry</span>
+                    </button>
+                  )}
                 </div>
              </form>
            </div>

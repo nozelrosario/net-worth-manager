@@ -70,8 +70,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       details = {};
     }
     
+    const safeDocId = details['Safe Document ID'];
+    const safeDoc = safeDocId && data?.safe ? data.safe.find(s => String(s['Document ID']) === String(safeDocId)) : null;
     let files = [];
-    if (details['Files JSON']) {
+    if (safeDoc && safeDoc['Files JSON']) {
+      try {
+        files = typeof safeDoc['Files JSON'] === 'string' ? JSON.parse(safeDoc['Files JSON']) : safeDoc['Files JSON'];
+      } catch (e) {}
+    } else if (details['Files JSON']) {
       try {
         files = typeof details['Files JSON'] === 'string' ? JSON.parse(details['Files JSON']) : details['Files JSON'];
       } catch (e) {

@@ -87,3 +87,17 @@ function deleteSafeDocument(documentId, idToken) {
     return { status: 'error', message: err.toString() };
   }
 }
+
+function trashDriveFile(fileId, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+    if (!fileId) return { status: 'error', message: 'Missing file ID' };
+    
+    var file = DriveApp.getFileById(fileId);
+    file.setTrashed(true);
+    return { status: 'success', message: 'File moved to Trash' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
