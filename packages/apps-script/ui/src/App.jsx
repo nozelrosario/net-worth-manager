@@ -120,16 +120,12 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Version check toast
-    setTimeout(() => {
-      showMessage("UI Version: " + new Date().toLocaleTimeString(), false);
-    }, 2000);
-
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
           setData(res);
           setLoading(false);
+          setTimeout(() => showMessage("Reminders System Active (v2.1)", false), 500);
         })
         .withFailureHandler((err) => {
           setDebugLog('Initial Load Error: ' + err.message);
@@ -143,6 +139,7 @@ export default function App() {
            assets: [], transactions: [], familyProfiles: [], events: [], settings: []
          });
          setLoading(false);
+         setTimeout(() => showMessage("Reminders System Active (v2.1)", false), 500);
       }, 1000);
     }
   }, []);
