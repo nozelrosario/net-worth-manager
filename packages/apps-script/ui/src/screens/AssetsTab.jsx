@@ -31,8 +31,13 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [deleteConfirmAsset, setDeleteConfirmAsset] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useModalBack(showAddModal && !deleteConfirmAsset, () => setShowAddModal(false));
-  useModalBack(!!deleteConfirmAsset, () => setDeleteConfirmAsset(null));
+  useModalBack(showAddModal, () => {
+    if (deleteConfirmAsset) {
+      setDeleteConfirmAsset(null);
+    } else {
+      setShowAddModal(false);
+    }
+  });
 
   const assets = data?.assets || [];
   
@@ -52,6 +57,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     setNewAsset({ Name: '', Category: categoriesList[0] || 'Equity', 'Current Value': '', Owner: '', 'Details JSON': {} });
     setAttachedFiles([]);
     setUploadProgress('');
+    setDeleteConfirmAsset(null);
     setShowAddModal(true);
   };
 
@@ -74,37 +80,41 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     }
     setAttachedFiles(Array.isArray(files) ? files : []);
     setUploadProgress('');
+    setDeleteConfirmAsset(null);
     setNewAsset({ ...asset, 'Details JSON': details });
     setShowAddModal(true);
   };
 
   const handleDelete = () => {
-    const asset = assets.find(a => a['Asset ID'] === editingAssetId) || newAsset;
+    const currentAsset = assets.find(a => String(a['Asset ID']) === String(editingAssetId)) || newAsset;
     let details = {};
     try {
-      details = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+      details = typeof currentAsset['Details JSON'] === 'string' ? JSON.parse(currentAsset['Details JSON']) : (currentAsset['Details JSON'] || {});
     } catch (e) {}
 
-    const safeDocId = details['Safe Document ID'];
-    const files = details['Files JSON'];
-    const hasFiles = (Array.isArray(files) && files.length > 0) || (attachedFiles && attachedFiles.length > 0);
+    let formDetails = {};
+    try {
+      formDetails = typeof newAsset['Details JSON'] === 'string' ? JSON.parse(newAsset['Details JSON']) : (newAsset['Details JSON'] || {});
+    } catch (e) {}
 
-    if (safeDocId || hasFiles) {
-      setDeleteConfirmAsset({
-        assetId: editingAssetId,
-        assetName: asset.Name || 'Asset',
-        safeDocId: safeDocId,
-        fileCount: (Array.isArray(files) ? files.length : 0) || attachedFiles.length
-      });
-    } else {
-      if (!window.confirm(`Are you sure you want to delete ${asset.Name || 'this asset'}?`)) return;
-      confirmDeleteAsset(editingAssetId, null, false);
-    }
+    const safeDocId = details['Safe Document ID'] || formDetails['Safe Document ID'];
+    const files = details['Files JSON'] || formDetails['Files JSON'];
+    const hasFiles = (Array.isArray(files) && files.length > 0) || (attachedFiles && attachedFiles.length > 0);
+    const fileCount = (Array.isArray(files) ? files.length : 0) || (attachedFiles ? attachedFiles.length : 0);
+    const assetName = newAsset.Name || currentAsset.Name || 'Asset';
+
+    setDeleteConfirmAsset({
+      assetId: editingAssetId,
+      assetName: assetName,
+      safeDocId: safeDocId,
+      hasDocuments: !!(safeDocId || hasFiles),
+      fileCount: fileCount
+    });
   };
 
   const confirmDeleteAsset = async (assetId, safeDocId, deleteDocuments) => {
     setIsSubmitting(true);
-    setDeleteConfirmAsset(null);
+    setUploadProgress(deleteDocuments ? 'Deleting asset & documents...' : 'Deleting asset...');
 
     if (window.google?.script?.run) {
       const token = getSafeStorage('nwm_session_token');
@@ -129,16 +139,21 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         });
 
         setIsSubmitting(false);
+        setUploadProgress('');
+        setDeleteConfirmAsset(null);
         setShowAddModal(false);
         if (onRefresh) onRefresh();
-        showMessage(deleteDocuments ? 'Asset and supporting documents deleted.' : 'Asset deleted. Supporting documents kept in Family Safe.');
+        showMessage(deleteDocuments ? 'Asset and supporting documents deleted.' : 'Asset deleted.');
       } catch (err) {
         setIsSubmitting(false);
+        setUploadProgress('');
         showMessage('Delete Error: ' + err.message, true);
       }
     } else {
       setTimeout(() => {
         setIsSubmitting(false);
+        setUploadProgress('');
+        setDeleteConfirmAsset(null);
         setShowAddModal(false);
         showMessage(deleteDocuments ? 'Asset & documents deleted (preview)' : 'Asset deleted (preview)');
       }, 1000);
@@ -380,10 +395,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         </div>
       )}
 
-      {/* Delete Confirmation Modal for Assets with Supporting Documents */}
+      {/* Delete Confirmation Modal for Assets */}
       {deleteConfirmAsset && (
         <div 
-          className="fixed inset-0 z-[60] no-swipe flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" 
+          className="fixed inset-0 z-[60] no-swipe flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" 
           onClick={() => !isSubmitting && setDeleteConfirmAsset(null)}
         >
           <div 
@@ -396,40 +411,62 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               </div>
               <div>
                 <h3 className="text-base font-bold text-white">Delete Asset</h3>
-                <p className="text-xs text-text-muted">Confirm document retention</p>
+                <p className="text-xs text-text-muted">
+                  {deleteConfirmAsset.hasDocuments ? 'Confirm document retention' : 'Permanent action'}
+                </p>
               </div>
             </div>
 
-            <div className="bg-surface-layer2/60 border border-border-subtle rounded-xl p-3 text-xs leading-relaxed text-text-secondary space-y-2">
-              <p>
-                <strong className="text-white">"{deleteConfirmAsset.assetName}"</strong> has{' '}
-                <strong className="text-primary-accent">{deleteConfirmAsset.fileCount} supporting document(s)</strong> linked in <strong className="text-white">Family Safe</strong>.
+            {deleteConfirmAsset.hasDocuments ? (
+              <div className="bg-surface-layer2/60 border border-border-subtle rounded-xl p-3 text-xs leading-relaxed text-text-secondary space-y-2">
+                <p>
+                  <strong className="text-white">"{deleteConfirmAsset.assetName}"</strong> has{' '}
+                  <strong className="text-primary-accent">{deleteConfirmAsset.fileCount} supporting document(s)</strong> linked in <strong className="text-white">Family Safe</strong>.
+                </p>
+                <p>
+                  Do you also want to permanently delete the supporting documents from Family Safe and Google Drive?
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-text-secondary">
+                Are you sure you want to delete <strong className="text-white">"{deleteConfirmAsset.assetName}"</strong>? This will permanently remove the asset record.
               </p>
-              <p>
-                Do you also want to permanently delete the supporting documents from Family Safe and Google Drive?
-              </p>
-            </div>
+            )}
 
             <div className="space-y-2 pt-2">
-              <button 
-                type="button" 
-                disabled={isSubmitting}
-                onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, true)}
-                className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-              >
-                <Trash2 size={14} />
-                <span>Delete Asset & Supporting Documents</span>
-              </button>
+              {deleteConfirmAsset.hasDocuments ? (
+                <>
+                  <button 
+                    type="button" 
+                    disabled={isSubmitting}
+                    onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, true)}
+                    className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                    <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset & Supporting Documents'}</span>
+                  </button>
 
-              <button 
-                type="button" 
-                disabled={isSubmitting}
-                onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, false)}
-                className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-border-prominent text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-              >
-                <Lock size={14} className="text-wealth-emerald" />
-                <span>Delete Asset Only (Keep in Family Safe)</span>
-              </button>
+                  <button 
+                    type="button" 
+                    disabled={isSubmitting}
+                    onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, false)}
+                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-border-prominent text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    <Lock size={14} className="text-wealth-emerald" />
+                    <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset Only (Keep in Family Safe)'}</span>
+                  </button>
+                </>
+              ) : (
+                <button 
+                  type="button" 
+                  disabled={isSubmitting}
+                  onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, null, false)}
+                  className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset'}</span>
+                </button>
+              )}
 
               <button 
                 type="button" 

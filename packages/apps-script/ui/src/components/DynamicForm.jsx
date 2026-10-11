@@ -311,7 +311,7 @@ export default function DynamicForm({
          {isEditing && (
            <button 
              type="button" 
-             onClick={onDelete} 
+             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }} 
              disabled={isSubmitting} 
              className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
            >
