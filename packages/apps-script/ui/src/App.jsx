@@ -125,7 +125,7 @@ export default function App() {
         .withSuccessHandler((res) => {
           setData(res);
           setLoading(false);
-          setTimeout(() => showMessage("Reminders System Active (v2.1)", false), 500);
+          setTimeout(() => showMessage("Net Worth Manager Active (v2.4)", false), 500);
         })
         .withFailureHandler((err) => {
           setDebugLog('Initial Load Error: ' + err.message);
