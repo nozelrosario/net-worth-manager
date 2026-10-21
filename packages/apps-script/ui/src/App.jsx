@@ -134,12 +134,65 @@ export default function App() {
         .getDashboardData(sessionToken);
     } else {
       setTimeout(() => {
+         const mockQuotesMap = {
+           'GOLD_24K_INR': { symbol: 'GOLD_24K_INR', price: 7850, changePct: 0.8, type: 'Gold', displayName: 'Gold 24K (per gram)' },
+           'GOLD_22K_INR': { symbol: 'GOLD_22K_INR', price: 7196, changePct: 0.8, type: 'Gold', displayName: 'Gold 22K (per gram)' },
+           'GOLD_18K_INR': { symbol: 'GOLD_18K_INR', price: 5888, changePct: 0.8, type: 'Gold', displayName: 'Gold 18K (per gram)' },
+           'NSE:RELIANCE': { symbol: 'NSE:RELIANCE', price: 2840.5, changePct: 1.25, type: 'Equity', displayName: 'Reliance Industries' },
+           'NSE:TCS': { symbol: 'NSE:TCS', price: 4120.0, changePct: -0.4, type: 'Equity', displayName: 'Tata Consultancy Services' },
+           '122639': { symbol: '122639', price: 82.4, changePct: 0.6, type: 'Mutual Funds', displayName: 'Parag Parikh Flexi Cap Fund' }
+         };
          setData({
            userInfo: { activeEmail: 'demo@family.com', userRole: 'admin', isOwner: true, isAuthorized: true },
-           assets: [], transactions: [], familyProfiles: [], events: [], settings: []
+           assets: [
+             {
+               'Asset ID': 'mock-eq-1',
+               Category: 'Equity',
+               Name: 'Reliance Industries',
+               Cost: 120000,
+               'Current Value': 142025,
+               'Live Price': 2840.5,
+               'Day Change %': 1.25,
+               'Is Live': true,
+               'P&L': 22025,
+               'P&L %': 18.35,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Ticker Symbol': 'NSE:RELIANCE', 'Quantity': 50, 'Average Buy Price': 2400, 'Live Tracking': true })
+             },
+             {
+               'Asset ID': 'mock-mf-1',
+               Category: 'Mutual Funds',
+               Name: 'Parag Parikh Flexi Cap Fund',
+               Cost: 50000,
+               'Current Value': 61800,
+               'Live Price': 82.4,
+               'Day Change %': 0.6,
+               'Is Live': true,
+               'P&L': 11800,
+               'P&L %': 23.6,
+               'Owner': 'Joint',
+               'Details JSON': JSON.stringify({ 'Scheme Code': '122639', 'Units': 750, 'Average NAV': 66.67, 'Live Tracking': true })
+             },
+             {
+               'Asset ID': 'mock-gold-1',
+               Category: 'Gold',
+               Name: 'Gold Sovereign Coins',
+               Cost: 140000,
+               'Current Value': 157000,
+               'Live Price': 7850,
+               'Day Change %': 0.8,
+               'Is Live': true,
+               'P&L': 17000,
+               'P&L %': 12.14,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Form Factor': 'Gold Coins/Bars', 'Purity': '24K (99.9% - Bullion / Coins / Bars / Digital)', 'Weight (Grams)': 20, 'Live Tracking': true })
+             }
+           ],
+           marketQuotesMap: mockQuotesMap,
+           transactions: [], familyProfiles: [], events: [], settings: []
          });
          setLoading(false);
-         setTimeout(() => showMessage("Reminders System Active (v2.1)", false), 500);
+         setTimeout(() => showMessage("Live Market Valuation Active (v2.5)", false), 500);
       }, 1000);
     }
   }, []);

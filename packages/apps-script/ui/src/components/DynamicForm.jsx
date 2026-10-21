@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { assetSchemas } from '../config/assetSchemas';
-import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock } from 'lucide-react';
+import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 
 // Utility to get nested object value (e.g., 'Details JSON.Interest Rate')
 const getNestedValue = (obj, path) => {
@@ -40,13 +40,21 @@ export default function DynamicForm({
   onDelete,
   attachedFiles = [],
   setAttachedFiles,
-  uploadProgress = ''
+  uploadProgress = '',
+  marketQuotes = {},
+  formatCurrency = (v) => `₹${Number(v || 0).toLocaleString('en-IN')}`
 }) {
   const [linkInput, setLinkInput] = useState('');
+  
+  // Mutual Fund live search state
+  const [mfSearchQuery, setMfSearchQuery] = useState('');
+  const [mfSearchResults, setMfSearchResults] = useState([]);
+  const [isSearchingMf, setIsSearchingMf] = useState(false);
+  const [showMfDropdown, setShowMfDropdown] = useState(false);
+  const [liveNavData, setLiveNavData] = useState(null);
+  const searchTimeoutRef = useRef(null);
 
-  // Use specific schema if available, else default, but Liabilities uses specific. 
-  // Need to map user categories to our schemas. If exact match doesn't exist, use default.
-  // We can do a loose match or exact match.
+  // Determine schema key
   let schemaKey = 'default';
   const catLower = (category || '').toLowerCase();
   
@@ -54,15 +62,170 @@ export default function DynamicForm({
   else if (catLower.includes('equity') || catLower.includes('stock')) schemaKey = 'Equity';
   else if (catLower.includes('mutual')) schemaKey = 'Mutual Funds';
   else if (catLower.includes('real estate') || catLower.includes('property')) schemaKey = 'Real Estate';
-  else if (catLower.includes('gold')) schemaKey = 'Gold';
+  else if (catLower.includes('gold') || catLower.includes('bullion')) schemaKey = 'Gold';
   else if (catLower.includes('provident') || catLower.includes('epf') || catLower.includes('ppf') || catLower.includes('nps')) schemaKey = 'Provident Funds';
   else if (catLower.includes('bond') || catLower.includes('debenture')) schemaKey = 'Bonds';
   else if (catLower.includes('liabilit') || catLower.includes('loan')) schemaKey = 'Liabilities';
   
   const schema = assetSchemas[schemaKey] || assetSchemas['default'];
 
+  // Gold rates from marketQuotes or realistic default
+  const gold24kRate = marketQuotes['GOLD_24K_INR']?.price || 7850;
+  const gold22kRate = marketQuotes['GOLD_22K_INR']?.price || Math.round(gold24kRate * (22 / 24));
+  const gold18kRate = marketQuotes['GOLD_18K_INR']?.price || Math.round(gold24kRate * (18 / 24));
+
   const handleChange = (name, value) => {
-    setFormData(setNestedValue(formData, name, value));
+    let updated = setNestedValue(formData, name, value);
+
+    // Auto-defaults for Gold Form Factor
+    if (name === 'Details JSON.Form Factor') {
+      if (value === 'Physical Jewelry') {
+        updated = setNestedValue(updated, 'Details JSON.Purity', '22K (91.6% - Standard Jewelry)');
+      } else if (value === 'Gold Coins/Bars' || value === 'Digital Gold') {
+        updated = setNestedValue(updated, 'Details JSON.Purity', '24K (99.9% - Bullion / Coins / Bars / Digital)');
+      }
+    }
+
+    // Auto-calculate for Equity
+    if (schemaKey === 'Equity') {
+      const isLiveTracking = updated['Details JSON']?.['Live Tracking'] !== false;
+      const qty = Number(updated['Details JSON']?.['Quantity'] || 0);
+      const avgPrice = Number(updated['Details JSON']?.['Average Buy Price'] || 0);
+      
+      // Auto-compute Cost if avg buy price & quantity provided and cost is not manually customized
+      if (name === 'Details JSON.Quantity' || name === 'Details JSON.Average Buy Price') {
+        if (qty > 0 && avgPrice > 0 && (!updated.Cost || updated.Cost === (qty * avgPrice))) {
+          updated.Cost = Math.round(qty * avgPrice * 100) / 100;
+        }
+      }
+
+      // Auto-compute Current Value from live ticker if available
+      if (isLiveTracking) {
+        const rawTicker = updated['Details JSON']?.['Ticker Symbol'] || '';
+        let cleanTicker = String(rawTicker).trim().toUpperCase();
+        if (cleanTicker && !cleanTicker.includes(':')) cleanTicker = 'NSE:' + cleanTicker;
+        const quote = marketQuotes[cleanTicker];
+        if (quote && quote.price > 0 && qty > 0) {
+          updated['Current Value'] = Math.round(qty * quote.price * 100) / 100;
+        }
+      }
+    }
+
+    // Auto-calculate for Gold
+    if (schemaKey === 'Gold') {
+      const isLiveTracking = updated['Details JSON']?.['Live Tracking'] !== false;
+      const ff = String(updated['Details JSON']?.['Form Factor'] || '');
+      
+      if (isLiveTracking) {
+        if (ff.includes('ETF') || ff.includes('SGB')) {
+          const rawTicker = updated['Details JSON']?.['Ticker Symbol'] || '';
+          let cleanTicker = String(rawTicker).trim().toUpperCase();
+          if (cleanTicker && !cleanTicker.includes(':')) cleanTicker = 'NSE:' + cleanTicker;
+          const quote = marketQuotes[cleanTicker];
+          const units = Number(updated['Details JSON']?.['Units'] || 0);
+          if (quote && quote.price > 0 && units > 0) {
+            updated['Current Value'] = Math.round(units * quote.price * 100) / 100;
+          }
+        } else {
+          const purity = String(updated['Details JSON']?.['Purity'] || (ff.includes('Jewelry') ? '22K' : '24K'));
+          const rate = purity.includes('22K') ? gold22kRate : (purity.includes('18K') ? gold18kRate : gold24kRate);
+          const weight = Number(updated['Details JSON']?.['Weight (Grams)'] || 0);
+          if (weight > 0 && rate > 0) {
+            updated['Current Value'] = Math.round(weight * rate * 100) / 100;
+          }
+        }
+      }
+    }
+
+    // Auto-calculate for Mutual Funds
+    if (schemaKey === 'Mutual Funds') {
+      const isLiveTracking = updated['Details JSON']?.['Live Tracking'] !== false;
+      const units = Number(updated['Details JSON']?.['Units'] || 0);
+      const avgNav = Number(updated['Details JSON']?.['Average NAV'] || 0);
+      
+      if (name === 'Details JSON.Units' || name === 'Details JSON.Average NAV') {
+        if (units > 0 && avgNav > 0 && (!updated.Cost || updated.Cost === (units * avgNav))) {
+          updated.Cost = Math.round(units * avgNav * 100) / 100;
+        }
+      }
+
+      if (isLiveTracking && units > 0) {
+        const sc = updated['Details JSON']?.['Scheme Code'];
+        const quote = sc ? marketQuotes[String(sc).trim().toUpperCase()] : null;
+        const navToUse = liveNavData?.nav || quote?.price;
+        if (navToUse && navToUse > 0) {
+          updated['Current Value'] = Math.round(units * navToUse * 100) / 100;
+        }
+      }
+    }
+
+    setFormData(updated);
+  };
+
+  // AMFI Mutual Fund Live Search
+  useEffect(() => {
+    if (schemaKey !== 'Mutual Funds') return;
+    if (!mfSearchQuery || mfSearchQuery.length < 3) {
+      setMfSearchResults([]);
+      setIsSearchingMf(false);
+      return;
+    }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingMf(true);
+      try {
+        const res = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(mfSearchQuery)}`);
+        if (res.ok) {
+          const list = await res.json();
+          setMfSearchResults((list || []).slice(0, 10));
+          setShowMfDropdown(true);
+        }
+      } catch (e) {
+        console.warn('MF Search error:', e);
+      } finally {
+        setIsSearchingMf(false);
+      }
+    }, 350);
+
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, [mfSearchQuery, schemaKey]);
+
+  // Fetch NAV when Scheme Code is entered or selected
+  const handleSelectMfScheme = async (scheme) => {
+    let updated = setNestedValue(formData, 'Name', scheme.schemeName);
+    updated = setNestedValue(updated, 'Details JSON.Scheme Code', String(scheme.schemeCode));
+    setShowMfDropdown(false);
+    setMfSearchQuery('');
+    
+    // Fetch live NAV
+    try {
+      const res = await fetch(`https://api.mfapi.in/mf/${scheme.schemeCode}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && json.data.length > 0) {
+          const nav = parseFloat(json.data[0].nav);
+          setLiveNavData({
+            nav: nav,
+            date: json.data[0].date,
+            schemeName: json.meta?.scheme_name || scheme.schemeName,
+            fundHouse: json.meta?.fund_house || ''
+          });
+          if (json.meta?.fund_house) {
+            updated = setNestedValue(updated, 'Institution/Location', json.meta.fund_house);
+          }
+          const units = Number(updated['Details JSON']?.['Units'] || 0);
+          if (units > 0 && nav > 0) {
+            updated['Current Value'] = Math.round(units * nav * 100) / 100;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('NAV fetch error:', e);
+    }
+    setFormData(updated);
   };
 
   const handleFileSelect = (e) => {
@@ -105,17 +268,122 @@ export default function DynamicForm({
     setLinkInput('');
   };
 
+  // Helper info for Equity
+  const rawEquityTicker = formData['Details JSON']?.['Ticker Symbol'] || '';
+  let cleanEquityTicker = String(rawEquityTicker).trim().toUpperCase();
+  if (cleanEquityTicker && !cleanEquityTicker.includes(':')) cleanEquityTicker = 'NSE:' + cleanEquityTicker;
+  const equityQuote = marketQuotes[cleanEquityTicker];
+
+  // Helper info for Gold
+  const goldFormFactor = formData['Details JSON']?.['Form Factor'] || '';
+  const goldPurity = formData['Details JSON']?.['Purity'] || (goldFormFactor.includes('Jewelry') ? '22K' : '24K');
+  const activeGoldRate = goldPurity.includes('22K') ? gold22kRate : (goldPurity.includes('18K') ? gold18kRate : gold24kRate);
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[65vh] overflow-y-auto px-1 pb-2 scrollbar-hide">
+      {/* Live Market Integration Banners */}
+      {schemaKey === 'Gold' && (
+        <div className="bg-gradient-to-r from-bullion-amber/15 via-surface-layer2 to-surface-layer2 border border-bullion-amber/30 rounded-xl p-3 text-xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-semibold text-bullion-amber flex items-center gap-1.5">
+              <Sparkles size={14} /> Live Gold Spot Rates (Google Finance)
+            </span>
+            <span className="text-[10px] text-text-muted">CURRENCY:XAUINR</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-2 text-center">
+            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('24K') ? 'bg-bullion-amber/20 border-bullion-amber text-white font-bold' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
+              <p className="text-[10px]">24K (99.9%)</p>
+              <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold24kRate)}/g</p>
+            </div>
+            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('22K') ? 'bg-bullion-amber/20 border-bullion-amber text-white font-bold' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
+              <p className="text-[10px]">22K (91.6%)</p>
+              <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold22kRate)}/g</p>
+            </div>
+            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('18K') ? 'bg-bullion-amber/20 border-bullion-amber text-white font-bold' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
+              <p className="text-[10px]">18K (75%)</p>
+              <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold18kRate)}/g</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {schemaKey === 'Equity' && equityQuote && equityQuote.price > 0 && (
+        <div className="bg-primary-accent/10 border border-primary-accent/30 rounded-xl p-3 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-wealth-emerald animate-pulse"></span>
+            <div>
+              <p className="font-semibold text-white">{cleanEquityTicker}</p>
+              <p className="text-[11px] text-text-muted">Live Google Finance Quote</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-bold text-wealth-emerald tabular-nums">{formatCurrency(equityQuote.price)}</p>
+            {equityQuote.changePct !== 0 && (
+              <p className={`text-[10px] font-medium tabular-nums ${equityQuote.changePct > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                {equityQuote.changePct > 0 ? '+' : ''}{equityQuote.changePct}% today
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mutual Fund Instant AMFI Search Helper */}
+      {schemaKey === 'Mutual Funds' && (
+        <div className="relative">
+          <label className="block text-xs font-medium text-text-secondary mb-1">
+            Search AMFI Mutual Funds (Instant Name & NAV)
+          </label>
+          <div className="relative">
+            <input 
+              type="text"
+              value={mfSearchQuery}
+              onChange={(e) => setMfSearchQuery(e.target.value)}
+              placeholder="Type scheme name (e.g. Parag Parikh, Axis, SBI Bluechip)..."
+              className="w-full bg-surface-layer2 border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-white text-xs focus:outline-none focus:border-primary-accent"
+            />
+            <Search size={14} className="absolute left-2.5 top-2.5 text-text-muted" />
+            {isSearchingMf && (
+              <RefreshCw size={12} className="absolute right-2.5 top-2.5 text-primary-accent animate-spin" />
+            )}
+          </div>
+
+          {/* Search Dropdown */}
+          {showMfDropdown && mfSearchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto bg-surface-layer1 border border-border-prominent rounded-xl shadow-2xl p-1 space-y-1">
+              {mfSearchResults.map((scheme) => (
+                <div 
+                  key={scheme.schemeCode}
+                  onClick={() => handleSelectMfScheme(scheme)}
+                  className="p-2 hover:bg-surface-layer2 rounded-lg cursor-pointer transition-colors"
+                >
+                  <p className="text-xs font-medium text-white">{scheme.schemeName}</p>
+                  <p className="text-[10px] text-text-muted mt-0.5">Code: {scheme.schemeCode}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {liveNavData && (
+            <div className="mt-2 bg-wealth-emerald/10 border border-wealth-emerald/30 rounded-lg p-2.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-wealth-emerald animate-pulse"></span>
+                <span className="text-text-secondary">Official AMFI NAV ({liveNavData.date}):</span>
+              </div>
+              <span className="font-bold text-wealth-emerald tabular-nums">{formatCurrency(liveNavData.nav)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1 pb-2 scrollbar-hide">
         {schema.fields.map(field => {
           if (field.condition && !field.condition(formData)) return null;
           
-          const value = getNestedValue(formData, field.name) || '';
+          const value = getNestedValue(formData, field.name) ?? '';
           
           if (field.type === 'checkbox') {
             return (
-              <div key={field.name} className="flex items-center gap-2 mt-4 md:col-span-2">
+              <div key={field.name} className="flex items-center gap-2 mt-2 md:col-span-2 bg-surface-layer2/40 p-2.5 rounded-lg border border-border-subtle">
                 <input 
                   type="checkbox" 
                   checked={!!value} 
@@ -123,7 +391,7 @@ export default function DynamicForm({
                   className="rounded bg-surface-layer2 border-border-subtle text-primary-accent focus:ring-0" 
                   id={field.name}
                 />
-                <label htmlFor={field.name} className="text-sm text-text-primary">{field.label}</label>
+                <label htmlFor={field.name} className="text-xs font-medium text-text-primary cursor-pointer">{field.label}</label>
               </div>
             );
           }
@@ -168,15 +436,22 @@ export default function DynamicForm({
           }
 
           return (
-            <div key={field.name} className={field.name === 'Name' ? "md:col-span-2" : ""}>
-              <label className="block text-xs text-text-secondary mb-1">{field.label} {field.required && <span className="text-liability-rose">*</span>}</label>
+            <div key={field.name} className={field.name === 'Name' || field.name === 'Current Value' ? "md:col-span-2" : ""}>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs text-text-secondary">{field.label} {field.required && <span className="text-liability-rose">*</span>}</label>
+                {field.name === 'Current Value' && (
+                  <span className="text-[10px] text-primary-accent font-medium flex items-center gap-1">
+                    <Sparkles size={11} /> Auto-updates with live rates
+                  </span>
+                )}
+              </div>
               <input 
                 required={field.required} 
                 value={value} 
-                onChange={e => handleChange(field.name, e.target.type === 'number' ? Number(e.target.value) : e.target.value)} 
+                onChange={e => handleChange(field.name, e.target.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} 
                 type={field.type} 
                 step={field.step}
-                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" 
+                className={`w-full bg-surface-layer2 border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent ${field.name === 'Current Value' ? 'border-primary-accent/40 font-bold tabular-nums text-wealth-emerald' : 'border-border-subtle'}`} 
                 placeholder={field.placeholder} 
               />
             </div>
@@ -192,7 +467,7 @@ export default function DynamicForm({
                 Supporting Documents
               </label>
               <p className="text-[11px] text-text-muted mt-0.5">
-                Attach FD certificates, 7/12 extract PDFs, property deeds, etc. Synced to Family Safe.
+                Attach FD certificates, gold purchase receipts, demat statements. Synced to Family Safe.
               </p>
             </div>
             {attachedFiles.length > 0 && (
