@@ -18,27 +18,31 @@ export const assetSchemas = {
   'Equity': {
     title: 'Direct Equity / Stocks',
     fields: [
-      { name: 'Name', label: 'Company / Ticker', type: 'text', placeholder: 'e.g. Reliance Industries', required: true },
-      { name: 'Institution/Location', label: 'Broker / Demat Account', type: 'text', placeholder: 'e.g. Zerodha' },
-      { name: 'Details JSON.Quantity', label: 'Quantity (Shares)', type: 'number' },
-      { name: 'Details JSON.Average Buy Price', label: 'Average Buy Price', type: 'number', step: '0.01' },
-      { name: 'Cost', label: 'Total Invested Amount', type: 'number' },
-      { name: 'Current Value', label: 'Current Value', type: 'number', required: true },
+      { name: 'Name', label: 'Company Name', type: 'text', placeholder: 'e.g. Reliance Industries', required: true },
+      { name: 'Details JSON.Ticker Symbol', label: 'Ticker Symbol (NSE / BSE / US)', type: 'text', placeholder: 'e.g. NSE:RELIANCE, TCS, NASDAQ:AAPL' },
+      { name: 'Details JSON.Live Tracking', label: 'Track Live Valuation (Google Finance)', type: 'checkbox', default: true },
+      { name: 'Institution/Location', label: 'Broker / Demat Account', type: 'text', placeholder: 'e.g. Zerodha, Groww' },
+      { name: 'Details JSON.Quantity', label: 'Quantity (Shares)', type: 'number', step: '1' },
+      { name: 'Details JSON.Average Buy Price', label: 'Average Buy Price (₹)', type: 'number', step: '0.01' },
+      { name: 'Cost', label: 'Total Invested Amount (₹)', type: 'number' },
+      { name: 'Current Value', label: 'Current Market Value (₹)', type: 'number', required: true },
       { name: 'Owner', label: 'Owner', type: 'text' }
     ]
   },
   'Mutual Funds': {
     title: 'Mutual Funds',
     fields: [
-      { name: 'Name', label: 'Scheme Name', type: 'text', required: true },
-      { name: 'Institution/Location', label: 'AMC / Fund House', type: 'text' },
+      { name: 'Name', label: 'Scheme Name', type: 'text', placeholder: 'e.g. Parag Parikh Flexi Cap Fund', required: true },
+      { name: 'Details JSON.Scheme Code', label: 'AMFI Scheme Code / Ticker', type: 'text', placeholder: 'e.g. 122639 or search scheme' },
+      { name: 'Details JSON.Live Tracking', label: 'Track Live NAV Valuation', type: 'checkbox', default: true },
+      { name: 'Institution/Location', label: 'AMC / Fund House', type: 'text', placeholder: 'e.g. PPFAS Mutual Fund' },
       { name: 'Identifiers', label: 'Folio Number', type: 'text' },
       { name: 'Details JSON.Units', label: 'Units Held', type: 'number', step: '0.001' },
-      { name: 'Details JSON.Average NAV', label: 'Average Purchase NAV', type: 'number', step: '0.0001' },
-      { name: 'Cost', label: 'Total Invested Amount', type: 'number' },
-      { name: 'Current Value', label: 'Current Value', type: 'number', required: true },
+      { name: 'Details JSON.Average NAV', label: 'Average Purchase NAV (₹)', type: 'number', step: '0.0001' },
+      { name: 'Cost', label: 'Total Invested Amount (₹)', type: 'number' },
+      { name: 'Current Value', label: 'Current Market Value (₹)', type: 'number', required: true },
       { name: 'Details JSON.SIP Active', label: 'SIP Active', type: 'checkbox' },
-      { name: 'Details JSON.SIP Amount', label: 'SIP Amount', type: 'number', condition: (fd) => fd['Details JSON']?.['SIP Active'] === true },
+      { name: 'Details JSON.SIP Amount', label: 'SIP Amount (₹)', type: 'number', condition: (fd) => fd['Details JSON']?.['SIP Active'] === true },
       { name: 'Owner', label: 'Owner', type: 'text' }
     ]
   },
@@ -61,13 +65,59 @@ export const assetSchemas = {
   'Gold': {
     title: 'Gold & Precious Metals',
     fields: [
-      { name: 'Name', label: 'Asset Name', type: 'text', required: true },
-      { name: 'Details JSON.Form Factor', label: 'Type', type: 'select', options: ['Physical Jewelry', 'Sovereign Gold Bonds (SGB)', 'Gold Coins/Bars', 'Digital Gold', 'Gold ETFs'] },
-      { name: 'Details JSON.Weight (Grams)', label: 'Quantity / Weight (Grams)', type: 'number', step: '0.01' },
+      { name: 'Name', label: 'Asset Name / Description', type: 'text', placeholder: 'e.g. Sovereign Gold Bond 2028 / Gold Coins', required: true },
+      { 
+        name: 'Details JSON.Form Factor', 
+        label: 'Type / Form Factor', 
+        type: 'select', 
+        options: ['Physical Jewelry', 'Gold Coins/Bars', 'Digital Gold', 'Gold ETFs', 'Sovereign Gold Bonds (SGB)'],
+        required: true
+      },
+      {
+        name: 'Details JSON.Purity',
+        label: 'Gold Purity',
+        type: 'select',
+        options: ['24K (99.9% - Bullion / Coins / Bars / Digital)', '22K (91.6% - Standard Jewelry)', '18K (75.0% - Diamond Jewelry)'],
+        condition: (fd) => {
+          const ff = fd['Details JSON']?.['Form Factor'] || '';
+          return !ff.includes('ETF') && !ff.includes('SGB');
+        }
+      },
+      {
+        name: 'Details JSON.Ticker Symbol',
+        label: 'Ticker Symbol (NSE / BSE)',
+        type: 'text',
+        placeholder: 'e.g. NSE:GOLDBEES, NSE:SGBOCT28I',
+        condition: (fd) => {
+          const ff = fd['Details JSON']?.['Form Factor'] || '';
+          return ff.includes('ETF') || ff.includes('SGB');
+        }
+      },
+      {
+        name: 'Details JSON.Weight (Grams)',
+        label: 'Weight (Grams)',
+        type: 'number',
+        step: '0.01',
+        condition: (fd) => {
+          const ff = fd['Details JSON']?.['Form Factor'] || '';
+          return !ff.includes('ETF') && !ff.includes('SGB');
+        }
+      },
+      {
+        name: 'Details JSON.Units',
+        label: 'Units Held',
+        type: 'number',
+        step: '1',
+        condition: (fd) => {
+          const ff = fd['Details JSON']?.['Form Factor'] || '';
+          return ff.includes('ETF') || ff.includes('SGB');
+        }
+      },
+      { name: 'Details JSON.Live Tracking', label: 'Track Live Valuation (Google Finance)', type: 'checkbox', default: true },
       { name: 'Acquisition Date', label: 'Purchase Date', type: 'date' },
-      { name: 'Cost', label: 'Purchase Value', type: 'number' },
-      { name: 'Current Value', label: 'Current Value', type: 'number', required: true },
-      { name: 'Institution/Location', label: 'Location (Locker / Home Safe)', type: 'text' },
+      { name: 'Cost', label: 'Purchase Cost / Invested (₹)', type: 'number' },
+      { name: 'Current Value', label: 'Current Market Value (₹)', type: 'number', required: true },
+      { name: 'Institution/Location', label: 'Location (Locker / Safe / Demat)', type: 'text', placeholder: 'e.g. SBI Bank Locker #142' },
       { name: 'Owner', label: 'Owner', type: 'text' }
     ]
   },

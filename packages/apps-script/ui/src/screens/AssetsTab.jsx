@@ -2,7 +2,7 @@ import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 import DynamicForm from "../components/DynamicForm";
-import { AlertTriangle, Trash2, Lock, Paperclip } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -30,6 +30,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [uploadProgress, setUploadProgress] = useState('');
   const [deleteConfirmAsset, setDeleteConfirmAsset] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncingRates, setIsSyncingRates] = useState(false);
 
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
@@ -41,7 +42,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   const assets = data?.assets || [];
   
-  const defaultCategories = 'Equity, Real Estate, Gold, Cash/FD, Liabilities';
+  const defaultCategories = 'Equity, Mutual Funds, Gold, Cash/FD, Real Estate, Liabilities';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
   const categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
   const profiles = data?.familyProfiles || [];
@@ -52,9 +53,33 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     ? assets 
     : assets.filter(a => a.Category === filter);
 
+  const handleSyncRates = () => {
+    setIsSyncingRates(true);
+    if (window.google?.script?.run) {
+      const token = getSafeStorage('nwm_session_token');
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSyncingRates(false);
+          if (onRefresh) onRefresh();
+          showMessage(res?.message || 'Live market valuations synchronized!');
+        })
+        .withFailureHandler((err) => {
+          setIsSyncingRates(false);
+          showMessage('Sync Error: ' + err.message, true);
+        })
+        .syncLiveValuationsToSheet(token);
+    } else {
+      setTimeout(() => {
+        setIsSyncingRates(false);
+        if (onRefresh) onRefresh();
+        showMessage('Live market valuations synchronized (preview)');
+      }, 1000);
+    }
+  };
+
   const openAddModal = () => {
     setEditingAssetId(null);
-    setNewAsset({ Name: '', Category: categoriesList[0] || 'Equity', 'Current Value': '', Owner: '', 'Details JSON': {} });
+    setNewAsset({ Name: '', Category: categoriesList[0] || 'Equity', 'Current Value': '', Owner: '', 'Details JSON': { 'Live Tracking': true } });
     setAttachedFiles([]);
     setUploadProgress('');
     setDeleteConfirmAsset(null);
@@ -302,8 +327,22 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-bold">Assets & Liabilities</h2>
-        <button onClick={openAddModal} className="text-primary-accent text-sm font-medium bg-primary-accent/10 px-3 py-1.5 rounded-lg">+ Add Asset</button>
+        <div>
+          <h2 className="text-xl font-bold">Assets & Liabilities</h2>
+          <p className="text-[11px] text-text-muted mt-0.5">Live Valuation via Google Finance & AMFI</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handleSyncRates} 
+            disabled={isSyncingRates}
+            title="Refresh and sync live valuations"
+            className="text-wealth-emerald text-xs font-semibold bg-wealth-emerald/10 border border-wealth-emerald/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-wealth-emerald/20 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw size={12} className={isSyncingRates ? 'animate-spin' : ''} />
+            <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
+          </button>
+          <button onClick={openAddModal} className="text-primary-accent text-sm font-medium bg-primary-accent/10 px-3 py-1.5 rounded-lg hover:bg-primary-accent/20 transition-colors">+ Add Asset</button>
+        </div>
       </div>
       <div 
         className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide no-swipe"
@@ -326,12 +365,34 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         )}
         {filteredAssets.map((asset, i) => {
           let docCount = 0;
+          let det = {};
           try {
-            const det = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+            det = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
             const files = det['Files JSON'];
             if (Array.isArray(files)) docCount = files.length;
             else if (typeof files === 'string') docCount = JSON.parse(files).length;
           } catch (e) {}
+
+          const cat = asset.Category;
+          let holdingSummary = '';
+          if (cat === 'Equity' && (det['Quantity'] || det['Units'])) {
+            const q = det['Quantity'] || det['Units'];
+            holdingSummary = `${q} shares` + (det['Average Buy Price'] ? ` @ avg ₹${det['Average Buy Price']}` : '');
+          } else if (cat === 'Gold') {
+            const ff = String(det['Form Factor'] || '');
+            if (ff.includes('ETF') || ff.includes('SGB')) {
+              holdingSummary = `${det['Units'] || det['Quantity'] || 0} units`;
+            } else {
+              holdingSummary = `${det['Weight (Grams)'] || 0}g` + (det['Purity'] ? ` (${det['Purity'].split(' ')[0]})` : '');
+            }
+          } else if (cat === 'Mutual Funds' && (det['Units'] || det['Quantity'])) {
+            const u = det['Units'] || det['Quantity'];
+            holdingSummary = `${u} units` + (det['Average NAV'] ? ` @ avg ₹${det['Average NAV']}` : '');
+          }
+
+          const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);
+          const pnl = asset['P&L'];
+          const pnlPct = asset['P&L %'];
 
           return (
             <div 
@@ -339,11 +400,26 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               onClick={() => openEditModal(asset)}
               className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm cursor-pointer hover:border-primary-accent/50 transition-colors"
             >
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="text-sm font-medium text-white">{asset.Name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-white">{asset.Name}</p>
+                    {isLive && (
+                      <span className="flex items-center gap-1 text-[10px] text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-1.5 py-0.2 rounded font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-text-muted">{asset.Category}</span>
+                    {holdingSummary && (
+                      <>
+                        <span className="text-text-muted text-[10px]">•</span>
+                        <span className="text-xs text-text-secondary">{holdingSummary}</span>
+                      </>
+                    )}
                     {docCount > 0 && (
                       <span className="flex items-center gap-1 text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
                         <Paperclip size={10} />
@@ -354,12 +430,32 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </div>
                 <span className="bg-surface-layer2 text-[10px] px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
               </div>
-              <div className="flex justify-between items-end">
+
+              <div className="flex justify-between items-end border-t border-border-subtle/40 pt-2 mt-2">
                 <div>
-                  <p className="text-xs text-text-secondary">Current Value</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-text-secondary">Current Value</p>
+                    {isLive && asset['Live Price'] && (
+                      <span className="text-[10px] text-text-muted">
+                        (@ {formatCurrency(asset['Live Price'])}{cat === 'Gold' && !String(det['Form Factor'] || '').includes('ETF') && !String(det['Form Factor'] || '').includes('SGB') ? '/g' : ''})
+                      </span>
+                    )}
+                  </div>
                   <p className={`text-lg font-bold tabular-nums mt-0.5 ${asset.Category === 'Liabilities' ? 'text-liability-rose' : 'text-wealth-emerald'}`}>{formatCurrency(asset['Current Value'])}</p>
                 </div>
-                <div className="text-primary-accent/70 text-xs">Edit</div>
+                
+                <div className="text-right">
+                  {pnl !== undefined && Number(asset.Cost) > 0 ? (
+                    <div>
+                      <p className="text-[10px] text-text-muted">Total Return</p>
+                      <p className={`text-xs font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                        {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct}%)
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-primary-accent/70 text-xs hover:text-primary-accent">Edit</div>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -396,6 +492,8 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                attachedFiles={attachedFiles}
                setAttachedFiles={setAttachedFiles}
                uploadProgress={uploadProgress}
+               marketQuotes={data?.marketQuotesMap || {}}
+               formatCurrency={formatCurrency}
              />
            </div>
         </div>
