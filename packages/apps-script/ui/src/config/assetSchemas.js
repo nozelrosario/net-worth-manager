@@ -24,6 +24,7 @@ export const assetSchemas = {
       { name: 'Institution/Location', label: 'Broker / Demat Account', type: 'text', placeholder: 'e.g. Zerodha, Groww' },
       { name: 'Details JSON.Quantity', label: 'Quantity (Shares)', type: 'number', step: '1' },
       { name: 'Details JSON.Average Buy Price', label: 'Average Buy Price (₹)', type: 'number', step: '0.01' },
+      { name: 'Acquisition Date', label: 'Purchase Date', type: 'date' },
       { name: 'Cost', label: 'Total Invested Amount (₹)', type: 'number' },
       { name: 'Current Value', label: 'Current Market Value (₹)', type: 'number', required: true },
       { name: 'Owner', label: 'Owner', type: 'text' }
@@ -39,6 +40,7 @@ export const assetSchemas = {
       { name: 'Identifiers', label: 'Folio Number', type: 'text' },
       { name: 'Details JSON.Units', label: 'Units Held', type: 'number', step: '0.001' },
       { name: 'Details JSON.Average NAV', label: 'Average Purchase NAV (₹)', type: 'number', step: '0.0001' },
+      { name: 'Acquisition Date', label: 'Purchase / Investment Date', type: 'date' },
       { name: 'Cost', label: 'Total Invested Amount (₹)', type: 'number' },
       { name: 'Current Value', label: 'Current Market Value (₹)', type: 'number', required: true },
       { name: 'Details JSON.SIP Active', label: 'SIP Active', type: 'checkbox' },

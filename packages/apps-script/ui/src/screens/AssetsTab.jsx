@@ -1,7 +1,7 @@
 import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
-import DynamicForm from "../components/DynamicForm";
+import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
@@ -112,7 +112,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     setAttachedFiles(Array.isArray(files) ? files : []);
     setUploadProgress('');
     setDeleteConfirmAsset(null);
-    setNewAsset({ ...asset, 'Details JSON': details });
+    let acqDate = asset['Acquisition Date'];
+    if (typeof acqDate === 'string' && acqDate.includes('T')) {
+      acqDate = acqDate.split('T')[0];
+    }
+    setNewAsset({ ...asset, 'Acquisition Date': acqDate, 'Details JSON': details });
     setShowAddModal(true);
   };
 
@@ -394,6 +398,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           const pnl = asset['P&L'];
           const pnlPct = asset['P&L %'];
 
+          const perf = (asset['CAGR'] !== undefined && asset['CAGR'] !== null)
+            ? { holdingStr: asset['Holding Period'], cagr: asset['CAGR'], taxTag: asset['Tax Tag'], taxLabel: asset['Tax Label'] }
+            : calculatePerformance(asset.Cost, asset['Current Value'], asset['Acquisition Date'], asset.Category);
+
           return (
             <div 
               key={asset['Asset ID'] || i} 
@@ -412,13 +420,27 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center flex-wrap gap-2 mt-0.5">
                     <span className="text-xs text-text-muted">{asset.Category}</span>
                     {holdingSummary && (
                       <>
                         <span className="text-text-muted text-[10px]">•</span>
                         <span className="text-xs text-text-secondary">{holdingSummary}</span>
                       </>
+                    )}
+                    {perf?.holdingStr && (
+                      <>
+                        <span className="text-text-muted text-[10px]">•</span>
+                        <span className="text-[11px] text-text-muted">Held: {perf.holdingStr}</span>
+                      </>
+                    )}
+                    {perf?.taxTag && (
+                      <span 
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
+                        title={perf.taxLabel}
+                      >
+                        {perf.taxTag}
+                      </span>
                     )}
                     {docCount > 0 && (
                       <span className="flex items-center gap-1 text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
@@ -451,6 +473,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                       <p className={`text-xs font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                         {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct}%)
                       </p>
+                      {perf?.cagr !== undefined && perf?.cagr !== null && (
+                        <p className="text-[10px] font-medium text-primary-accent tabular-nums">
+                          {perf.cagr >= 0 ? '+' : ''}{perf.cagr}% p.a.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="text-primary-accent/70 text-xs hover:text-primary-accent">Edit</div>

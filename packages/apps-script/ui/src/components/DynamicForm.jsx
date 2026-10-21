@@ -1,6 +1,61 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { assetSchemas } from '../config/assetSchemas';
-import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle, Calendar } from 'lucide-react';
+
+// Investment performance calculation helper: P&L, Holding Period, CAGR, and Tax Classification
+export function calculatePerformance(cost, currentValue, acqDateStr, category) {
+  try {
+    const c = Number(cost || 0);
+    const v = Number(currentValue || 0);
+    if (c <= 0 || v <= 0 || !acqDateStr) return null;
+
+    const acqDate = new Date(acqDateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - acqDate.getTime();
+    if (isNaN(diffMs) || diffMs <= 0) return null;
+
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const years = days / 365.25;
+    const months = Math.round(days / 30.4375);
+
+    let holdingStr = '';
+    if (days < 30) holdingStr = `${days}d`;
+    else if (months < 12) holdingStr = `${months}m`;
+    else holdingStr = `${years.toFixed(1)}y`;
+
+    const pnl = Math.round((v - c) * 100) / 100;
+    const pnlPct = Math.round(((pnl / c) * 100) * 100) / 100;
+
+    let cagr = null;
+    if (years >= 0.5) {
+      const rawCagr = (Math.pow(v / c, 1 / years) - 1) * 100;
+      cagr = Math.round(rawCagr * 100) / 100;
+    }
+
+    const catLower = String(category || '').toLowerCase();
+    const isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
+    const isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
+    const taxTag = isLtcg ? 'LTCG' : 'STCG';
+    const taxLabel = isLtcg 
+      ? (isEquityOrMf ? 'LTCG (> 12m @ 12.5% above ₹1.25L)' : 'LTCG (> 24m @ 12.5%)') 
+      : (isEquityOrMf ? 'STCG (≤ 12m @ 20%)' : 'STCG (≤ 24m @ slab rate)');
+
+    return {
+      days,
+      months,
+      years: Math.round(years * 100) / 100,
+      holdingStr,
+      pnl,
+      pnlPct,
+      cagr,
+      isLtcg,
+      taxTag,
+      taxLabel
+    };
+  } catch (e) {
+    return null;
+  }
+}
 
 // Stock ticker aliases for Indian equities and ETFs
 export const STOCK_ALIASES = {
@@ -145,6 +200,12 @@ export default function DynamicForm({
   const [liveNavData, setLiveNavData] = useState(null);
   const searchTimeoutRef = useRef(null);
 
+  // Historical Asset Valuation & Auto-Cost State
+  const [historicalQuote, setHistoricalQuote] = useState(null);
+  const [isFetchingHistorical, setIsFetchingHistorical] = useState(false);
+  const [historicalFetchError, setHistoricalFetchError] = useState(null);
+  const historicalFetchTimeoutRef = useRef(null);
+
   // Determine schema key
   let schemaKey = 'default';
   const catLower = (category || '').toLowerCase();
@@ -264,6 +325,9 @@ export default function DynamicForm({
           updated.Cost = Math.round(qty * avgPrice * 100) / 100;
         } else if (qty > 0 && cost > 0 && (!avgPrice || avgPrice === 0)) {
           updated = setNestedValue(updated, 'Details JSON.Average Buy Price', Math.round((cost / qty) * 100) / 100);
+        } else if (qty > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
+          updated.Cost = Math.round(qty * historicalQuote.price * 100) / 100;
+          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', historicalQuote.price);
         }
       } else if (name === 'Details JSON.Average Buy Price') {
         if (qty > 0 && avgPrice > 0 && (!cost || cost === 0)) {
@@ -310,6 +374,15 @@ export default function DynamicForm({
           }
         }
       }
+
+      // Auto-populate Gold cost from historical rate if weight entered
+      if (name === 'Details JSON.Weight (Grams)') {
+        const wt = Number(value || 0);
+        const cost = Number(updated.Cost || 0);
+        if (wt > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
+          updated.Cost = Math.round(wt * historicalQuote.price * 100) / 100;
+        }
+      }
     }
 
     // Auto-calculate for Mutual Funds
@@ -324,6 +397,9 @@ export default function DynamicForm({
           updated.Cost = Math.round(units * avgNav * 100) / 100;
         } else if (units > 0 && cost > 0 && (!avgNav || avgNav === 0)) {
           updated = setNestedValue(updated, 'Details JSON.Average NAV', Math.round((cost / units) * 10000) / 10000);
+        } else if (units > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
+          updated.Cost = Math.round(units * historicalQuote.price * 100) / 100;
+          updated = setNestedValue(updated, 'Details JSON.Average NAV', historicalQuote.price);
         }
       } else if (name === 'Details JSON.Average NAV') {
         if (units > 0 && avgNav > 0 && (!cost || cost === 0)) {
@@ -414,6 +490,225 @@ export default function DynamicForm({
     setFormData(updated);
   };
 
+  // Auto-apply historical rate to Cost & Average Price
+  const autoApplyHistoricalCost = (quote) => {
+    if (!quote || !quote.price) return;
+    setFormData(prev => {
+      const currentCost = Number(prev.Cost || 0);
+      if (currentCost > 0) return prev; // Do not overwrite user-entered cost automatically
+
+      let updated = { ...prev };
+      const p = quote.price;
+      if (schemaKey === 'Equity') {
+        const qty = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
+        if (qty > 0) {
+          updated.Cost = Math.round(qty * p * 100) / 100;
+          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', p);
+        }
+      } else if (schemaKey === 'Gold') {
+        const ff = String(updated['Details JSON']?.['Form Factor'] || '');
+        if (ff.includes('ETF') || ff.includes('SGB')) {
+          const units = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
+          if (units > 0) updated.Cost = Math.round(units * p * 100) / 100;
+        } else {
+          const wt = Number(updated['Details JSON']?.['Weight (Grams)'] || 0);
+          if (wt > 0) updated.Cost = Math.round(wt * p * 100) / 100;
+        }
+      } else if (schemaKey === 'Mutual Funds') {
+        const units = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
+        if (units > 0) {
+          updated.Cost = Math.round(units * p * 100) / 100;
+          updated = setNestedValue(updated, 'Details JSON.Average NAV', p);
+        }
+      }
+      return updated;
+    });
+  };
+
+  const handleApplyHistoricalCost = () => {
+    if (!historicalQuote || !historicalQuote.price) return;
+    const p = historicalQuote.price;
+    let updated = { ...formData };
+
+    if (schemaKey === 'Equity') {
+      const qty = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
+      updated = setNestedValue(updated, 'Details JSON.Average Buy Price', p);
+      if (qty > 0) {
+        updated.Cost = Math.round(qty * p * 100) / 100;
+      }
+    } else if (schemaKey === 'Gold') {
+      const ff = String(updated['Details JSON']?.['Form Factor'] || '');
+      if (ff.includes('ETF') || ff.includes('SGB')) {
+        const units = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
+        if (units > 0) updated.Cost = Math.round(units * p * 100) / 100;
+      } else {
+        const wt = Number(updated['Details JSON']?.['Weight (Grams)'] || 0);
+        if (wt > 0) updated.Cost = Math.round(wt * p * 100) / 100;
+      }
+    } else if (schemaKey === 'Mutual Funds') {
+      const units = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
+      updated = setNestedValue(updated, 'Details JSON.Average NAV', p);
+      if (units > 0) {
+        updated.Cost = Math.round(units * p * 100) / 100;
+      }
+    }
+    setFormData(updated);
+  };
+
+  // Historical Asset Valuation Fetching on Acquisition Date Change
+  useEffect(() => {
+    const rawAcqDate = formData['Acquisition Date'];
+    if (!rawAcqDate) {
+      setHistoricalQuote(null);
+      setHistoricalFetchError(null);
+      return;
+    }
+    const acqDate = String(rawAcqDate).split('T')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(acqDate)) {
+      setHistoricalQuote(null);
+      setHistoricalFetchError(null);
+      return;
+    }
+
+    let symbol = '';
+    let categoryName = '';
+    let formFactor = '';
+    let purity = '';
+
+    if (schemaKey === 'Equity') {
+      const rawTicker = formData['Details JSON']?.['Ticker Symbol'];
+      if (!rawTicker || String(rawTicker).trim().length < 2) {
+        setHistoricalQuote(null);
+        return;
+      }
+      symbol = normalizeStockSymbol(rawTicker);
+      categoryName = 'Equity';
+    } else if (schemaKey === 'Gold') {
+      categoryName = 'Gold';
+      formFactor = formData['Details JSON']?.['Form Factor'] || '';
+      purity = formData['Details JSON']?.['Purity'] || (formFactor.includes('Jewelry') ? '22K' : '24K');
+      if (formFactor.includes('ETF') || formFactor.includes('SGB')) {
+        symbol = normalizeStockSymbol(formData['Details JSON']?.['Ticker Symbol'] || '');
+        if (!symbol) {
+          setHistoricalQuote(null);
+          return;
+        }
+      } else {
+        symbol = 'CURRENCY:XAUINR';
+      }
+    } else if (schemaKey === 'Mutual Funds') {
+      categoryName = 'Mutual Funds';
+      symbol = String(formData['Details JSON']?.['Scheme Code'] || '').trim();
+      if (!symbol) {
+        setHistoricalQuote(null);
+        return;
+      }
+    } else {
+      setHistoricalQuote(null);
+      return;
+    }
+
+    if (historicalFetchTimeoutRef.current) clearTimeout(historicalFetchTimeoutRef.current);
+    historicalFetchTimeoutRef.current = setTimeout(async () => {
+      setIsFetchingHistorical(true);
+      setHistoricalFetchError(null);
+
+      if (window.google?.script?.run?.fetchHistoricalAssetPrice) {
+        window.google.script.run
+          .withSuccessHandler((res) => {
+            setIsFetchingHistorical(false);
+            if (res && res.status === 'success' && res.price > 0) {
+              setHistoricalQuote(res);
+              setHistoricalFetchError(null);
+              autoApplyHistoricalCost(res);
+            } else {
+              setHistoricalQuote(null);
+              setHistoricalFetchError(res?.message || 'Could not fetch historical price for this date');
+            }
+          })
+          .withFailureHandler((err) => {
+            setIsFetchingHistorical(false);
+            setHistoricalQuote(null);
+            setHistoricalFetchError('Historical fetch error: ' + (err?.message || err));
+          })
+          .fetchHistoricalAssetPrice(symbol, categoryName, acqDate, formFactor, purity);
+      } else {
+        // Fallback for preview / dev environment
+        try {
+          if (categoryName === 'Mutual Funds') {
+            const sc = symbol.replace(/[^0-9]/g, '');
+            const res = await fetch(`https://api.mfapi.in/mf/${sc}`);
+            if (res.ok) {
+              const json = await res.json();
+              if (json && json.data && json.data.length > 0) {
+                const targetD = new Date(acqDate);
+                let matched = null;
+                for (let i = 0; i < json.data.length; i++) {
+                  const it = json.data[i];
+                  const p = String(it.date).split('-');
+                  const itD = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+                  if (itD <= targetD) {
+                    matched = it;
+                    break;
+                  }
+                }
+                if (matched && matched.nav) {
+                  const quoteRes = {
+                    status: 'success',
+                    price: parseFloat(matched.nav),
+                    matchedDate: matched.date,
+                    targetDate: acqDate,
+                    schemeName: json.meta?.scheme_name || symbol,
+                    source: 'Official AMFI NAV'
+                  };
+                  setHistoricalQuote(quoteRes);
+                  setIsFetchingHistorical(false);
+                  autoApplyHistoricalCost(quoteRes);
+                  return;
+                }
+              }
+            }
+          } else if (categoryName === 'Gold') {
+            const yyyy = Number(acqDate.split('-')[0]);
+            const goldBenchmarks = {
+              2026: 7850, 2025: 7400, 2024: 7000, 2023: 5900, 2022: 5200,
+              2021: 4750, 2020: 4850, 2019: 3500, 2018: 3150, 2017: 2950,
+              2016: 2850, 2015: 2600, 2014: 2800, 2013: 2950, 2012: 3100,
+              2011: 2600, 2010: 1850, 2005: 700, 2000: 440
+            };
+            const benchRate = goldBenchmarks[yyyy] || 7000;
+            const bMult = purity.includes('22K') ? (22 / 24) : (purity.includes('18K') ? (18 / 24) : 1);
+            const quoteRes = {
+              status: 'success',
+              price: Math.round(benchRate * bMult),
+              purity: purity,
+              targetDate: acqDate,
+              source: 'Historical Gold Benchmark'
+            };
+            setHistoricalQuote(quoteRes);
+            setIsFetchingHistorical(false);
+            autoApplyHistoricalCost(quoteRes);
+            return;
+          }
+        } catch (e) {
+          console.warn('Fallback error:', e);
+        }
+        setIsFetchingHistorical(false);
+      }
+    }, 450);
+
+    return () => {
+      if (historicalFetchTimeoutRef.current) clearTimeout(historicalFetchTimeoutRef.current);
+    };
+  }, [
+    formData['Acquisition Date'],
+    schemaKey,
+    formData['Details JSON']?.['Ticker Symbol'],
+    formData['Details JSON']?.['Scheme Code'],
+    formData['Details JSON']?.['Form Factor'],
+    formData['Details JSON']?.['Purity']
+  ]);
+
   const handleFileSelect = (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const files = Array.from(e.target.files);
@@ -468,6 +763,36 @@ export default function DynamicForm({
   const goldFormFactor = formData['Details JSON']?.['Form Factor'] || '';
   const goldPurity = formData['Details JSON']?.['Purity'] || (goldFormFactor.includes('Jewelry') ? '22K' : '24K');
   const activeGoldRate = goldPurity.includes('22K') ? gold22kRate : (goldPurity.includes('18K') ? gold18kRate : gold24kRate);
+
+  // Historical suggested cost
+  let suggestedCost = null;
+  if (historicalQuote && historicalQuote.price > 0) {
+    if (schemaKey === 'Equity') {
+      const q = Number(formData['Details JSON']?.['Quantity'] || formData['Details JSON']?.['Units'] || 0);
+      if (q > 0) suggestedCost = Math.round(q * historicalQuote.price * 100) / 100;
+    } else if (schemaKey === 'Gold') {
+      const ff = String(formData['Details JSON']?.['Form Factor'] || '');
+      if (ff.includes('ETF') || ff.includes('SGB')) {
+        const u = Number(formData['Details JSON']?.['Units'] || formData['Details JSON']?.['Quantity'] || 0);
+        if (u > 0) suggestedCost = Math.round(u * historicalQuote.price * 100) / 100;
+      } else {
+        const w = Number(formData['Details JSON']?.['Weight (Grams)'] || 0);
+        if (w > 0) suggestedCost = Math.round(w * historicalQuote.price * 100) / 100;
+      }
+    } else if (schemaKey === 'Mutual Funds') {
+      const u = Number(formData['Details JSON']?.['Units'] || formData['Details JSON']?.['Quantity'] || 0);
+      if (u > 0) suggestedCost = Math.round(u * historicalQuote.price * 100) / 100;
+    }
+  }
+
+  // Investment return & tax intelligence
+  const perfCost = Number(formData.Cost || 0);
+  const perfCurrentVal = Number(formData['Current Value'] || 0);
+  const rawAcqDate = formData['Acquisition Date'];
+  const perfAcqDate = rawAcqDate ? String(rawAcqDate).split('T')[0] : '';
+  const perfMetrics = (perfCost > 0 && perfCurrentVal > 0 && perfAcqDate)
+    ? calculatePerformance(perfCost, perfCurrentVal, perfAcqDate, category)
+    : null;
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -633,6 +958,49 @@ export default function DynamicForm({
         </div>
       )}
 
+      {/* Historical Asset Price & Auto-Cost Suggestions Banner */}
+      {isFetchingHistorical && (
+        <div className="bg-surface-layer2 border border-primary-accent/30 rounded-xl p-2.5 text-xs flex items-center gap-2 text-primary-accent animate-pulse">
+          <RefreshCw size={13} className="animate-spin text-primary-accent flex-shrink-0" />
+          <span>Fetching historical valuation for {perfAcqDate}...</span>
+        </div>
+      )}
+
+      {historicalQuote && historicalQuote.price > 0 && (
+        <div className="bg-gradient-to-r from-primary-accent/15 via-surface-layer2 to-surface-layer2 border border-primary-accent/35 rounded-xl p-3 text-xs space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Calendar size={15} className="text-primary-accent flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-white">
+                  Historical Price on {historicalQuote.matchedDate || historicalQuote.targetDate}: {formatCurrency(historicalQuote.price)}
+                  {schemaKey === 'Gold' && !String(formData['Details JSON']?.['Form Factor'] || '').includes('ETF') && !String(formData['Details JSON']?.['Form Factor'] || '').includes('SGB') ? '/g' : (schemaKey === 'Mutual Funds' ? ' NAV' : ' / share')}
+                </p>
+                <p className="text-[10px] text-text-muted">Source: {historicalQuote.source}</p>
+              </div>
+            </div>
+            {suggestedCost !== null && (
+              <button
+                type="button"
+                onClick={handleApplyHistoricalCost}
+                className="px-2.5 py-1 bg-primary-accent/20 hover:bg-primary-accent/30 text-primary-accent border border-primary-accent/30 rounded-lg text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1 flex-shrink-0"
+                title="Populate Total Invested Amount and Average Buy Price from historical price"
+              >
+                <Sparkles size={11} />
+                <span>Apply Cost ({formatCurrency(suggestedCost)})</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {historicalFetchError && !historicalQuote && perfAcqDate && (
+        <div className="bg-surface-layer2/80 border border-border-subtle rounded-xl p-2.5 text-xs flex items-center gap-2 text-text-muted">
+          <AlertCircle size={13} className="flex-shrink-0 text-text-muted" />
+          <span>{historicalFetchError}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1 pb-2 scrollbar-hide">
         {schema.fields.map(field => {
           if (field.condition && !field.condition(formData)) return null;
@@ -705,7 +1073,7 @@ export default function DynamicForm({
               </div>
               <input 
                 required={field.required} 
-                value={value} 
+                value={field.type === 'date' && typeof value === 'string' && value.includes('T') ? value.split('T')[0] : value} 
                 onChange={e => handleChange(field.name, e.target.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} 
                 type={field.type} 
                 step={field.step}
@@ -732,6 +1100,61 @@ export default function DynamicForm({
             </div>
           );
         })}
+
+        {/* Investment Return & Tax Intelligence Card */}
+        {perfMetrics && (
+          <div className="md:col-span-2 bg-gradient-to-r from-wealth-emerald/10 via-surface-layer2 to-surface-layer2 border border-wealth-emerald/30 rounded-xl p-3 text-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-white flex items-center gap-1.5">
+                <TrendingUp size={14} className="text-wealth-emerald" />
+                Investment Return & Tax Intelligence
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${perfMetrics.isLtcg ? 'bg-wealth-emerald/20 text-wealth-emerald border-wealth-emerald/40' : 'bg-bullion-amber/20 text-bullion-amber border-bullion-amber/40'}`}>
+                {perfMetrics.taxTag}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border-subtle/50 text-center">
+              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+                <p className="text-[10px] text-text-muted">Holding Period</p>
+                <p className="text-xs font-bold text-white tabular-nums mt-0.5">{perfMetrics.holdingStr}</p>
+                <p className="text-[9px] text-text-muted">{perfMetrics.days} days</p>
+              </div>
+
+              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+                <p className="text-[10px] text-text-muted">Total Gain / P&L</p>
+                <p className={`text-xs font-bold tabular-nums mt-0.5 ${perfMetrics.pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                  {perfMetrics.pnl >= 0 ? '+' : ''}{formatCurrency(perfMetrics.pnl)}
+                </p>
+                <p className={`text-[9px] tabular-nums ${perfMetrics.pnlPct >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                  {perfMetrics.pnlPct >= 0 ? '+' : ''}{perfMetrics.pnlPct}%
+                </p>
+              </div>
+
+              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+                <p className="text-[10px] text-text-muted">Annualized (CAGR)</p>
+                <p className="text-xs font-bold text-primary-accent tabular-nums mt-0.5">
+                  {perfMetrics.cagr !== null ? `${perfMetrics.cagr >= 0 ? '+' : ''}${perfMetrics.cagr}%` : 'N/A (<6m)'}
+                </p>
+                <p className="text-[9px] text-text-muted">{perfMetrics.cagr !== null ? 'per annum' : 'needs 6m+'}</p>
+              </div>
+
+              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+                <p className="text-[10px] text-text-muted">Tax Classification</p>
+                <p className={`text-xs font-bold mt-0.5 ${perfMetrics.isLtcg ? 'text-wealth-emerald' : 'text-bullion-amber'}`}>
+                  {perfMetrics.taxTag}
+                </p>
+                <p className="text-[9px] text-text-muted truncate" title={perfMetrics.taxLabel}>
+                  {perfMetrics.isLtcg ? '> Threshold' : '≤ Threshold'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-text-muted pt-1 border-t border-border-subtle/30">
+              Tax Rule: {perfMetrics.taxLabel}
+            </p>
+          </div>
+        )}
 
         {/* Supporting Documents Section */}
         <div className="md:col-span-2 border-t border-border-subtle pt-4 mt-2">

@@ -25,6 +25,18 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v2.6) - Historical Valuations, Auto-Cost Suggestion, CAGR & Tax Intelligence (Issue #10)
+✅ **Historical Acquisition Pricing Engine**: Integrated historical valuation retrieval on a given acquisition date:
+  - **Mutual Funds**: Exact historical daily NAV lookup from the official AMFI time-series (`https://api.mfapi.in/mf/{schemeCode}`).
+  - **Gold**: Historical rate via Google Sheets `=GOOGLEFINANCE("CURRENCY:XAUINR", "price", ...)` converted per gram for 24K, 22K, and 18K purity with weekend/holiday rollback and multi-decade fallback benchmarks.
+  - **Equities / ETFs**: Historical closing price via Google Finance historical pricing formula.
+✅ **Auto-Cost Suggestion & Application**: As soon as the user enters or changes the acquisition date and units/weight, the UI displays the historical rate and offers a one-tap "Apply Cost" action (and automatically populates empty cost) to calculate total invested amount and average purchase price/NAV.
+✅ **Annualized Return / CAGR Engine**: Computes Compound Annual Growth Rate (`CAGR = (Current Value / Cost)^(1 / Years) - 1`) for all holdings $\ge 6$ months.
+✅ **Indian Capital Gains Tax Intelligence**: Categorizes holdings into Long Term Capital Gain (`LTCG`) vs Short Term Capital Gain (`STCG`) based on Indian Income Tax holding rules:
+  - Equities & Mutual Funds: LTCG if held $> 12$ months (12.5% above ₹1.25L), STCG if $\le 12$ months (20%).
+  - Gold, Real Estate & Other Assets: LTCG if held $> 24$ months (12.5%), STCG if $\le 24$ months (slab rates).
+✅ **Asset Card Badges & In-Form Analytics**: Displays holding period (e.g. `2.4y`), CAGR badge (`+18.4% p.a.`), and tax status tags (`LTCG`/`STCG`) on both the asset cards in `AssetsTab` and inside `DynamicForm`.
+
 ## Feature Update (v2.5) - Live Market Valuation Engine (Issue #8)
 ✅ **Google Finance & AMFI Integration**: Created automated `MarketQuotes` database tab maintaining real-time formulas (`=GOOGLEFINANCE(...)`) for stocks and precious metals. Gold rates for 24K, 22K, and 18K are dynamically computed per gram from `CURRENCY:XAUINR` with purity selector support (Coins/Bars 24K, Jewelry 22K).
 ✅ **AMFI Mutual Funds Direct NAV & Instant Search**: Integrated live AMFI NAV fetching and instantaneous scheme search via official endpoints. Supports entering or selecting AMFI scheme codes with automatic NAV lookup.
