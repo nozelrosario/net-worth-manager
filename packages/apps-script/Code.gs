@@ -493,6 +493,128 @@ function fetchAmfiNav(schemeCode) {
   return null;
 }
 
+var STOCK_ALIASES = {
+  'RIL': 'NSE:RELIANCE',
+  'RELIANCE': 'NSE:RELIANCE',
+  'TCS': 'NSE:TCS',
+  'INFY': 'NSE:INFY',
+  'INFOSYS': 'NSE:INFY',
+  'HDFC': 'NSE:HDFCBANK',
+  'HDFCBANK': 'NSE:HDFCBANK',
+  'ICICI': 'NSE:ICICIBANK',
+  'ICICIBANK': 'NSE:ICICIBANK',
+  'SBI': 'NSE:SBIN',
+  'SBIN': 'NSE:SBIN',
+  'STATE BANK': 'NSE:SBIN',
+  'BHARTI': 'NSE:BHARTIARTL',
+  'AIRTEL': 'NSE:BHARTIARTL',
+  'BHARTIARTL': 'NSE:BHARTIARTL',
+  'ITC': 'NSE:ITC',
+  'LT': 'NSE:LT',
+  'L&T': 'NSE:LT',
+  'LARSEN': 'NSE:LT',
+  'KOTAK': 'NSE:KOTAKBANK',
+  'KOTAKBANK': 'NSE:KOTAKBANK',
+  'AXIS': 'NSE:AXISBANK',
+  'AXISBANK': 'NSE:AXISBANK',
+  'MARUTI': 'NSE:MARUTI',
+  'TATAMOTORS': 'NSE:TATAMOTORS',
+  'TATA MOTORS': 'NSE:TATAMOTORS',
+  'TATASTEEL': 'NSE:TATASTEEL',
+  'TATA STEEL': 'NSE:TATASTEEL',
+  'TITAN': 'NSE:TITAN',
+  'WIPRO': 'NSE:WIPRO',
+  'ASIANPAINT': 'NSE:ASIANPAINT',
+  'ASIAN PAINTS': 'NSE:ASIANPAINT',
+  'BAJAJFINANCE': 'NSE:BAJFINANCE',
+  'BAJFINANCE': 'NSE:BAJFINANCE',
+  'BAJAJ FINANCE': 'NSE:BAJFINANCE',
+  'BAJAJFINSV': 'NSE:BAJFINSV',
+  'HCLTECH': 'NSE:HCLTECH',
+  'HCL': 'NSE:HCLTECH',
+  'SUNPHARMA': 'NSE:SUNPHARMA',
+  'SUN PHARMA': 'NSE:SUNPHARMA',
+  'NTPC': 'NSE:NTPC',
+  'ONGC': 'NSE:ONGC',
+  'POWERGRID': 'NSE:POWERGRID',
+  'ADANIENT': 'NSE:ADANIENT',
+  'ADANI': 'NSE:ADANIENT',
+  'ADANIPORTS': 'NSE:ADANIPORTS',
+  'COALINDIA': 'NSE:COALINDIA',
+  'ZOMATO': 'NSE:ZOMATO',
+  'SWIGGY': 'NSE:SWIGGY',
+  'PAYTM': 'NSE:PAYTM',
+  'JIOFIN': 'NSE:JIOFIN',
+  'JIO': 'NSE:JIOFIN',
+  'GOLDBEES': 'NSE:GOLDBEES',
+  'SILVERBEES': 'NSE:SILVERBEES',
+  'NIFTYBEES': 'NSE:NIFTYBEES'
+};
+
+function normalizeStockSymbol(sym) {
+  if (!sym) return '';
+  var s = String(sym).trim().toUpperCase();
+  if (STOCK_ALIASES[s]) return STOCK_ALIASES[s];
+  
+  if (s.indexOf(':') !== -1) {
+    var parts = s.split(':');
+    var ex = parts[0];
+    var tkr = parts[1];
+    if (STOCK_ALIASES[tkr]) return STOCK_ALIASES[tkr];
+    return s;
+  }
+  
+  if (/^\d{6}$/.test(s)) {
+    return 'BOM:' + s;
+  }
+  
+  return 'NSE:' + s;
+}
+
+/**
+ * Fetches real-time stock quote from Yahoo Finance API for instant calculation
+ */
+function fetchLiveStockQuote(symbol) {
+  try {
+    if (!symbol) return null;
+    var clean = normalizeStockSymbol(symbol);
+    
+    var yahooSymbol = '';
+    if (clean.indexOf('NSE:') === 0) {
+      yahooSymbol = clean.replace('NSE:', '') + '.NS';
+    } else if (clean.indexOf('BOM:') === 0 || clean.indexOf('BSE:') === 0) {
+      yahooSymbol = clean.replace(/^(BOM:|BSE:)/, '') + '.BO';
+    } else if (clean.indexOf('NASDAQ:') === 0 || clean.indexOf('NYSE:') === 0) {
+      yahooSymbol = clean.replace(/^(NASDAQ:|NYSE:)/, '');
+    } else {
+      yahooSymbol = clean + '.NS';
+    }
+    
+    var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yahooSymbol) + '?interval=1d';
+    var response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (response.getResponseCode() === 200) {
+      var data = JSON.parse(response.getContentText());
+      var meta = data?.chart?.result?.[0]?.meta;
+      if (meta && meta.regularMarketPrice) {
+        var price = Number(meta.regularMarketPrice);
+        var prevClose = Number(meta.chartPreviousClose || meta.previousClose || price);
+        var changePct = prevClose > 0 ? Math.round(((price - prevClose) / prevClose) * 100 * 100) / 100 : 0;
+        return {
+          status: 'success',
+          symbol: clean,
+          price: price,
+          changePct: changePct,
+          shortName: meta.shortName || clean,
+          currency: meta.currency || 'INR'
+        };
+      }
+    }
+  } catch (e) {
+    console.error('Error fetching live stock quote for ' + symbol + ': ' + e);
+  }
+  return null;
+}
+
 /**
  * Live search Indian Mutual Fund schemes by keywords
  */
@@ -518,13 +640,7 @@ function registerMarketQuote(ss, symbol, type, displayName) {
   if (!symbol || !ss) return;
   symbol = String(symbol).trim();
   
-  var cleanSymbol = symbol;
-  var isUsStock = cleanSymbol.indexOf('NASDAQ:') === 0 || cleanSymbol.indexOf('NYSE:') === 0;
-  var isIndianStock = cleanSymbol.indexOf('NSE:') === 0 || cleanSymbol.indexOf('BOM:') === 0;
-  
-  if ((type === 'Equity' || type === 'Gold') && !isUsStock && !isIndianStock && cleanSymbol.indexOf(':') === -1 && !/^\d+$/.test(cleanSymbol)) {
-    cleanSymbol = 'NSE:' + cleanSymbol.toUpperCase();
-  }
+  var cleanSymbol = (type === 'Equity' || type === 'Gold') ? normalizeStockSymbol(symbol) : symbol;
   
   var sheet = ss.getSheetByName('MarketQuotes');
   if (!sheet) {
@@ -548,17 +664,26 @@ function registerMarketQuote(ss, symbol, type, displayName) {
     return;
   }
   
+  var initialPrice = 0;
+  var initialChange = 0;
+  var liveQuote = fetchLiveStockQuote(cleanSymbol);
+  if (liveQuote && liveQuote.price > 0) {
+    initialPrice = liveQuote.price;
+    initialChange = liveQuote.changePct;
+  }
+
+  var isUsStock = cleanSymbol.indexOf('NASDAQ:') === 0 || cleanSymbol.indexOf('NYSE:') === 0;
   var priceFormula = '';
   var changeFormula = '';
   if (isUsStock) {
-    priceFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "price") * GOOGLEFINANCE("CURRENCY:USDINR"), 2), 0)';
-    changeFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "changepct"), 2), 0)';
+    priceFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "price") * GOOGLEFINANCE("CURRENCY:USDINR"), 2), ' + initialPrice + ')';
+    changeFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "changepct"), 2), ' + initialChange + ')';
   } else {
-    priceFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "price"), 2), 0)';
-    changeFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "changepct"), 2), 0)';
+    priceFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "price"), 2), ' + initialPrice + ')';
+    changeFormula = '=IFERROR(ROUND(GOOGLEFINANCE("' + cleanSymbol + '", "changepct"), 2), ' + initialChange + ')';
   }
   
-  var newRow = [cleanSymbol, type, displayName || cleanSymbol, priceFormula, changeFormula, new Date().toISOString(), 'Google Finance', ''];
+  var newRow = [cleanSymbol, type, displayName || (liveQuote ? liveQuote.shortName : cleanSymbol), initialPrice, initialChange, new Date().toISOString(), 'Google Finance', ''];
   sheet.appendRow(newRow);
   var lastRow = sheet.getLastRow();
   sheet.getRange(lastRow, 4).setFormula(priceFormula);
@@ -851,22 +976,67 @@ function addRecord(sheetName, recordData, idToken) {
     
     sheet.appendRow(newRow);
     
-    // Auto-register quote for live market tracking if applicable
+    // Auto-register quote and compute initial live market valuation if applicable
     if (sheetName === 'Assets') {
       try {
         var cat = recordData['Category'];
         var det = typeof recordData['Details JSON'] === 'string' ? JSON.parse(recordData['Details JSON'] || '{}') : (recordData['Details JSON'] || {});
+        var lastAddedRow = sheet.getLastRow();
         if (cat === 'Equity') {
           var tkr = det['Ticker Symbol'] || recordData['Identifiers'];
-          if (tkr) registerMarketQuote(ss, tkr, 'Equity', recordData['Name']);
+          if (tkr) {
+            var normTkr = normalizeStockSymbol(tkr);
+            det['Ticker Symbol'] = normTkr;
+            var qty = Number(det['Quantity'] || det['Units'] || 0);
+            if (det['Live Tracking'] !== false && qty > 0) {
+              var liveQ = fetchLiveStockQuote(normTkr);
+              if (liveQ && liveQ.price > 0) {
+                var calcVal = Math.round(qty * liveQ.price * 100) / 100;
+                recordData['Current Value'] = calcVal;
+                var cvColIdx = headers.indexOf('Current Value');
+                if (cvColIdx !== -1) sheet.getRange(lastAddedRow, cvColIdx + 1).setValue(calcVal);
+              }
+            }
+            recordData['Details JSON'] = det;
+            var dtColIdx = headers.indexOf('Details JSON');
+            if (dtColIdx !== -1) sheet.getRange(lastAddedRow, dtColIdx + 1).setValue(JSON.stringify(det));
+            registerMarketQuote(ss, normTkr, 'Equity', recordData['Name']);
+          }
         } else if (cat === 'Gold') {
           var ff = String(det['Form Factor'] || '');
           if ((ff.includes('ETF') || ff.includes('SGB')) && det['Ticker Symbol']) {
-            registerMarketQuote(ss, det['Ticker Symbol'], 'Gold', recordData['Name']);
+            var normGTkr = normalizeStockSymbol(det['Ticker Symbol']);
+            det['Ticker Symbol'] = normGTkr;
+            var gUnits = Number(det['Units'] || det['Quantity'] || 0);
+            if (det['Live Tracking'] !== false && gUnits > 0) {
+              var liveGQ = fetchLiveStockQuote(normGTkr);
+              if (liveGQ && liveGQ.price > 0) {
+                var calcGVal = Math.round(gUnits * liveGQ.price * 100) / 100;
+                recordData['Current Value'] = calcGVal;
+                var gcvCol = headers.indexOf('Current Value');
+                if (gcvCol !== -1) sheet.getRange(lastAddedRow, gcvCol + 1).setValue(calcGVal);
+              }
+            }
+            recordData['Details JSON'] = det;
+            var gdtCol = headers.indexOf('Details JSON');
+            if (gdtCol !== -1) sheet.getRange(lastAddedRow, gdtCol + 1).setValue(JSON.stringify(det));
+            registerMarketQuote(ss, normGTkr, 'Gold', recordData['Name']);
           }
         } else if (cat === 'Mutual Funds') {
           var sc = det['Scheme Code'] || det['Ticker Symbol'];
-          if (sc) registerMarketQuote(ss, sc, 'Mutual Funds', recordData['Name']);
+          if (sc) {
+            var mfUnits = Number(det['Units'] || det['Quantity'] || 0);
+            if (det['Live Tracking'] !== false && mfUnits > 0 && /^\d+$/.test(String(sc).trim())) {
+              var amfiQ = fetchAmfiNav(sc);
+              if (amfiQ && amfiQ.nav > 0) {
+                var calcMfVal = Math.round(mfUnits * amfiQ.nav * 100) / 100;
+                recordData['Current Value'] = calcMfVal;
+                var mfcvCol = headers.indexOf('Current Value');
+                if (mfcvCol !== -1) sheet.getRange(lastAddedRow, mfcvCol + 1).setValue(calcMfVal);
+              }
+            }
+            registerMarketQuote(ss, sc, 'Mutual Funds', recordData['Name']);
+          }
         }
       } catch (e) {
         console.warn('Error auto-registering market quote on add: ' + e);
@@ -914,7 +1084,7 @@ function updateRecord(sheetName, idField, idValue, updateData, idToken) {
           }
         }
         
-        // Auto-register quote for live market tracking if applicable
+        // Auto-register quote and compute initial live market valuation if applicable
         if (sheetName === 'Assets') {
           try {
             var cat = updateData['Category'] || data[i][headers.indexOf('Category')];
@@ -923,15 +1093,59 @@ function updateRecord(sheetName, idField, idValue, updateData, idToken) {
             var assetName = updateData['Name'] || data[i][headers.indexOf('Name')];
             if (cat === 'Equity') {
               var tkr = det['Ticker Symbol'] || updateData['Identifiers'] || data[i][headers.indexOf('Identifiers')];
-              if (tkr) registerMarketQuote(ss, tkr, 'Equity', assetName);
+              if (tkr) {
+                var normTkr = normalizeStockSymbol(tkr);
+                det['Ticker Symbol'] = normTkr;
+                var qty = Number(det['Quantity'] || det['Units'] || 0);
+                if (det['Live Tracking'] !== false && qty > 0) {
+                  var liveQ = fetchLiveStockQuote(normTkr);
+                  if (liveQ && liveQ.price > 0) {
+                    var calcVal = Math.round(qty * liveQ.price * 100) / 100;
+                    updateData['Current Value'] = calcVal;
+                    var cvColIdx = headers.indexOf('Current Value');
+                    if (cvColIdx !== -1) sheet.getRange(i + 1, cvColIdx + 1).setValue(calcVal);
+                  }
+                }
+                updateData['Details JSON'] = det;
+                var dtColIdx = headers.indexOf('Details JSON');
+                if (dtColIdx !== -1) sheet.getRange(i + 1, dtColIdx + 1).setValue(JSON.stringify(det));
+                registerMarketQuote(ss, normTkr, 'Equity', assetName);
+              }
             } else if (cat === 'Gold') {
               var ff = String(det['Form Factor'] || '');
               if ((ff.includes('ETF') || ff.includes('SGB')) && det['Ticker Symbol']) {
-                registerMarketQuote(ss, det['Ticker Symbol'], 'Gold', assetName);
+                var normGTkr = normalizeStockSymbol(det['Ticker Symbol']);
+                det['Ticker Symbol'] = normGTkr;
+                var gUnits = Number(det['Units'] || det['Quantity'] || 0);
+                if (det['Live Tracking'] !== false && gUnits > 0) {
+                  var liveGQ = fetchLiveStockQuote(normGTkr);
+                  if (liveGQ && liveGQ.price > 0) {
+                    var calcGVal = Math.round(gUnits * liveGQ.price * 100) / 100;
+                    updateData['Current Value'] = calcGVal;
+                    var gcvCol = headers.indexOf('Current Value');
+                    if (gcvCol !== -1) sheet.getRange(i + 1, gcvCol + 1).setValue(calcGVal);
+                  }
+                }
+                updateData['Details JSON'] = det;
+                var gdtCol = headers.indexOf('Details JSON');
+                if (gdtCol !== -1) sheet.getRange(i + 1, gdtCol + 1).setValue(JSON.stringify(det));
+                registerMarketQuote(ss, normGTkr, 'Gold', assetName);
               }
             } else if (cat === 'Mutual Funds') {
               var sc = det['Scheme Code'] || det['Ticker Symbol'];
-              if (sc) registerMarketQuote(ss, sc, 'Mutual Funds', assetName);
+              if (sc) {
+                var mfUnits = Number(det['Units'] || det['Quantity'] || 0);
+                if (det['Live Tracking'] !== false && mfUnits > 0 && /^\d+$/.test(String(sc).trim())) {
+                  var amfiQ = fetchAmfiNav(sc);
+                  if (amfiQ && amfiQ.nav > 0) {
+                    var calcMfVal = Math.round(mfUnits * amfiQ.nav * 100) / 100;
+                    updateData['Current Value'] = calcMfVal;
+                    var mfcvCol = headers.indexOf('Current Value');
+                    if (mfcvCol !== -1) sheet.getRange(i + 1, mfcvCol + 1).setValue(calcMfVal);
+                  }
+                }
+                registerMarketQuote(ss, sc, 'Mutual Funds', assetName);
+              }
             }
           } catch (e) {
             console.warn('Error auto-registering market quote on update: ' + e);
@@ -1116,16 +1330,26 @@ function getDashboardData(idToken) {
         if (category === 'Equity') {
           var tkr = details['Ticker Symbol'] || asset['Identifiers'];
           if (tkr) {
-            var cleanTkr = String(tkr).trim();
-            if (cleanTkr.indexOf(':') === -1) cleanTkr = 'NSE:' + cleanTkr.toUpperCase();
+            var cleanTkr = normalizeStockSymbol(tkr);
             var quote = quotesMap[cleanTkr.toUpperCase()];
-            var qty = Number(details['Quantity'] || 0);
+            var qty = Number(details['Quantity'] || details['Units'] || 0);
             if (quote && quote.price > 0) {
               livePrice = quote.price;
               dayChange = quote.changePct;
               isLive = true;
               if (qty > 0) {
                 calculatedVal = Math.round(qty * livePrice * 100) / 100;
+              }
+            } else {
+              var onDemandQ = fetchLiveStockQuote(cleanTkr);
+              if (onDemandQ && onDemandQ.price > 0) {
+                livePrice = onDemandQ.price;
+                dayChange = onDemandQ.changePct;
+                isLive = true;
+                if (qty > 0) {
+                  calculatedVal = Math.round(qty * livePrice * 100) / 100;
+                }
+                quotesMap[cleanTkr.toUpperCase()] = onDemandQ;
               }
             }
           }
@@ -1134,16 +1358,26 @@ function getDashboardData(idToken) {
           if (ff.includes('ETF') || ff.includes('SGB')) {
             var gTkr = details['Ticker Symbol'];
             if (gTkr) {
-              var cleanGTkr = String(gTkr).trim();
-              if (cleanGTkr.indexOf(':') === -1) cleanGTkr = 'NSE:' + cleanGTkr.toUpperCase();
+              var cleanGTkr = normalizeStockSymbol(gTkr);
               var gQuote = quotesMap[cleanGTkr.toUpperCase()];
-              var units = Number(details['Units'] || 0);
+              var units = Number(details['Units'] || details['Quantity'] || 0);
               if (gQuote && gQuote.price > 0) {
                 livePrice = gQuote.price;
                 dayChange = gQuote.changePct;
                 isLive = true;
                 if (units > 0) {
                   calculatedVal = Math.round(units * livePrice * 100) / 100;
+                }
+              } else {
+                var onDemandGQ = fetchLiveStockQuote(cleanGTkr);
+                if (onDemandGQ && onDemandGQ.price > 0) {
+                  livePrice = onDemandGQ.price;
+                  dayChange = onDemandGQ.changePct;
+                  isLive = true;
+                  if (units > 0) {
+                    calculatedVal = Math.round(units * livePrice * 100) / 100;
+                  }
+                  quotesMap[cleanGTkr.toUpperCase()] = onDemandGQ;
                 }
               }
             }
@@ -1288,12 +1522,17 @@ function syncLiveValuationsToSheet(idToken) {
       if (category === 'Equity') {
         var ticker = details['Ticker Symbol'] || assetData[i][headers.indexOf('Identifiers')];
         if (ticker) {
-          var cleanTicker = String(ticker).trim();
-          if (cleanTicker.indexOf(':') === -1) cleanTicker = 'NSE:' + cleanTicker.toUpperCase();
+          var cleanTicker = normalizeStockSymbol(ticker);
           var quote = quotesMap[cleanTicker.toUpperCase()];
-          var qty = Number(details['Quantity'] || 0);
+          var qty = Number(details['Quantity'] || details['Units'] || 0);
           if (quote && quote.price > 0 && qty > 0) {
             calculatedVal = Math.round(qty * quote.price * 100) / 100;
+          } else if (qty > 0) {
+            var liveQ = fetchLiveStockQuote(cleanTicker);
+            if (liveQ && liveQ.price > 0) {
+              calculatedVal = Math.round(qty * liveQ.price * 100) / 100;
+              quotesMap[cleanTicker.toUpperCase()] = liveQ;
+            }
           }
         }
       } else if (category === 'Gold') {
@@ -1301,12 +1540,17 @@ function syncLiveValuationsToSheet(idToken) {
         if (ff.includes('ETF') || ff.includes('SGB')) {
           var gTicker = details['Ticker Symbol'];
           if (gTicker) {
-            var cleanGTicker = String(gTicker).trim();
-            if (cleanGTicker.indexOf(':') === -1) cleanGTicker = 'NSE:' + cleanGTicker.toUpperCase();
+            var cleanGTicker = normalizeStockSymbol(gTicker);
             var gQuote = quotesMap[cleanGTicker.toUpperCase()];
-            var units = Number(details['Units'] || 0);
+            var units = Number(details['Units'] || details['Quantity'] || 0);
             if (gQuote && gQuote.price > 0 && units > 0) {
               calculatedVal = Math.round(units * gQuote.price * 100) / 100;
+            } else if (units > 0) {
+              var liveGQ = fetchLiveStockQuote(cleanGTicker);
+              if (liveGQ && liveGQ.price > 0) {
+                calculatedVal = Math.round(units * liveGQ.price * 100) / 100;
+                quotesMap[cleanGTicker.toUpperCase()] = liveGQ;
+              }
             }
           }
         } else {
@@ -1323,9 +1567,14 @@ function syncLiveValuationsToSheet(idToken) {
         if (sc) {
           var cleanSc = String(sc).trim().toUpperCase();
           var mfQuote = quotesMap[cleanSc];
-          var mfUnits = Number(details['Units'] || 0);
+          var mfUnits = Number(details['Units'] || details['Quantity'] || 0);
           if (mfQuote && mfQuote.price > 0 && mfUnits > 0) {
             calculatedVal = Math.round(mfUnits * mfQuote.price * 100) / 100;
+          } else if (mfUnits > 0 && /^\d+$/.test(cleanSc)) {
+            var amfiLive = fetchAmfiNav(cleanSc);
+            if (amfiLive && amfiLive.nav > 0) {
+              calculatedVal = Math.round(mfUnits * amfiLive.nav * 100) / 100;
+            }
           }
         }
       }

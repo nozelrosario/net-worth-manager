@@ -375,17 +375,19 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
           const cat = asset.Category;
           let holdingSummary = '';
-          if (cat === 'Equity' && det['Quantity']) {
-            holdingSummary = `${det['Quantity']} shares` + (det['Average Buy Price'] ? ` @ avg ₹${det['Average Buy Price']}` : '');
+          if (cat === 'Equity' && (det['Quantity'] || det['Units'])) {
+            const q = det['Quantity'] || det['Units'];
+            holdingSummary = `${q} shares` + (det['Average Buy Price'] ? ` @ avg ₹${det['Average Buy Price']}` : '');
           } else if (cat === 'Gold') {
             const ff = String(det['Form Factor'] || '');
             if (ff.includes('ETF') || ff.includes('SGB')) {
-              holdingSummary = `${det['Units'] || 0} units`;
+              holdingSummary = `${det['Units'] || det['Quantity'] || 0} units`;
             } else {
               holdingSummary = `${det['Weight (Grams)'] || 0}g` + (det['Purity'] ? ` (${det['Purity'].split(' ')[0]})` : '');
             }
-          } else if (cat === 'Mutual Funds' && det['Units']) {
-            holdingSummary = `${det['Units']} units` + (det['Average NAV'] ? ` @ avg ₹${det['Average NAV']}` : '');
+          } else if (cat === 'Mutual Funds' && (det['Units'] || det['Quantity'])) {
+            const u = det['Units'] || det['Quantity'];
+            holdingSummary = `${u} units` + (det['Average NAV'] ? ` @ avg ₹${det['Average NAV']}` : '');
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);

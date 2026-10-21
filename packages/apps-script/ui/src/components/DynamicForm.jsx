@@ -2,6 +2,84 @@ import React, { useState, useEffect, useRef } from 'react';
 import { assetSchemas } from '../config/assetSchemas';
 import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 
+// Stock ticker aliases for Indian equities and ETFs
+export const STOCK_ALIASES = {
+  'RIL': 'NSE:RELIANCE',
+  'RELIANCE': 'NSE:RELIANCE',
+  'TCS': 'NSE:TCS',
+  'INFY': 'NSE:INFY',
+  'INFOSYS': 'NSE:INFY',
+  'HDFC': 'NSE:HDFCBANK',
+  'HDFCBANK': 'NSE:HDFCBANK',
+  'ICICI': 'NSE:ICICIBANK',
+  'ICICIBANK': 'NSE:ICICIBANK',
+  'SBI': 'NSE:SBIN',
+  'SBIN': 'NSE:SBIN',
+  'STATE BANK': 'NSE:SBIN',
+  'BHARTI': 'NSE:BHARTIARTL',
+  'AIRTEL': 'NSE:BHARTIARTL',
+  'BHARTIARTL': 'NSE:BHARTIARTL',
+  'ITC': 'NSE:ITC',
+  'LT': 'NSE:LT',
+  'L&T': 'NSE:LT',
+  'LARSEN': 'NSE:LT',
+  'KOTAK': 'NSE:KOTAKBANK',
+  'KOTAKBANK': 'NSE:KOTAKBANK',
+  'AXIS': 'NSE:AXISBANK',
+  'AXISBANK': 'NSE:AXISBANK',
+  'MARUTI': 'NSE:MARUTI',
+  'TATAMOTORS': 'NSE:TATAMOTORS',
+  'TATA MOTORS': 'NSE:TATAMOTORS',
+  'TATASTEEL': 'NSE:TATASTEEL',
+  'TATA STEEL': 'NSE:TATASTEEL',
+  'TITAN': 'NSE:TITAN',
+  'WIPRO': 'NSE:WIPRO',
+  'ASIANPAINT': 'NSE:ASIANPAINT',
+  'ASIAN PAINTS': 'NSE:ASIANPAINT',
+  'BAJAJFINANCE': 'NSE:BAJFINANCE',
+  'BAJFINANCE': 'NSE:BAJFINANCE',
+  'BAJAJ FINANCE': 'NSE:BAJFINANCE',
+  'BAJAJFINSV': 'NSE:BAJFINSV',
+  'HCLTECH': 'NSE:HCLTECH',
+  'HCL': 'NSE:HCLTECH',
+  'SUNPHARMA': 'NSE:SUNPHARMA',
+  'SUN PHARMA': 'NSE:SUNPHARMA',
+  'NTPC': 'NSE:NTPC',
+  'ONGC': 'NSE:ONGC',
+  'POWERGRID': 'NSE:POWERGRID',
+  'ADANIENT': 'NSE:ADANIENT',
+  'ADANI': 'NSE:ADANIENT',
+  'ADANIPORTS': 'NSE:ADANIPORTS',
+  'COALINDIA': 'NSE:COALINDIA',
+  'ZOMATO': 'NSE:ZOMATO',
+  'SWIGGY': 'NSE:SWIGGY',
+  'PAYTM': 'NSE:PAYTM',
+  'JIOFIN': 'NSE:JIOFIN',
+  'JIO': 'NSE:JIOFIN',
+  'GOLDBEES': 'NSE:GOLDBEES',
+  'SILVERBEES': 'NSE:SILVERBEES',
+  'NIFTYBEES': 'NSE:NIFTYBEES'
+};
+
+export function normalizeStockSymbol(sym) {
+  if (!sym) return '';
+  const s = String(sym).trim().toUpperCase();
+  if (STOCK_ALIASES[s]) return STOCK_ALIASES[s];
+  
+  if (s.indexOf(':') !== -1) {
+    const parts = s.split(':');
+    const tkr = parts[1];
+    if (STOCK_ALIASES[tkr]) return STOCK_ALIASES[tkr];
+    return s;
+  }
+  
+  if (/^\d{6}$/.test(s)) {
+    return 'BOM:' + s;
+  }
+  
+  return 'NSE:' + s;
+}
+
 // Utility to get nested object value (e.g., 'Details JSON.Interest Rate')
 const getNestedValue = (obj, path) => {
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
@@ -45,6 +123,12 @@ export default function DynamicForm({
   formatCurrency = (v) => `₹${Number(v || 0).toLocaleString('en-IN')}`
 }) {
   const [linkInput, setLinkInput] = useState('');
+
+  // Stock live quote state
+  const [liveStockQuote, setLiveStockQuote] = useState(null);
+  const [isFetchingStock, setIsFetchingStock] = useState(false);
+  const [stockFetchError, setStockFetchError] = useState(null);
+  const stockSearchTimeoutRef = useRef(null);
   
   // Mutual Fund live search state
   const [mfSearchQuery, setMfSearchQuery] = useState('');
@@ -74,6 +158,77 @@ export default function DynamicForm({
   const gold22kRate = marketQuotes['GOLD_22K_INR']?.price || Math.round(gold24kRate * (22 / 24));
   const gold18kRate = marketQuotes['GOLD_18K_INR']?.price || Math.round(gold24kRate * (18 / 24));
 
+  // On-demand Live Stock Quote Fetching
+  useEffect(() => {
+    if (schemaKey !== 'Equity' && schemaKey !== 'Gold') {
+      setLiveStockQuote(null);
+      return;
+    }
+
+    const rawTicker = formData['Details JSON']?.['Ticker Symbol'];
+    if (!rawTicker || String(rawTicker).trim().length < 2) {
+      setLiveStockQuote(null);
+      setStockFetchError(null);
+      return;
+    }
+
+    const cleanTicker = normalizeStockSymbol(rawTicker);
+    if (!cleanTicker) return;
+
+    // Check if quote is already seeded in marketQuotes
+    const existingQuote = marketQuotes[cleanTicker.toUpperCase()];
+    if (existingQuote && existingQuote.price > 0) {
+      setLiveStockQuote(existingQuote);
+      setStockFetchError(null);
+      const qty = Number(formData['Details JSON']?.['Quantity'] || formData['Details JSON']?.['Units'] || 0);
+      if (qty > 0 && formData['Details JSON']?.['Live Tracking'] !== false && (!formData['Current Value'] || formData['Current Value'] === 0)) {
+        setFormData(prev => ({
+          ...prev,
+          'Current Value': Math.round(qty * existingQuote.price * 100) / 100
+        }));
+      }
+      return;
+    }
+
+    // Fetch on-demand via Google Apps Script (which queries Yahoo Finance)
+    if (stockSearchTimeoutRef.current) clearTimeout(stockSearchTimeoutRef.current);
+    stockSearchTimeoutRef.current = setTimeout(() => {
+      if (window.google?.script?.run?.fetchLiveStockQuote) {
+        setIsFetchingStock(true);
+        setStockFetchError(null);
+        window.google.script.run
+          .withSuccessHandler((res) => {
+            setIsFetchingStock(false);
+            if (res && res.price > 0) {
+              setLiveStockQuote(res);
+              setStockFetchError(null);
+              setFormData(prev => {
+                const qty = Number(prev['Details JSON']?.['Quantity'] || prev['Details JSON']?.['Units'] || 0);
+                if (qty > 0 && prev['Details JSON']?.['Live Tracking'] !== false) {
+                  return {
+                    ...prev,
+                    'Current Value': Math.round(qty * res.price * 100) / 100
+                  };
+                }
+                return prev;
+              });
+            } else {
+              setStockFetchError(`Could not find live quote for "${cleanTicker}"`);
+            }
+          })
+          .withFailureHandler((err) => {
+            setIsFetchingStock(false);
+            setStockFetchError(`Error fetching quote: ${err?.message || err}`);
+          })
+          .fetchLiveStockQuote(cleanTicker);
+      }
+    }, 450);
+
+    return () => {
+      if (stockSearchTimeoutRef.current) clearTimeout(stockSearchTimeoutRef.current);
+    };
+  }, [formData['Details JSON']?.['Ticker Symbol'], schemaKey, marketQuotes]);
+
   const handleChange = (name, value) => {
     let updated = setNestedValue(formData, name, value);
 
@@ -89,23 +244,36 @@ export default function DynamicForm({
     // Auto-calculate for Equity
     if (schemaKey === 'Equity') {
       const isLiveTracking = updated['Details JSON']?.['Live Tracking'] !== false;
-      const qty = Number(updated['Details JSON']?.['Quantity'] || 0);
+      const qty = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
       const avgPrice = Number(updated['Details JSON']?.['Average Buy Price'] || 0);
+      const cost = Number(updated.Cost || 0);
       
-      // Auto-compute Cost if avg buy price & quantity provided and cost is not manually customized
-      if (name === 'Details JSON.Quantity' || name === 'Details JSON.Average Buy Price') {
-        if (qty > 0 && avgPrice > 0 && (!updated.Cost || updated.Cost === (qty * avgPrice))) {
+      // Auto-compute between Cost, Quantity, and Average Buy Price
+      if (name === 'Details JSON.Quantity' || name === 'Details JSON.Units') {
+        if (name === 'Details JSON.Units') {
+          updated = setNestedValue(updated, 'Details JSON.Quantity', value);
+        }
+        if (qty > 0 && avgPrice > 0 && (!cost || cost === 0 || cost === Math.round(qty * avgPrice * 100) / 100)) {
           updated.Cost = Math.round(qty * avgPrice * 100) / 100;
+        } else if (qty > 0 && cost > 0 && (!avgPrice || avgPrice === 0)) {
+          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', Math.round((cost / qty) * 100) / 100);
+        }
+      } else if (name === 'Details JSON.Average Buy Price') {
+        if (qty > 0 && avgPrice > 0 && (!cost || cost === 0)) {
+          updated.Cost = Math.round(qty * avgPrice * 100) / 100;
+        }
+      } else if (name === 'Cost') {
+        if (cost > 0 && qty > 0 && (!avgPrice || avgPrice === 0)) {
+          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', Math.round((cost / qty) * 100) / 100);
         }
       }
 
       // Auto-compute Current Value from live ticker if available
-      if (isLiveTracking) {
+      if (isLiveTracking && qty > 0) {
         const rawTicker = updated['Details JSON']?.['Ticker Symbol'] || '';
-        let cleanTicker = String(rawTicker).trim().toUpperCase();
-        if (cleanTicker && !cleanTicker.includes(':')) cleanTicker = 'NSE:' + cleanTicker;
-        const quote = marketQuotes[cleanTicker];
-        if (quote && quote.price > 0 && qty > 0) {
+        const cleanTicker = normalizeStockSymbol(rawTicker);
+        const quote = (cleanTicker && marketQuotes[cleanTicker]) || (liveStockQuote?.symbol === cleanTicker ? liveStockQuote : null);
+        if (quote && quote.price > 0) {
           updated['Current Value'] = Math.round(qty * quote.price * 100) / 100;
         }
       }
@@ -119,10 +287,9 @@ export default function DynamicForm({
       if (isLiveTracking) {
         if (ff.includes('ETF') || ff.includes('SGB')) {
           const rawTicker = updated['Details JSON']?.['Ticker Symbol'] || '';
-          let cleanTicker = String(rawTicker).trim().toUpperCase();
-          if (cleanTicker && !cleanTicker.includes(':')) cleanTicker = 'NSE:' + cleanTicker;
-          const quote = marketQuotes[cleanTicker];
-          const units = Number(updated['Details JSON']?.['Units'] || 0);
+          const cleanTicker = normalizeStockSymbol(rawTicker);
+          const quote = (cleanTicker && marketQuotes[cleanTicker]) || (liveStockQuote?.symbol === cleanTicker ? liveStockQuote : null);
+          const units = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
           if (quote && quote.price > 0 && units > 0) {
             updated['Current Value'] = Math.round(units * quote.price * 100) / 100;
           }
@@ -140,12 +307,23 @@ export default function DynamicForm({
     // Auto-calculate for Mutual Funds
     if (schemaKey === 'Mutual Funds') {
       const isLiveTracking = updated['Details JSON']?.['Live Tracking'] !== false;
-      const units = Number(updated['Details JSON']?.['Units'] || 0);
+      const units = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
       const avgNav = Number(updated['Details JSON']?.['Average NAV'] || 0);
+      const cost = Number(updated.Cost || 0);
       
-      if (name === 'Details JSON.Units' || name === 'Details JSON.Average NAV') {
-        if (units > 0 && avgNav > 0 && (!updated.Cost || updated.Cost === (units * avgNav))) {
+      if (name === 'Details JSON.Units' || name === 'Details JSON.Quantity') {
+        if (units > 0 && avgNav > 0 && (!cost || cost === 0 || cost === Math.round(units * avgNav * 100) / 100)) {
           updated.Cost = Math.round(units * avgNav * 100) / 100;
+        } else if (units > 0 && cost > 0 && (!avgNav || avgNav === 0)) {
+          updated = setNestedValue(updated, 'Details JSON.Average NAV', Math.round((cost / units) * 10000) / 10000);
+        }
+      } else if (name === 'Details JSON.Average NAV') {
+        if (units > 0 && avgNav > 0 && (!cost || cost === 0)) {
+          updated.Cost = Math.round(units * avgNav * 100) / 100;
+        }
+      } else if (name === 'Cost') {
+        if (cost > 0 && units > 0 && (!avgNav || avgNav === 0)) {
+          updated = setNestedValue(updated, 'Details JSON.Average NAV', Math.round((cost / units) * 10000) / 10000);
         }
       }
 
@@ -270,17 +448,40 @@ export default function DynamicForm({
 
   // Helper info for Equity
   const rawEquityTicker = formData['Details JSON']?.['Ticker Symbol'] || '';
-  let cleanEquityTicker = String(rawEquityTicker).trim().toUpperCase();
-  if (cleanEquityTicker && !cleanEquityTicker.includes(':')) cleanEquityTicker = 'NSE:' + cleanEquityTicker;
-  const equityQuote = marketQuotes[cleanEquityTicker];
+  const cleanEquityTicker = normalizeStockSymbol(rawEquityTicker);
+  const currentEquityQuote = (cleanEquityTicker && marketQuotes[cleanEquityTicker]) || (liveStockQuote?.symbol === cleanEquityTicker ? liveStockQuote : null);
+  const equityQty = Number(formData['Details JSON']?.['Quantity'] || formData['Details JSON']?.['Units'] || 0);
+  const equityCost = Number(formData.Cost || 0);
+  const calculatedEquityVal = equityQty > 0 && currentEquityQuote?.price ? Math.round(equityQty * currentEquityQuote.price * 100) / 100 : null;
+  const equityPnl = (calculatedEquityVal && equityCost > 0) ? Math.round((calculatedEquityVal - equityCost) * 100) / 100 : null;
+  const equityPnlPct = (equityPnl !== null && equityCost > 0) ? Math.round(((equityPnl / equityCost) * 100) * 100) / 100 : null;
 
   // Helper info for Gold
   const goldFormFactor = formData['Details JSON']?.['Form Factor'] || '';
   const goldPurity = formData['Details JSON']?.['Purity'] || (goldFormFactor.includes('Jewelry') ? '22K' : '24K');
   const activeGoldRate = goldPurity.includes('22K') ? gold22kRate : (goldPurity.includes('18K') ? gold18kRate : gold24kRate);
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    let updated = { ...formData };
+    if (schemaKey === 'Equity') {
+      const rawTicker = updated['Details JSON']?.['Ticker Symbol'];
+      if (rawTicker) {
+        const norm = normalizeStockSymbol(rawTicker);
+        updated = setNestedValue(updated, 'Details JSON.Ticker Symbol', norm);
+        const qty = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
+        const quote = (norm && marketQuotes[norm]) || (liveStockQuote?.symbol === norm ? liveStockQuote : null);
+        if (qty > 0 && quote?.price > 0 && updated['Details JSON']?.['Live Tracking'] !== false) {
+          updated['Current Value'] = Math.round(qty * quote.price * 100) / 100;
+        }
+      }
+      setFormData(updated);
+    }
+    onSubmit(e);
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleFormSubmit} className="space-y-4">
       {/* Live Market Integration Banners */}
       {schemaKey === 'Gold' && (
         <div className="bg-gradient-to-r from-bullion-amber/15 via-surface-layer2 to-surface-layer2 border border-bullion-amber/30 rounded-xl p-3 text-xs">
@@ -307,24 +508,73 @@ export default function DynamicForm({
         </div>
       )}
 
-      {schemaKey === 'Equity' && equityQuote && equityQuote.price > 0 && (
-        <div className="bg-primary-accent/10 border border-primary-accent/30 rounded-xl p-3 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-wealth-emerald animate-pulse"></span>
-            <div>
-              <p className="font-semibold text-white">{cleanEquityTicker}</p>
-              <p className="text-[11px] text-text-muted">Live Google Finance Quote</p>
+      {schemaKey === 'Equity' && (
+        <>
+          {isFetchingStock && (
+            <div className="bg-surface-layer2 border border-primary-accent/30 rounded-xl p-3 text-xs flex items-center gap-2 text-primary-accent animate-pulse">
+              <RefreshCw size={13} className="animate-spin text-primary-accent flex-shrink-0" />
+              <span>Fetching live market price for {cleanEquityTicker || 'ticker'}...</span>
             </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-wealth-emerald tabular-nums">{formatCurrency(equityQuote.price)}</p>
-            {equityQuote.changePct !== 0 && (
-              <p className={`text-[10px] font-medium tabular-nums ${equityQuote.changePct > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
-                {equityQuote.changePct > 0 ? '+' : ''}{equityQuote.changePct}% today
-              </p>
-            )}
-          </div>
-        </div>
+          )}
+
+          {currentEquityQuote && currentEquityQuote.price > 0 && (
+            <div className="bg-gradient-to-r from-primary-accent/15 via-surface-layer2 to-surface-layer2 border border-primary-accent/30 rounded-xl p-3 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-wealth-emerald animate-pulse"></span>
+                  <div>
+                    <p className="font-semibold text-white flex items-center gap-1.5">
+                      {currentEquityQuote.shortName || cleanEquityTicker}
+                      {cleanEquityTicker !== String(rawEquityTicker).toUpperCase() && (
+                        <span className="text-[10px] text-primary-accent bg-primary-accent/20 px-1.5 py-0.2 rounded font-mono">
+                          {cleanEquityTicker}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-[10px] text-text-muted">Live Market Quote</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-wealth-emerald tabular-nums">
+                    {formatCurrency(currentEquityQuote.price)}
+                  </p>
+                  {currentEquityQuote.changePct !== undefined && currentEquityQuote.changePct !== 0 && (
+                    <p className={`text-[10px] font-medium tabular-nums ${currentEquityQuote.changePct > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                      {currentEquityQuote.changePct > 0 ? '+' : ''}{currentEquityQuote.changePct}% today
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {calculatedEquityVal !== null && (
+                <div className="pt-2 border-t border-border-subtle/60 flex items-center justify-between text-[11px]">
+                  <span className="text-text-secondary">
+                    Market Value ({equityQty} shares × {formatCurrency(currentEquityQuote.price)}):
+                  </span>
+                  <span className="font-bold text-wealth-emerald tabular-nums">
+                    {formatCurrency(calculatedEquityVal)}
+                  </span>
+                </div>
+              )}
+
+              {equityPnl !== null && (
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-text-secondary">Unrealized P&L:</span>
+                  <span className={`font-semibold tabular-nums ${equityPnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                    {equityPnl >= 0 ? '+' : ''}{formatCurrency(equityPnl)} ({equityPnlPct >= 0 ? '+' : ''}{equityPnlPct}%)
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {stockFetchError && !currentEquityQuote && (
+            <div className="bg-liability-rose/10 border border-liability-rose/30 rounded-xl p-2.5 text-xs flex items-center gap-2 text-liability-rose">
+              <AlertCircle size={14} className="flex-shrink-0" />
+              <span>{stockFetchError}</span>
+            </div>
+          )}
+        </>
       )}
 
       {/* Mutual Fund Instant AMFI Search Helper */}
@@ -454,6 +704,23 @@ export default function DynamicForm({
                 className={`w-full bg-surface-layer2 border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent ${field.name === 'Current Value' ? 'border-primary-accent/40 font-bold tabular-nums text-wealth-emerald' : 'border-border-subtle'}`} 
                 placeholder={field.placeholder} 
               />
+              {field.name === 'Details JSON.Ticker Symbol' && cleanEquityTicker && (
+                <div className="mt-1 flex items-center justify-between text-[11px] px-1">
+                  {cleanEquityTicker !== String(value || '').toUpperCase() ? (
+                    <span className="text-primary-accent font-medium flex items-center gap-1">
+                      <span>Mapped:</span>
+                      <span className="font-mono bg-primary-accent/15 px-1 rounded">{cleanEquityTicker}</span>
+                    </span>
+                  ) : (
+                    <span className="text-text-muted font-mono">{cleanEquityTicker}</span>
+                  )}
+                  {currentEquityQuote?.price > 0 && (
+                    <span className="text-wealth-emerald font-semibold tabular-nums">
+                      CMP: {formatCurrency(currentEquityQuote.price)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
