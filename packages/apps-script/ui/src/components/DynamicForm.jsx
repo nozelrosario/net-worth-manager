@@ -814,8 +814,10 @@ export default function DynamicForm({
   };
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-4">
-      {/* Live Market Integration Banners */}
+    <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+      {/* Scrollable Form Body */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 min-h-0 scrollbar-hide">
+        {/* Live Market Integration Banners */}
       {schemaKey === 'Gold' && (
         <div className="bg-gradient-to-r from-bullion-amber/15 via-surface-layer2 to-surface-layer2 border border-bullion-amber/30 rounded-xl p-3 text-xs">
           <div className="flex items-center justify-between mb-1">
@@ -1001,7 +1003,8 @@ export default function DynamicForm({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto px-1 pb-2 scrollbar-hide">
+      {/* Form Fields Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {schema.fields.map(field => {
           if (field.condition && !field.condition(formData)) return null;
           
@@ -1009,7 +1012,7 @@ export default function DynamicForm({
           
           if (field.type === 'checkbox') {
             return (
-              <div key={field.name} className="flex items-center gap-2 mt-2 md:col-span-2 bg-surface-layer2/40 p-2.5 rounded-lg border border-border-subtle">
+              <div key={field.name} className="flex items-center gap-2 mt-1 md:col-span-2 bg-surface-layer2/40 p-2.5 rounded-lg border border-border-subtle">
                 <input 
                   type="checkbox" 
                   checked={!!value} 
@@ -1100,199 +1103,201 @@ export default function DynamicForm({
             </div>
           );
         })}
+      </div>
 
-        {/* Investment Return & Tax Intelligence Card */}
-        {perfMetrics && (
-          <div className="md:col-span-2 bg-gradient-to-r from-wealth-emerald/10 via-surface-layer2 to-surface-layer2 border border-wealth-emerald/30 rounded-xl p-3 text-xs space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-white flex items-center gap-1.5">
-                <TrendingUp size={14} className="text-wealth-emerald" />
-                Investment Return & Tax Intelligence
-              </span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${perfMetrics.isLtcg ? 'bg-wealth-emerald/20 text-wealth-emerald border-wealth-emerald/40' : 'bg-bullion-amber/20 text-bullion-amber border-bullion-amber/40'}`}>
+      {/* Investment Return & Tax Intelligence Card */}
+      {perfMetrics && (
+        <div className="bg-gradient-to-r from-wealth-emerald/10 via-surface-layer2 to-surface-layer2 border border-wealth-emerald/30 rounded-xl p-3 text-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-white flex items-center gap-1.5">
+              <TrendingUp size={14} className="text-wealth-emerald" />
+              Investment Return & Tax Intelligence
+            </span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${perfMetrics.isLtcg ? 'bg-wealth-emerald/20 text-wealth-emerald border-wealth-emerald/40' : 'bg-bullion-amber/20 text-bullion-amber border-bullion-amber/40'}`}>
+              {perfMetrics.taxTag}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border-subtle/50 text-center">
+            <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+              <p className="text-[10px] text-text-muted">Holding Period</p>
+              <p className="text-xs font-bold text-white tabular-nums mt-0.5">{perfMetrics.holdingStr}</p>
+              <p className="text-[9px] text-text-muted">{perfMetrics.days} days</p>
+            </div>
+
+            <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+              <p className="text-[10px] text-text-muted">Total Gain / P&L</p>
+              <p className={`text-xs font-bold tabular-nums mt-0.5 ${perfMetrics.pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                {perfMetrics.pnl >= 0 ? '+' : ''}{formatCurrency(perfMetrics.pnl)}
+              </p>
+              <p className={`text-[9px] tabular-nums ${perfMetrics.pnlPct >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                {perfMetrics.pnlPct >= 0 ? '+' : ''}{perfMetrics.pnlPct}%
+              </p>
+            </div>
+
+            <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+              <p className="text-[10px] text-text-muted">Annualized (CAGR)</p>
+              <p className="text-xs font-bold text-primary-accent tabular-nums mt-0.5">
+                {perfMetrics.cagr !== null ? `${perfMetrics.cagr >= 0 ? '+' : ''}${perfMetrics.cagr}%` : 'N/A (<6m)'}
+              </p>
+              <p className="text-[9px] text-text-muted">{perfMetrics.cagr !== null ? 'per annum' : 'needs 6m+'}</p>
+            </div>
+
+            <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
+              <p className="text-[10px] text-text-muted">Tax Classification</p>
+              <p className={`text-xs font-bold mt-0.5 ${perfMetrics.isLtcg ? 'text-wealth-emerald' : 'text-bullion-amber'}`}>
                 {perfMetrics.taxTag}
-              </span>
+              </p>
+              <p className="text-[9px] text-text-muted truncate" title={perfMetrics.taxLabel}>
+                {perfMetrics.isLtcg ? '> Threshold' : '≤ Threshold'}
+              </p>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border-subtle/50 text-center">
-              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-                <p className="text-[10px] text-text-muted">Holding Period</p>
-                <p className="text-xs font-bold text-white tabular-nums mt-0.5">{perfMetrics.holdingStr}</p>
-                <p className="text-[9px] text-text-muted">{perfMetrics.days} days</p>
-              </div>
+          <p className="text-[10px] text-text-muted pt-1 border-t border-border-subtle/30">
+            Tax Rule: {perfMetrics.taxLabel}
+          </p>
+        </div>
+      )}
 
-              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-                <p className="text-[10px] text-text-muted">Total Gain / P&L</p>
-                <p className={`text-xs font-bold tabular-nums mt-0.5 ${perfMetrics.pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
-                  {perfMetrics.pnl >= 0 ? '+' : ''}{formatCurrency(perfMetrics.pnl)}
-                </p>
-                <p className={`text-[9px] tabular-nums ${perfMetrics.pnlPct >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
-                  {perfMetrics.pnlPct >= 0 ? '+' : ''}{perfMetrics.pnlPct}%
-                </p>
-              </div>
-
-              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-                <p className="text-[10px] text-text-muted">Annualized (CAGR)</p>
-                <p className="text-xs font-bold text-primary-accent tabular-nums mt-0.5">
-                  {perfMetrics.cagr !== null ? `${perfMetrics.cagr >= 0 ? '+' : ''}${perfMetrics.cagr}%` : 'N/A (<6m)'}
-                </p>
-                <p className="text-[9px] text-text-muted">{perfMetrics.cagr !== null ? 'per annum' : 'needs 6m+'}</p>
-              </div>
-
-              <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-                <p className="text-[10px] text-text-muted">Tax Classification</p>
-                <p className={`text-xs font-bold mt-0.5 ${perfMetrics.isLtcg ? 'text-wealth-emerald' : 'text-bullion-amber'}`}>
-                  {perfMetrics.taxTag}
-                </p>
-                <p className="text-[9px] text-text-muted truncate" title={perfMetrics.taxLabel}>
-                  {perfMetrics.isLtcg ? '> Threshold' : '≤ Threshold'}
-                </p>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-text-muted pt-1 border-t border-border-subtle/30">
-              Tax Rule: {perfMetrics.taxLabel}
+      {/* Supporting Documents Section */}
+      <div className="border-t border-border-subtle pt-4 mt-2">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+              <Paperclip size={14} className="text-primary-accent" />
+              Supporting Documents
+            </label>
+            <p className="text-[11px] text-text-muted mt-0.5">
+              Attach FD certificates, gold purchase receipts, demat statements. Synced to Family Safe.
             </p>
+          </div>
+          {attachedFiles.length > 0 && (
+            <span className="text-[10px] text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
+              {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'}
+            </span>
+          )}
+        </div>
+
+        {/* Attached Files List */}
+        {attachedFiles.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {attachedFiles.map(f => (
+              <div 
+                key={f.id} 
+                className="flex justify-between items-center bg-surface-layer2 p-2.5 rounded-xl border border-border-subtle hover:border-border-prominent transition-colors"
+              >
+                <div className="flex items-center space-x-2.5 overflow-hidden flex-1 mr-2">
+                  {f.isLink ? (
+                    <LinkIcon size={15} className="text-blue-400 flex-shrink-0" />
+                  ) : (
+                    <FileText size={15} className="text-wealth-emerald flex-shrink-0" />
+                  )}
+                  <div className="truncate flex-1">
+                    <p className="text-xs text-text-primary truncate font-medium">{f.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {f.isNewUpload ? (
+                        <span className="text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
+                      ) : (
+                        <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
+                          <Lock size={9} /> In Family Safe
+                        </span>
+                      )}
+                      {f.url && (
+                        <a 
+                          href={f.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          onClick={e => e.stopPropagation()} 
+                          className="text-[10px] text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
+                        >
+                          View <ExternalLink size={10} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => removeFile(f.id)} 
+                  className="text-text-muted hover:text-liability-rose p-1.5 hover:bg-liability-rose/10 rounded-lg transition-colors flex-shrink-0"
+                  title="Remove file"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Supporting Documents Section */}
-        <div className="md:col-span-2 border-t border-border-subtle pt-4 mt-2">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
-                <Paperclip size={14} className="text-primary-accent" />
-                Supporting Documents
-              </label>
-              <p className="text-[11px] text-text-muted mt-0.5">
-                Attach FD certificates, gold purchase receipts, demat statements. Synced to Family Safe.
-              </p>
+        {/* File Attachment Controls */}
+        <div className="space-y-2">
+          <div className="relative">
+            <input 
+              type="file" 
+              multiple 
+              onChange={handleFileSelect} 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+              id="asset-supporting-docs-file"
+            />
+            <div className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-border-prominent rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:border-primary-accent transition-colors bg-surface-layer2/40 cursor-pointer">
+              <Upload size={14} className="text-primary-accent" />
+              <span>Attach Files from Device (PDF, Image, Docs)</span>
             </div>
-            {attachedFiles.length > 0 && (
-              <span className="text-[10px] text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
-                {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'}
-              </span>
-            )}
           </div>
-
-          {/* Attached Files List */}
-          {attachedFiles.length > 0 && (
-            <div className="space-y-2 mb-3">
-              {attachedFiles.map(f => (
-                <div 
-                  key={f.id} 
-                  className="flex justify-between items-center bg-surface-layer2 p-2.5 rounded-xl border border-border-subtle hover:border-border-prominent transition-colors"
-                >
-                  <div className="flex items-center space-x-2.5 overflow-hidden flex-1 mr-2">
-                    {f.isLink ? (
-                      <LinkIcon size={15} className="text-blue-400 flex-shrink-0" />
-                    ) : (
-                      <FileText size={15} className="text-wealth-emerald flex-shrink-0" />
-                    )}
-                    <div className="truncate flex-1">
-                      <p className="text-xs text-text-primary truncate font-medium">{f.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {f.isNewUpload ? (
-                          <span className="text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
-                        ) : (
-                          <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
-                            <Lock size={9} /> In Family Safe
-                          </span>
-                        )}
-                        {f.url && (
-                          <a 
-                            href={f.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            onClick={e => e.stopPropagation()} 
-                            className="text-[10px] text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
-                          >
-                            View <ExternalLink size={10} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => removeFile(f.id)} 
-                    className="text-text-muted hover:text-liability-rose p-1.5 hover:bg-liability-rose/10 rounded-lg transition-colors flex-shrink-0"
-                    title="Remove file"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* File Attachment Controls */}
-          <div className="space-y-2">
-            <div className="relative">
-              <input 
-                type="file" 
-                multiple 
-                onChange={handleFileSelect} 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                id="asset-supporting-docs-file"
-              />
-              <div className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-border-prominent rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:border-primary-accent transition-colors bg-surface-layer2/40 cursor-pointer">
-                <Upload size={14} className="text-primary-accent" />
-                <span>Attach Files from Device (PDF, Image, Docs)</span>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <input 
-                value={linkInput} 
-                onChange={e => setLinkInput(e.target.value)} 
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
-                type="text" 
-                placeholder="Or paste Google Drive URL..." 
-                className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-primary-accent" 
-              />
-              <button 
-                type="button" 
-                onClick={handleAddLink} 
-                className="px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-lg text-xs font-medium transition-colors text-text-secondary hover:text-white"
-              >
-                Add Link
-              </button>
-            </div>
+          
+          <div className="flex gap-2">
+            <input 
+              value={linkInput} 
+              onChange={e => setLinkInput(e.target.value)} 
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
+              type="text" 
+              placeholder="Or paste Google Drive URL..." 
+              className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-primary-accent" 
+            />
+            <button 
+              type="button" 
+              onClick={handleAddLink} 
+              className="px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-lg text-xs font-medium transition-colors text-text-secondary hover:text-white"
+            >
+              Add Link
+            </button>
           </div>
         </div>
       </div>
+    </div>
       
-      <div className="pt-4 flex flex-col gap-3 border-t border-border-subtle mt-2">
-         <div className="flex gap-3">
-           <button 
-             type="button" 
-             onClick={onCancel} 
-             disabled={isSubmitting} 
-             className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
-           >
-             Cancel
-           </button>
-           <button 
-             type="submit" 
-             disabled={isSubmitting} 
-             className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
-           >
-             {isSubmitting ? (uploadProgress || 'Saving...') : 'Save Asset'}
-           </button>
-         </div>
-         {isEditing && (
-           <button 
-             type="button" 
-             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }} 
-             disabled={isSubmitting} 
-             className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-           >
-             <Trash2 size={14} />
-             <span>Delete Asset</span>
-           </button>
-         )}
+    {/* Pinned Bottom Action Bar */}
+    <div className="p-4 bg-surface-layer1 border-t border-border-subtle flex-shrink-0 flex flex-col gap-2.5">
+       <div className="flex gap-3">
+         <button 
+           type="button" 
+           onClick={onCancel} 
+           disabled={isSubmitting} 
+           className="flex-1 px-4 py-2.5 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
+         >
+           Cancel
+         </button>
+         <button 
+           type="submit" 
+           disabled={isSubmitting} 
+           className="flex-1 px-4 py-2.5 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-primary-accent/20"
+         >
+           {isSubmitting ? (uploadProgress || 'Saving...') : 'Save Asset'}
+         </button>
        </div>
-    </form>
+       {isEditing && (
+         <button 
+           type="button" 
+           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }} 
+           disabled={isSubmitting} 
+           className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-xs font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+         >
+           <Trash2 size={13} />
+           <span>Delete Asset</span>
+         </button>
+       )}
+     </div>
+  </form>
   );
 }

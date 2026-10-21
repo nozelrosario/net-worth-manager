@@ -2,7 +2,7 @@ import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -491,14 +491,32 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       
       {/* Add/Edit Asset Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
-           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
-             <h3 className="text-lg font-bold mb-4 text-white">{editingAssetId ? 'Edit Asset' : 'Add New Asset'}</h3>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4" onClick={() => setShowAddModal(false)}>
+           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-lg md:max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+             {/* Pinned Modal Header */}
+             <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
+               <div>
+                 <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                   {editingAssetId ? 'Edit Asset' : 'Add New Asset'}
+                 </h3>
+                 <p className="text-[11px] text-text-muted mt-0.5">
+                   {newAsset.Category || categoriesList[0] || 'Asset'} Details & Live Valuation
+                 </p>
+               </div>
+               <button 
+                 type="button" 
+                 onClick={() => setShowAddModal(false)}
+                 className="text-text-muted hover:text-white p-1.5 hover:bg-surface-layer2 rounded-lg transition-colors"
+                 title="Close"
+               >
+                 <X size={18} />
+               </button>
+             </div>
              
              {!editingAssetId && (
-               <div className="mb-4">
+               <div className="px-5 pt-3 pb-2 border-b border-border-subtle/50 bg-surface-layer2/30 flex-shrink-0">
                  <label className="block text-xs text-text-secondary mb-1">Asset Category</label>
-                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
+                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-primary-accent">
                    {categoriesList.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
                    ))}
