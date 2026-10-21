@@ -106,6 +106,13 @@ const setNestedValue = (obj, path, value) => {
   return newObj;
 };
 
+export const isQuoteMatch = (q, tkr) => {
+  if (!q || !tkr) return false;
+  const qSym = String(q.symbol || '').toUpperCase();
+  const tkrUpper = String(tkr).toUpperCase();
+  return qSym === tkrUpper || qSym.replace(/^(NSE:|BSE:|BOM:)/, '') === tkrUpper.replace(/^(NSE:|BSE:|BOM:)/, '');
+};
+
 export default function DynamicForm({ 
   category, 
   formData, 
@@ -272,7 +279,8 @@ export default function DynamicForm({
       if (isLiveTracking && qty > 0) {
         const rawTicker = updated['Details JSON']?.['Ticker Symbol'] || '';
         const cleanTicker = normalizeStockSymbol(rawTicker);
-        const quote = (cleanTicker && marketQuotes[cleanTicker]) || (liveStockQuote?.symbol === cleanTicker ? liveStockQuote : null);
+        const quote = (cleanTicker && (marketQuotes[cleanTicker] || marketQuotes[cleanTicker.toUpperCase()])) || 
+          (isQuoteMatch(liveStockQuote, cleanTicker) ? liveStockQuote : null);
         if (quote && quote.price > 0) {
           updated['Current Value'] = Math.round(qty * quote.price * 100) / 100;
         }
@@ -449,7 +457,7 @@ export default function DynamicForm({
   // Helper info for Equity
   const rawEquityTicker = formData['Details JSON']?.['Ticker Symbol'] || '';
   const cleanEquityTicker = normalizeStockSymbol(rawEquityTicker);
-  const currentEquityQuote = (cleanEquityTicker && marketQuotes[cleanEquityTicker]) || (liveStockQuote?.symbol === cleanEquityTicker ? liveStockQuote : null);
+  const currentEquityQuote = (cleanEquityTicker && (marketQuotes[cleanEquityTicker] || marketQuotes[cleanEquityTicker.toUpperCase()])) || (isQuoteMatch(liveStockQuote, cleanEquityTicker) ? liveStockQuote : null);
   const equityQty = Number(formData['Details JSON']?.['Quantity'] || formData['Details JSON']?.['Units'] || 0);
   const equityCost = Number(formData.Cost || 0);
   const calculatedEquityVal = equityQty > 0 && currentEquityQuote?.price ? Math.round(equityQty * currentEquityQuote.price * 100) / 100 : null;
@@ -470,7 +478,7 @@ export default function DynamicForm({
         const norm = normalizeStockSymbol(rawTicker);
         updated = setNestedValue(updated, 'Details JSON.Ticker Symbol', norm);
         const qty = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
-        const quote = (norm && marketQuotes[norm]) || (liveStockQuote?.symbol === norm ? liveStockQuote : null);
+        const quote = (norm && (marketQuotes[norm] || marketQuotes[norm.toUpperCase()])) || (isQuoteMatch(liveStockQuote, norm) ? liveStockQuote : null);
         if (qty > 0 && quote?.price > 0 && updated['Details JSON']?.['Live Tracking'] !== false) {
           updated['Current Value'] = Math.round(qty * quote.price * 100) / 100;
         }

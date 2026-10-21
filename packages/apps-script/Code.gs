@@ -572,45 +572,156 @@ function normalizeStockSymbol(sym) {
 }
 
 /**
- * Fetches real-time stock quote from Yahoo Finance API for instant calculation
+ * Fetches real-time stock quote with multi-tier failover:
+ * 1. Groww Accord Points API (Direct live NSE/BSE quotes, fast & reliable)
+ * 2. Groww Search Scrip Resolution (Handles demerged scrips & ticker updates)
+ * 3. MarketQuotes sheet tab cache (Persisted Google Finance quotes)
+ * 4. Yahoo Finance API fallback
  */
 function fetchLiveStockQuote(symbol) {
   try {
     if (!symbol) return null;
     var clean = normalizeStockSymbol(symbol);
     
-    var yahooSymbol = '';
+    var ex = 'NSE';
+    var tkr = clean;
     if (clean.indexOf('NSE:') === 0) {
-      yahooSymbol = clean.replace('NSE:', '') + '.NS';
+      ex = 'NSE';
+      tkr = clean.replace('NSE:', '');
     } else if (clean.indexOf('BOM:') === 0 || clean.indexOf('BSE:') === 0) {
-      yahooSymbol = clean.replace(/^(BOM:|BSE:)/, '') + '.BO';
-    } else if (clean.indexOf('NASDAQ:') === 0 || clean.indexOf('NYSE:') === 0) {
-      yahooSymbol = clean.replace(/^(NASDAQ:|NYSE:)/, '');
-    } else {
-      yahooSymbol = clean + '.NS';
+      ex = 'BSE';
+      tkr = clean.replace(/^(BOM:|BSE:)/, '');
     }
     
-    var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yahooSymbol) + '?interval=1d';
-    var response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-    if (response.getResponseCode() === 200) {
-      var data = JSON.parse(response.getContentText());
-      var meta = data?.chart?.result?.[0]?.meta;
-      if (meta && meta.regularMarketPrice) {
-        var price = Number(meta.regularMarketPrice);
-        var prevClose = Number(meta.chartPreviousClose || meta.previousClose || price);
-        var changePct = prevClose > 0 ? Math.round(((price - prevClose) / prevClose) * 100 * 100) / 100 : 0;
-        return {
-          status: 'success',
-          symbol: clean,
-          price: price,
-          changePct: changePct,
-          shortName: meta.shortName || clean,
-          currency: meta.currency || 'INR'
-        };
+    // Tier 1: Groww Direct Accord Points (NSE / BSE)
+    if (ex === 'NSE' || ex === 'BSE') {
+      try {
+        var url1 = 'https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/' + ex + '/segment/CASH/latest_prices_ohlc/' + encodeURIComponent(tkr);
+        var res1 = UrlFetchApp.fetch(url1, { muteHttpExceptions: true });
+        if (res1.getResponseCode() === 200) {
+          var data1 = JSON.parse(res1.getContentText());
+          if (data1 && data1.ltp && Number(data1.ltp) > 0) {
+            var price = Number(data1.ltp);
+            var chgPct = Math.round((Number(data1.dayChangePerc) || 0) * 100) / 100;
+            return {
+              status: 'success',
+              symbol: ex + ':' + tkr,
+              price: price,
+              changePct: chgPct,
+              shortName: data1.symbol || tkr,
+              currency: 'INR'
+            };
+          }
+        }
+      } catch (e1) {
+        console.warn('Groww direct quote failed for ' + clean + ': ' + e1);
+      }
+      
+      // Tier 2: Groww Search API for scrip resolution
+      try {
+        var url2 = 'https://groww.in/v1/api/search/v1/entity?app=false&entity_type=stocks&page=0&q=' + encodeURIComponent(tkr) + '&size=1';
+        var res2 = UrlFetchApp.fetch(url2, { muteHttpExceptions: true });
+        if (res2.getResponseCode() === 200) {
+          var data2 = JSON.parse(res2.getContentText());
+          var item = data2 && data2.content && data2.content.length > 0 ? data2.content[0] : null;
+          if (item) {
+            var scrip = item.nse_scrip_code || item.bse_scrip_code;
+            var scripEx = item.nse_scrip_code ? 'NSE' : 'BSE';
+            if (scrip) {
+              var urlRetry = 'https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/' + scripEx + '/segment/CASH/latest_prices_ohlc/' + encodeURIComponent(scrip);
+              var resRetry = UrlFetchApp.fetch(urlRetry, { muteHttpExceptions: true });
+              if (resRetry.getResponseCode() === 200) {
+                var dataRetry = JSON.parse(resRetry.getContentText());
+                if (dataRetry && dataRetry.ltp && Number(dataRetry.ltp) > 0) {
+                  return {
+                    status: 'success',
+                    symbol: scripEx + ':' + scrip,
+                    price: Number(dataRetry.ltp),
+                    changePct: Math.round((Number(dataRetry.dayChangePerc) || 0) * 100) / 100,
+                    shortName: item.company_short_name || scrip,
+                    currency: 'INR'
+                  };
+                }
+              }
+            }
+          }
+        }
+      } catch (e2) {
+        console.warn('Groww search quote failed for ' + clean + ': ' + e2);
       }
     }
-  } catch (e) {
-    console.error('Error fetching live stock quote for ' + symbol + ': ' + e);
+    
+    // Tier 3: MarketQuotes sheet tab cache
+    try {
+      var ss = getSpreadsheet();
+      if (ss) {
+        var mqSheet = ss.getSheetByName('MarketQuotes');
+        if (mqSheet) {
+          var qData = mqSheet.getDataRange().getValues();
+          for (var i = 1; i < qData.length; i++) {
+            if (String(qData[i][0]).toUpperCase() === clean.toUpperCase()) {
+              var p = Number(qData[i][3]) || 0;
+              var c = Number(qData[i][4]) || 0;
+              if (p > 0) {
+                return {
+                  status: 'success',
+                  symbol: clean,
+                  price: p,
+                  changePct: c,
+                  shortName: String(qData[i][2] || clean),
+                  currency: 'INR'
+                };
+              }
+            }
+          }
+        }
+      }
+    } catch (e3) {
+      console.warn('MarketQuotes lookup failed for ' + clean + ': ' + e3);
+    }
+    
+    // Tier 4: Yahoo Finance with browser headers
+    try {
+      var yahooSymbol = '';
+      if (clean.indexOf('NSE:') === 0) {
+        yahooSymbol = clean.replace('NSE:', '') + '.NS';
+      } else if (clean.indexOf('BOM:') === 0 || clean.indexOf('BSE:') === 0) {
+        yahooSymbol = clean.replace(/^(BOM:|BSE:)/, '') + '.BO';
+      } else if (clean.indexOf('NASDAQ:') === 0 || clean.indexOf('NYSE:') === 0) {
+        yahooSymbol = clean.replace(/^(NASDAQ:|NYSE:)/, '');
+      } else {
+        yahooSymbol = clean;
+      }
+      
+      var yUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yahooSymbol) + '?interval=1d';
+      var yRes = UrlFetchApp.fetch(yUrl, {
+        muteHttpExceptions: true,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      if (yRes.getResponseCode() === 200) {
+        var yData = JSON.parse(yRes.getContentText());
+        var meta = yData && yData.chart && yData.chart.result && yData.chart.result[0] ? yData.chart.result[0].meta : null;
+        if (meta && meta.regularMarketPrice) {
+          var yPrice = Number(meta.regularMarketPrice);
+          var prevClose = Number(meta.chartPreviousClose || meta.previousClose || yPrice);
+          var changePct = prevClose > 0 ? Math.round(((yPrice - prevClose) / prevClose) * 100 * 100) / 100 : 0;
+          return {
+            status: 'success',
+            symbol: clean,
+            price: yPrice,
+            changePct: changePct,
+            shortName: meta.shortName || clean,
+            currency: meta.currency || 'INR'
+          };
+        }
+      }
+    } catch (e4) {
+      console.warn('Yahoo quote fallback failed for ' + clean + ': ' + e4);
+    }
+  } catch (err) {
+    console.error('Error in fetchLiveStockQuote: ' + err);
   }
   return null;
 }
