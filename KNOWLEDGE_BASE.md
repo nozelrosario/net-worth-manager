@@ -25,9 +25,11 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
-## Next Iteration Targets
-- **Automated Cashflow Ingestion**: Link React Native SMS parsing module to ping the `addRecord('Transactions', ...)` API endpoint.
-- **Market Integration**: Configure a timed Google Apps Script Trigger to fetch AMFI NAVs and update the `Current Value` field in the `Assets` table.
+## Feature Update (v2.5) - Live Market Valuation Engine (Issue #8)
+✅ **Google Finance & AMFI Integration**: Created automated `MarketQuotes` database tab maintaining real-time formulas (`=GOOGLEFINANCE(...)`) for stocks and precious metals. Gold rates for 24K, 22K, and 18K are dynamically computed per gram from `CURRENCY:XAUINR` with purity selector support (Coins/Bars 24K, Jewelry 22K).
+✅ **AMFI Mutual Funds Direct NAV & Instant Search**: Integrated live AMFI NAV fetching and instantaneous scheme search via official endpoints. Supports entering or selecting AMFI scheme codes with automatic NAV lookup.
+✅ **Dynamic Valuation & P&L Analytics**: Assets in Equity, Mutual Funds, and Gold automatically calculate their `Current Value = Units/Qty/Weight × CMP`. Individual asset cards display live pulsing badges, holding summaries, CMP, and total return (P&L and P&L %).
+✅ **Consolidated Net Worth Sync**: Consolidated Net Worth in HomeTab reflects live market valuations and includes Mutual Funds and liabilities accurately. Added a "Sync Rates" action in AssetsTab that persists live computed market values directly to the Google Sheet.
 
 ## Feature Update (v2.0)
 ✅ **Restored Base UX Features**: Re-implemented `react-swipeable` for seamless swiping between navigation tabs. Added user avatar, active session modal, expandable header menus, and a pulsing live sync indicator to restore the original responsive prototype feel. Fixed gesture collision bugs by isolating scroll containers.
