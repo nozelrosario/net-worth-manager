@@ -573,15 +573,45 @@ function normalizeStockSymbol(sym) {
 
 /**
  * Fetches real-time stock quote with multi-tier failover:
- * 1. Groww Accord Points API (Direct live NSE/BSE quotes, fast & reliable)
- * 2. Groww Search Scrip Resolution (Handles demerged scrips & ticker updates)
- * 3. MarketQuotes sheet tab cache (Persisted Google Finance quotes)
+ * 1. MarketQuotes sheet tab (Native =GOOGLEFINANCE(...) formula values in Google Sheets)
+ * 2. Groww Accord Points API (Direct live NSE/BSE quotes for instant in-form preview)
+ * 3. Groww Search Scrip Resolution (Handles demerged scrips & ticker updates)
  * 4. Yahoo Finance API fallback
  */
 function fetchLiveStockQuote(symbol) {
   try {
     if (!symbol) return null;
     var clean = normalizeStockSymbol(symbol);
+    
+    // Tier 1: Check native Google Sheets MarketQuotes tab (=GOOGLEFINANCE formulas)
+    try {
+      var ss = getSpreadsheet();
+      if (ss) {
+        var mqSheet = ss.getSheetByName('MarketQuotes');
+        if (mqSheet) {
+          var qData = mqSheet.getDataRange().getValues();
+          for (var i = 1; i < qData.length; i++) {
+            if (String(qData[i][0]).toUpperCase() === clean.toUpperCase()) {
+              var p = Number(qData[i][3]) || 0;
+              var c = Number(qData[i][4]) || 0;
+              if (p > 0) {
+                return {
+                  status: 'success',
+                  symbol: clean,
+                  price: p,
+                  changePct: c,
+                  shortName: String(qData[i][2] || clean),
+                  currency: 'INR',
+                  source: 'Google Finance (Sheet)'
+                };
+              }
+            }
+          }
+        }
+      }
+    } catch (eSheet) {
+      console.warn('MarketQuotes lookup failed for ' + clean + ': ' + eSheet);
+    }
     
     var ex = 'NSE';
     var tkr = clean;
@@ -593,7 +623,7 @@ function fetchLiveStockQuote(symbol) {
       tkr = clean.replace(/^(BOM:|BSE:)/, '');
     }
     
-    // Tier 1: Groww Direct Accord Points (NSE / BSE)
+    // Tier 2: Instant live NSE/BSE quote for in-form typing preview
     if (ex === 'NSE' || ex === 'BSE') {
       try {
         var url1 = 'https://groww.in/v1/api/stocks_data/v1/accord_points/exchange/' + ex + '/segment/CASH/latest_prices_ohlc/' + encodeURIComponent(tkr);
@@ -609,7 +639,8 @@ function fetchLiveStockQuote(symbol) {
               price: price,
               changePct: chgPct,
               shortName: data1.symbol || tkr,
-              currency: 'INR'
+              currency: 'INR',
+              source: 'Live Exchange Feed'
             };
           }
         }
@@ -617,7 +648,7 @@ function fetchLiveStockQuote(symbol) {
         console.warn('Groww direct quote failed for ' + clean + ': ' + e1);
       }
       
-      // Tier 2: Groww Search API for scrip resolution
+      // Tier 3: Groww Search API for scrip resolution (demerged scrips)
       try {
         var url2 = 'https://groww.in/v1/api/search/v1/entity?app=false&entity_type=stocks&page=0&q=' + encodeURIComponent(tkr) + '&size=1';
         var res2 = UrlFetchApp.fetch(url2, { muteHttpExceptions: true });
@@ -639,7 +670,8 @@ function fetchLiveStockQuote(symbol) {
                     price: Number(dataRetry.ltp),
                     changePct: Math.round((Number(dataRetry.dayChangePerc) || 0) * 100) / 100,
                     shortName: item.company_short_name || scrip,
-                    currency: 'INR'
+                    currency: 'INR',
+                    source: 'Live Exchange Feed'
                   };
                 }
               }
