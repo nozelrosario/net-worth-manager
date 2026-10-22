@@ -50,7 +50,7 @@ export default function HomeTab({ formatCurrency, data }) {
           )}
         </div>
         
-        <h2 className="text-4xl font-bold tabular-nums tracking-tight text-white mb-2">{formatCurrency(totalNetWorth)}</h2>
+        <h2 className="text-4xl font-bold tabular-nums tracking-tight text-text-primary mb-2">{formatCurrency(totalNetWorth)}</h2>
 
         {/* Live Market Portfolio Return Ribbon */}
         {liveAssets.length > 0 && totalLiveCost > 0 && (
@@ -85,17 +85,17 @@ export default function HomeTab({ formatCurrency, data }) {
 
       {/* Analytics Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+        <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm">
           <p className="text-xs text-text-secondary mb-1">Liquid Buffer & Drag</p>
-          <p className="text-lg font-bold text-white tabular-nums">{formatCurrency(cash)}</p>
+          <p className="text-lg font-bold text-text-primary tabular-nums">{formatCurrency(cash)}</p>
           <p className="text-[11px] text-text-muted mt-0.5">{totalExpense > 0 ? (cash / (totalExpense/12)).toFixed(1) : 0} Mos Runway</p>
-          <div className="mt-3 inline-flex items-center text-[10px] bg-bullion-amber/10 text-bullion-amber px-2 py-1 rounded">⚠️ Check Cash Drag</div>
+          <div className="mt-3 inline-flex items-center text-[10px] bg-bullion-amber/10 text-bullion-amber font-medium px-2 py-1 rounded-md border border-bullion-amber/25">⚠️ Check Cash Drag</div>
         </div>
-        <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+        <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm">
           <p className="text-xs text-text-secondary mb-1">This Month's Cashflow</p>
           <p className="text-lg font-bold text-liability-rose tabular-nums">-{formatCurrency(totalExpense)}</p>
           <p className="text-[11px] text-text-muted mt-0.5">Inflow: {formatCurrency(totalIncome)}</p>
-          <div className="mt-3 inline-flex items-center text-[10px] bg-surface-layer2 text-text-secondary px-2 py-1 rounded">{savingsRate.toFixed(1)}% Savings Rate</div>
+          <div className="mt-3 inline-flex items-center text-[10px] bg-surface-layer2 text-text-secondary font-medium px-2 py-1 rounded-md border border-border-subtle">{savingsRate.toFixed(1)}% Savings Rate</div>
         </div>
       </div>
 

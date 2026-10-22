@@ -827,15 +827,15 @@ export default function DynamicForm({
             <span className="text-[10px] text-text-muted">CURRENCY:XAUINR</span>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-2 text-center">
-            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('24K') ? 'bg-bullion-amber/20 border-bullion-amber text-white font-bold' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
+            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('24K') ? 'bg-bullion-amber/20 border-bullion-amber text-text-primary font-bold shadow-xs' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
               <p className="text-[10px]">24K (99.9%)</p>
               <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold24kRate)}/g</p>
             </div>
-            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('22K') ? 'bg-bullion-amber/20 border-bullion-amber text-white font-bold' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
+            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('22K') ? 'bg-bullion-amber/20 border-bullion-amber text-text-primary font-bold shadow-xs' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
               <p className="text-[10px]">22K (91.6%)</p>
               <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold22kRate)}/g</p>
             </div>
-            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('18K') ? 'bg-bullion-amber/20 border-bullion-amber text-white font-bold' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
+            <div className={`p-1.5 rounded-lg border ${goldPurity.includes('18K') ? 'bg-bullion-amber/20 border-bullion-amber text-text-primary font-bold shadow-xs' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
               <p className="text-[10px]">18K (75%)</p>
               <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold18kRate)}/g</p>
             </div>
@@ -858,7 +858,7 @@ export default function DynamicForm({
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-wealth-emerald animate-pulse"></span>
                   <div>
-                    <p className="font-semibold text-white flex items-center gap-1.5">
+                    <p className="font-semibold text-text-primary flex items-center gap-1.5">
                       {currentEquityQuote.shortName || cleanEquityTicker}
                       {cleanEquityTicker !== String(rawEquityTicker).toUpperCase() && (
                         <span className="text-[10px] text-primary-accent bg-primary-accent/20 px-1.5 py-0.2 rounded font-mono">
@@ -924,7 +924,7 @@ export default function DynamicForm({
               value={mfSearchQuery}
               onChange={(e) => setMfSearchQuery(e.target.value)}
               placeholder="Type scheme name (e.g. Parag Parikh, Axis, SBI Bluechip)..."
-              className="w-full bg-surface-layer2 border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-white text-xs focus:outline-none focus:border-primary-accent"
+              className="w-full bg-surface-layer2 border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-text-primary text-xs focus:outline-none focus:border-primary-accent"
             />
             <Search size={14} className="absolute left-2.5 top-2.5 text-text-muted" />
             {isSearchingMf && (
@@ -941,7 +941,7 @@ export default function DynamicForm({
                   onClick={() => handleSelectMfScheme(scheme)}
                   className="p-2 hover:bg-surface-layer2 rounded-lg cursor-pointer transition-colors"
                 >
-                  <p className="text-xs font-medium text-white">{scheme.schemeName}</p>
+                  <p className="text-xs font-medium text-text-primary">{scheme.schemeName}</p>
                   <p className="text-[10px] text-text-muted mt-0.5">Code: {scheme.schemeCode}</p>
                 </div>
               ))}
@@ -974,7 +974,7 @@ export default function DynamicForm({
             <div className="flex items-center gap-2">
               <Calendar size={15} className="text-primary-accent flex-shrink-0" />
               <div>
-                <p className="font-semibold text-white">
+                <p className="font-semibold text-text-primary">
                   Historical Price on {historicalQuote.matchedDate || historicalQuote.targetDate}: {formatCurrency(historicalQuote.price)}
                   {schemaKey === 'Gold' && !String(formData['Details JSON']?.['Form Factor'] || '').includes('ETF') && !String(formData['Details JSON']?.['Form Factor'] || '').includes('SGB') ? '/g' : (schemaKey === 'Mutual Funds' ? ' NAV' : ' / share')}
                 </p>
@@ -985,7 +985,7 @@ export default function DynamicForm({
               <button
                 type="button"
                 onClick={handleApplyHistoricalCost}
-                className="px-2.5 py-1 bg-primary-accent/20 hover:bg-primary-accent/30 text-primary-accent border border-primary-accent/30 rounded-lg text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1 flex-shrink-0"
+                className="px-2.5 py-1 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-[11px] font-semibold shadow-xs transition-all active:scale-95 flex items-center gap-1 flex-shrink-0"
                 title="Populate Total Invested Amount and Average Buy Price from historical price"
               >
                 <Sparkles size={11} />
@@ -1033,7 +1033,7 @@ export default function DynamicForm({
                    value={value} 
                    onChange={e => handleChange(field.name, e.target.value)} 
                    required={field.required}
-                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent"
+                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent"
                  >
                    <option value="">Select...</option>
                    {field.options.map(opt => (
@@ -1052,7 +1052,7 @@ export default function DynamicForm({
                   value={value} 
                   onChange={e => handleChange(field.name, e.target.value)} 
                   required={field.required}
-                  className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent"
+                  className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent"
                 >
                   <option value="">Self</option>
                   <option value="Joint">Joint</option>
@@ -1080,7 +1080,7 @@ export default function DynamicForm({
                 onChange={e => handleChange(field.name, e.target.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} 
                 type={field.type} 
                 step={field.step}
-                className={`w-full bg-surface-layer2 border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent ${field.name === 'Current Value' ? 'border-primary-accent/40 font-bold tabular-nums text-wealth-emerald' : 'border-border-subtle'}`} 
+                className={`w-full bg-surface-layer2 border rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent ${field.name === 'Current Value' ? 'border-primary-accent/40 font-bold tabular-nums text-wealth-emerald' : 'border-border-subtle'}`} 
                 placeholder={field.placeholder} 
               />
               {field.name === 'Details JSON.Ticker Symbol' && cleanEquityTicker && (
@@ -1109,7 +1109,7 @@ export default function DynamicForm({
       {perfMetrics && (
         <div className="bg-gradient-to-r from-wealth-emerald/10 via-surface-layer2 to-surface-layer2 border border-wealth-emerald/30 rounded-xl p-3 text-xs space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-white flex items-center gap-1.5">
+            <span className="font-semibold text-text-primary flex items-center gap-1.5">
               <TrendingUp size={14} className="text-wealth-emerald" />
               Investment Return & Tax Intelligence
             </span>
@@ -1121,7 +1121,7 @@ export default function DynamicForm({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border-subtle/50 text-center">
             <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
               <p className="text-[10px] text-text-muted">Holding Period</p>
-              <p className="text-xs font-bold text-white tabular-nums mt-0.5">{perfMetrics.holdingStr}</p>
+              <p className="text-xs font-bold text-text-primary tabular-nums mt-0.5">{perfMetrics.holdingStr}</p>
               <p className="text-[9px] text-text-muted">{perfMetrics.days} days</p>
             </div>
 
@@ -1240,7 +1240,7 @@ export default function DynamicForm({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
               id="asset-supporting-docs-file"
             />
-            <div className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-border-prominent rounded-lg text-xs font-medium text-text-secondary hover:text-white hover:border-primary-accent transition-colors bg-surface-layer2/40 cursor-pointer">
+            <div className="w-full flex items-center justify-center gap-2 py-2.5 px-3 border border-dashed border-border-prominent rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:border-primary-accent transition-colors bg-surface-layer2/40 cursor-pointer">
               <Upload size={14} className="text-primary-accent" />
               <span>Attach Files from Device (PDF, Image, Docs)</span>
             </div>
@@ -1253,12 +1253,12 @@ export default function DynamicForm({
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
               type="text" 
               placeholder="Or paste Google Drive URL..." 
-              className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-primary-accent" 
+              className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent" 
             />
             <button 
               type="button" 
               onClick={handleAddLink} 
-              className="px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-lg text-xs font-medium transition-colors text-text-secondary hover:text-white"
+              className="px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-lg text-xs font-medium transition-colors text-text-secondary hover:text-text-primary"
             >
               Add Link
             </button>
@@ -1274,7 +1274,7 @@ export default function DynamicForm({
            type="button" 
            onClick={onCancel} 
            disabled={isSubmitting} 
-           className="flex-1 px-4 py-2.5 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
+           className="flex-1 px-4 py-2.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
          >
            Cancel
          </button>

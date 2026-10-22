@@ -98,7 +98,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 required 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
-                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-primary-accent" 
+                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary text-sm focus:outline-none focus:border-primary-accent" 
                 placeholder="you@family.com" 
               />
             </div>
@@ -120,7 +120,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 maxLength={6}
                 value={otp} 
                 onChange={e => setOtp(e.target.value)} 
-                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-white text-center tracking-widest text-lg font-mono focus:outline-none focus:border-primary-accent" 
+                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary text-center tracking-widest text-lg font-mono focus:outline-none focus:border-primary-accent" 
                 placeholder="000000" 
               />
             </div>

@@ -164,7 +164,7 @@ const familyProfiles = data?.familyProfiles || [];
     <div className="space-y-6 pb-20">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-white">Admin Settings</h2>
+          <h2 className="text-xl font-bold tracking-tight text-text-primary">Admin Settings</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
             <span className="text-[11px] text-text-muted">
               Access Control & Asset Categories
@@ -216,15 +216,15 @@ const familyProfiles = data?.familyProfiles || [];
          <form onSubmit={handleUpdateTeam} className="space-y-4 border-b border-border-subtle pb-6 mb-4">
            <div>
              <label className="block text-xs text-text-secondary mb-1">Member Name (e.g. Spouse)</label>
-             <input required value={memberName} onChange={e => setMemberName(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Spouse" />
+             <input required value={memberName} onChange={e => setMemberName(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="Spouse" />
            </div>
            <div>
              <label className="block text-xs text-text-secondary mb-1">Google Emails (Comma separated)</label>
-             <input required value={teamEmailsText} onChange={e => setTeamEmailsText(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="email1@gmail.com, email2@gmail.com" />
+             <input required value={teamEmailsText} onChange={e => setTeamEmailsText(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="email1@gmail.com, email2@gmail.com" />
            </div>
            <div>
              <label className="block text-xs text-text-secondary mb-1">Role</label>
-             <select value={teamRole} onChange={e => setTeamRole(e.target.value)} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
+             <select value={teamRole} onChange={e => setTeamRole(e.target.value)} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent">
                <option value="editor">Editor (Can add/edit records)</option>
                <option value="readonly">Read-Only (Can only view dashboards)</option>
              </select>
@@ -259,11 +259,11 @@ const familyProfiles = data?.familyProfiles || [];
          <form onSubmit={handleAddFamilyProfile} className="space-y-4 border-b border-border-subtle pb-6 mb-4">
            <div>
              <label className="block text-xs text-text-secondary mb-1">Name (e.g. Son, Daughter)</label>
-             <input required value={profileName} onChange={e => setProfileName(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="John" />
+             <input required value={profileName} onChange={e => setProfileName(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="John" />
            </div>
            <div>
              <label className="block text-xs text-text-secondary mb-1">Relation (Optional)</label>
-             <input value={profileRelation} onChange={e => setProfileRelation(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Son" />
+             <input value={profileRelation} onChange={e => setProfileRelation(e.target.value)} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Son" />
            </div>
            <button type="submit" disabled={isProfileSubmitting} className="w-full flex items-center justify-center gap-2 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 mt-2">
              <Save size={16} />
@@ -277,8 +277,8 @@ const familyProfiles = data?.familyProfiles || [];
               <div key={i} className="flex flex-col gap-2 p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
                  {editingProfileId === p['Profile ID'] ? (
                    <form onSubmit={handleUpdateFamilyProfile} className="flex flex-col gap-2">
-                     <input required value={editProfileName} onChange={e => setEditProfileName(e.target.value)} type="text" className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2 py-1 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Name" />
-                     <input value={editProfileRelation} onChange={e => setEditProfileRelation(e.target.value)} type="text" className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2 py-1 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="Relation" />
+                     <input required value={editProfileName} onChange={e => setEditProfileName(e.target.value)} type="text" className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2 py-1 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="Name" />
+                     <input value={editProfileRelation} onChange={e => setEditProfileRelation(e.target.value)} type="text" className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2 py-1 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="Relation" />
                      <div className="flex gap-2 justify-end mt-1">
                        <button type="button" onClick={handleCancelEdit} className="px-3 py-1 bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-xs hover:bg-surface-layer1/80">Cancel</button>
                        <button type="submit" disabled={isUpdateProfileSubmitting} className="px-3 py-1 bg-primary-accent text-white rounded-lg text-xs hover:bg-primary-accent/90 disabled:opacity-50">{isUpdateProfileSubmitting ? 'Saving...' : 'Save'}</button>
@@ -374,9 +374,9 @@ const CategoryEditor = ({ title, defaultCategories, settingKey, data, onRefresh,
           onKeyDown={e => { if (e.key === 'Enter') handleAdd(e); }}
           type="text" 
           placeholder="New Category" 
-          className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" 
+          className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" 
         />
-        <button type="button" onClick={handleAdd} className="px-4 py-2 bg-surface-layer2 border border-border-subtle text-text-primary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Add</button>
+        <button type="button" onClick={handleAdd} className="px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-sm font-medium transition-colors">Add</button>
       </div>
       <button type="button" onClick={handleSave} disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 mt-3">
         <Save size={16} />

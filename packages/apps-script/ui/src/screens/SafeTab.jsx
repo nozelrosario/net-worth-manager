@@ -276,7 +276,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
     <div className="space-y-4 pb-20">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-white">Family Safe</h2>
+          <h2 className="text-xl font-bold tracking-tight text-text-primary">Family Safe</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
             <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
@@ -298,7 +298,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
       <div className="bg-gradient-to-br from-surface-layer1 to-surface-layer2 border border-border-subtle rounded-xl p-5 relative overflow-hidden shadow-lg">
         <div className="absolute -right-4 -top-4 p-4 opacity-[0.03]"><Lock size={120} /></div>
-        <p className="text-sm font-medium text-white mb-2 flex items-center gap-2"><Lock size={16} className="text-wealth-emerald" /> Secure Document Vault</p>
+        <p className="text-sm font-medium text-text-primary mb-2 flex items-center gap-2"><Lock size={16} className="text-wealth-emerald" /> Secure Document Vault</p>
         <p className="text-xs text-text-secondary max-w-[85%] leading-relaxed">
           Store critical family documents. Files are securely uploaded directly to a "Family Safe" folder in your connected Google Drive.
         </p>
@@ -316,7 +316,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
               <div key={doc['Document ID'] || i} className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm hover:border-border-prominent transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-sm font-semibold text-white">{doc.Name}</h4>
+                    <h4 className="text-sm font-semibold text-text-primary">{doc.Name}</h4>
                     <p className="text-xs text-text-secondary mt-0.5">{doc.Category} • {doc.Owner || 'Self'}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -366,7 +366,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
              {/* Pinned Modal Header */}
              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
                <div>
-                 <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                 <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
                    {editingDocId ? 'Edit Safe Document' : 'Add to Family Safe'}
                  </h3>
                  <p className="text-[11px] text-text-muted mt-0.5">
@@ -376,7 +376,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                <button 
                  type="button" 
                  onClick={() => { setShowAddModal(false); setEditingDocId(null); }}
-                 className="text-text-muted hover:text-white p-1.5 hover:bg-surface-layer2 rounded-lg transition-colors"
+                 className="text-text-muted hover:text-text-primary p-1.5 hover:bg-surface-layer2 rounded-lg transition-colors"
                  title="Close"
                >
                  <X size={18} />
@@ -388,19 +388,19 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4">
                 <div>
                   <label className="block text-xs text-text-secondary mb-1">Entry Title</label>
-                  <input required value={newEntry.Name} onChange={e => setNewEntry({...newEntry, Name: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Life Insurance Policy 2026" />
+                  <input required value={newEntry.Name} onChange={e => setNewEntry({...newEntry, Name: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Life Insurance Policy 2026" />
                 </div>
                 
                 <div className="flex gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-text-secondary mb-1">Category</label>
-                    <select value={newEntry.Category} onChange={e => setNewEntry({...newEntry, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
+                    <select value={newEntry.Category} onChange={e => setNewEntry({...newEntry, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent">
                       {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs text-text-secondary mb-1">Owner</label>
-                    <select value={newEntry.Owner} onChange={e => setNewEntry({...newEntry, Owner: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
+                    <select value={newEntry.Owner} onChange={e => setNewEntry({...newEntry, Owner: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent">
                       <option value="">Self</option>
                       {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
                     </select>
@@ -409,7 +409,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
                 <div>
                   <label className="block text-xs text-text-secondary mb-1">Description (Optional)</label>
-                  <textarea value={newEntry.Description} onChange={e => setNewEntry({...newEntry, Description: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent h-20 resize-none" placeholder="Brief details about these documents..." />
+                  <textarea value={newEntry.Description} onChange={e => setNewEntry({...newEntry, Description: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent h-20 resize-none" placeholder="Brief details about these documents..." />
                 </div>
 
                 <div className="pt-2 border-t border-border-subtle">
@@ -482,9 +482,9 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
                         type="text" 
                         placeholder="Paste Google Drive URL..." 
-                        className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-primary-accent" 
+                        className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-xs focus:outline-none focus:border-primary-accent" 
                       />
-                      <button type="button" onClick={handleAddLink} className="px-3 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-lg text-xs font-medium transition-colors">Add Link</button>
+                      <button type="button" onClick={handleAddLink} className="px-3 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-xs font-medium transition-colors">Add Link</button>
                     </div>
                   </div>
                 </div>
@@ -497,7 +497,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                     type="button" 
                     onClick={() => { setShowAddModal(false); setEditingDocId(null); }} 
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -538,7 +538,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
              <div className="flex justify-between items-center p-4 border-b border-border-subtle bg-surface-layer2">
                <div className="flex items-center gap-2 overflow-hidden">
                  {previewDoc.isLink ? <LinkIcon size={18} className="text-blue-400" /> : <FileText size={18} className="text-primary-accent" />}
-                 <h3 className="text-sm font-bold text-white truncate">{previewDoc.name}</h3>
+                 <h3 className="text-sm font-bold text-text-primary truncate">{previewDoc.name}</h3>
                </div>
                <div className="flex items-center gap-3">
                  {previewDoc.url && (
@@ -546,7 +546,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                      <ExternalLink size={14} /> Open Native Viewer
                    </a>
                  )}
-                 <button onClick={() => setPreviewDoc(null)} className="p-1 hover:bg-surface-layer1 rounded-lg text-text-secondary">
+                 <button onClick={() => setPreviewDoc(null)} className="p-1 hover:bg-surface-layer1 rounded-lg text-text-secondary hover:text-text-primary transition-colors">
                    <X size={20} />
                  </button>
                </div>
@@ -555,7 +555,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                {previewDoc.url ? (
                   <div className="text-center text-text-secondary flex flex-col items-center max-w-sm mx-auto">
                     <Lock size={48} className="text-primary-accent/50 mb-4" />
-                    <h4 className="text-white font-medium mb-2">Secure Document</h4>
+                    <h4 className="text-text-primary font-medium mb-2">Secure Document</h4>
                     <p className="text-sm text-text-muted mb-6">
                       For your privacy and security, embedded previews of Drive documents are disabled to prevent third-party tracking.
                     </p>
