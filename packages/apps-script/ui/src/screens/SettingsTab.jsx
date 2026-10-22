@@ -160,10 +160,19 @@ const familyProfiles = data?.familyProfiles || [];
       }, 1000);
     }
   };
-return (
+  return (
     <div className="space-y-6 pb-20">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-bold text-text-primary">Admin Settings</h2>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight text-white">Admin Settings</h2>
+          <div className="flex items-center flex-wrap gap-2 mt-1">
+            <span className="text-[11px] text-text-muted">
+              Access Control & Asset Categories
+            </span>
+            <span className="text-text-muted text-[10px]">•</span>
+            <span className="text-[11px] text-text-muted">Family Office Config</span>
+          </div>
+        </div>
       </div>
 
       <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">

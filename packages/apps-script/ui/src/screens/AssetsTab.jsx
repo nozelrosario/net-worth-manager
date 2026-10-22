@@ -2,7 +2,7 @@ import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -354,9 +354,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         <button 
           type="button"
           onClick={openAddModal} 
-          className="flex items-center gap-1 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
         >
-          <span>+ Add Asset</span>
+          <Plus size={14} />
+          <span>Add Asset</span>
         </button>
       </div>
       <div 

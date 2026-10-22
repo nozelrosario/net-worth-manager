@@ -1,6 +1,6 @@
 import useModalBack from "../hooks/useModalBack";
 import React, { useState } from 'react';
-import { Lock, FileText, User, PlusCircle, Link as LinkIcon, Upload, Trash2, ExternalLink, X, File, Pencil } from 'lucide-react';
+import { Lock, FileText, User, PlusCircle, Plus, Link as LinkIcon, Upload, Trash2, ExternalLink, X, File, Pencil } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 
 export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }) {
@@ -274,11 +274,25 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-bold">Family Safe</h2>
-        <button onClick={resetForm} className="flex items-center space-x-1 px-3 py-1.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/20 rounded-full text-primary-accent transition-transform active:scale-95">
-          <PlusCircle size={16} />
-          <span className="text-sm font-semibold">New Entry</span>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight text-white">Family Safe</h2>
+          <div className="flex items-center flex-wrap gap-2 mt-1">
+            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
+              Encrypted Cloud Vault
+            </span>
+            <span className="text-text-muted text-[10px]">•</span>
+            <span className="text-[11px] text-text-muted">Synced to Google Drive</span>
+          </div>
+        </div>
+        <button 
+          type="button"
+          onClick={resetForm} 
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+        >
+          <Plus size={14} />
+          <span>Add Document</span>
         </button>
       </div>
 
@@ -347,11 +361,31 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
       {/* Add / Edit Document Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => { setShowAddModal(false); setEditingDocId(null); }}>
-           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-             <h3 className="text-lg font-bold mb-4 text-white">{editingDocId ? 'Edit Safe Document' : 'Add to Family Safe'}</h3>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4" onClick={() => { setShowAddModal(false); setEditingDocId(null); }}>
+           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-lg md:max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+             {/* Pinned Modal Header */}
+             <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
+               <div>
+                 <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                   {editingDocId ? 'Edit Safe Document' : 'Add to Family Safe'}
+                 </h3>
+                 <p className="text-[11px] text-text-muted mt-0.5">
+                   Secure document storage in connected Google Drive
+                 </p>
+               </div>
+               <button 
+                 type="button" 
+                 onClick={() => { setShowAddModal(false); setEditingDocId(null); }}
+                 className="text-text-muted hover:text-white p-1.5 hover:bg-surface-layer2 rounded-lg transition-colors"
+                 title="Close"
+               >
+                 <X size={18} />
+               </button>
+             </div>
              
-             <form onSubmit={handleSaveEntry} className="space-y-4">
+             <form onSubmit={handleSaveEntry} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+               {/* Scrollable Form Body */}
+               <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4">
                 <div>
                   <label className="block text-xs text-text-secondary mb-1">Entry Title</label>
                   <input required value={newEntry.Name} onChange={e => setNewEntry({...newEntry, Name: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Life Insurance Policy 2026" />
@@ -454,43 +488,45 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="pt-4 flex flex-col gap-3 mt-4 border-t border-border-subtle">
-                  <div className="flex gap-3">
-                    <button 
-                      type="button" 
-                      onClick={() => { setShowAddModal(false); setEditingDocId(null); }} 
-                      disabled={isSubmitting}
-                      className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      disabled={isSubmitting || (!newEntry.Name && attachedFiles.length === 0)} 
-                      className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 flex justify-center items-center gap-2 transition-all active:scale-95"
-                    >
-                      {isSubmitting ? (uploadProgress || 'Saving...') : (editingDocId ? 'Save Changes' : 'Save Entry')}
-                    </button>
-                  </div>
-                  {editingDocId && (
-                    <button 
-                      type="button" 
-                      disabled={isSubmitting}
-                      onClick={() => {
-                        const idToDelete = editingDocId;
-                        setShowAddModal(false);
-                        setEditingDocId(null);
-                        handleDeleteEntry(idToDelete);
-                      }}
-                      className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Trash2 size={14} />
-                      <span>Delete Document Entry</span>
-                    </button>
-                  )}
+              {/* Pinned Action Footer */}
+              <div className="p-4 border-t border-border-subtle bg-surface-layer1 flex-shrink-0 flex flex-col gap-2.5">
+                <div className="flex gap-3">
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowAddModal(false); setEditingDocId(null); }} 
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting || (!newEntry.Name && attachedFiles.length === 0)} 
+                    className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
+                  >
+                    {isSubmitting ? (uploadProgress || 'Saving...') : (editingDocId ? 'Save Changes' : 'Save Entry')}
+                  </button>
                 </div>
-             </form>
+                {editingDocId && (
+                  <button 
+                    type="button" 
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      const idToDelete = editingDocId;
+                      setShowAddModal(false);
+                      setEditingDocId(null);
+                      handleDeleteEntry(idToDelete);
+                    }}
+                    className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={14} />
+                    <span>Delete Document Entry</span>
+                  </button>
+                )}
+              </div>
+            </form>
            </div>
         </div>
       )}

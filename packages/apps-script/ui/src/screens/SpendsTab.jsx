@@ -19,7 +19,9 @@ import {
   PieChart,
   Wallet,
   X,
-  Calendar
+  Calendar,
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage }) {
@@ -504,25 +506,35 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="flex justify-between items-center mb-1">
-        <h2 className="text-xl font-bold text-text-primary">Cashflow & Spends</h2>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setSelectedMonth(selectedMonth === 'ALL' ? (availableMonths[0] || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`) : 'ALL')}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-              selectedMonth === 'ALL'
-                ? 'bg-primary-accent text-white border-primary-accent'
-                : 'bg-surface-layer1 text-text-secondary hover:text-white border-border-subtle'
-            }`}
-          >
-            {selectedMonth === 'ALL' ? 'Monthly View' : 'All Time'}
-          </button>
-          <button onClick={openAddModal} className="flex items-center space-x-1 px-3 py-1.5 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle rounded-full text-primary-accent transition-transform active:scale-95">
-            <PlusCircle size={15} />
-            <span className="text-xs font-semibold">Log</span>
-          </button>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight text-white">Cashflow & Spends</h2>
+          <div className="flex items-center flex-wrap gap-2 mt-1">
+            <span className="text-[11px] text-text-muted">
+              {selectedMonth === 'ALL' ? 'All-Time Outflow Analysis' : `Tracking for ${formatMonthName(selectedMonth)}`}
+            </span>
+            <span className="text-text-muted text-[10px]">•</span>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth(selectedMonth === 'ALL' ? (availableMonths[0] || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`) : 'ALL')}
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 ${
+                selectedMonth === 'ALL'
+                  ? 'bg-primary-accent text-white border-primary-accent'
+                  : 'bg-surface-layer1 text-text-secondary hover:text-white border-border-subtle'
+              }`}
+            >
+              {selectedMonth === 'ALL' ? 'Switch to Monthly' : 'View All-Time'}
+            </button>
+          </div>
         </div>
+        <button 
+          type="button"
+          onClick={openAddModal} 
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+        >
+          <Plus size={14} />
+          <span>Log Spend</span>
+        </button>
       </div>
 
       {/* Month Navigator Sub-bar */}
@@ -884,60 +896,85 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       
       {/* Add Transaction Modal */}
       {showLogModal && (
-        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowLogModal(false)}>
-           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
-             <h3 className="text-lg font-bold mb-4 text-white">{editingTxnId ? 'Edit Transaction' : 'Log Transaction'}</h3>
-             <form onSubmit={handleSaveTxn} className="space-y-4">
-               <div className="flex gap-2">
-                 <div className="flex-1">
-                   <label className="block text-xs text-text-secondary mb-1">Type</label>
-                   <select value={newTxn.Type} onChange={e => setNewTxn({...newTxn, Type: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
-                     <option>Expense</option>
-                     <option>Income</option>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4" onClick={() => setShowLogModal(false)}>
+           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md max-h-[92vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+             {/* Pinned Modal Header */}
+             <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
+               <div>
+                 <h3 className="text-base sm:text-lg font-bold text-white leading-tight">
+                   {editingTxnId ? 'Edit Transaction' : 'Log Transaction'}
+                 </h3>
+                 <p className="text-[11px] text-text-muted mt-0.5">
+                   Record expense or income against family ledger
+                 </p>
+               </div>
+               <button 
+                 type="button" 
+                 onClick={() => setShowLogModal(false)}
+                 className="text-text-muted hover:text-white p-1.5 hover:bg-surface-layer2 rounded-lg transition-colors"
+                 title="Close"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+
+             <form onSubmit={handleSaveTxn} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+               {/* Scrollable Form Body */}
+               <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4">
+                 <div className="flex gap-2">
+                   <div className="flex-1">
+                     <label className="block text-xs text-text-secondary mb-1">Type</label>
+                     <select value={newTxn.Type} onChange={e => setNewTxn({...newTxn, Type: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
+                       <option>Expense</option>
+                       <option>Income</option>
+                     </select>
+                   </div>
+                   <div className="flex-1">
+                     <label className="block text-xs text-text-secondary mb-1">Date</label>
+                     <input required value={newTxn.Date} onChange={e => setNewTxn({...newTxn, Date: e.target.value})} type="date" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" />
+                   </div>
+                 </div>
+                 <div>
+                   <label className="block text-xs text-text-secondary mb-1">Merchant / Description</label>
+                   <input required value={newTxn['Merchant/Description']} onChange={e => setNewTxn({...newTxn, 'Merchant/Description': e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Swiggy" />
+                 </div>
+                 <div>
+                   <label className="block text-xs text-text-secondary mb-1">For Whom (Beneficiary)</label>
+                   <select value={newTxn.Beneficiary || ''} onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
+                     <option value="">Whole Family</option>
+                     {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
                    </select>
                  </div>
-                 <div className="flex-1">
-                   <label className="block text-xs text-text-secondary mb-1">Date</label>
-                   <input required value={newTxn.Date} onChange={e => setNewTxn({...newTxn, Date: e.target.value})} type="date" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" />
+                 <div className="flex gap-2">
+                   <div className="flex-1">
+                     <label className="block text-xs text-text-secondary mb-1">Category</label>
+                     <select value={newTxn.Category || categoriesList[0] || ''} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
+                       {categoriesList.map(cat => (
+                         <option key={cat} value={cat}>{cat}</option>
+                       ))}
+                     </select>
+                   </div>
+                   <div className="flex-1">
+                     <label className="block text-xs text-text-secondary mb-1">Amount (₹)</label>
+                     <input required value={newTxn.Amount} onChange={e => setNewTxn({...newTxn, Amount: e.target.value})} type="number" step="0.01" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="1000" />
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-2 mt-2">
+                    <input type="checkbox" id="isTransfer" checked={newTxn['Is Transfer']} onChange={e => setNewTxn({...newTxn, 'Is Transfer': e.target.checked})} className="rounded bg-surface-layer2 border-border-subtle text-primary-accent focus:ring-0" />
+                    <label htmlFor="isTransfer" className="text-xs text-text-secondary">Mark as Internal Transfer</label>
                  </div>
                </div>
-               <div>
-                 <label className="block text-xs text-text-secondary mb-1">Merchant / Description</label>
-                 <input required value={newTxn['Merchant/Description']} onChange={e => setNewTxn({...newTxn, 'Merchant/Description': e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Swiggy" />
-               </div>
-               <div>
-                 <label className="block text-xs text-text-secondary mb-1">For Whom (Beneficiary)</label>
-                 <select value={newTxn.Beneficiary || ''} onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
-                   <option value="">Whole Family</option>
-                   {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
-                 </select>
-               </div>
-               <div className="flex gap-2">
-                 <div className="flex-1">
-                   <label className="block text-xs text-text-secondary mb-1">Category</label>
-                   <select value={newTxn.Category || categoriesList[0] || ''} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none">
-                     {categoriesList.map(cat => (
-                       <option key={cat} value={cat}>{cat}</option>
-                     ))}
-                   </select>
-                 </div>
-                 <div className="flex-1">
-                   <label className="block text-xs text-text-secondary mb-1">Amount (₹)</label>
-                   <input required value={newTxn.Amount} onChange={e => setNewTxn({...newTxn, Amount: e.target.value})} type="number" step="0.01" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="1000" />
-                 </div>
-               </div>
-               <div className="flex items-center gap-2 mt-2">
-                  <input type="checkbox" id="isTransfer" checked={newTxn['Is Transfer']} onChange={e => setNewTxn({...newTxn, 'Is Transfer': e.target.checked})} className="rounded bg-surface-layer2 border-border-subtle text-primary-accent focus:ring-0" />
-                  <label htmlFor="isTransfer" className="text-xs text-text-secondary">Mark as Internal Transfer</label>
-               </div>
-               <div className="pt-2 flex flex-col gap-3">
+
+               {/* Pinned Action Footer */}
+               <div className="p-4 border-t border-border-subtle bg-surface-layer1 flex-shrink-0 flex flex-col gap-2.5">
                  <div className="flex gap-3">
-                   <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80">Cancel</button>
-                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+                   <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 text-text-secondary rounded-lg text-sm font-medium hover:bg-surface-layer2/80 transition-colors">Cancel</button>
+                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
                  </div>
                  {editingTxnId && (
-                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50">
-                     {isSubmitting ? 'Deleting...' : 'Delete Transaction'}
+                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5">
+                     <Trash2 size={14} />
+                     <span>{isSubmitting ? 'Deleting...' : 'Delete Transaction'}</span>
                    </button>
                  )}
                </div>
