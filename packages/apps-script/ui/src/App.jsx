@@ -292,11 +292,11 @@ export default function App() {
         
         {headerExpanded && (
           <div className="mt-4 pt-4 border-t border-border-subtle flex justify-around text-xs text-text-secondary">
-             <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-white" onClick={refreshData}>
+             <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors" onClick={refreshData}>
                <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
                <span>Sync</span>
              </div>
-             <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-white">
+             <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors">
                <Shield size={18} />
                <span>Security</span>
              </div>
@@ -312,7 +312,7 @@ export default function App() {
               <div className="w-16 h-16 rounded-full bg-primary-accent text-white flex items-center justify-center font-bold text-2xl shadow-inner mb-3">
                 {userInitial}
               </div>
-              <h3 className="text-lg font-bold text-white">{data?.userInfo?.activeEmail}</h3>
+              <h3 className="text-lg font-bold text-text-primary">{data?.userInfo?.activeEmail}</h3>
               <p className="text-sm text-primary-accent font-medium mt-1 uppercase tracking-wider">{data?.userInfo?.userRole}</p>
             </div>
             <div className="p-2">
@@ -321,11 +321,11 @@ export default function App() {
               </button>
               <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
                 <div className="flex items-center gap-3"><Moon size={18} className="text-text-secondary" /> Dark Mode</div>
-                <div className={`w-8 h-4 rounded-full flex items-center p-0.5 ${darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full"></div></div>
+                <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
               </div>
               <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDebugMode(!debugMode)}>
                 <div className="flex items-center gap-3"><Bug size={18} className="text-text-secondary" /> Debug Mode</div>
-                <div className={`w-8 h-4 rounded-full flex items-center p-0.5 ${debugMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full"></div></div>
+                <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${debugMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
               </div>
               <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-liability-rose hover:bg-liability-rose/10 transition-colors mt-1">
                 <LogOut size={18} /> Sign Out (Device)
@@ -350,8 +350,8 @@ export default function App() {
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={() => setShowNotifications(false)}>
           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
-              <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-white p-1"><X size={20} /></button>
+              <h3 className="text-lg font-bold text-text-primary flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
+              <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-text-primary p-1"><X size={20} /></button>
             </div>
             
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">

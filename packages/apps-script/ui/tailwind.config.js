@@ -14,6 +14,7 @@ export default {
         surface: {
           layer1: 'var(--surface-layer1)',
           layer2: 'var(--surface-layer2)',
+          layer3: 'var(--surface-layer3)',
           DEFAULT: 'var(--surface-default)'
         },
         border: {
