@@ -51,6 +51,7 @@ export default function App() {
       <WebView
         ref={webviewRef}
         source={{ uri: BASE_URL }}
+        applicationNameForUserAgent="NetWorthManagerApp/2.0"
         style={styles.webview}
         sharedCookiesEnabled={true}
         thirdPartyCookiesEnabled={true}
