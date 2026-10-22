@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import useModalBack from "./hooks/useModalBack";
 import { X } from "lucide-react";
-import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug } from 'lucide-react';
+import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
 import AssetsTab from './screens/AssetsTab';
@@ -9,7 +9,11 @@ import SpendsTab from './screens/SpendsTab';
 import SafeTab from './screens/SafeTab';
 import SettingsTab from './screens/SettingsTab';
 import LoginScreen from './screens/LoginScreen';
+import SecurityModal from './components/SecurityModal';
+import AppLockScreen from './components/AppLockScreen';
+import PrivacyCurtain from './components/PrivacyCurtain';
 import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
+import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes, clearPinConfig } from './utils/securityUtils';
 
 const TABS = ['home', 'assets', 'spends', 'safe', 'settings'];
 
@@ -17,7 +21,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(getSafeStorage('nwm_session_token')));
   const [showUserModal, setShowUserModal] = useState(false);
   useModalBack(showUserModal, () => setShowUserModal(false));
   
@@ -75,6 +79,95 @@ export default function App() {
   const [debugLog, setDebugLog] = useState('');
   const [toast, setToast] = useState(null);
 
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [isAppLocked, setIsAppLocked] = useState(() => isPinConfigured());
+  const [isCurtainActive, setIsCurtainActive] = useState(false);
+  const backgroundTimestampRef = useRef(null);
+  const lastActivityTimestampRef = useRef(Date.now());
+
+  // App Lifecycle Auto-Lock & Background Privacy Curtain
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const pinConfig = getPinConfig();
+      const isPinActive = Boolean(pinConfig && pinConfig.isEnabled && pinConfig.hash);
+
+      if (document.hidden) {
+        backgroundTimestampRef.current = Date.now();
+        if (isPinActive || isAppShell()) {
+          setIsCurtainActive(true);
+        }
+      } else {
+        if (backgroundTimestampRef.current && isPinActive) {
+          const elapsedSec = (Date.now() - backgroundTimestampRef.current) / 1000;
+          const gracePeriodSec = pinConfig?.autoLockTimeout ?? 0;
+          if (elapsedSec >= gracePeriodSec) {
+            setIsAppLocked(true);
+          }
+        }
+        setIsCurtainActive(false);
+      }
+    };
+
+    const handleWindowBlur = () => {
+      const pinConfig = getPinConfig();
+      if (pinConfig && pinConfig.isEnabled) {
+        backgroundTimestampRef.current = Date.now();
+        setIsCurtainActive(true);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      const pinConfig = getPinConfig();
+      if (backgroundTimestampRef.current && pinConfig && pinConfig.isEnabled) {
+        const elapsedSec = (Date.now() - backgroundTimestampRef.current) / 1000;
+        const gracePeriodSec = pinConfig?.autoLockTimeout ?? 0;
+        if (elapsedSec >= gracePeriodSec) {
+          setIsAppLocked(true);
+        }
+      }
+      setIsCurtainActive(false);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, []);
+
+  // Web Browser Inactivity Idle Timer
+  useEffect(() => {
+    if (isAppShell()) return;
+
+    const updateActivity = () => {
+      lastActivityTimestampRef.current = Date.now();
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(evt => window.addEventListener(evt, updateActivity, { passive: true }));
+
+    const idleInterval = setInterval(() => {
+      const idleMinutes = (Date.now() - lastActivityTimestampRef.current) / (1000 * 60);
+      const configuredLimit = getBrowserIdleTimeoutMinutes();
+      if (idleMinutes >= configuredLimit) {
+        if (isPinConfigured()) {
+          setIsAppLocked(true);
+        } else {
+          setIsCurtainActive(true);
+        }
+      }
+    }, 30000);
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, updateActivity));
+      clearInterval(idleInterval);
+    };
+  }, []);
+
   useEffect(() => {
     setSafeStorage('nwm_dark_mode', darkMode.toString());
     const root = document.documentElement;
@@ -120,12 +213,18 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!sessionToken) {
+      setData({ userInfo: { isAuthorized: false } });
+      setLoading(false);
+      return;
+    }
+
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
           setData(res);
           setLoading(false);
-          setTimeout(() => showMessage("Net Worth Manager Active (v2.4)", false), 500);
+          setTimeout(() => showMessage("Net Worth Manager Active (v2.7)", false), 500);
         })
         .withFailureHandler((err) => {
           setDebugLog('Initial Load Error: ' + err.message);
@@ -197,16 +296,43 @@ export default function App() {
     }
   }, []);
 
-  const handleLoginSuccess = (newToken) => {
+  const handleLoginSuccess = (newToken, meta = {}) => {
     setSessionToken(newToken);
     setLoading(true);
     refreshData(newToken);
+    // If logging in on mobile shell, prompt user to set a PIN
+    if (meta?.isFreshLogin && (meta?.appShell || isAppShell())) {
+      setTimeout(() => {
+        setShowSecurityModal(true);
+      }, 600);
+    }
   };
 
   const handleSignOut = () => {
-    removeSafeStorage('nwm_session_token');
+    try {
+      removeSafeStorage('nwm_session_token');
+      clearPinConfig();
+    } catch (e) {
+      console.error('Error during sign out storage cleanup:', e);
+    }
     setSessionToken('');
-    window.location.reload();
+    setIsAppLocked(false);
+    setIsCurtainActive(false);
+    setShowUserModal(false);
+    setShowSecurityModal(false);
+    setData({
+      userInfo: {
+        activeEmail: '',
+        userRole: '',
+        isOwner: false,
+        isAuthorized: false
+      }
+    });
+    setLoading(false);
+  };
+
+  const handleForgotPin = () => {
+    handleSignOut();
   };
 
   const handleSwipe = (dir, event) => {
@@ -246,9 +372,19 @@ export default function App() {
     );
   }
 
-  // If we have data but user is not authorized, show login screen
-  if (data && data.userInfo && data.userInfo.isAuthorized === false) {
+  // If we have no session token or user is not authorized, show login screen
+  if (!sessionToken || (data && data.userInfo && data.userInfo.isAuthorized === false)) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // If user has a valid session token but PIN lock is active, show AppLockScreen
+  if (sessionToken && isAppLocked) {
+    return (
+      <AppLockScreen 
+        onUnlockSuccess={() => setIsAppLocked(false)} 
+        onForgotPin={handleForgotPin} 
+      />
+    );
   }
 
   const formatCurrency = (val) => {
@@ -296,7 +432,10 @@ export default function App() {
                <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
                <span>Sync</span>
              </div>
-             <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors">
+             <div 
+               className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors"
+               onClick={() => { setHeaderExpanded(false); setShowSecurityModal(true); }}
+             >
                <Shield size={18} />
                <span>Security</span>
              </div>
@@ -316,8 +455,11 @@ export default function App() {
               <p className="text-sm text-primary-accent font-medium mt-1 uppercase tracking-wider">{data?.userInfo?.userRole}</p>
             </div>
             <div className="p-2">
-              <button className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-text-primary hover:bg-surface-layer2 transition-colors">
-                <User size={18} className="text-text-secondary" /> Profile Settings
+              <button 
+                onClick={() => { setShowUserModal(false); setShowSecurityModal(true); }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-text-primary hover:bg-surface-layer2 transition-colors"
+              >
+                <Shield size={18} className="text-text-secondary" /> Security & Access Control
               </button>
               <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
                 <div className="flex items-center gap-3"><Moon size={18} className="text-text-secondary" /> Dark Mode</div>
@@ -344,7 +486,14 @@ export default function App() {
         {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
         {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
         {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
-        {activeTab === 'settings' && <SettingsTab data={data} onRefresh={refreshData} showMessage={showMessage} />}
+        {activeTab === 'settings' && (
+          <SettingsTab 
+            data={data} 
+            onRefresh={refreshData} 
+            showMessage={showMessage} 
+            onOpenSecurityModal={() => setShowSecurityModal(true)} 
+          />
+        )}
       </main>
       {showNotifications && (
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={() => setShowNotifications(false)}>
@@ -409,6 +558,20 @@ export default function App() {
            <NavButton icon={SettingsIcon} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         )}
       </nav>
+
+      {/* App Switcher & Background Privacy Curtain */}
+      {sessionToken && !isAppLocked && isCurtainActive && (
+        <PrivacyCurtain onResume={() => setIsCurtainActive(false)} />
+      )}
+
+      {/* Security & Access Control Configuration Modal */}
+      <SecurityModal
+        isOpen={showSecurityModal}
+        onClose={() => setShowSecurityModal(false)}
+        userEmail={data?.userInfo?.activeEmail}
+        onSignOut={handleSignOut}
+        showMessage={showMessage}
+      />
     </div>
   );
 }

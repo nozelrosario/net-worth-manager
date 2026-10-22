@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, Smartphone, Globe } from 'lucide-react';
 import { setSafeStorage } from '../utils/storage';
+import { isAppShell, clearPinConfig, getRememberMePreference, setRememberMePreference } from '../utils/securityUtils';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('email'); // 'email' or 'otp'
+  const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const appShell = isAppShell();
 
   const handleSendOtp = (e) => {
     e.preventDefault();
@@ -44,6 +47,13 @@ export default function LoginScreen({ onLoginSuccess }) {
     setIsLoading(true);
     setError('');
 
+    // Clear any previously saved PIN on fresh OTP verification
+    clearPinConfig();
+
+    if (!appShell) {
+      setRememberMePreference(rememberMe);
+    }
+
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
@@ -51,9 +61,9 @@ export default function LoginScreen({ onLoginSuccess }) {
           if (res.status === 'error') {
             setError(res.message);
           } else {
-            // Save token
+            // Save token via container-aware storage
             setSafeStorage('nwm_session_token', res.sessionToken);
-            onLoginSuccess(res.sessionToken);
+            onLoginSuccess(res.sessionToken, { isFreshLogin: true, appShell });
           }
         })
         .withFailureHandler((err) => {
@@ -65,7 +75,7 @@ export default function LoginScreen({ onLoginSuccess }) {
       setTimeout(() => {
         setIsLoading(false);
         setSafeStorage('nwm_session_token', 'mock_token');
-        onLoginSuccess('mock_token');
+        onLoginSuccess('mock_token', { isFreshLogin: true, appShell });
       }, 1000);
     }
   };
@@ -102,6 +112,19 @@ export default function LoginScreen({ onLoginSuccess }) {
                 placeholder="you@family.com" 
               />
             </div>
+
+            {!appShell && (
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-border-prominent text-primary-accent focus:ring-0 focus:ring-offset-0 w-4 h-4 bg-surface-layer2"
+                />
+                <span className="text-xs text-text-secondary">Keep me signed in on this computer</span>
+              </label>
+            )}
+
             <button 
               type="submit" 
               disabled={isLoading || !email} 
@@ -124,6 +147,19 @@ export default function LoginScreen({ onLoginSuccess }) {
                 placeholder="000000" 
               />
             </div>
+
+            {!appShell && (
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-border-prominent text-primary-accent focus:ring-0 focus:ring-offset-0 w-4 h-4 bg-surface-layer2"
+                />
+                <span className="text-xs text-text-secondary">Keep me signed in on this computer</span>
+              </label>
+            )}
+
             <button 
               type="submit" 
               disabled={isLoading || otp.length < 6} 
@@ -140,6 +176,11 @@ export default function LoginScreen({ onLoginSuccess }) {
             </button>
           </form>
         )}
+      </div>
+
+      <div className="flex items-center gap-1.5 mt-6 text-xs text-text-muted">
+        {appShell ? <Smartphone size={14} className="text-wealth-emerald" /> : <Globe size={14} className="text-primary-accent" />}
+        <span>{appShell ? 'Mobile App Shell (Protected)' : 'Web Browser (Session Scoped)'}</span>
       </div>
     </div>
   );

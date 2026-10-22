@@ -25,6 +25,24 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v2.7) - Container-Aware Dual-Tier Security Architecture (Issue #14)
+✅ **Container-Aware Platform Detection**: Automatically detects runtime container (Mobile App Shell via `NetWorthManagerApp/2.0` user-agent and `window.ReactNativeWebView` vs Web Browser) and dynamically tailors security controls.
+✅ **Mobile PIN App Lock (`AppLockScreen`)**:
+  - Standalone high-security gatekeeper with 4-digit masked dots indicator, responsive numeric keypad, and hardware keyboard support (`0-9`, `Backspace`, `Escape`).
+  - Cryptographic salted hashing: PIN is hashed using `window.crypto.subtle` SHA-256 (`Hash = SHA-256(DeviceSalt || PIN)`) and never stored in plaintext.
+  - Brute-force rate limiting: Progressive 30-second security cooldown lockout after 5 consecutive failed attempts.
+  - Smart lifecycle auto-lock & grace periods: Configurable re-authentication interval (Immediately, 1 min, 5 min, 15 min) on cold start and background-to-foreground transitions (`visibilitychange`, `blur`/`focus`).
+  - "Forgot PIN? Sign In with OTP" fallback trigger that safely purges stored PIN credentials and routes the user to email OTP re-authentication.
+  - Fresh mobile login PIN prompt: Automatically prompts user to set a PIN upon completing OTP verification in the mobile shell.
+✅ **Background & App Switcher Privacy Curtain (`PrivacyCurtain`)**:
+  - Secure privacy shield overlay conceals sensitive net worth and account numbers whenever the app loses focus or is backgrounded in the OS multitasking carousel.
+✅ **Web Browser Ephemeral Session & Inactivity Protection**:
+  - Dynamic storage routing: Sensitive session tokens default to tab-scoped `sessionStorage` in browsers (purged on tab/window close) with an optional "Keep me signed in on this computer" preference for trusted desktop environments.
+  - Inactivity idle timer: Monitors user interactions and automatically locks the session after inactivity (default 15 minutes).
+✅ **Security Configuration Center (`SecurityModal`)**:
+  - Accessible via the Shield icon in the expandable app header and a dedicated section in `SettingsTab`.
+  - Comprehensive controls for PIN management, Set/Change PIN wizard with current PIN verification, Auto-lock grace period picker, browser persistent login toggle, inactivity timeout, and single-click device sign-out.
+
 ## Feature Update (v2.6) - Historical Valuations, Auto-Cost Suggestion, CAGR & Tax Intelligence (Issue #10)
 ✅ **Historical Acquisition Pricing Engine**: Integrated historical valuation retrieval on a given acquisition date:
   - **Mutual Funds**: Exact historical daily NAV lookup from the official AMFI time-series (`https://api.mfapi.in/mf/{schemeCode}`).
