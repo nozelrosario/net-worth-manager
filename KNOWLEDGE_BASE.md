@@ -42,7 +42,6 @@
 ✅ **Security Configuration Center (`SecurityModal`)**:
   - Accessible via the Shield icon in the expandable app header and a dedicated section in `SettingsTab`.
   - Comprehensive controls for PIN management, Set/Change PIN wizard with current PIN verification, Auto-lock grace period picker, browser persistent login toggle, inactivity timeout, and single-click device sign-out.
-
 ## Feature Update (v2.6) - Historical Valuations, Auto-Cost Suggestion, CAGR & Tax Intelligence (Issue #10)
 ✅ **Historical Acquisition Pricing Engine**: Integrated historical valuation retrieval on a given acquisition date:
   - **Mutual Funds**: Exact historical daily NAV lookup from the official AMFI time-series (`https://api.mfapi.in/mf/{schemeCode}`).
