@@ -330,23 +330,34 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
-        <div>
-          <h2 className="text-xl font-bold">Assets & Liabilities</h2>
-          <p className="text-[11px] text-text-muted mt-0.5">Live Valuation via Google Finance & AMFI</p>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight text-white">Assets & Liabilities</h2>
+          <div className="flex items-center flex-wrap gap-2 mt-1">
+            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
+              Google Finance & AMFI Live
+            </span>
+            <span className="text-text-muted text-[10px]">•</span>
+            <button 
+              type="button"
+              onClick={handleSyncRates} 
+              disabled={isSyncingRates}
+              title="Refresh and sync live valuations to spreadsheet"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-[11px] font-medium transition-all active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
+              <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={handleSyncRates} 
-            disabled={isSyncingRates}
-            title="Refresh and sync live valuations"
-            className="text-wealth-emerald text-xs font-semibold bg-wealth-emerald/10 border border-wealth-emerald/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-wealth-emerald/20 transition-all active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCw size={12} className={isSyncingRates ? 'animate-spin' : ''} />
-            <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
-          </button>
-          <button onClick={openAddModal} className="text-primary-accent text-sm font-medium bg-primary-accent/10 px-3 py-1.5 rounded-lg hover:bg-primary-accent/20 transition-colors">+ Add Asset</button>
-        </div>
+        <button 
+          type="button"
+          onClick={openAddModal} 
+          className="flex items-center gap-1 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+        >
+          <span>+ Add Asset</span>
+        </button>
       </div>
       <div 
         className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide no-swipe"
