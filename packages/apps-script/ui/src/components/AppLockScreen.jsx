@@ -8,6 +8,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
   const [errorMsg, setErrorMsg] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(() => getRemainingLockoutTime());
+  const [showForgotConfirm, setShowForgotConfirm] = useState(false);
   const timerRef = useRef(null);
 
   // Lockout countdown timer
@@ -117,12 +118,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
   }, [handleDigit, handleBackspace, handleClear, lockoutRemaining]);
 
   const handleForgotPinClick = () => {
-    if (window.confirm('Reset PIN and verify identity with Email OTP?')) {
-      clearPinConfig();
-      if (onForgotPin) {
-        onForgotPin();
-      }
-    }
+    setShowForgotConfirm(true);
   };
 
   return (
@@ -229,6 +225,49 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
           <span>Forgot PIN? Sign In with OTP</span>
         </button>
       </div>
+
+      {/* Forgot PIN Confirmation Dialog */}
+      {showForgotConfirm && (
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+          onClick={() => setShowForgotConfirm(false)}
+        >
+          <div 
+            className="bg-surface-layer1 border border-border-subtle rounded-2xl p-5 max-w-xs w-full text-center shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-full bg-primary-accent/15 text-primary-accent flex items-center justify-center mx-auto">
+              <KeyRound size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-text-primary">Reset PIN via OTP?</h3>
+              <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                Your stored PIN will be cleared and you will be routed to Email OTP verification.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowForgotConfirm(false)}
+                className="flex-1 py-2.5 px-3 rounded-xl border border-border-subtle text-xs font-medium text-text-secondary hover:bg-surface-layer2 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotConfirm(false);
+                  clearPinConfig();
+                  if (onForgotPin) onForgotPin();
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:bg-primary-accent/90 transition-colors shadow-xs"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

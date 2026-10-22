@@ -21,7 +21,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(getSafeStorage('nwm_session_token')));
   const [showUserModal, setShowUserModal] = useState(false);
   useModalBack(showUserModal, () => setShowUserModal(false));
   
@@ -213,12 +213,18 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!sessionToken) {
+      setData({ userInfo: { isAuthorized: false } });
+      setLoading(false);
+      return;
+    }
+
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
           setData(res);
           setLoading(false);
-          setTimeout(() => showMessage("Net Worth Manager Active (v2.4)", false), 500);
+          setTimeout(() => showMessage("Net Worth Manager Active (v2.7)", false), 500);
         })
         .withFailureHandler((err) => {
           setDebugLog('Initial Load Error: ' + err.message);
@@ -304,15 +310,24 @@ export default function App() {
 
   const handleSignOut = () => {
     removeSafeStorage('nwm_session_token');
+    clearPinConfig();
     setSessionToken('');
+    setIsAppLocked(false);
+    setIsCurtainActive(false);
     setShowUserModal(false);
     setShowSecurityModal(false);
-    setIsAppLocked(false);
-    window.location.reload();
+    setData({
+      userInfo: {
+        activeEmail: '',
+        userRole: '',
+        isOwner: false,
+        isAuthorized: false
+      }
+    });
+    setLoading(false);
   };
 
   const handleForgotPin = () => {
-    setIsAppLocked(false);
     handleSignOut();
   };
 
@@ -353,9 +368,19 @@ export default function App() {
     );
   }
 
-  // If we have data but user is not authorized, show login screen
-  if (data && data.userInfo && data.userInfo.isAuthorized === false) {
+  // If we have no session token or user is not authorized, show login screen
+  if (!sessionToken || (data && data.userInfo && data.userInfo.isAuthorized === false)) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // If user has a valid session token but PIN lock is active, show AppLockScreen
+  if (sessionToken && isAppLocked) {
+    return (
+      <AppLockScreen 
+        onUnlockSuccess={() => setIsAppLocked(false)} 
+        onForgotPin={handleForgotPin} 
+      />
+    );
   }
 
   const formatCurrency = (val) => {
@@ -529,14 +554,6 @@ export default function App() {
            <NavButton icon={SettingsIcon} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         )}
       </nav>
-
-      {/* App Lock Screen Gatekeeper (Mobile Shell & Browser) */}
-      {sessionToken && isAppLocked && (
-        <AppLockScreen 
-          onUnlockSuccess={() => setIsAppLocked(false)} 
-          onForgotPin={handleForgotPin} 
-        />
-      )}
 
       {/* App Switcher & Background Privacy Curtain */}
       {sessionToken && !isAppLocked && isCurtainActive && (
