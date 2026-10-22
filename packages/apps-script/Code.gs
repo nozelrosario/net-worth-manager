@@ -777,6 +777,230 @@ function searchAmfiSchemes(query) {
 }
 
 /**
+ * Calculates investment performance metrics: Holding Period, CAGR, and Tax Status
+ */
+function calculateAssetPerformance(cost, currentValue, acqDateStr, category) {
+  try {
+    cost = Number(cost || 0);
+    currentValue = Number(currentValue || 0);
+    if (cost <= 0 || currentValue <= 0 || !acqDateStr) return null;
+    
+    var acqDate = new Date(acqDateStr);
+    var now = new Date();
+    var diffMs = now.getTime() - acqDate.getTime();
+    if (isNaN(diffMs) || diffMs <= 0) return null;
+    
+    var days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    var years = days / 365.25;
+    var months = Math.round(days / 30.4375);
+    
+    var holdingStr = '';
+    if (days < 30) holdingStr = days + 'd';
+    else if (months < 12) holdingStr = months + 'm';
+    else holdingStr = years.toFixed(1) + 'y';
+    
+    var pnl = Math.round((currentValue - cost) * 100) / 100;
+    var pnlPct = Math.round(((pnl / cost) * 100) * 100) / 100;
+    
+    var cagr = null;
+    if (years >= 0.5) {
+      var rawCagr = (Math.pow(currentValue / cost, 1 / years) - 1) * 100;
+      cagr = Math.round(rawCagr * 100) / 100;
+    }
+    
+    var catLower = String(category || '').toLowerCase();
+    var isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
+    var isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
+    var taxTag = isLtcg ? 'LTCG' : 'STCG';
+    var taxLabel = isLtcg ? (isEquityOrMf ? 'LTCG (> 12m)' : 'LTCG (> 24m)') : (isEquityOrMf ? 'STCG (≤ 12m)' : 'STCG (≤ 24m)');
+    
+    return {
+      days: days,
+      months: months,
+      years: Math.round(years * 100) / 100,
+      holdingStr: holdingStr,
+      pnl: pnl,
+      pnlPct: pnlPct,
+      cagr: cagr,
+      isLtcg: isLtcg,
+      taxTag: taxTag,
+      taxLabel: taxLabel
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Fetches historical asset price on a specific date for Gold, Equity, or Mutual Funds
+ */
+function fetchHistoricalAssetPrice(symbol, category, dateStr, formFactor, purity) {
+  try {
+    if (!dateStr) return { status: 'error', message: 'Acquisition date is required' };
+    
+    // Parse target date (YYYY-MM-DD)
+    var dParts = String(dateStr).split('-');
+    if (dParts.length !== 3) return { status: 'error', message: 'Date must be YYYY-MM-DD' };
+    var yyyy = Number(dParts[0]);
+    var mm = Number(dParts[1]);
+    var dd = Number(dParts[2]);
+    if (isNaN(yyyy) || isNaN(mm) || isNaN(dd)) return { status: 'error', message: 'Invalid date values' };
+    var targetDate = new Date(yyyy, mm - 1, dd);
+    
+    // 1. Mutual Funds: Lookup from official AMFI historical NAV time-series
+    if (category === 'Mutual Funds') {
+      var schemeCode = String(symbol || '').replace(/[^0-9]/g, '');
+      if (!schemeCode) return { status: 'error', message: 'Valid AMFI Scheme Code required' };
+      
+      var url = 'https://api.mfapi.in/mf/' + schemeCode;
+      var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      if (res.getResponseCode() === 200) {
+        var json = JSON.parse(res.getContentText());
+        if (json && json.data && json.data.length > 0) {
+          var matched = null;
+          for (var i = 0; i < json.data.length; i++) {
+            var item = json.data[i];
+            var parts = String(item.date).split('-');
+            var itemDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+            if (itemDate <= targetDate) {
+              matched = item;
+              break;
+            }
+          }
+          if (matched && matched.nav) {
+            return {
+              status: 'success',
+              price: parseFloat(matched.nav),
+              matchedDate: matched.date,
+              targetDate: dateStr,
+              schemeName: json.meta?.scheme_name || symbol,
+              source: 'Official AMFI NAV'
+            };
+          }
+        }
+      }
+      return { status: 'error', message: 'Could not find AMFI NAV on or before ' + dateStr };
+    }
+    
+    // 2. Gold: Lookup historical rate via Google Sheets CURRENCY:XAUINR
+    if (category === 'Gold') {
+      var ff = String(formFactor || '');
+      var pur = String(purity || (ff.includes('Jewelry') ? '22K' : '24K'));
+      
+      var ss = getSpreadsheet();
+      if (ss) {
+        var calcSheet = ss.getSheetByName('_Calc');
+        if (!calcSheet) {
+          calcSheet = ss.insertSheet('_Calc');
+          calcSheet.hideSheet();
+        }
+        
+        // If ETF or SGB, query ticker
+        if (ff.includes('ETF') || ff.includes('SGB')) {
+          var cleanTkr = normalizeStockSymbol(symbol);
+          if (cleanTkr) {
+            var etfFmla = '=IFERROR(INDEX(GOOGLEFINANCE("' + cleanTkr + '", "price", DATE(' + yyyy + ', ' + mm + ', ' + Math.max(1, dd - 5) + '), DATE(' + yyyy + ', ' + mm + ', ' + (dd + 1) + ')), ROWS(GOOGLEFINANCE("' + cleanTkr + '", "price", DATE(' + yyyy + ', ' + mm + ', ' + Math.max(1, dd - 5) + '), DATE(' + yyyy + ', ' + mm + ', ' + (dd + 1) + '))), 2), 0)';
+            calcSheet.getRange(1, 1).setFormula(etfFmla);
+            SpreadsheetApp.flush();
+            var etfVal = calcSheet.getRange(1, 1).getValue();
+            if (typeof etfVal !== 'number' || etfVal <= 0) {
+              Utilities.sleep(1200);
+              SpreadsheetApp.flush();
+              etfVal = calcSheet.getRange(1, 1).getValue();
+            }
+            if (typeof etfVal === 'number' && etfVal > 0) {
+              return {
+                status: 'success',
+                price: Math.round(etfVal * 100) / 100,
+                targetDate: dateStr,
+                source: 'Google Finance (ETF Close)'
+              };
+            }
+          }
+        } else {
+          // Physical Gold (XAUINR per troy ounce / 31.1035)
+          var goldFmla = '=IFERROR(INDEX(GOOGLEFINANCE("CURRENCY:XAUINR", "price", DATE(' + yyyy + ', ' + mm + ', ' + Math.max(1, dd - 5) + '), DATE(' + yyyy + ', ' + mm + ', ' + (dd + 1) + ')), ROWS(GOOGLEFINANCE("CURRENCY:XAUINR", "price", DATE(' + yyyy + ', ' + mm + ', ' + Math.max(1, dd - 5) + '), DATE(' + yyyy + ', ' + mm + ', ' + (dd + 1) + '))), 2) / 31.1034768, 0)';
+          calcSheet.getRange(1, 1).setFormula(goldFmla);
+          SpreadsheetApp.flush();
+          var goldVal = calcSheet.getRange(1, 1).getValue();
+          if (typeof goldVal !== 'number' || goldVal <= 0) {
+            Utilities.sleep(1200);
+            SpreadsheetApp.flush();
+            goldVal = calcSheet.getRange(1, 1).getValue();
+          }
+          if (typeof goldVal === 'number' && goldVal > 0) {
+            var mult = pur.includes('22K') ? (22 / 24) : (pur.includes('18K') ? (18 / 24) : 1);
+            var goldPerGram = Math.round(goldVal * mult);
+            return {
+              status: 'success',
+              price: goldPerGram,
+              purity: pur,
+              targetDate: dateStr,
+              source: 'Google Finance (XAUINR Historical)'
+            };
+          }
+        }
+      }
+      
+      // Historical Gold Reference Benchmark table by year (fallback)
+      var goldBenchmarks = {
+        2026: 7850, 2025: 7400, 2024: 7000, 2023: 5900, 2022: 5200,
+        2021: 4750, 2020: 4850, 2019: 3500, 2018: 3150, 2017: 2950,
+        2016: 2850, 2015: 2600, 2014: 2800, 2013: 2950, 2012: 3100,
+        2011: 2600, 2010: 1850, 2005: 700,  2000: 440
+      };
+      var benchRate = goldBenchmarks[yyyy] || (yyyy < 2000 ? 400 : 7000);
+      var bMult = pur.includes('22K') ? (22 / 24) : (pur.includes('18K') ? (18 / 24) : 1);
+      return {
+        status: 'success',
+        price: Math.round(benchRate * bMult),
+        purity: pur,
+        targetDate: dateStr,
+        source: 'Historical Gold Benchmark'
+      };
+    }
+    
+    // 3. Equity: GOOGLEFINANCE historical close
+    if (category === 'Equity') {
+      var ssEq = getSpreadsheet();
+      if (ssEq) {
+        var eqSheet = ssEq.getSheetByName('_Calc');
+        if (!eqSheet) {
+          eqSheet = ssEq.insertSheet('_Calc');
+          eqSheet.hideSheet();
+        }
+        var cleanSym = normalizeStockSymbol(symbol);
+        if (cleanSym) {
+          var eqFmla = '=IFERROR(INDEX(GOOGLEFINANCE("' + cleanSym + '", "price", DATE(' + yyyy + ', ' + mm + ', ' + Math.max(1, dd - 5) + '), DATE(' + yyyy + ', ' + mm + ', ' + (dd + 1) + ')), ROWS(GOOGLEFINANCE("' + cleanSym + '", "price", DATE(' + yyyy + ', ' + mm + ', ' + Math.max(1, dd - 5) + '), DATE(' + yyyy + ', ' + mm + ', ' + (dd + 1) + '))), 2), 0)';
+          eqSheet.getRange(1, 1).setFormula(eqFmla);
+          SpreadsheetApp.flush();
+          var eqVal = eqSheet.getRange(1, 1).getValue();
+          if (typeof eqVal !== 'number' || eqVal <= 0) {
+            Utilities.sleep(1200);
+            SpreadsheetApp.flush();
+            eqVal = eqSheet.getRange(1, 1).getValue();
+          }
+          if (typeof eqVal === 'number' && eqVal > 0) {
+            return {
+              status: 'success',
+              price: Math.round(eqVal * 100) / 100,
+              targetDate: dateStr,
+              symbol: cleanSym,
+              source: 'Google Finance (Historical Close)'
+            };
+          }
+        }
+      }
+    }
+    
+    return { status: 'error', message: 'No historical price available for this date' };
+  } catch (err) {
+    console.error('Error in fetchHistoricalAssetPrice: ' + err);
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
  * Registers an asset ticker or AMFI scheme code in the MarketQuotes sheet
  */
 function registerMarketQuote(ss, symbol, type, displayName) {
@@ -1573,11 +1797,27 @@ function getDashboardData(idToken) {
           asset['Calculated Value'] = calculatedVal;
           asset['Current Value'] = calculatedVal;
         }
-        var cost = Number(asset['Cost'] || 0);
-        if (cost > 0 && asset['Current Value']) {
-          var pnl = Number(asset['Current Value']) - cost;
-          asset['P&L'] = Math.round(pnl * 100) / 100;
-          asset['P&L %'] = Math.round(((pnl / cost) * 100) * 100) / 100;
+      }
+
+      // Compute P&L, Holding Period, CAGR, and Tax Status
+      var cost = Number(asset['Cost'] || 0);
+      var currentVal = Number(asset['Current Value'] || 0);
+      var acqDate = asset['Acquisition Date'];
+      if (cost > 0 && currentVal > 0) {
+        var pnl = Math.round((currentVal - cost) * 100) / 100;
+        asset['P&L'] = pnl;
+        asset['P&L %'] = Math.round(((pnl / cost) * 100) * 100) / 100;
+        
+        if (acqDate) {
+          var perf = calculateAssetPerformance(cost, currentVal, acqDate, category);
+          if (perf) {
+            asset['Holding Period'] = perf.holdingStr;
+            asset['Holding Days'] = perf.days;
+            asset['Holding Years'] = perf.years;
+            asset['CAGR'] = perf.cagr;
+            asset['Tax Tag'] = perf.taxTag;
+            asset['Tax Label'] = perf.taxLabel;
+          }
         }
       }
     }

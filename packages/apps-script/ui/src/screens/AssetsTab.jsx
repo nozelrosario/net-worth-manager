@@ -1,8 +1,8 @@
 import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
-import DynamicForm from "../components/DynamicForm";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
+import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -112,7 +112,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     setAttachedFiles(Array.isArray(files) ? files : []);
     setUploadProgress('');
     setDeleteConfirmAsset(null);
-    setNewAsset({ ...asset, 'Details JSON': details });
+    let acqDate = asset['Acquisition Date'];
+    if (typeof acqDate === 'string' && acqDate.includes('T')) {
+      acqDate = acqDate.split('T')[0];
+    }
+    setNewAsset({ ...asset, 'Acquisition Date': acqDate, 'Details JSON': details });
     setShowAddModal(true);
   };
 
@@ -326,23 +330,35 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
-        <div>
-          <h2 className="text-xl font-bold">Assets & Liabilities</h2>
-          <p className="text-[11px] text-text-muted mt-0.5">Live Valuation via Google Finance & AMFI</p>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight text-text-primary">Assets & Liabilities</h2>
+          <div className="flex items-center flex-wrap gap-2 mt-1">
+            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
+              Google Finance & AMFI Live
+            </span>
+            <span className="text-text-muted text-[10px]">•</span>
+            <button 
+              type="button"
+              onClick={handleSyncRates} 
+              disabled={isSyncingRates}
+              title="Refresh and sync live valuations to spreadsheet"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-[11px] font-medium transition-all active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
+              <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={handleSyncRates} 
-            disabled={isSyncingRates}
-            title="Refresh and sync live valuations"
-            className="text-wealth-emerald text-xs font-semibold bg-wealth-emerald/10 border border-wealth-emerald/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-wealth-emerald/20 transition-all active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCw size={12} className={isSyncingRates ? 'animate-spin' : ''} />
-            <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
-          </button>
-          <button onClick={openAddModal} className="text-primary-accent text-sm font-medium bg-primary-accent/10 px-3 py-1.5 rounded-lg hover:bg-primary-accent/20 transition-colors">+ Add Asset</button>
-        </div>
+        <button 
+          type="button"
+          onClick={openAddModal} 
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+        >
+          <Plus size={14} />
+          <span>Add Asset</span>
+        </button>
       </div>
       <div 
         className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide no-swipe"
@@ -352,7 +368,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         onMouseMove={e => e.stopPropagation()}
       >
         {filters.map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${f === filter ? 'bg-primary-accent text-white' : 'bg-surface-layer2 text-text-secondary border border-border-subtle hover:bg-surface-layer1'}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${f === filter ? 'bg-primary-accent text-white shadow-sm font-semibold' : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'}`}>
             {f}
           </button>
         ))}
@@ -394,6 +410,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           const pnl = asset['P&L'];
           const pnlPct = asset['P&L %'];
 
+          const perf = (asset['CAGR'] !== undefined && asset['CAGR'] !== null)
+            ? { holdingStr: asset['Holding Period'], cagr: asset['CAGR'], taxTag: asset['Tax Tag'], taxLabel: asset['Tax Label'] }
+            : calculatePerformance(asset.Cost, asset['Current Value'], asset['Acquisition Date'], asset.Category);
+
           return (
             <div 
               key={asset['Asset ID'] || i} 
@@ -403,7 +423,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-white">{asset.Name}</p>
+                    <p className="text-sm font-semibold text-text-primary">{asset.Name}</p>
                     {isLive && (
                       <span className="flex items-center gap-1 text-[10px] text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-1.5 py-0.2 rounded font-semibold">
                         <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
@@ -412,13 +432,27 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center flex-wrap gap-2 mt-0.5">
                     <span className="text-xs text-text-muted">{asset.Category}</span>
                     {holdingSummary && (
                       <>
                         <span className="text-text-muted text-[10px]">•</span>
                         <span className="text-xs text-text-secondary">{holdingSummary}</span>
                       </>
+                    )}
+                    {perf?.holdingStr && (
+                      <>
+                        <span className="text-text-muted text-[10px]">•</span>
+                        <span className="text-[11px] text-text-muted">Held: {perf.holdingStr}</span>
+                      </>
+                    )}
+                    {perf?.taxTag && (
+                      <span 
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
+                        title={perf.taxLabel}
+                      >
+                        {perf.taxTag}
+                      </span>
                     )}
                     {docCount > 0 && (
                       <span className="flex items-center gap-1 text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
@@ -451,6 +485,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                       <p className={`text-xs font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                         {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct}%)
                       </p>
+                      {perf?.cagr !== undefined && perf?.cagr !== null && (
+                        <p className="text-[10px] font-medium text-primary-accent tabular-nums">
+                          {perf.cagr >= 0 ? '+' : ''}{perf.cagr}% p.a.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="text-primary-accent/70 text-xs hover:text-primary-accent">Edit</div>
@@ -464,14 +503,32 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       
       {/* Add/Edit Asset Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
-           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5" onClick={e => e.stopPropagation()}>
-             <h3 className="text-lg font-bold mb-4 text-white">{editingAssetId ? 'Edit Asset' : 'Add New Asset'}</h3>
+        <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4" onClick={() => setShowAddModal(false)}>
+           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-lg md:max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+             {/* Pinned Modal Header */}
+             <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
+               <div>
+                 <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
+                   {editingAssetId ? 'Edit Asset' : 'Add New Asset'}
+                 </h3>
+                 <p className="text-[11px] text-text-muted mt-0.5">
+                   {newAsset.Category || categoriesList[0] || 'Asset'} Details & Live Valuation
+                 </p>
+               </div>
+               <button 
+                 type="button" 
+                 onClick={() => setShowAddModal(false)}
+                 className="text-text-muted hover:text-text-primary p-1.5 hover:bg-surface-layer2 rounded-lg transition-colors"
+                 title="Close"
+               >
+                 <X size={18} />
+               </button>
+             </div>
              
              {!editingAssetId && (
-               <div className="mb-4">
+               <div className="px-5 pt-3 pb-2 border-b border-border-subtle/50 bg-surface-layer2/30 flex-shrink-0">
                  <label className="block text-xs text-text-secondary mb-1">Asset Category</label>
-                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-accent">
+                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent">
                    {categoriesList.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
                    ))}
@@ -514,7 +571,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 <AlertTriangle size={22} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Delete Asset</h3>
+                <h3 className="text-base font-bold text-text-primary">Delete Asset</h3>
                 <p className="text-xs text-text-muted">
                   {deleteConfirmAsset.hasDocuments ? 'Confirm document retention' : 'Permanent action'}
                 </p>
@@ -524,8 +581,8 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             {deleteConfirmAsset.hasDocuments ? (
               <div className="bg-surface-layer2/60 border border-border-subtle rounded-xl p-3 text-xs leading-relaxed text-text-secondary space-y-2">
                 <p>
-                  <strong className="text-white">"{deleteConfirmAsset.assetName}"</strong> has{' '}
-                  <strong className="text-primary-accent">{deleteConfirmAsset.fileCount} supporting document(s)</strong> linked in <strong className="text-white">Family Safe</strong>.
+                  <strong className="text-text-primary">"{deleteConfirmAsset.assetName}"</strong> has{' '}
+                  <strong className="text-primary-accent">{deleteConfirmAsset.fileCount} supporting document(s)</strong> linked in <strong className="text-text-primary">Family Safe</strong>.
                 </p>
                 <p>
                   Do you also want to permanently delete the supporting documents from Family Safe and Google Drive?
@@ -533,7 +590,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               </div>
             ) : (
               <p className="text-sm text-text-secondary">
-                Are you sure you want to delete <strong className="text-white">"{deleteConfirmAsset.assetName}"</strong>? This will permanently remove the asset record.
+                Are you sure you want to delete <strong className="text-text-primary">"{deleteConfirmAsset.assetName}"</strong>? This will permanently remove the asset record.
               </p>
             )}
 
@@ -576,7 +633,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 type="button" 
                 disabled={isSubmitting}
                 onClick={() => setDeleteConfirmAsset(null)}
-                className="w-full py-2 px-4 text-text-muted hover:text-white text-xs font-medium transition-colors"
+                className="w-full py-2 px-4 text-text-muted hover:text-text-primary text-xs font-medium transition-colors"
               >
                 Cancel
               </button>
