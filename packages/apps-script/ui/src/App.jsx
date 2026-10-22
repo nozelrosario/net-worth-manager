@@ -13,7 +13,7 @@ import SecurityModal from './components/SecurityModal';
 import AppLockScreen from './components/AppLockScreen';
 import PrivacyCurtain from './components/PrivacyCurtain';
 import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
-import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes } from './utils/securityUtils';
+import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes, clearPinConfig } from './utils/securityUtils';
 
 const TABS = ['home', 'assets', 'spends', 'safe', 'settings'];
 
@@ -309,8 +309,12 @@ export default function App() {
   };
 
   const handleSignOut = () => {
-    removeSafeStorage('nwm_session_token');
-    clearPinConfig();
+    try {
+      removeSafeStorage('nwm_session_token');
+      clearPinConfig();
+    } catch (e) {
+      console.error('Error during sign out storage cleanup:', e);
+    }
     setSessionToken('');
     setIsAppLocked(false);
     setIsCurtainActive(false);

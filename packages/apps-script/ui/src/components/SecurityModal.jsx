@@ -414,8 +414,10 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                 </div>
                 <button
                   type="button"
-                  onClick={onSignOut}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-sm font-medium text-liability-rose bg-liability-rose/10 hover:bg-liability-rose/15 border border-liability-rose/25 transition-colors"
+                  onClick={() => {
+                    if (onSignOut) onSignOut();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-sm font-medium text-liability-rose bg-liability-rose/10 hover:bg-liability-rose/15 border border-liability-rose/25 transition-colors cursor-pointer"
                 >
                   <LogOut size={16} />
                   <span>Sign Out on this Device</span>
