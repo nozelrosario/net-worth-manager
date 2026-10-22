@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2 } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
+import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 
-export default function SettingsTab({ data, onRefresh, showMessage }) {
+export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
   const [memberName, setMemberName] = useState('');
@@ -301,12 +302,37 @@ const familyProfiles = data?.familyProfiles || [];
          </div>
       </section>
 
-      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 opacity-50">
-         <div className="flex items-center gap-2 mb-4 text-text-primary">
-            <Shield size={20} className="text-text-secondary" />
-            <h3 className="font-semibold">Security Settings (Coming Soon)</h3>
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+         <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-text-primary">
+               <Shield size={20} className="text-primary-accent" />
+               <h3 className="font-semibold">Access Control & Security</h3>
+            </div>
+            <button
+               type="button"
+               onClick={onOpenSecurityModal}
+               className="text-xs bg-primary-accent text-white px-3 py-1.5 rounded-lg font-medium hover:bg-primary-accent/90 transition-colors"
+            >
+               Configure
+            </button>
          </div>
-         <p className="text-xs text-text-muted">Two-factor authentication and session controls will be available in a future update.</p>
+         <p className="text-xs text-text-muted mb-3">
+            Container-aware security policies: PIN app lock for mobile shell, session-based ephemeral isolation and idle timeout for web browsers.
+         </p>
+         <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-surface-layer2 p-2.5 rounded-lg border border-border-subtle flex items-center justify-between">
+               <span className="text-text-secondary">App Lock (PIN)</span>
+               <span className={`font-semibold ${isPinConfigured() ? 'text-wealth-emerald' : 'text-text-muted'}`}>
+                  {isPinConfigured() ? 'Enabled' : 'Disabled'}
+               </span>
+            </div>
+            <div className="bg-surface-layer2 p-2.5 rounded-lg border border-border-subtle flex items-center justify-between">
+               <span className="text-text-secondary">Platform Tier</span>
+               <span className="font-semibold text-primary-accent">
+                  {isAppShell() ? 'Mobile Shell' : 'Web Browser'}
+               </span>
+            </div>
+         </div>
       </section>
     </div>
   );
