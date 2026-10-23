@@ -21,7 +21,7 @@ const getSafeCategoryForAsset = (assetCategory) => {
   return 'Finance';
 };
 
-export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage }) {
+export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer }) {
   const [filter, setFilter] = useState('All Assets');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
@@ -349,6 +349,20 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
               <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
             </button>
+            {onOpenRebalancer && (
+              <>
+                <span className="text-text-muted text-[10px]">•</span>
+                <button 
+                  type="button"
+                  onClick={onOpenRebalancer} 
+                  title="Open AI Portfolio Rebalancer & Asset Allocation Advisor"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-[11px] font-medium transition-all active:scale-95"
+                >
+                  <Sparkles size={10} />
+                  <span>AI Rebalance</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
         <button 

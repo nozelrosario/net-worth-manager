@@ -1,8 +1,25 @@
-import React from 'react';
-import { Shield, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight } from 'lucide-react';
+import { calculatePortfolioAlignment, RISK_PROFILES } from '../utils/portfolioMath';
 
-export default function HomeTab({ formatCurrency, data }) {
+export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
   const assets = data?.assets || [];
+  const settings = data?.settings || [];
+
+  const targetMap = useMemo(() => {
+    const s = settings.find(item => item['Setting Key'] === 'TargetAllocation');
+    if (s?.['Setting Value']) {
+      try {
+        return JSON.parse(s['Setting Value']);
+      } catch (e) {}
+    }
+    const profileName = settings.find(item => item['Setting Key'] === 'RiskProfile')?.['Setting Value'] || 'Moderate';
+    return RISK_PROFILES[profileName]?.target || RISK_PROFILES.Moderate.target;
+  }, [settings]);
+
+  const alignment = useMemo(() => {
+    return calculatePortfolioAlignment(assets, targetMap);
+  }, [assets, targetMap]);
   
   const equity = assets.filter(a => a.Category === 'Equity').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const mf = assets.filter(a => a.Category === 'Mutual Funds').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
@@ -83,9 +100,59 @@ export default function HomeTab({ formatCurrency, data }) {
         </div>
       </div>
 
+      {/* AI Portfolio Advisor & Rebalance Banner */}
+      {onOpenRebalancer && (
+        <div 
+          onClick={onOpenRebalancer}
+          className="bg-surface-layer1 border border-border-subtle hover:border-primary-accent/40 rounded-xl p-4 shadow-sm relative overflow-hidden cursor-pointer transition-all active:scale-[0.99] group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-primary-accent/15 flex items-center justify-center text-primary-accent border border-primary-accent/25 shadow-sm">
+                <Sparkles size={16} />
+              </div>
+              <div>
+                <h3 className="text-xs font-semibold text-text-primary group-hover:text-primary-accent transition-colors flex items-center gap-1.5">
+                  AI Portfolio Advisor & Rebalance
+                  <span className="text-[9px] font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-1.5 py-0.2 rounded-full">
+                    Zero-Tax
+                  </span>
+                </h3>
+                <p className="text-[10px] text-text-muted">Smart fresh capital deployment & risk audit</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-primary-accent">
+              <span>Rebalance</span>
+              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle/70 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-text-secondary text-[11px]">Alignment Score:</span>
+              <span className="font-bold text-wealth-emerald tabular-nums">{alignment.alignmentScore}/100</span>
+              <span className="text-[10px] text-text-muted">({alignment.healthLabel})</span>
+            </div>
+
+            {alignment.maxOverweight ? (
+              <span className="text-[10px] text-liability-rose font-medium bg-liability-rose/10 px-2 py-0.5 rounded-full border border-liability-rose/20">
+                +{alignment.maxOverweight.drift.toFixed(1)}% {alignment.maxOverweight.name}
+              </span>
+            ) : (
+              <span className="text-[10px] text-wealth-emerald font-medium bg-wealth-emerald/10 px-2 py-0.5 rounded-full border border-wealth-emerald/20">
+                ✓ Balanced
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Analytics Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm">
+        <div 
+          onClick={onOpenRebalancer}
+          className={`bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm ${onOpenRebalancer ? 'cursor-pointer hover:border-bullion-amber/30 transition-all active:scale-[0.98]' : ''}`}
+        >
           <p className="text-xs text-text-secondary mb-1">Liquid Buffer & Drag</p>
           <p className="text-lg font-bold text-text-primary tabular-nums">{formatCurrency(cash)}</p>
           <p className="text-[11px] text-text-muted mt-0.5">{totalExpense > 0 ? (cash / (totalExpense/12)).toFixed(1) : 0} Mos Runway</p>

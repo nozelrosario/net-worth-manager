@@ -12,6 +12,7 @@ import LoginScreen from './screens/LoginScreen';
 import SecurityModal from './components/SecurityModal';
 import AppLockScreen from './components/AppLockScreen';
 import PrivacyCurtain from './components/PrivacyCurtain';
+import PortfolioRebalancerModal from './components/PortfolioRebalancerModal';
 import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
 import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes, clearPinConfig } from './utils/securityUtils';
 
@@ -80,6 +81,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
 
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showRebalancerModal, setShowRebalancerModal] = useState(false);
   const [isAppLocked, setIsAppLocked] = useState(() => isPinConfigured());
   const [isCurtainActive, setIsCurtainActive] = useState(false);
   const backgroundTimestampRef = useRef(null);
@@ -482,8 +484,24 @@ export default function App() {
 
       {/* Main Content Area with Swiping */}
       <main {...swipeHandlers} className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 touch-pan-y">
-        {activeTab === 'home' && <HomeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
-        {activeTab === 'assets' && <AssetsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
+        {activeTab === 'home' && (
+          <HomeTab 
+            formatCurrency={formatCurrency} 
+            data={data} 
+            onRefresh={refreshData} 
+            showMessage={showMessage} 
+            onOpenRebalancer={() => setShowRebalancerModal(true)} 
+          />
+        )}
+        {activeTab === 'assets' && (
+          <AssetsTab 
+            formatCurrency={formatCurrency} 
+            data={data} 
+            onRefresh={refreshData} 
+            showMessage={showMessage} 
+            onOpenRebalancer={() => setShowRebalancerModal(true)} 
+          />
+        )}
         {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
         {activeTab === 'safe' && <SafeTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
         {activeTab === 'settings' && (
@@ -492,6 +510,7 @@ export default function App() {
             onRefresh={refreshData} 
             showMessage={showMessage} 
             onOpenSecurityModal={() => setShowSecurityModal(true)} 
+            onOpenRebalancer={() => setShowRebalancerModal(true)} 
           />
         )}
       </main>
@@ -571,6 +590,16 @@ export default function App() {
         userEmail={data?.userInfo?.activeEmail}
         onSignOut={handleSignOut}
         showMessage={showMessage}
+      />
+
+      {/* AI Portfolio Advisor & Rebalance Modal */}
+      <PortfolioRebalancerModal
+        isOpen={showRebalancerModal}
+        onClose={() => setShowRebalancerModal(false)}
+        data={data}
+        formatCurrency={formatCurrency}
+        showMessage={showMessage}
+        onRefresh={refreshData}
       />
     </div>
   );

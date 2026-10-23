@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2 } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders } from 'lucide-react';
 import { getSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 
-export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal }) {
+export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
   const [memberName, setMemberName] = useState('');
@@ -206,6 +206,34 @@ const familyProfiles = data?.familyProfiles || [];
            onRefresh={onRefresh}
            showMessage={showMessage}
          />
+      </section>
+
+      {/* AI Portfolio Advisor & Rebalance Config */}
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+         <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-text-primary">
+               <Sparkles size={18} className="text-wealth-emerald" />
+               <h3 className="font-semibold text-sm">AI Portfolio Advisor & Targets</h3>
+            </div>
+            <span className="text-[10px] font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full">
+              Zero Tax Inflow Engine
+            </span>
+         </div>
+
+         <p className="text-xs text-text-secondary leading-relaxed mb-3">
+            Configure target asset allocation benchmarks (Moderate, Aggressive, Conservative, All-Weather, Custom) and optional Google Gemini API key for deep narrative synthesis.
+         </p>
+
+         {onOpenRebalancer && (
+           <button
+             type="button"
+             onClick={onOpenRebalancer}
+             className="w-full py-2.5 px-4 rounded-xl bg-surface-layer2 hover:bg-surface-layer2/80 border border-border-prominent text-text-primary text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
+           >
+             <Sliders size={14} className="text-primary-accent" />
+             <span>Configure Target Allocation & AI Key</span>
+           </button>
+         )}
       </section>
 
       <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
