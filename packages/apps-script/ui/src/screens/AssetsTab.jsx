@@ -21,7 +21,7 @@ const getSafeCategoryForAsset = (assetCategory) => {
   return 'Finance';
 };
 
-export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage }) {
+export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer }) {
   const [filter, setFilter] = useState('All Assets');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
@@ -349,6 +349,20 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
               <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
             </button>
+            {onOpenRebalancer && (
+              <>
+                <span className="text-text-muted text-[10px]">•</span>
+                <button 
+                  type="button"
+                  onClick={onOpenRebalancer} 
+                  title="Open AI Portfolio Rebalancer & Asset Allocation Advisor"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-[11px] font-medium transition-all active:scale-95"
+                >
+                  <Sparkles size={10} />
+                  <span>AI Rebalance</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
         <button 
@@ -611,7 +625,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     type="button" 
                     disabled={isSubmitting}
                     onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, false)}
-                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-border-prominent text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-white/[0.08] hover:border-white/[0.14] text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                   >
                     <Lock size={14} className="text-wealth-emerald" />
                     <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset Only (Keep in Family Safe)'}</span>

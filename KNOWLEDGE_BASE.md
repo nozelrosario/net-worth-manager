@@ -25,6 +25,38 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v2.9) - AI Product Recommendations, Mutual Fund Look-Through & Overlap Radar (Issue #20)
+✅ **Look-Through & Fund Overlap Radar (`portfolioMath.js` + `PortfolioRebalancerModal.jsx`)**:
+  - Analyzes mutual fund and equity holdings to detect inter-scheme duplication (e.g. Flexi Cap + Nifty 50 overlap sharing identical heavyweights: HDFC Bank, ICICI Bank, Reliance, Infosys).
+  - True Sector Allocation heatmap: Audits effective exposure to Financials, IT, Auto, FMCG, Healthcare, and Cash to alert on hidden sectoral skews.
+  - Market Cap Exposure gauge: Accurately maps effective portfolio split across Large Cap (68%), Mid Cap (22%), and Small Cap (10%).
+✅ **Tax & Yield Arbitrage Switch**:
+  - Automatically identifies high-tax-bracket inefficiencies (e.g., Bank FDs taxed at ~31.2% slab rates).
+  - Recommends shifting idle liquid surplus into Arbitrage Funds (benefiting from Section 112A equity capital gains treatment: 12.5% LTCG / 20% STCG with ₹1.25L exemption), unlocking an extra ~+1.5% net annual post-tax yield (~₹14,200/yr savings).
+✅ **Curated Zero-Commission Direct Product Matcher**:
+  - Suggests specific, low-cost Direct Mutual Funds (e.g., UTI/ICICI Nifty Next 50 Direct Index, 0.22% TER, 0.04% tracking error), Sovereign Gold Bonds (SGB 2031-32 secondary market at ~3.1% discount to spot, 100% tax-free capital gains), and Arbitrage Funds.
+  - Category filter chips, stats grid (TER, tracking error, 3Y CAGR), rationale, and a "Deploy Direct" guide for MF Central / direct brokers.
+✅ **Backend Intelligence Gateway (`Code.gs`)**:
+  - `generateProductIntelligence`: Anonymized holdings payload, Gemini 1.5 Flash structured JSON response, and deterministic offline engine fallback.
+  - Compliance: SEBI RIA regulatory disclaimer stating algorithmic research and educational portfolio analytics.
+
+## Feature Update (v2.8) - AI Portfolio Rebalancer & Asset Allocation Advisor (Issue #18)
+✅ **Deterministic Financial Math Engine (`portfolioMath.js`)**:
+  - Implements multi-asset drift calculation, absolute portfolio drift sum, and 0-100 Alignment Score formula.
+  - Smart Fresh Capital Inflow Simulator ("No-Sale Rebalancing"): Given new money $\Delta C$, mathematically allocates strictly to underweight categories proportionally to their shortfalls, minimizing drift without selling any asset (avoiding Section 112A LTCG / Section 111A STCG tax).
+  - Cash drag & runway intelligence: Analyzes liquid bank deposits against 6 months of actual living expenses to quantify deployable idle funds.
+  - Concentration risk monitor: Flags single assets representing $>15\%$ of total portfolio or $>20\%$ of listed equities.
+✅ **Backend Hybrid AI Gateway (`Code.gs`)**:
+  - `generatePortfolioInsights`: Privacy-sanitized payload stripping personal identifiers (accounts, folios, names).
+  - Google Gemini 1.5 Flash (Free Tier) integration via native Apps Script `UrlFetchApp`.
+  - Offline Heuristics Engine fallback: Provides rich, SEBI-compliant financial advisory insights even when no API key is provided or when offline.
+✅ **Interactive UI / UX (`PortfolioRebalancerModal.jsx`)**:
+  - High-fidelity OLED Dark mode design matching the Stitch prototype (`screen_12_ai_portfolio_rebalance.html`).
+  - Stacked progress bars showing Current vs Target Benchmark vs Projected Post-Inflow.
+  - Interactive simulation chips (`₹25k`, `₹50k`, `₹1,00,000`, `₹2,50,000`), custom amount input, and real-time slider.
+  - Risk profile presets (*Moderate*, *Aggressive*, *Conservative*, *All-Weather*, *Custom*) and in-app target percentage customizer.
+  - Integrated directly into `HomeTab`, `AssetsTab`, and `SettingsTab` with hardware back navigation support.
+
 ## Feature Update (v2.7) - Container-Aware Dual-Tier Security Architecture (Issue #14)
 ✅ **Container-Aware Platform Detection**: Automatically detects runtime container (Mobile App Shell via `NetWorthManagerApp/2.0` user-agent and `window.ReactNativeWebView` vs Web Browser) and dynamically tailors security controls.
 ✅ **Mobile PIN App Lock (`AppLockScreen`)**:

@@ -27,8 +27,8 @@
     --surface-layer2: #1E293B;
     --surface-layer3: #334155;
     --surface-default: #13131b;
-    --border-subtle: #222F3E;
-    --border-prominent: #334155;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-prominent: rgba(255, 255, 255, 0.10);
     --primary-accent: #6366F1;
     --primary-default: #c0c1ff;
     --wealth-emerald: #10B981;
