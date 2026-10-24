@@ -25,6 +25,23 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v2.8) - AI Portfolio Rebalancer & Asset Allocation Advisor (Issue #18)
+✅ **Deterministic Financial Math Engine (`portfolioMath.js`)**:
+  - Implements multi-asset drift calculation, absolute portfolio drift sum, and 0-100 Alignment Score formula.
+  - Smart Fresh Capital Inflow Simulator ("No-Sale Rebalancing"): Given new money $\Delta C$, mathematically allocates strictly to underweight categories proportionally to their shortfalls, minimizing drift without selling any asset (avoiding Section 112A LTCG / Section 111A STCG tax).
+  - Cash drag & runway intelligence: Analyzes liquid bank deposits against 6 months of actual living expenses to quantify deployable idle funds.
+  - Concentration risk monitor: Flags single assets representing $>15\%$ of total portfolio or $>20\%$ of listed equities.
+✅ **Backend Hybrid AI Gateway (`Code.gs`)**:
+  - `generatePortfolioInsights`: Privacy-sanitized payload stripping personal identifiers (accounts, folios, names).
+  - Google Gemini 1.5 Flash (Free Tier) integration via native Apps Script `UrlFetchApp`.
+  - Offline Heuristics Engine fallback: Provides rich, SEBI-compliant financial advisory insights even when no API key is provided or when offline.
+✅ **Interactive UI / UX (`PortfolioRebalancerModal.jsx`)**:
+  - High-fidelity OLED Dark mode design matching the Stitch prototype (`screen_12_ai_portfolio_rebalance.html`).
+  - Stacked progress bars showing Current vs Target Benchmark vs Projected Post-Inflow.
+  - Interactive simulation chips (`₹25k`, `₹50k`, `₹1,00,000`, `₹2,50,000`), custom amount input, and real-time slider.
+  - Risk profile presets (*Moderate*, *Aggressive*, *Conservative*, *All-Weather*, *Custom*) and in-app target percentage customizer.
+  - Integrated directly into `HomeTab`, `AssetsTab`, and `SettingsTab` with hardware back navigation support.
+
 ## Feature Update (v2.7) - Container-Aware Dual-Tier Security Architecture (Issue #14)
 ✅ **Container-Aware Platform Detection**: Automatically detects runtime container (Mobile App Shell via `NetWorthManagerApp/2.0` user-agent and `window.ReactNativeWebView` vs Web Browser) and dynamically tailors security controls.
 ✅ **Mobile PIN App Lock (`AppLockScreen`)**:

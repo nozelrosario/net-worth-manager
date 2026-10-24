@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Portfolio Advisor &amp; Rebalance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed": "#ffdcc5",
+            "outline-variant": "#464554",
+            "on-error": "#690005",
+            "on-tertiary": "#4f2500",
+            "profit-emerald": "#10B981",
+            "surface-tint": "#c0c1ff",
+            "background": "#13131b",
+            "warning-amber": "#F59E0B",
+            "surface": "#13131b",
+            "on-primary": "#1000a9",
+            "inverse-on-surface": "#303038",
+            "tertiary-fixed-dim": "#ffb783",
+            "on-tertiary-container": "#452000",
+            "outline": "#908fa0",
+            "on-secondary": "#003824",
+            "surface-variant": "#34343d",
+            "liability-rose": "#F43F5E",
+            "tertiary": "#ffb783",
+            "secondary": "#4edea3",
+            "surface-container-low": "#1b1b23",
+            "inverse-primary": "#494bd6",
+            "on-error-container": "#ffdad6",
+            "on-secondary-fixed-variant": "#005236",
+            "on-secondary-fixed": "#002113",
+            "border-subtle": "#222F3E",
+            "surface-container-highest": "#34343d",
+            "surface-layer-1": "#151C28",
+            "on-tertiary-fixed-variant": "#703700",
+            "on-primary-fixed": "#07006c",
+            "text-primary": "#F8FAFC",
+            "error": "#ffb4ab",
+            "primary-fixed-dim": "#c0c1ff",
+            "secondary-container": "#00a572",
+            "primary-fixed": "#e1e0ff",
+            "on-surface": "#e4e1ed",
+            "surface-layer-2": "#1E293B",
+            "secondary-fixed-dim": "#4edea3",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-primary-container": "#0d0096",
+            "border-prominent": "#334155",
+            "surface-dim": "#13131b",
+            "surface-container": "#1f1f27",
+            "on-background": "#e4e1ed",
+            "primary": "#c0c1ff",
+            "background-root": "#0B0F17",
+            "on-tertiary-fixed": "#301400",
+            "text-secondary": "#94A3B8",
+            "primary-container": "#8083ff",
+            "surface-bright": "#393841",
+            "surface-container-lowest": "#0d0d15",
+            "secondary-fixed": "#6ffbbe",
+            "surface-container-high": "#292932",
+            "tertiary-container": "#d97721",
+            "inverse-surface": "#e4e1ed",
+            "text-muted": "#64748B",
+            "on-secondary-container": "#00311f",
+            "error-container": "#93000a",
+            "on-surface-variant": "#c7c4d7"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "space-md": "16px",
+            "space-xs": "4px",
+            "space-xl": "32px",
+            "space-lg": "24px",
+            "margin": "16px",
+            "gutter": "12px"
+          },
+          "fontFamily": {
+            "display-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"]
+          },
+          "fontSize": {
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .num-tabular {
+      font-feature-settings: 'tnum' on, 'lnum' on;
+    }
+    /* Hide scrollbars cleanly */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen flex justify-center selection:bg-primary-container selection:text-white">
+<!-- 393px OLED Container -->
+<main class="w-full max-w-[393px] bg-background-root min-h-screen flex flex-col relative pb-36 shadow-2xl">
+<!-- 1. Sticky Header / Top App Bar -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-margin py-space-sm flex items-center justify-between border-b border-border-subtle">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Go back" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-layer-1 flex items-center justify-center text-text-secondary hover:text-text-primary active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</button>
+<div>
+<h1 class="text-headline-sm font-headline-sm text-text-primary tracking-tight">AI Portfolio Advisor &amp; Rebalance</h1>
+<p class="text-label-sm font-label-sm text-text-muted">Net Worth Suite • Model v4.2</p>
+</div>
+</div>
+<button class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-layer-1 border border-border-prominent text-text-secondary hover:text-text-primary active:scale-95 transition-transform duration-150" type="button">
+<span class="text-label-sm font-label-sm font-semibold text-text-primary">Moderate</span>
+<span class="material-symbols-outlined text-[14px] text-text-muted">tune</span>
+</button>
+</header>
+<!-- Scrollable Content Canvas -->
+<div class="px-margin flex flex-col gap-gutter pt-gutter">
+<!-- 2. Portfolio Health & Drift Hero Card -->
+<section class="bg-surface-layer-1 rounded-xl p-space-md border border-border-subtle relative overflow-hidden">
+<!-- Ambient Subtle Indigo Glow -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary-container/15 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<span class="text-label-md font-label-md text-text-muted uppercase tracking-wider">Total Portfolio Wealth</span>
+<div class="text-headline-lg font-headline-lg text-text-primary num-tabular font-bold">
+              ₹1,24,50,000
+            </div>
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-liability-rose/10 border border-liability-rose/25 text-liability-rose text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+<span>+7.4% Equity Overweight</span>
+</div>
+</div>
+<!-- Alignment Score Gauge Dial / Circular Badge -->
+<div class="relative flex flex-col items-center justify-center w-20 h-20 rounded-full bg-surface-layer-2 border-2 border-profit-emerald/40 shadow-inner">
+<span class="text-headline-md font-headline-md text-profit-emerald font-bold leading-none num-tabular">82</span>
+<span class="text-label-sm font-label-sm text-text-muted text-[9px] mt-0.5">/100</span>
+<span class="text-[8px] font-semibold uppercase tracking-wider text-profit-emerald/90">Healthy</span>
+</div>
+</div>
+<!-- Inflow Adjustment Indicator Badge -->
+<div class="mt-space-md pt-3 border-t border-border-subtle/80 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning-amber opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-warning-amber"></span>
+</span>
+<span class="text-body-sm font-body-sm text-text-secondary">Requires Inflow Adjustment</span>
+</div>
+<span class="text-label-sm font-label-sm text-profit-emerald font-medium">Non-taxable fix available</span>
+</div>
+</section>
+<!-- 3. Allocation Visualizer (Current vs Target vs Projected) -->
+<section class="bg-surface-layer-1 rounded-xl p-space-md border border-border-subtle flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Allocation Alignment</h2>
+<p class="text-body-sm font-body-sm text-text-muted">Target profile drift comparison</p>
+</div>
+<span class="material-symbols-outlined text-text-muted text-base">stacked_bar_chart</span>
+</div>
+<!-- Legend Pills -->
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer-2 text-text-secondary text-label-sm font-label-sm border border-border-subtle">
+<span class="w-2 h-2 rounded-full bg-[#6366F1]"></span>Equity 35%
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer-2 text-text-secondary text-label-sm font-label-sm border border-border-subtle">
+<span class="w-2 h-2 rounded-full bg-[#38BDF8]"></span>MFs 25%
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer-2 text-text-secondary text-label-sm font-label-sm border border-border-subtle">
+<span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>Gold 10%
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer-2 text-text-secondary text-label-sm font-label-sm border border-border-subtle">
+<span class="w-2 h-2 rounded-full bg-[#10B981]"></span>Debt/FD 15%
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer-2 text-text-secondary text-label-sm font-label-sm border border-border-subtle">
+<span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>RE 15%
+          </span>
+</div>
+<!-- Segmented Stacked Progress Bars -->
+<div class="space-y-3 pt-2">
+<!-- Bar 1: Current -->
+<div>
+<div class="flex justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary font-medium">Current Allocation</span>
+<span class="text-liability-rose text-label-sm font-label-sm font-semibold">Drift: +7.4%</span>
+</div>
+<div class="h-3 w-full rounded-full bg-surface-layer-2 flex overflow-hidden border border-border-subtle">
+<div class="bg-[#6366F1]" style="width: 43.5%" title="Equity 43.5%"></div>
+<div class="bg-[#38BDF8]" style="width: 20.8%" title="MFs 20.8%"></div>
+<div class="bg-[#F59E0B]" style="width: 8.9%" title="Gold 8.9%"></div>
+<div class="bg-[#10B981]" style="width: 11.8%" title="Debt 11.8%"></div>
+<div class="bg-[#8B5CF6]" style="width: 15.0%" title="Real Estate 15.0%"></div>
+</div>
+<div class="flex justify-between text-[10px] text-text-muted mt-1 num-tabular">
+<span>Eq 43.5%</span>
+<span>MF 20.8%</span>
+<span>Au 8.9%</span>
+<span>Debt 11.8%</span>
+<span>RE 15%</span>
+</div>
+</div>
+<!-- Bar 2: Target Model -->
+<div>
+<div class="flex justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-secondary font-medium">Target Benchmark</span>
+<span class="text-primary text-label-sm font-label-sm">Optimal 60/20/10/10</span>
+</div>
+<div class="h-2.5 w-full rounded-full bg-surface-layer-2 flex overflow-hidden border border-border-subtle opacity-85">
+<div class="bg-[#6366F1]" style="width: 35.0%"></div>
+<div class="bg-[#38BDF8]" style="width: 25.0%"></div>
+<div class="bg-[#F59E0B]" style="width: 10.0%"></div>
+<div class="bg-[#10B981]" style="width: 15.0%"></div>
+<div class="bg-[#8B5CF6]" style="width: 15.0%"></div>
+</div>
+</div>
+<!-- Bar 3: Projected Post-Rebalance -->
+<div>
+<div class="flex justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-text-primary font-medium flex items-center gap-1">
+                Projected Post-Inflow
+                <span class="material-symbols-outlined text-profit-emerald text-[14px]">trending_up</span>
+</span>
+<span class="text-profit-emerald text-label-sm font-label-sm font-semibold">Alignment: 94.2%</span>
+</div>
+<div class="h-3 w-full rounded-full bg-surface-layer-2 flex overflow-hidden border border-profit-emerald/40 ring-1 ring-profit-emerald/20">
+<div class="bg-[#6366F1]" style="width: 39.8%"></div>
+<div class="bg-[#38BDF8]" style="width: 24.6%"></div>
+<div class="bg-[#F59E0B]" style="width: 9.8%"></div>
+<div class="bg-[#10B981]" style="width: 14.5%"></div>
+<div class="bg-[#8B5CF6]" style="width: 15.0%"></div>
+</div>
+<div class="flex justify-between text-[10px] text-text-secondary mt-1 num-tabular">
+<span>Eq 39.8%</span>
+<span>MF 24.6%</span>
+<span>Au 9.8%</span>
+<span>Debt 14.5%</span>
+<span>RE 15%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Smart Inflow Rebalance Simulator -->
+<section class="bg-surface-layer-1 rounded-xl p-space-md border border-border-subtle">
+<div class="flex items-start justify-between mb-2">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Deploy Fresh Capital</h2>
+<p class="text-body-sm font-body-sm text-text-muted mt-0.5">Rebalance without selling to minimize capital gains tax (Section 112A optimization)</p>
+</div>
+<span class="material-symbols-outlined text-primary-container text-lg">auto_fix_high</span>
+</div>
+<!-- Quick Select Amount Chips -->
+<div class="grid grid-cols-4 gap-1.5 my-3">
+<button class="py-1.5 px-2 rounded-lg bg-surface-layer-2 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary active:scale-95 transition-all text-center num-tabular" type="button">
+            ₹25,000
+          </button>
+<button class="py-1.5 px-2 rounded-lg bg-surface-layer-2 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary active:scale-95 transition-all text-center num-tabular" type="button">
+            ₹50,000
+          </button>
+<button class="py-1.5 px-2 rounded-lg bg-primary-container/20 border border-primary-container text-text-primary text-label-md font-label-md font-semibold active:scale-95 transition-all text-center num-tabular ring-1 ring-primary-container/40" type="button">
+            ₹1,00,000
+          </button>
+<button class="py-1.5 px-2 rounded-lg bg-surface-layer-2 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary active:scale-95 transition-all text-center num-tabular" type="button">
+            ₹2,50,000
+          </button>
+</div>
+<!-- Custom Input Bar -->
+<div class="flex items-center gap-2 bg-surface-layer-2 rounded-lg px-3 py-2 border border-border-prominent focus-within:border-primary-container transition-colors">
+<span class="text-text-secondary font-semibold text-body-lg">₹</span>
+<input aria-label="Fresh Capital Amount" class="bg-transparent border-0 p-0 text-text-primary font-headline-sm font-headline-sm focus:ring-0 w-full num-tabular" type="text" value="1,00,000"/>
+<button class="px-2.5 py-1 rounded bg-primary-container text-white text-label-sm font-label-sm font-semibold flex items-center gap-1 hover:brightness-110 active:scale-95 transition-transform" type="button">
+<span>Simulate</span>
+<span class="material-symbols-outlined text-[13px]">play_arrow</span>
+</button>
+</div>
+</section>
+<!-- 5. Asset Class Rebalance Breakdown -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-headline-sm font-headline-sm text-text-primary">Execution Breakdown</h2>
+<span class="text-label-sm font-label-sm text-text-muted">₹1,00,000 Inflow Allocation</span>
+</div>
+<!-- Item 1: Mutual Funds -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-[#38BDF8]">
+<span class="material-symbols-outlined text-[18px]">show_chart</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Mutual Funds</h3>
+<span class="text-label-sm font-label-sm text-text-muted">Target: 25.0% → Projected: 24.6%</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-profit-emerald num-tabular">+₹52,000</span>
+<div class="inline-flex items-center px-1.5 py-0.5 rounded bg-sky-500/10 text-[#38BDF8] text-[10px] font-medium border border-sky-500/20">
+                -4.2% Underweight
+              </div>
+</div>
+</div>
+<div class="bg-surface-layer-2/70 rounded-lg px-2.5 py-1.5 border border-border-subtle/60 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-sky-400">tips_and_updates</span>
+<p class="text-[11px] text-text-secondary leading-tight">Recommended: <span class="text-text-primary font-medium">Nifty 50 Index</span> (₹30k) + <span class="text-text-primary font-medium">Parag Parikh Flexi Cap</span> (₹22k)</p>
+</div>
+</div>
+<!-- Item 2: Cash & Fixed Deposits -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-profit-emerald">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Cash &amp; Fixed Deposits</h3>
+<span class="text-label-sm font-label-sm text-text-muted">Target: 15.0% → Projected: 14.5%</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-profit-emerald num-tabular">+₹38,000</span>
+<div class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 text-profit-emerald text-[10px] font-medium border border-emerald-500/20">
+                -3.2% Underweight
+              </div>
+</div>
+</div>
+<div class="bg-surface-layer-2/70 rounded-lg px-2.5 py-1.5 border border-border-subtle/60 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-profit-emerald">lock_clock</span>
+<p class="text-[11px] text-text-secondary leading-tight">Deploy into <span class="text-text-primary font-medium">7.10% SBI Callable FD</span> / Liquid Fund</p>
+</div>
+</div>
+<!-- Item 3: Gold & SGB -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-warning-amber">
+<span class="material-symbols-outlined text-[18px]">monetization_on</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Gold &amp; SGB</h3>
+<span class="text-label-sm font-label-sm text-text-muted">Target: 10.0% → Projected: 9.8%</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-profit-emerald num-tabular">+₹10,000</span>
+<div class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/10 text-warning-amber text-[10px] font-medium border border-amber-500/20">
+                -1.1% Underweight
+              </div>
+</div>
+</div>
+<div class="bg-surface-layer-2/70 rounded-lg px-2.5 py-1.5 border border-border-subtle/60 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-warning-amber">diamond</span>
+<p class="text-[11px] text-text-secondary leading-tight">Purchase <span class="text-text-primary font-medium">SGB tranche</span> or Gold ETF on NSE</p>
+</div>
+</div>
+<!-- Item 4: Direct Equity -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Direct Equity</h3>
+<span class="text-label-sm font-label-sm text-text-muted">Target: 35.0% (Current: 43.5%)</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-text-muted num-tabular">₹0</span>
+<div class="inline-flex items-center px-1.5 py-0.5 rounded bg-liability-rose/10 text-liability-rose text-[10px] font-medium border border-liability-rose/20">
+                +8.5% Overweight
+              </div>
+</div>
+</div>
+<div class="bg-surface-layer-2/70 rounded-lg px-2.5 py-1.5 border border-border-subtle/60 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-liability-rose">shield</span>
+<p class="text-[11px] text-text-secondary leading-tight"><span class="text-profit-emerald font-semibold">Tax Guard:</span> Holding avoids ₹18,400 short term capital gains tax.</p>
+</div>
+</div>
+<!-- Item 5: Real Estate -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-[#8B5CF6]">
+<span class="material-symbols-outlined text-[18px]">apartment</span>
+</div>
+<div>
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Real Estate</h3>
+<span class="text-label-sm font-label-sm text-text-muted">Target: 15.0% • Projected: 15.0%</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm font-bold text-text-muted num-tabular">₹0</span>
+<div class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-secondary text-[10px] font-medium border border-border-subtle">
+              Aligned (15.0%)
+            </div>
+</div>
+</div>
+</section>
+<!-- 6. Cash Drag & Risk Intelligence Cards -->
+<section class="grid grid-cols-1 gap-2.5">
+<!-- Card A: Cash Drag Warning -->
+<div class="bg-surface-layer-1 border border-amber-500/30 rounded-xl p-3.5 relative overflow-hidden bg-gradient-to-r from-surface-layer-1 to-amber-950/10">
+<div class="flex items-start gap-2.5">
+<div class="p-1.5 rounded-lg bg-warning-amber/15 text-warning-amber">
+<span class="material-symbols-outlined text-lg">hourglass_empty</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Cash Drag Warning</h3>
+<span class="text-label-sm font-label-sm text-warning-amber font-semibold num-tabular">14.2 Mos Runway</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary">
+                ₹18.4L in savings account. <span class="text-text-primary font-medium">₹6.4L excess liquid cash drag</span> detected beyond 6-month family emergency buffer, reducing real portfolio CAGR by ~1.4%.
+              </p>
+</div>
+</div>
+</div>
+<!-- Card B: Concentration Risk -->
+<div class="bg-surface-layer-1 border border-liability-rose/30 rounded-xl p-3.5 relative overflow-hidden bg-gradient-to-r from-surface-layer-1 to-rose-950/10">
+<div class="flex items-start gap-2.5">
+<div class="p-1.5 rounded-lg bg-liability-rose/15 text-liability-rose">
+<span class="material-symbols-outlined text-lg">pie_chart</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<h3 class="text-body-md font-body-md font-semibold text-text-primary">Concentration Risk</h3>
+<span class="text-label-sm font-label-sm text-liability-rose font-semibold num-tabular">16.2% in TCS</span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary">
+                Single equity scrip (TCS) exceeds prudential 10% single-asset threshold. Rebalance engine suggests staggered trim in Q1 next financial year.
+              </p>
+</div>
+</div>
+</div>
+</section>
+<!-- 7. AI Strategic Commentary (Powered by Gemini) -->
+<section class="bg-gradient-to-b from-surface-layer-2 to-surface-layer-1 border border-primary-container/40 rounded-xl p-space-md shadow-lg relative">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-6 h-6 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-sm">arrow_back_ios_new</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary tracking-tight">Gemini Portfolio Synthesis</h2>
+</div>
+<ul class="space-y-2.5 text-body-sm font-body-sm text-text-secondary">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-profit-emerald mt-0.5">analytics</span>
+<span><strong class="text-text-primary">Macro &amp; Valuation:</strong> Indian large caps trading at 21.4x PE; tactical pivot towards debt and hybrid allocation reduces portfolio volatility (Beta drops from 1.14 to 0.96).</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-warning-amber mt-0.5">percent</span>
+<span><strong class="text-text-primary">Tax Harvesting:</strong> Retain ₹1.25L LTCG annual exemption headroom for FY26-27 before triggering any equity sales.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary-container mt-0.5">sync_alt</span>
+<span><strong class="text-text-primary">Execution Sync:</strong> Automated order bundle formatted for 1-click execution via Zerodha &amp; MF Central.</span>
+</li>
+</ul>
+</section>
+<!-- Security Trust Bar -->
+<div class="py-2 text-center text-label-sm font-label-sm text-text-muted flex items-center justify-center gap-1.5 opacity-80">
+<span class="material-symbols-outlined text-[13px]">lock</span>
+<span>Client-side AES-256 encrypted ledger • SEBI RIA advisory compliance</span>
+</div>
+</div>
+<!-- 8. Sticky Bottom Action Bar -->
+<div class="fixed bottom-0 max-w-[393px] w-full bg-surface-layer-1/95 backdrop-blur-md px-margin py-3 border-t border-border-subtle z-50 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<button aria-label="Export PDF summary" class="w-12 h-11 rounded-lg border border-border-prominent bg-surface-layer-2 text-text-secondary hover:text-text-primary flex items-center justify-center active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+<button class="flex-1 h-11 rounded-lg bg-[#6366F1] hover:bg-indigo-500 text-white font-headline-sm font-headline-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition-all" type="button">
+<span>Apply Rebalance Plan</span>
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+<div class="flex justify-between items-center px-1 text-[10px] text-text-muted">
+<span>Allocation batch: #4492-IN</span>
+<span>Tax impact: ₹0.00</span>
+</div>
+</div>
+</main>
+</body></html>

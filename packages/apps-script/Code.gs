@@ -1974,3 +1974,263 @@ function syncLiveValuationsToSheet(idToken) {
     return { status: 'error', message: err.toString() };
   }
 }
+
+/**
+ * Generates AI or heuristic portfolio rebalancing and asset allocation insights.
+ * Sanitizes all sensitive user details (strips account numbers, folios, names)
+ * and leverages Gemini API (Google AI Studio Free Tier) or an intelligent
+ * offline financial heuristics advisor when no API key is provided.
+ */
+function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
+  try {
+    var auth = assertWriteAccess(sessionToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    if (!rebalanceData) {
+      return { status: 'error', message: 'Missing portfolio rebalance data.' };
+    }
+
+    var ss = getSpreadsheet();
+    
+    // Resolve Gemini API key:
+    // 1. Passed explicitly from user settings
+    // 2. Stored in Settings sheet
+    // 3. Stored in Script Properties
+    var apiKey = userApiKey ? String(userApiKey).trim() : '';
+    if (!apiKey) {
+      var settingsSheet = ss.getSheetByName('Settings');
+      if (settingsSheet) {
+        var sData = settingsSheet.getDataRange().getValues();
+        for (var i = 1; i < sData.length; i++) {
+          if (String(sData[i][0]) === 'GeminiApiKey' && sData[i][1]) {
+            apiKey = String(sData[i][1]).trim();
+            break;
+          }
+        }
+      }
+    }
+    if (!apiKey) {
+      apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || '';
+    }
+
+    // Prepare privacy-sanitized payload
+    var sanitizedData = {
+      netWorth: rebalanceData.netWorth || 0,
+      totalGrossAssets: rebalanceData.totalGrossAssets || 0,
+      alignmentScore: rebalanceData.alignmentScore || 0,
+      inflowAmount: rebalanceData.inflowAmount || 0,
+      projectedAlignmentScore: rebalanceData.projectedAlignmentScore || 0,
+      cashRunwayMonths: rebalanceData.cashRunwayMonths || 0,
+      excessCashDrag: rebalanceData.excessCashDrag || 0,
+      breakdown: (rebalanceData.breakdown || []).map(function(item) {
+        return {
+          category: item.category,
+          currentPct: item.currentPct,
+          targetPct: item.targetPct,
+          driftPct: item.driftPct,
+          allocatedRupees: item.allocatedRupees || 0,
+          projectedPct: item.projectedPct || item.currentPct,
+          status: item.status
+        };
+      }),
+      concentrationAlerts: (rebalanceData.concentrationAlerts || []).map(function(alert) {
+        return {
+          category: alert.category,
+          percentage: alert.percentage,
+          message: alert.message
+        };
+      })
+    };
+
+    var aiNarrative = null;
+    var modelUsed = 'Rule-based Financial Heuristics Engine';
+
+    if (apiKey) {
+      try {
+        var prompt = "You are a senior SEBI-compliant family office wealth manager and Indian tax optimization strategist. " +
+          "Analyze the following anonymized personal portfolio rebalance simulation and provide concise, high-value strategic guidance.\n\n" +
+          "PORTFOLIO METRICS:\n" +
+          "- Total Net Worth: ₹" + Number(sanitizedData.netWorth).toLocaleString('en-IN') + "\n" +
+          "- Current Alignment Score: " + sanitizedData.alignmentScore + "/100\n" +
+          "- Proposed Fresh Capital Inflow: ₹" + Number(sanitizedData.inflowAmount).toLocaleString('en-IN') + "\n" +
+          "- Projected Score Post-Inflow: " + sanitizedData.projectedAlignmentScore + "/100\n" +
+          "- Liquid Cash Runway: " + sanitizedData.cashRunwayMonths + " months\n" +
+          "- Excess Cash Drag: ₹" + Number(sanitizedData.excessCashDrag).toLocaleString('en-IN') + "\n\n" +
+          "ASSET ALLOCATION DRIFT & PROPOSED FRESH INFLOW DEPLOYMENT:\n" +
+          JSON.stringify(sanitizedData.breakdown, null, 2) + "\n\n" +
+          "CONCENTRATION ALERTS:\n" +
+          JSON.stringify(sanitizedData.concentrationAlerts, null, 2) + "\n\n" +
+          "GUIDELINES FOR YOUR RESPONSE:\n" +
+          "1. Give an Executive Assessment (1-2 sentences on health and drift).\n" +
+          "2. Fresh Capital Deployment Advice: Why allocating to underweight assets without selling prevents Section 112A/111A capital gains tax.\n" +
+          "3. Tactical Recommendations: Give specific asset class suggestions (e.g. Nifty 50 Index / Flexi Cap for MFs, Callable FD vs Liquid funds for cash, SGB vs Gold ETFs for gold).\n" +
+          "4. Cash Drag & Risk Action: Comment on runway and concentration if any.\n" +
+          "Keep your answer crisp, professional, formatted in clean markdown bullet points, avoiding generic disclaimers.";
+
+        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + encodeURIComponent(apiKey);
+        var payload = {
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 1000
+          }
+        };
+
+        var response = UrlFetchApp.fetch(url, {
+          method: "post",
+          contentType: "application/json",
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+
+        if (response.getResponseCode() === 200) {
+          var respJson = JSON.parse(response.getContentText());
+          if (respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
+            aiNarrative = respJson.candidates[0].content.parts[0].text;
+            modelUsed = 'Google Gemini 1.5 Flash';
+          }
+        }
+      } catch (apiErr) {
+        // Fall back to rule-based heuristics on API error
+        aiNarrative = null;
+      }
+    }
+
+    // If Gemini was not called or failed, generate high-quality deterministic financial advisory narrative
+    if (!aiNarrative) {
+      aiNarrative = generateOfflineHeuristicInsights(sanitizedData);
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'AI_PORTFOLIO_REBALANCE', 'Portfolio Advisor', 'Generated insights using ' + modelUsed);
+
+    return {
+      status: 'success',
+      modelUsed: modelUsed,
+      insights: aiNarrative,
+      timestamp: new Date().toISOString()
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Intelligent deterministic rule-based financial advisory heuristics
+ */
+function generateOfflineHeuristicInsights(data) {
+  var lines = [];
+  lines.push("### 📊 Portfolio Diagnosis & Health");
+  if (data.alignmentScore >= 80) {
+    lines.push("• **Strong Structural Alignment:** Portfolio health score of **" + data.alignmentScore + "/100**. Your asset mix closely reflects your benchmark risk profile with minor tactical drift.");
+  } else if (data.alignmentScore >= 65) {
+    lines.push("• **Moderate Drift Detected:** Portfolio health score is **" + data.alignmentScore + "/100**. Asset distribution has tilted from the target benchmark due to recent market appreciation.");
+  } else {
+    lines.push("• **Significant Drift Warning:** Portfolio health score is **" + data.alignmentScore + "/100**. Substantial skew between actual holdings and target weights requires active capital redirection.");
+  }
+
+  lines.push("\n### 💡 Smart Inflow & Tax-Efficient Deployment");
+  if (data.inflowAmount > 0) {
+    var gain = Math.max(0, data.projectedAlignmentScore - data.alignmentScore);
+    lines.push("• **Non-Taxable Rebalance:** Deploying ₹" + Number(data.inflowAmount).toLocaleString('en-IN') + " of fresh capital improves alignment score to **" + data.projectedAlignmentScore + "/100** (+" + gain + " pts) **without selling any existing assets**.");
+    lines.push("• **Section 112A / 111A Tax Guard:** By avoiding asset sales to rebalance, you preserve compounding and avoid triggering 12.5% LTCG or 20% STCG liabilities.");
+  } else {
+    lines.push("• **Fresh Inflow Recommendation:** Instead of selling overweight holdings (which incurs 12.5% LTCG or 20% STCG), channel your next monthly savings or lump sum exclusively into underweight categories.");
+  }
+
+  // Underweight vs Overweight specific guidance
+  var underweight = [];
+  var overweight = [];
+  (data.breakdown || []).forEach(function(b) {
+    if (b.driftPct < -1.5) underweight.push(b);
+    if (b.driftPct > 1.5) overweight.push(b);
+  });
+
+  if (underweight.length > 0) {
+    lines.push("\n### 🎯 Tactical Asset Allocations");
+    underweight.forEach(function(u) {
+      if (u.category === 'Mutual Funds') {
+        lines.push("• **Mutual Funds (-" + Math.abs(u.driftPct) + "%):** Allocate " + (u.allocatedRupees > 0 ? "₹" + Number(u.allocatedRupees).toLocaleString('en-IN') : "fresh SIPs") + " into broad-market Nifty 50 Index or Flexi-Cap funds to establish consistent dollar-cost averaging.");
+      } else if (u.category === 'Cash/FD') {
+        lines.push("• **Cash & Fixed Deposits (-" + Math.abs(u.driftPct) + "%):** Channel " + (u.allocatedRupees > 0 ? "₹" + Number(u.allocatedRupees).toLocaleString('en-IN') : "capital") + " into 7.10%+ multi-year bank FDs or high-grade corporate bond funds to reinforce stability.");
+      } else if (u.category === 'Gold') {
+        lines.push("• **Gold & Precious Metals (-" + Math.abs(u.driftPct) + "%):** Add " + (u.allocatedRupees > 0 ? "₹" + Number(u.allocatedRupees).toLocaleString('en-IN') : "allocation") + " via Sovereign Gold Bonds (SGB) or Gold ETFs to capture inflation hedging.");
+      } else if (u.category === 'Equity') {
+        lines.push("• **Direct Equity (-" + Math.abs(u.driftPct) + "%):** Deploy into undervalued dividend-paying large-cap stocks.");
+      }
+    });
+  }
+
+  if (overweight.length > 0) {
+    overweight.forEach(function(o) {
+      lines.push("• **" + o.category + " (+" + o.driftPct + "% Overweight):** Pause aggressive fresh capital additions here. Allow underweight asset accumulation to naturally rebalance portfolio weights.");
+    });
+  }
+
+  // Cash drag guidance
+  if (data.excessCashDrag > 0) {
+    lines.push("\n### ⚠️ Cash Drag & Runway Optimization");
+    lines.push("• **Excess Liquid Buffer:** Total runway is **" + data.cashRunwayMonths + " months**. Approximately ₹" + Number(data.excessCashDrag).toLocaleString('en-IN') + " is idle beyond the recommended 6-month family emergency buffer, causing an estimated ~1.2% - 1.8% annual drag against inflation.");
+  }
+
+  // Concentration alerts
+  if (data.concentrationAlerts && data.concentrationAlerts.length > 0) {
+    lines.push("\n### 🛡️ Concentration Risk Warnings");
+    data.concentrationAlerts.forEach(function(alert) {
+      lines.push("• " + alert.message);
+    });
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Saves all portfolio settings (TargetAllocation, RiskProfile, GeminiApiKey)
+ * in a single atomic operation to the Settings sheet.
+ */
+function savePortfolioSettings(targetAllocationJson, riskProfile, geminiApiKey, sessionToken) {
+  try {
+    var auth = assertWriteAccess(sessionToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Settings');
+    if (!sheet) return { status: 'error', message: 'Settings sheet not found' };
+
+    var data = sheet.getDataRange().getValues();
+    var keyCol = data[0].indexOf('Setting Key');
+    var valCol = data[0].indexOf('Setting Value');
+    if (keyCol === -1 || valCol === -1) return { status: 'error', message: 'Invalid Settings sheet format' };
+
+    var settingsToSave = {
+      'TargetAllocation': targetAllocationJson || '',
+      'RiskProfile': riskProfile || 'Moderate',
+      'GeminiApiKey': geminiApiKey !== undefined ? String(geminiApiKey).trim() : ''
+    };
+
+    var existingKeys = {};
+    for (var i = 1; i < data.length; i++) {
+      var rowKey = String(data[i][keyCol]);
+      if (settingsToSave.hasOwnProperty(rowKey)) {
+        sheet.getRange(i + 1, valCol + 1).setValue(settingsToSave[rowKey]);
+        existingKeys[rowKey] = true;
+      }
+    }
+
+    // Append any keys that did not exist yet
+    for (var k in settingsToSave) {
+      if (!existingKeys[k]) {
+        var newRow = [];
+        newRow[keyCol] = k;
+        newRow[valCol] = settingsToSave[k];
+        sheet.appendRow(newRow);
+      }
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_PORTFOLIO_SETTINGS', 'Settings', 'Updated target allocation and Gemini configuration');
+    return { status: 'success', message: 'Portfolio settings & AI configuration saved successfully!' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
