@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders } from 'lucide-react';
-import { getSafeStorage } from '../utils/storage';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw } from 'lucide-react';
+import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 
 export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer }) {
@@ -17,7 +17,48 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
   const [editProfileName, setEditProfileName] = useState('');
   const [editProfileRelation, setEditProfileRelation] = useState('');
   const [isUpdateProfileSubmitting, setIsUpdateProfileSubmitting] = useState(false);
-const familyProfiles = data?.familyProfiles || [];
+  const familyProfiles = data?.familyProfiles || [];
+
+  const savedKey = data?.settings?.find(s => s['Setting Key'] === 'GeminiApiKey')?.['Setting Value'] || getSafeStorage('nwm_gemini_api_key', '');
+  const [apiKeyInput, setApiKeyInput] = useState(savedKey);
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [keySavedFeedback, setKeySavedFeedback] = useState(false);
+
+  useEffect(() => {
+    if (savedKey) setApiKeyInput(savedKey);
+  }, [savedKey]);
+
+  const handleSaveGeminiKey = (e) => {
+    e.preventDefault();
+    setIsSavingKey(true);
+    setKeySavedFeedback(false);
+    const cleanKey = (apiKeyInput || '').trim();
+    setSafeStorage('nwm_gemini_api_key', cleanKey);
+    const token = getSafeStorage('nwm_session_token');
+
+    if (window.google?.script?.run?.upsertSetting) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSavingKey(false);
+          setKeySavedFeedback(true);
+          showMessage(res?.message || 'Gemini API Key saved successfully!');
+          if (onRefresh) onRefresh();
+          setTimeout(() => setKeySavedFeedback(false), 3500);
+        })
+        .withFailureHandler((err) => {
+          setIsSavingKey(false);
+          showMessage('Error saving key: ' + err.message, true);
+        })
+        .upsertSetting('GeminiApiKey', cleanKey, token);
+    } else {
+      setTimeout(() => {
+        setIsSavingKey(false);
+        setKeySavedFeedback(true);
+        showMessage('Gemini API Key saved (preview)');
+        setTimeout(() => setKeySavedFeedback(false), 3500);
+      }, 500);
+    }
+  };
 
 
   useEffect(() => {
@@ -220,9 +261,56 @@ const familyProfiles = data?.familyProfiles || [];
             </span>
          </div>
 
-         <p className="text-xs text-text-secondary leading-relaxed mb-3">
+         <p className="text-xs text-text-secondary leading-relaxed mb-4">
             Configure target asset allocation benchmarks (Moderate, Aggressive, Conservative, All-Weather, Custom) and optional Google Gemini API key for deep narrative synthesis.
          </p>
+
+         {/* Direct Gemini API Key Config */}
+         <form onSubmit={handleSaveGeminiKey} className="space-y-2 mb-4 bg-surface-layer2/50 p-3 rounded-xl border border-border-subtle">
+            <div className="flex items-center justify-between">
+               <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-wealth-emerald" />
+                  Google Gemini API Key
+               </label>
+               <a 
+                  href="https://aistudio.google.com/app/apikey" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-primary-accent hover:underline flex items-center gap-0.5"
+               >
+                  Get Free Key <ExternalLink size={10} />
+               </a>
+            </div>
+
+            <div className="flex gap-2">
+               <input 
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="flex-1 bg-surface-layer1 border border-border-prominent rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary-accent font-mono"
+               />
+               <button
+                  type="submit"
+                  disabled={isSavingKey}
+                  className="px-3 py-1.5 rounded-lg bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 disabled:opacity-50 flex items-center gap-1 shadow-sm"
+               >
+                  {isSavingKey ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                  <span>{isSavingKey ? 'Saving...' : 'Save Key'}</span>
+               </button>
+            </div>
+
+            {keySavedFeedback && (
+               <p className="text-[10px] text-wealth-emerald font-medium flex items-center gap-1">
+                  <CheckCircle2 size={12} />
+                  API Key saved and active for AI Advisory!
+               </p>
+            )}
+
+            <p className="text-[10px] text-text-muted">
+               100% free forever (1,500 requests/day). If left blank, offline heuristics advisor is used.
+            </p>
+         </form>
 
          {onOpenRebalancer && (
            <button
@@ -231,7 +319,7 @@ const familyProfiles = data?.familyProfiles || [];
              className="w-full py-2.5 px-4 rounded-xl bg-surface-layer2 hover:bg-surface-layer2/80 border border-border-prominent text-text-primary text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
            >
              <Sliders size={14} className="text-primary-accent" />
-             <span>Configure Target Allocation & AI Key</span>
+             <span>Configure Target Allocation & Rebalance</span>
            </button>
          )}
       </section>

@@ -66,6 +66,7 @@ export default function PortfolioRebalancerModal({
   const [tempTargets, setTempTargets] = useState({ ...savedTargetMap });
   const [tempApiKey, setTempApiKey] = useState(savedGeminiKey);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [customizerFeedback, setCustomizerFeedback] = useState(null);
 
   // AI Insights state
   const [aiInsights, setAiInsights] = useState(null);
@@ -192,60 +193,79 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
   // Save Target Profile and Gemini Key
   const handleSaveCustomizer = () => {
-    // Validate target sum
+    setCustomizerFeedback(null);
     const total = Object.values(tempTargets).reduce((s, v) => s + (Number(v) || 0), 0);
     if (total !== 100) {
-      showMessage(`Target percentages must sum to 100% (currently ${total}%).`, true);
+      const msg = `Target percentages must sum to 100% (currently ${total}%). Please adjust sliders.`;
+      setCustomizerFeedback({ text: msg, isError: true });
+      showMessage(msg, true);
       return;
     }
 
     setIsSavingSettings(true);
     const token = getSafeStorage('nwm_session_token');
+    const cleanApiKey = tempApiKey ? tempApiKey.trim() : '';
 
-    // Also persist API key locally
-    if (tempApiKey) {
-      setSafeStorage('nwm_gemini_api_key', tempApiKey.trim());
-    }
+    // Always immediately persist key in local storage so it is active right away
+    setSafeStorage('nwm_gemini_api_key', cleanApiKey);
 
     const payload = JSON.stringify(tempTargets);
 
-    if (window.google?.script?.run) {
-      // Save TargetAllocation
+    function finishSave(successMsg) {
+      setIsSavingSettings(false);
+      setSelectedProfile(tempProfile);
+      setTargetAllocation({ ...tempTargets });
+      setCustomizerFeedback({ text: '✓ ' + (successMsg || 'Settings saved successfully!'), isError: false });
+      showMessage(successMsg || 'Settings saved successfully!');
+      if (onRefresh) onRefresh();
+      setTimeout(() => {
+        setShowCustomizer(false);
+        setCustomizerFeedback(null);
+        // Refresh AI advisory insights with the updated key/targets
+        handleGenerateAIInsights(true);
+      }, 700);
+    }
+
+    if (window.google?.script?.run?.savePortfolioSettings) {
       window.google.script.run
-        .withSuccessHandler(() => {
-          // Save RiskProfile
-          window.google.script.run
-            .withSuccessHandler(() => {
-              if (tempApiKey) {
-                window.google.script.run
-                  .withSuccessHandler(() => {
-                    finishSave();
-                  })
-                  .upsertSetting('GeminiApiKey', tempApiKey.trim(), token);
-              } else {
-                finishSave();
-              }
-            })
-            .upsertSetting('RiskProfile', tempProfile, token);
+        .withSuccessHandler((res) => {
+          if (res && res.status === 'error') {
+            setIsSavingSettings(false);
+            setCustomizerFeedback({ text: res.message || 'Error saving settings', isError: true });
+            showMessage(res.message, true);
+          } else {
+            finishSave(res?.message || 'Portfolio settings & AI Key saved!');
+          }
         })
         .withFailureHandler((err) => {
           setIsSavingSettings(false);
+          setCustomizerFeedback({ text: 'Error: ' + err.message, isError: true });
           showMessage('Error saving settings: ' + err.message, true);
+        })
+        .savePortfolioSettings(payload, tempProfile, cleanApiKey, token);
+    } else if (window.google?.script?.run?.upsertSetting) {
+      // Fallback
+      window.google.script.run
+        .withSuccessHandler(() => {
+          if (cleanApiKey) {
+            window.google.script.run
+              .withSuccessHandler(() => finishSave('Settings saved!'))
+              .withFailureHandler(() => finishSave('Settings saved!'))
+              .upsertSetting('GeminiApiKey', cleanApiKey, token);
+          } else {
+            finishSave('Settings saved!');
+          }
+        })
+        .withFailureHandler((err) => {
+          setIsSavingSettings(false);
+          setCustomizerFeedback({ text: 'Error: ' + err.message, isError: true });
+          showMessage('Error: ' + err.message, true);
         })
         .upsertSetting('TargetAllocation', payload, token);
     } else {
       setTimeout(() => {
-        finishSave();
-      }, 500);
-    }
-
-    function finishSave() {
-      setIsSavingSettings(false);
-      setSelectedProfile(tempProfile);
-      setTargetAllocation({ ...tempTargets });
-      setShowCustomizer(false);
-      showMessage('Target allocation profile updated!');
-      if (onRefresh) onRefresh();
+        finishSave('Settings updated (preview)');
+      }, 400);
     }
   };
 
@@ -781,6 +801,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                       value={tempTargets[cat] || 0}
                       onChange={(e) => {
                         setTempProfile('Custom');
+                        setCustomizerFeedback(null);
                         setTempTargets(prev => ({
                           ...prev,
                           [cat]: Number(e.target.value)
@@ -811,20 +832,38 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 <input 
                   type="password"
                   value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
+                  onChange={(e) => {
+                    setTempApiKey(e.target.value);
+                    setCustomizerFeedback(null);
+                  }}
                   placeholder="AIzaSy..."
                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary-accent font-mono"
                 />
                 <p className="text-[9px] text-text-muted">
-                  Gemini Flash is 100% free forever (1,500 requests/day). If left blank, offline heuristics are used.
+                  Gemini Flash is 100% free forever (1,500 requests/day). Stored securely in your sheet.
                 </p>
               </div>
+
+              {/* Inline Feedback Message */}
+              {customizerFeedback && (
+                <div className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
+                  customizerFeedback.isError 
+                    ? 'bg-liability-rose/15 border border-liability-rose/30 text-liability-rose' 
+                    : 'bg-wealth-emerald/15 border border-wealth-emerald/30 text-wealth-emerald'
+                }`}>
+                  {customizerFeedback.isError ? <AlertTriangle size={14} className="flex-shrink-0" /> : <CheckCircle2 size={14} className="flex-shrink-0" />}
+                  <span>{customizerFeedback.text}</span>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCustomizer(false)}
+                  onClick={() => {
+                    setShowCustomizer(false);
+                    setCustomizerFeedback(null);
+                  }}
                   className="flex-1 py-2 rounded-xl bg-surface-layer2 text-text-secondary font-semibold text-xs hover:text-text-primary"
                 >
                   Cancel
@@ -833,9 +872,16 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   type="button"
                   onClick={handleSaveCustomizer}
                   disabled={isSavingSettings}
-                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 disabled:opacity-50"
+                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md shadow-primary-accent/20"
                 >
-                  {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                  {isSavingSettings ? (
+                    <>
+                      <RefreshCw size={13} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Settings</span>
+                  )}
                 </button>
               </div>
             </div>

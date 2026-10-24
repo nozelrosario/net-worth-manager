@@ -2184,3 +2184,53 @@ function generateOfflineHeuristicInsights(data) {
 
   return lines.join("\n");
 }
+
+/**
+ * Saves all portfolio settings (TargetAllocation, RiskProfile, GeminiApiKey)
+ * in a single atomic operation to the Settings sheet.
+ */
+function savePortfolioSettings(targetAllocationJson, riskProfile, geminiApiKey, sessionToken) {
+  try {
+    var auth = assertWriteAccess(sessionToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Settings');
+    if (!sheet) return { status: 'error', message: 'Settings sheet not found' };
+
+    var data = sheet.getDataRange().getValues();
+    var keyCol = data[0].indexOf('Setting Key');
+    var valCol = data[0].indexOf('Setting Value');
+    if (keyCol === -1 || valCol === -1) return { status: 'error', message: 'Invalid Settings sheet format' };
+
+    var settingsToSave = {
+      'TargetAllocation': targetAllocationJson || '',
+      'RiskProfile': riskProfile || 'Moderate',
+      'GeminiApiKey': geminiApiKey !== undefined ? String(geminiApiKey).trim() : ''
+    };
+
+    var existingKeys = {};
+    for (var i = 1; i < data.length; i++) {
+      var rowKey = String(data[i][keyCol]);
+      if (settingsToSave.hasOwnProperty(rowKey)) {
+        sheet.getRange(i + 1, valCol + 1).setValue(settingsToSave[rowKey]);
+        existingKeys[rowKey] = true;
+      }
+    }
+
+    // Append any keys that did not exist yet
+    for (var k in settingsToSave) {
+      if (!existingKeys[k]) {
+        var newRow = [];
+        newRow[keyCol] = k;
+        newRow[valCol] = settingsToSave[k];
+        sheet.appendRow(newRow);
+      }
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_PORTFOLIO_SETTINGS', 'Settings', 'Updated target allocation and Gemini configuration');
+    return { status: 'success', message: 'Portfolio settings & AI configuration saved successfully!' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}

@@ -562,7 +562,7 @@ export default function App() {
 
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full shadow-lg text-sm font-medium whitespace-nowrap transition-all animate-bounce ${toast.isError ? 'bg-liability-rose text-white' : 'bg-wealth-emerald text-white'}`}>
+        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[99999] px-4 py-2 rounded-full shadow-2xl text-sm font-medium whitespace-nowrap transition-all animate-bounce ${toast.isError ? 'bg-liability-rose text-white' : 'bg-wealth-emerald text-white'}`}>
           {toast.msg}
         </div>
       )}
