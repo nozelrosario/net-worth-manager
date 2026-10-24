@@ -3,7 +3,8 @@ import useModalBack from '../hooks/useModalBack';
 import { 
   ArrowLeft, Sparkles, Sliders, AlertTriangle, TrendingUp, TrendingDown, 
   CheckCircle2, Info, Copy, Check, RefreshCw, X, Shield, ChevronRight, 
-  HelpCircle, ExternalLink, Flame, DollarSign, Wallet
+  HelpCircle, ExternalLink, Flame, DollarSign, Wallet, Radar, Compass,
+  Layers, Zap, BarChart3, PieChart, ArrowUpRight
 } from 'lucide-react';
 import { 
   RISK_PROFILES, 
@@ -13,7 +14,10 @@ import {
   simulateInflowRebalancing, 
   calculateCashDrag, 
   auditConcentrationRisk,
-  normalizeTargetAllocation
+  normalizeTargetAllocation,
+  analyzePortfolioLookThrough,
+  calculateTaxArbitrageOpportunity,
+  getCuratedProductRecommendations
 } from '../utils/portfolioMath';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 
@@ -75,6 +79,14 @@ export default function PortfolioRebalancerModal({
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Product Discovery & Overlap Radar State
+  const [activeTab, setActiveTab] = useState('rebalance'); // 'rebalance' | 'products'
+  const [productFilter, setProductFilter] = useState('all');
+  const [productIntelligence, setProductIntelligence] = useState(null);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [productModelUsed, setProductModelUsed] = useState('');
+  const [showDeployGuide, setShowDeployGuide] = useState(false);
+
   // Sync state if settings change from backend
   useEffect(() => {
     setSelectedProfile(savedProfileName);
@@ -96,6 +108,19 @@ export default function PortfolioRebalancerModal({
   const concentration = useMemo(() => {
     return auditConcentrationRisk(assets);
   }, [assets]);
+
+  // Local look-through and tax arbitrage calculations
+  const localLookThrough = useMemo(() => {
+    return analyzePortfolioLookThrough(assets);
+  }, [assets]);
+
+  const localTaxArbitrage = useMemo(() => {
+    return calculateTaxArbitrageOpportunity(assets);
+  }, [assets]);
+
+  const localProductRecs = useMemo(() => {
+    return getCuratedProductRecommendations(simulation.projectedBreakdown);
+  }, [simulation.projectedBreakdown]);
 
   // Handle Quick Chips
   const handleChipSelect = (amt) => {
@@ -182,6 +207,105 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         setAiTimestamp(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
       }, 700);
     }
+  };
+
+  // Generate Product Intelligence & Overlap analysis
+  const handleGenerateProductIntelligence = (forceRefresh = false) => {
+    if (isLoadingProducts || (productIntelligence && !forceRefresh)) return;
+    setIsLoadingProducts(true);
+
+    const payload = {
+      holdings: assets.map(a => ({
+        category: a.Category,
+        name: a.Name,
+        currentValue: Number(a['Current Value'] || 0),
+        percentage: simulation.totalGrossAssets > 0 ? Number(((Number(a['Current Value'] || 0) / simulation.totalGrossAssets) * 100).toFixed(1)) : 0
+      })),
+      breakdown: simulation.projectedBreakdown.map(b => ({
+        category: b.category,
+        currentPct: b.currentPct,
+        targetPct: b.targetPct,
+        allocatedRupees: b.allocatedRupees,
+        status: b.status
+      }))
+    };
+
+    const token = getSafeStorage('nwm_session_token');
+    const keyToUse = tempApiKey || savedGeminiKey;
+
+    function fallbackLocalProducts() {
+      setProductIntelligence({
+        macroRegime: { peRatio: "21.8", valuationStatus: "Fair Valuation Zone", gsecYield: "6.84%" },
+        overlapAnalysis: {
+          overlapDetected: localLookThrough.hasHighOverlap,
+          overlapPercentage: localLookThrough.overlapPercentage,
+          schemePair: localLookThrough.overlappingPair,
+          commonHoldings: localLookThrough.commonHoldings,
+          note: localLookThrough.hasHighOverlap 
+            ? "High common weight in top bluechip heavyweights. Allocate fresh capital to non-overlapping market-cap segments." 
+            : "Healthy diversification across schemes."
+        },
+        sectorExposure: localLookThrough.sectorExposure,
+        marketCapSplit: localLookThrough.marketCapSplit,
+        taxArbitrageSwitch: {
+          title: "Debt vs Arbitrage Switch",
+          potentialSavingsRupees: localTaxArbitrage.potentialSavingsRupees,
+          description: "In the 30% tax bracket, Bank FDs are taxed at ~31.2%, while Arbitrage Funds enjoy equity capital gains taxation (12.5% LTCG / 20% STCG with ₹1.25L annual exemption), unlocking an extra ~1.5% net post-tax yield."
+        },
+        productRecommendations: localProductRecs
+      });
+      setProductModelUsed('Deterministic Intelligence Engine');
+    }
+
+    if (window.google?.script?.run?.generateProductIntelligence) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsLoadingProducts(false);
+          if (res?.status === 'success' && res.data) {
+            setProductIntelligence(res.data);
+            setProductModelUsed(res.modelUsed || 'AI Advisor');
+          } else {
+            fallbackLocalProducts();
+          }
+        })
+        .withFailureHandler(() => {
+          setIsLoadingProducts(false);
+          fallbackLocalProducts();
+        })
+        .generateProductIntelligence(payload, keyToUse, token);
+    } else {
+      setTimeout(() => {
+        setIsLoadingProducts(false);
+        fallbackLocalProducts();
+      }, 500);
+    }
+  };
+
+  const handleCopyProductStrategy = () => {
+    const activeData = productIntelligence || {
+      overlapAnalysis: { overlapPercentage: localLookThrough.overlapPercentage, schemePair: localLookThrough.overlappingPair },
+      taxArbitrageSwitch: { potentialSavingsRupees: localTaxArbitrage.potentialSavingsRupees },
+      productRecommendations: localProductRecs
+    };
+    const lines = [
+      `Net Worth Manager — AI Product Discovery & Overlap Blueprint`,
+      `Generated: ${new Date().toLocaleDateString('en-IN')}`,
+      ``,
+      `--- PORTFOLIO OVERLAP & LOOK-THROUGH ---`,
+      `Fund Overlap: ${activeData.overlapAnalysis?.overlapPercentage || 0}% (${activeData.overlapAnalysis?.schemePair || 'Holdings'})`,
+      `Large Cap: ${localLookThrough.marketCapSplit.largeCap}% | Mid Cap: ${localLookThrough.marketCapSplit.midCap}% | Small Cap: ${localLookThrough.marketCapSplit.smallCap}%`,
+      ``,
+      `--- TAX & YIELD ARBITRAGE SWITCH ---`,
+      `Est. Annual Savings: ₹${Number(activeData.taxArbitrageSwitch?.potentialSavingsRupees || 14200).toLocaleString('en-IN')}`,
+      `Strategy: Shift idle Bank FDs to Arbitrage Funds for 12.5% LTCG vs 31.2% slab tax`,
+      ``,
+      `--- CURATED ZERO-COMMISSION DIRECT PRODUCTS ---`,
+      ...(activeData.productRecommendations || []).map(p => `• [${p.category}] ${p.name} (TER: ${p.ter} | Tag: ${p.tag})\n  Why: ${p.why}`)
+    ];
+    navigator.clipboard.writeText(lines.join('\n'));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    showMessage('Product discovery strategy copied to clipboard!');
   };
 
   // Automatically fetch initial insights if not already present
@@ -321,8 +445,43 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           </button>
         </header>
 
-        {/* Scrollable Content Canvas */}
-        <div className="px-4 flex flex-col gap-3.5 pt-3.5">
+        {/* Segmented Mode Navigation Bar */}
+        <div className="px-4 pt-3 pb-1">
+          <div className="flex p-1 bg-surface-layer2/80 rounded-xl border border-white/[0.06] text-xs font-semibold">
+            <button
+              onClick={() => setActiveTab('rebalance')}
+              className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'rebalance'
+                  ? 'bg-primary-accent text-white shadow-sm'
+                  : 'text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              <Wallet size={13} />
+              <span>1. Allocation Plan</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('products');
+                if (!productIntelligence) handleGenerateProductIntelligence();
+              }}
+              className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'products'
+                  ? 'bg-primary-accent text-white shadow-sm'
+                  : 'text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              <Compass size={13} />
+              <span>2. Product Discovery & Overlap</span>
+              {localLookThrough.hasHighOverlap && (
+                <span className="w-1.5 h-1.5 rounded-full bg-bullion-amber"></span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Content Canvas - TAB 1: Allocation Plan */}
+        {activeTab === 'rebalance' && (
+          <div className="px-4 flex flex-col gap-3.5 pt-2">
           
           {/* 2. Portfolio Health & Drift Hero Card */}
           <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] relative overflow-hidden shadow-sm">
@@ -738,27 +897,359 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             </div>
           </section>
 
+          {/* Quick Switch Callout to Products & Overlap */}
+          <div 
+            onClick={() => {
+              setActiveTab('products');
+              if (!productIntelligence) handleGenerateProductIntelligence();
+            }}
+            className="bg-surface-layer1 border border-primary-accent/30 hover:border-primary-accent/60 rounded-xl p-3 flex items-center justify-between cursor-pointer transition-all group shadow-sm active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary-accent/15 flex items-center justify-center text-primary-accent border border-primary-accent/25">
+                <Compass size={16} />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-text-primary group-hover:text-primary-accent transition-colors flex items-center gap-1.5">
+                  <span>Explore Direct Products & Overlap Radar</span>
+                  <span className="text-[9px] font-bold text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded-full border border-wealth-emerald/20">
+                    New
+                  </span>
+                </div>
+                <div className="text-[10px] text-text-muted">
+                  Find mutual funds, ETFs, & SGBs matching your shortfalls
+                </div>
+              </div>
+            </div>
+            <ChevronRight size={15} className="text-primary-accent group-hover:translate-x-0.5 transition-transform" />
+          </div>
+
         </div>
+        )}
+
+        {/* Scrollable Content Canvas - TAB 2: Product Discovery & Overlap */}
+        {activeTab === 'products' && (
+          <div className="px-4 flex flex-col gap-3.5 pt-2">
+            
+            {/* 1. Macro & Valuation Regime Ticker */}
+            <section className="bg-surface-layer1 rounded-xl p-3 border border-white/[0.07] flex items-center justify-between text-xs shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-primary-accent/15 text-primary-accent border border-primary-accent/20">
+                  <TrendingUp size={14} />
+                </span>
+                <div>
+                  <div className="text-[11px] font-semibold text-text-primary">Macro & Valuation Regime</div>
+                  <div className="text-[9px] text-text-muted">
+                    {productIntelligence?.macroRegime?.valuationStatus || 'Fair Valuation Zone'} • 10Y G-Sec: {productIntelligence?.macroRegime?.gsecYield || '6.84%'}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full font-mono">
+                  P/E {productIntelligence?.macroRegime?.peRatio || '21.8'}
+                </span>
+                <button
+                  onClick={() => handleGenerateProductIntelligence(true)}
+                  disabled={isLoadingProducts}
+                  className="p-1 rounded bg-surface-layer2 text-text-secondary hover:text-text-primary transition-all disabled:opacity-50"
+                  title="Refresh market intelligence"
+                >
+                  <RefreshCw size={11} className={isLoadingProducts ? "animate-spin" : ""} />
+                </button>
+              </div>
+            </section>
+
+            {/* 2. Portfolio Look-Through & Overlap Radar Card */}
+            <section className="bg-surface-layer1 rounded-2xl p-4 border border-white/[0.08] flex flex-col gap-3 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Radar size={16} className="text-bullion-amber animate-pulse" />
+                  <h2 className="text-xs font-semibold text-text-primary">Portfolio Look-Through & Overlap</h2>
+                </div>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                  (productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage) >= 40
+                    ? 'text-liability-rose bg-liability-rose/10 border-liability-rose/20'
+                    : 'text-wealth-emerald bg-wealth-emerald/10 border-wealth-emerald/20'
+                }`}>
+                  {(productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage) >= 40 ? 'High Duplication' : 'Well Diversified'}
+                </span>
+              </div>
+
+              {/* Overlap Alert Card */}
+              <div className="bg-surface-layer2/60 border border-bullion-amber/25 rounded-xl p-3 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-bullion-amber flex items-center gap-1">
+                    <AlertTriangle size={13} />
+                    {productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage}% Fund Overlap Identified
+                  </span>
+                  <span className="text-[9px] font-mono text-text-muted">
+                    {localLookThrough.equityHoldingsCount} Schemes
+                  </span>
+                </div>
+                <p className="text-[11px] text-text-secondary leading-relaxed">
+                  <strong className="text-text-primary">{productIntelligence?.overlapAnalysis?.schemePair || localLookThrough.overlappingPair}</strong> share common heavyweights in <span className="text-text-primary">{localLookThrough.commonHoldings.slice(0, 4).join(', ')}</span>.
+                </p>
+                <div className="text-[9px] text-text-muted pt-1 border-t border-white/[0.04]">
+                  💡 {productIntelligence?.overlapAnalysis?.note || "Allocate fresh capital to non-overlapping market-cap segments."}
+                </div>
+              </div>
+
+              {/* Sector Exposure Heatmap Chips */}
+              <div className="space-y-1.5 pt-0.5">
+                <div className="flex justify-between items-center text-[10px] text-text-secondary">
+                  <span className="font-semibold">Underlying Sector Skew</span>
+                  <span className="text-liability-rose font-mono">Financials Skewed</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(productIntelligence?.sectorExposure || localLookThrough.sectorExposure).map(sec => (
+                    <span 
+                      key={sec.sector}
+                      className={`px-2 py-1 rounded-lg border text-[10px] font-medium flex items-center gap-1 ${
+                        sec.status === 'overweight' 
+                          ? 'bg-liability-rose/10 border-liability-rose/25 text-liability-rose font-semibold' 
+                          : 'bg-surface-layer2 border-white/[0.06] text-text-secondary'
+                      }`}
+                    >
+                      <span>{sec.sector}</span>
+                      <strong className={`tabular-nums ${sec.status === 'overweight' ? 'text-liability-rose' : 'text-text-primary'}`}>
+                        {sec.percentage}%
+                      </strong>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Market Cap True Split Bar */}
+              <div className="space-y-1 pt-1">
+                <div className="flex justify-between text-[10px] text-text-muted">
+                  <span className="font-medium">Market Cap Exposure</span>
+                  <span className="text-text-secondary font-mono">
+                    Large: {productIntelligence?.marketCapSplit?.largeCap || localLookThrough.marketCapSplit.largeCap}% • Mid: {productIntelligence?.marketCapSplit?.midCap || localLookThrough.marketCapSplit.midCap}% • Small: {productIntelligence?.marketCapSplit?.smallCap || localLookThrough.marketCapSplit.smallCap}%
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-surface-layer2 flex overflow-hidden border border-white/[0.06]">
+                  <div className="bg-[#6366F1] h-full" style={{ width: `${productIntelligence?.marketCapSplit?.largeCap || 68}%` }} title="Large Cap"></div>
+                  <div className="bg-[#38BDF8] h-full" style={{ width: `${productIntelligence?.marketCapSplit?.midCap || 22}%` }} title="Mid Cap"></div>
+                  <div className="bg-[#F59E0B] h-full" style={{ width: `${productIntelligence?.marketCapSplit?.smallCap || 10}%` }} title="Small Cap"></div>
+                </div>
+              </div>
+            </section>
+
+            {/* 3. Tactical Tax & Yield Arbitrage Switch */}
+            <section className="bg-surface-layer1 rounded-2xl p-4 border border-wealth-emerald/25 flex flex-col gap-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Zap size={15} className="text-wealth-emerald" />
+                  <h2 className="text-xs font-semibold text-text-primary">
+                    {productIntelligence?.taxArbitrageSwitch?.title || "Debt vs Arbitrage Switch"}
+                  </h2>
+                </div>
+                <span className="text-[10px] font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full tabular-nums">
+                  +₹{Number(productIntelligence?.taxArbitrageSwitch?.potentialSavingsRupees || localTaxArbitrage.potentialSavingsRupees).toLocaleString('en-IN')} / Yr
+                </span>
+              </div>
+
+              <p className="text-[11px] text-text-secondary leading-relaxed">
+                {productIntelligence?.taxArbitrageSwitch?.description || localTaxArbitrage.description || 
+                  "In the 30% tax bracket, Bank FDs are taxed at ~31.2%, while Arbitrage Funds enjoy equity capital gains taxation (12.5% LTCG / 20% STCG with ₹1.25L exemption), unlocking an extra ~1.5% net post-tax yield."}
+              </p>
+            </section>
+
+            {/* 4. Curated Product Recommendations */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h3 className="text-xs font-semibold text-text-primary">Curated Direct Product Recommendations</h3>
+                  <p className="text-[10px] text-text-muted">Targeted solutions for your underweight shortfall</p>
+                </div>
+                <span className="text-[9px] text-wealth-emerald font-semibold uppercase tracking-wider bg-wealth-emerald/10 px-2 py-0.5 rounded-full border border-wealth-emerald/20">
+                  Zero Commission Direct
+                </span>
+              </div>
+
+              {/* Filter Chips */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1">
+                {['all', 'Equity', 'Gold', 'Cash/FD', 'Mutual Funds'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setProductFilter(f)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all whitespace-nowrap border ${
+                      productFilter === f
+                        ? 'bg-primary-accent/20 border-primary-accent/50 text-primary-accent shadow-sm'
+                        : 'bg-surface-layer2/80 border-white/[0.06] text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {f === 'all' ? 'All Ideas' : f}
+                  </button>
+                ))}
+              </div>
+
+              {/* Product Cards List */}
+              <div className="space-y-2.5">
+                {(productIntelligence?.productRecommendations || localProductRecs)
+                  .filter(p => productFilter === 'all' || p.category === productFilter)
+                  .map(prod => (
+                    <div 
+                      key={prod.id || prod.name}
+                      className="bg-surface-layer1 border border-white/[0.07] hover:border-white/[0.14] rounded-xl p-3.5 flex flex-col gap-2 transition-all shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${
+                              prod.category === 'Equity' ? 'bg-[#6366F1]' :
+                              prod.category === 'Gold' ? 'bg-[#F59E0B]' :
+                              prod.category === 'Cash/FD' ? 'bg-[#10B981]' : 'bg-[#8B5CF6]'
+                            }`}></span>
+                            <span className="text-xs font-semibold text-text-primary">{prod.name}</span>
+                          </div>
+                          <span className="text-[10px] text-text-muted">{prod.category} • Direct Growth</span>
+                        </div>
+                        <span className="text-[9px] font-semibold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          {prod.tag}
+                        </span>
+                      </div>
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-1.5 py-1 text-center bg-surface-layer2/50 rounded-lg border border-white/[0.04]">
+                        <div>
+                          <div className="text-[9px] text-text-muted">Expense Ratio</div>
+                          <div className="text-xs font-bold text-text-primary tabular-nums">{prod.ter}</div>
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-text-muted">Tracking / Risk</div>
+                          <div className="text-xs font-bold text-wealth-emerald tabular-nums">{prod.trackingError}</div>
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-text-muted">3Y CAGR / Return</div>
+                          <div className="text-xs font-bold text-text-primary tabular-nums">{prod.cagr3Y}</div>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-text-secondary leading-relaxed">
+                        <strong className="text-text-primary">Why:</strong> {prod.why}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-white/[0.04] text-[9px] text-text-muted">
+                        <span>{prod.taxNote}</span>
+                        <button
+                          onClick={() => setShowDeployGuide(true)}
+                          className="text-primary-accent hover:underline font-semibold flex items-center gap-0.5"
+                        >
+                          How to Invest <ArrowUpRight size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </section>
+
+            {/* 5. SEBI Regulatory & Compliance Disclaimer */}
+            <section className="p-3 rounded-xl bg-surface-layer2/40 border border-white/[0.06] text-[10px] text-text-muted space-y-1">
+              <div className="font-semibold text-text-secondary flex items-center gap-1">
+                <Shield size={12} className="text-primary-accent" />
+                <span>SEBI Compliance & Disclosure</span>
+              </div>
+              <p className="leading-relaxed">
+                Automated algorithmic research & portfolio look-through for educational purposes only. Not SEBI registered investment advice. Users should consult a qualified financial advisor before executing trades.
+              </p>
+            </section>
+
+          </div>
+        )}
 
         {/* 8. Sticky Bottom Action Dock */}
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-background-root/95 backdrop-blur-md border-t border-white/[0.07] p-3 flex justify-center">
           <div className="w-full max-w-[440px] flex gap-2">
-            <button 
-              onClick={() => setShowApplyModal(true)}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
-            >
-              <CheckCircle2 size={15} />
-              <span>Apply Rebalance Plan</span>
-            </button>
-            <button 
-              onClick={handleCopyPlan}
-              className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
-            >
-              {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
-              <span>{copied ? 'Copied' : 'Export'}</span>
-            </button>
+            {activeTab === 'rebalance' ? (
+              <>
+                <button 
+                  onClick={() => setShowApplyModal(true)}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Apply Rebalance Plan</span>
+                </button>
+                <button 
+                  onClick={handleCopyPlan}
+                  className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
+                >
+                  {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
+                  <span>{copied ? 'Copied' : 'Export'}</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={() => setShowDeployGuide(true)}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
+                >
+                  <ExternalLink size={15} />
+                  <span>Deploy via Broker / MF Central</span>
+                </button>
+                <button 
+                  onClick={handleCopyProductStrategy}
+                  className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
+                >
+                  {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
+                  <span>{copied ? 'Copied' : 'Export'}</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
+
+        {/* --- MODAL 3: How to Deploy Direct Guide --- */}
+        {showDeployGuide && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-sm bg-surface-layer1 border border-white/[0.1] rounded-2xl p-5 space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/[0.07] pb-2">
+                <div className="flex items-center gap-2 text-primary-accent">
+                  <Compass size={18} />
+                  <h3 className="text-sm font-semibold text-text-primary">Deploy Zero-Commission Direct</h3>
+                </div>
+                <button onClick={() => setShowDeployGuide(false)} className="text-text-muted hover:text-text-primary">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="text-xs text-text-secondary leading-relaxed">
+                To maximize returns and save up to <strong>1.5% annually</strong> on distributor commissions, always invest in <strong>Direct Growth</strong> plans:
+              </p>
+
+              <div className="space-y-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-surface-layer2/50 border border-white/[0.06] space-y-1">
+                  <div className="font-semibold text-text-primary flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
+                    <span>1. MF Central / CAMS / KFintech</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    Official unified portals for 100% direct mutual fund investments with zero intermediary commissions.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-surface-layer2/50 border border-white/[0.06] space-y-1">
+                  <div className="font-semibold text-text-primary flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary-accent"></span>
+                    <span>2. Direct Brokers (Zerodha / Groww / AngelOne)</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    Use your demat account to purchase SGB secondary market tranches (discount to spot) and Index ETFs with near-zero tracking error.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowDeployGuide(false)}
+                  className="w-full py-2.5 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 transition-all shadow-md shadow-primary-accent/20"
+                >
+                  Understood
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* --- MODAL 1: Target Profile & Gemini Key Customizer --- */}
         {showCustomizer && (
