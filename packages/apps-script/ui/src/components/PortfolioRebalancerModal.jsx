@@ -297,12 +297,12 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
       <main className="w-full max-w-[440px] bg-background-root min-h-screen flex flex-col relative pb-32 shadow-2xl">
         
         {/* 1. Sticky Header / Top App Bar */}
-        <header className="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-border-subtle">
+        <header className="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
             <button 
               onClick={onClose}
               aria-label="Go back" 
-              className="w-8 h-8 rounded-full border border-border-subtle bg-surface-layer1 flex items-center justify-center text-text-secondary hover:text-text-primary active:scale-95 transition-all"
+              className="w-8 h-8 rounded-full border border-white/[0.08] bg-surface-layer1/80 hover:bg-surface-layer2 flex items-center justify-center text-text-secondary hover:text-text-primary active:scale-95 transition-all"
             >
               <ArrowLeft size={17} />
             </button>
@@ -314,7 +314,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
           <button 
             onClick={() => setShowCustomizer(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-layer1 border border-border-prominent text-text-secondary hover:text-text-primary active:scale-95 transition-all text-xs font-medium"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-text-primary active:scale-95 transition-all text-xs font-medium"
           >
             <span className="text-[11px] font-semibold text-text-primary">{selectedProfile}</span>
             <Sliders size={12} className="text-text-muted" />
@@ -325,7 +325,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         <div className="px-4 flex flex-col gap-3.5 pt-3.5">
           
           {/* 2. Portfolio Health & Drift Hero Card */}
-          <section className="bg-surface-layer1 rounded-xl p-4 border border-border-subtle relative overflow-hidden shadow-sm">
+          <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] relative overflow-hidden shadow-sm">
             {/* Ambient Subtle Indigo Glow */}
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-accent/15 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -343,20 +343,38 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 )}
               </div>
 
-              {/* Alignment Score Gauge Dial */}
-              <div className="relative flex flex-col items-center justify-center w-16 h-16 rounded-full bg-surface-layer2 border-2 border-wealth-emerald/40 shadow-inner">
-                <span className="text-lg font-bold text-wealth-emerald leading-none tabular-nums">
-                  {simulation.alignmentScore}
-                </span>
-                <span className="text-[9px] text-text-muted mt-0.5">/100</span>
-                <span className="text-[7px] font-bold uppercase tracking-wider text-wealth-emerald">
+              {/* Alignment Score Gauge Dial (Refined non-overflowing circle with clean status badge) */}
+              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <div className={`relative flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full bg-surface-layer2/90 border-2 transition-all ${
+                  simulation.alignmentScore >= 80 
+                    ? 'border-wealth-emerald/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+                    : simulation.alignmentScore >= 60 
+                    ? 'border-bullion-amber/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]' 
+                    : 'border-liability-rose/40 shadow-[0_0_15px_rgba(244,63,94,0.15)]'
+                }`}>
+                  <span className={`text-2xl font-black tabular-nums leading-none ${
+                    simulation.alignmentScore >= 80 ? 'text-wealth-emerald' : simulation.alignmentScore >= 60 ? 'text-bullion-amber' : 'text-liability-rose'
+                  }`}>
+                    {simulation.alignmentScore}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-wider text-text-muted font-bold mt-0.5">
+                    / 100
+                  </span>
+                </div>
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border text-center leading-none whitespace-nowrap ${
+                  simulation.alignmentScore >= 80 
+                    ? 'bg-wealth-emerald/15 border-wealth-emerald/30 text-wealth-emerald' 
+                    : simulation.alignmentScore >= 60 
+                    ? 'bg-bullion-amber/15 border-bullion-amber/30 text-bullion-amber' 
+                    : 'bg-liability-rose/15 border-liability-rose/30 text-liability-rose'
+                }`}>
                   {simulation.healthLabel}
                 </span>
               </div>
             </div>
 
             {/* Inflow Adjustment Indicator Badge */}
-            <div className="mt-3.5 pt-2.5 border-t border-border-subtle/80 flex items-center justify-between text-xs">
+            <div className="mt-3.5 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-bullion-amber opacity-75"></span>
@@ -373,7 +391,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           </section>
 
           {/* 3. Allocation Visualizer (Current vs Target vs Projected) */}
-          <section className="bg-surface-layer1 rounded-xl p-4 border border-border-subtle flex flex-col gap-2.5 shadow-sm">
+          <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] flex flex-col gap-2.5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xs font-semibold text-text-primary">Allocation Alignment</h2>
@@ -392,7 +410,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 return (
                   <span 
                     key={cat}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer2 text-text-secondary text-[10px] font-medium border border-border-subtle"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-layer2 text-text-secondary text-[10px] font-medium border border-white/[0.06]"
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${conf.bgClass}`}></span>
                     {conf.label}: {tgt}%
@@ -409,7 +427,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   <span className="text-text-secondary">1. Current Allocation</span>
                   <span className="text-text-muted font-mono">{simulation.alignmentScore}/100</span>
                 </div>
-                <div className="h-2.5 w-full rounded-full bg-surface-layer2 flex overflow-hidden border border-border-subtle">
+                <div className="h-2.5 w-full rounded-full bg-surface-layer2 flex overflow-hidden border border-white/[0.06]">
                   {simulation.breakdown.map(b => {
                     const conf = CATEGORY_COLORS[b.category] || CATEGORY_COLORS.Other;
                     return (
@@ -430,7 +448,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   <span className="text-text-secondary">2. Target Benchmark ({selectedProfile})</span>
                   <span className="text-primary-accent font-medium text-[10px]">Benchmark</span>
                 </div>
-                <div className="h-2.5 w-full rounded-full bg-surface-layer2 flex overflow-hidden border border-border-subtle opacity-75">
+                <div className="h-2.5 w-full rounded-full bg-surface-layer2 flex overflow-hidden border border-white/[0.06] opacity-75">
                   {CORE_CATEGORIES.map(cat => {
                     const conf = CATEGORY_COLORS[cat] || CATEGORY_COLORS.Other;
                     const pct = Number(targetAllocation[cat] || 0);
@@ -473,7 +491,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           </section>
 
           {/* 4. Smart Inflow Rebalance Simulator */}
-          <section className="bg-surface-layer1 rounded-xl p-4 border border-border-subtle flex flex-col gap-3 shadow-sm">
+          <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] flex flex-col gap-3 shadow-sm">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
                 <Wallet size={14} className="text-primary-accent" />
@@ -492,8 +510,8 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   onClick={() => handleChipSelect(amt)}
                   className={`py-1.5 px-1 rounded-lg text-[11px] font-semibold border transition-all tabular-nums ${
                     inflowAmount === amt
-                      ? 'bg-primary-accent/15 border-primary-accent text-primary-accent shadow-sm'
-                      : 'bg-surface-layer2 border-border-subtle text-text-secondary hover:text-text-primary'
+                      ? 'bg-primary-accent/20 border-primary-accent/50 text-primary-accent shadow-sm'
+                      : 'bg-surface-layer2/60 border-white/[0.06] hover:border-white/[0.14] text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   ₹{amt >= 100000 ? `${amt / 100000}L` : `${amt / 1000}k`}
@@ -510,7 +528,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   value={customInflowInput}
                   onChange={handleCustomInputChange}
                   placeholder="Enter investment amount"
-                  className="w-full bg-surface-layer2 border border-border-prominent rounded-lg pl-7 pr-16 py-2 text-sm font-bold text-text-primary tabular-nums focus:outline-none focus:border-primary-accent"
+                  className="w-full bg-surface-layer2/70 border border-white/[0.1] rounded-lg pl-7 pr-16 py-2 text-sm font-bold text-text-primary tabular-nums focus:outline-none focus:border-primary-accent/80 transition-colors"
                 />
                 <span className="absolute right-3 text-[10px] text-text-muted font-semibold uppercase">
                   Inflow
@@ -546,7 +564,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 return (
                   <div 
                     key={item.category}
-                    className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 flex flex-col gap-1.5 shadow-sm"
+                    className="bg-surface-layer1 border border-white/[0.07] hover:border-white/[0.12] rounded-xl p-3 flex flex-col gap-1.5 shadow-sm transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -594,7 +612,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     </div>
 
                     {/* Tactical Tip Note */}
-                    <div className="text-[10px] text-text-muted bg-surface-layer2/60 px-2 py-1 rounded border border-border-subtle/50 mt-0.5">
+                    <div className="text-[10px] text-text-muted bg-surface-layer2/40 px-2.5 py-1.5 rounded-lg border border-white/[0.04] mt-0.5">
                       {item.tacticalNote}
                     </div>
                   </div>
@@ -606,7 +624,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           {/* 6. Cash Drag & Concentration Risk Cards */}
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {/* Cash Drag Card */}
-            <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 flex flex-col justify-between">
+            <div className="bg-surface-layer1 border border-white/[0.07] rounded-xl p-3.5 flex flex-col justify-between shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-semibold text-text-secondary flex items-center gap-1">
@@ -637,7 +655,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             </div>
 
             {/* Concentration Risk Card */}
-            <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 flex flex-col justify-between">
+            <div className="bg-surface-layer1 border border-white/[0.07] rounded-xl p-3.5 flex flex-col justify-between shadow-sm">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-semibold text-text-secondary flex items-center gap-1">
@@ -669,7 +687,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           </section>
 
           {/* 7. Gemini AI Strategic Synthesis */}
-          <section className="bg-surface-layer1 border border-primary-accent/30 rounded-xl p-4 relative overflow-hidden shadow-sm">
+          <section className="bg-surface-layer1 border border-primary-accent/25 rounded-2xl p-4 relative overflow-hidden shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <Sparkles size={16} className="text-wealth-emerald animate-pulse" />
@@ -685,7 +703,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 <button 
                   onClick={() => handleGenerateAIInsights(true)}
                   disabled={isLoadingAI}
-                  className="p-1 rounded bg-surface-layer2 text-text-secondary hover:text-text-primary disabled:opacity-50 transition-all"
+                  className="p-1.5 rounded-lg bg-surface-layer2/60 border border-white/[0.06] text-text-secondary hover:text-text-primary disabled:opacity-50 transition-all"
                   title="Refresh AI Insights"
                 >
                   <RefreshCw size={12} className={isLoadingAI ? "animate-spin" : ""} />
@@ -708,7 +726,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               </div>
             )}
 
-            <div className="mt-3 pt-2 border-t border-border-subtle/80 flex items-center justify-between text-[10px] text-text-muted">
+            <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-text-muted">
               <span>SEBI RIA Compliance Guidelines • Zero Sales</span>
               <button 
                 onClick={handleCopyPlan}
@@ -723,7 +741,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         </div>
 
         {/* 8. Sticky Bottom Action Dock */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background-root/95 backdrop-blur-md border-t border-border-subtle p-3 flex justify-center">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background-root/95 backdrop-blur-md border-t border-white/[0.07] p-3 flex justify-center">
           <div className="w-full max-w-[440px] flex gap-2">
             <button 
               onClick={() => setShowApplyModal(true)}
@@ -734,7 +752,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             </button>
             <button 
               onClick={handleCopyPlan}
-              className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 border border-border-prominent text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1 active:scale-[0.98] transition-all"
+              className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
             >
               {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
               <span>{copied ? 'Copied' : 'Export'}</span>
@@ -745,8 +763,8 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         {/* --- MODAL 1: Target Profile & Gemini Key Customizer --- */}
         {showCustomizer && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-surface-layer1 border border-border-prominent rounded-2xl p-4 space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+            <div className="w-full max-w-sm bg-surface-layer1 border border-white/[0.1] rounded-2xl p-4 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/[0.07] pb-2.5">
                 <h3 className="text-sm font-semibold text-text-primary">Customize Target Benchmark</h3>
                 <button onClick={() => setShowCustomizer(false)} className="text-text-muted hover:text-text-primary">
                   <X size={18} />
@@ -765,10 +783,10 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                         setTempProfile(k);
                         setTempTargets({ ...RISK_PROFILES[k].target });
                       }}
-                      className={`p-2 rounded-lg text-left border text-xs transition-all ${
+                      className={`p-2.5 rounded-xl text-left border text-xs transition-all ${
                         tempProfile === k 
-                          ? 'border-primary-accent bg-primary-accent/15 text-primary-accent font-semibold' 
-                          : 'border-border-subtle bg-surface-layer2 text-text-secondary'
+                          ? 'border-primary-accent/60 bg-primary-accent/15 text-primary-accent font-semibold shadow-sm' 
+                          : 'border-white/[0.06] bg-surface-layer2/60 hover:border-white/[0.12] text-text-secondary'
                       }`}
                     >
                       <div className="font-medium">{k}</div>
@@ -814,7 +832,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               </div>
 
               {/* Optional Gemini API Key Field */}
-              <div className="space-y-1.5 pt-2 border-t border-border-subtle">
+              <div className="space-y-1.5 pt-2.5 border-t border-white/[0.07]">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold text-text-secondary flex items-center gap-1">
                     <Sparkles size={12} className="text-wealth-emerald" />
@@ -837,7 +855,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     setCustomizerFeedback(null);
                   }}
                   placeholder="AIzaSy..."
-                  className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary-accent font-mono"
+                  className="w-full bg-surface-layer2/70 border border-white/[0.08] focus:border-primary-accent/70 rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none font-mono"
                 />
                 <p className="text-[9px] text-text-muted">
                   Gemini Flash is 100% free forever (1,500 requests/day). Stored securely in your sheet.
@@ -864,7 +882,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     setShowCustomizer(false);
                     setCustomizerFeedback(null);
                   }}
-                  className="flex-1 py-2 rounded-xl bg-surface-layer2 text-text-secondary font-semibold text-xs hover:text-text-primary"
+                  className="flex-1 py-2.5 rounded-xl bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.06] text-text-secondary font-semibold text-xs hover:text-text-primary transition-all"
                 >
                   Cancel
                 </button>
@@ -891,7 +909,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         {/* --- MODAL 2: Apply Plan Confirmation --- */}
         {showApplyModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-surface-layer1 border border-border-prominent rounded-2xl p-5 space-y-4">
+            <div className="w-full max-w-sm bg-surface-layer1 border border-white/[0.1] rounded-2xl p-5 space-y-4 shadow-2xl">
               <div className="flex items-center gap-2 text-wealth-emerald">
                 <CheckCircle2 size={20} />
                 <h3 className="text-sm font-semibold text-text-primary">Execution Blueprint Ready</h3>
@@ -901,9 +919,9 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 To execute this rebalance with ₹{Number(inflowAmount).toLocaleString('en-IN')}, deploy your fresh savings into the following instruments:
               </p>
 
-              <div className="space-y-1.5 bg-surface-layer2/50 p-2.5 rounded-xl border border-border-subtle text-xs">
+              <div className="space-y-1.5 bg-surface-layer2/40 p-3 rounded-xl border border-white/[0.06] text-xs">
                 {simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => (
-                  <div key={b.category} className="flex justify-between py-1 border-b border-border-subtle/40 last:border-0">
+                  <div key={b.category} className="flex justify-between py-1 border-b border-white/[0.05] last:border-0">
                     <span className="text-text-secondary font-medium">{b.category}</span>
                     <span className="font-bold text-wealth-emerald tabular-nums">+{formatCurrency(b.allocatedRupees)}</span>
                   </div>
@@ -917,7 +935,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setShowApplyModal(false)}
-                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 transition-all shadow-md shadow-primary-accent/20"
                 >
                   Got It
                 </button>

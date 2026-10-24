@@ -192,16 +192,16 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
   const alignmentScore = Math.max(0, Math.min(100, totalGrossAssets > 0 ? rawScore : 100));
 
   let healthLabel = 'Excellent';
-  let healthColor = 'text-profit-emerald';
+  let healthColor = 'text-wealth-emerald';
   if (alignmentScore < 60) {
     healthLabel = 'Severe Drift';
     healthColor = 'text-liability-rose';
   } else if (alignmentScore < 75) {
     healthLabel = 'Moderate Drift';
-    healthColor = 'text-warning-amber';
+    healthColor = 'text-bullion-amber';
   } else if (alignmentScore < 85) {
     healthLabel = 'Good Health';
-    healthColor = 'text-profit-emerald';
+    healthColor = 'text-wealth-emerald';
   }
 
   return {

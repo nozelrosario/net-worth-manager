@@ -625,7 +625,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     type="button" 
                     disabled={isSubmitting}
                     onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, false)}
-                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-border-prominent text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-white/[0.08] hover:border-white/[0.14] text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                   >
                     <Lock size={14} className="text-wealth-emerald" />
                     <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset Only (Keep in Family Safe)'}</span>

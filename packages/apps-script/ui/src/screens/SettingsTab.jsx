@@ -288,7 +288,7 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
                   value={apiKeyInput}
                   onChange={e => setApiKeyInput(e.target.value)}
                   placeholder="AIzaSy..."
-                  className="flex-1 bg-surface-layer1 border border-border-prominent rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary-accent font-mono"
+                  className="flex-1 bg-surface-layer1 border border-white/[0.08] focus:border-primary-accent/70 rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none font-mono"
                />
                <button
                   type="submit"
@@ -316,7 +316,7 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
            <button
              type="button"
              onClick={onOpenRebalancer}
-             className="w-full py-2.5 px-4 rounded-xl bg-surface-layer2 hover:bg-surface-layer2/80 border border-border-prominent text-text-primary text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
+             className="w-full py-2.5 px-4 rounded-xl bg-surface-layer2 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-primary text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
            >
              <Sliders size={14} className="text-primary-accent" />
              <span>Configure Target Allocation & Rebalance</span>

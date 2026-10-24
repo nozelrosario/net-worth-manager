@@ -104,7 +104,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
       {onOpenRebalancer && (
         <div 
           onClick={onOpenRebalancer}
-          className="bg-surface-layer1 border border-border-subtle hover:border-primary-accent/40 rounded-xl p-4 shadow-sm relative overflow-hidden cursor-pointer transition-all active:scale-[0.99] group"
+          className="bg-surface-layer1 border border-white/[0.08] hover:border-primary-accent/40 rounded-xl p-4 shadow-sm relative overflow-hidden cursor-pointer transition-all active:scale-[0.99] group"
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2.5">
@@ -127,7 +127,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border-subtle/70 text-xs">
+          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
             <div className="flex items-center gap-1.5">
               <span className="text-text-secondary text-[11px]">Alignment Score:</span>
               <span className="font-bold text-wealth-emerald tabular-nums">{alignment.alignmentScore}/100</span>
@@ -151,18 +151,18 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
       <div className="grid grid-cols-2 gap-3">
         <div 
           onClick={onOpenRebalancer}
-          className={`bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm ${onOpenRebalancer ? 'cursor-pointer hover:border-bullion-amber/30 transition-all active:scale-[0.98]' : ''}`}
+          className={`bg-surface-layer1 border border-white/[0.08] rounded-xl p-4 shadow-sm ${onOpenRebalancer ? 'cursor-pointer hover:border-bullion-amber/30 transition-all active:scale-[0.98]' : ''}`}
         >
           <p className="text-xs text-text-secondary mb-1">Liquid Buffer & Drag</p>
           <p className="text-lg font-bold text-text-primary tabular-nums">{formatCurrency(cash)}</p>
           <p className="text-[11px] text-text-muted mt-0.5">{totalExpense > 0 ? (cash / (totalExpense/12)).toFixed(1) : 0} Mos Runway</p>
           <div className="mt-3 inline-flex items-center text-[10px] bg-bullion-amber/10 text-bullion-amber font-medium px-2 py-1 rounded-md border border-bullion-amber/25">⚠️ Check Cash Drag</div>
         </div>
-        <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm">
+        <div className="bg-surface-layer1 border border-white/[0.08] rounded-xl p-4 shadow-sm">
           <p className="text-xs text-text-secondary mb-1">This Month's Cashflow</p>
           <p className="text-lg font-bold text-liability-rose tabular-nums">-{formatCurrency(totalExpense)}</p>
           <p className="text-[11px] text-text-muted mt-0.5">Inflow: {formatCurrency(totalIncome)}</p>
-          <div className="mt-3 inline-flex items-center text-[10px] bg-surface-layer2 text-text-secondary font-medium px-2 py-1 rounded-md border border-border-subtle">{savingsRate.toFixed(1)}% Savings Rate</div>
+          <div className="mt-3 inline-flex items-center text-[10px] bg-surface-layer2 text-text-secondary font-medium px-2 py-1 rounded-md border border-white/[0.06]">{savingsRate.toFixed(1)}% Savings Rate</div>
         </div>
       </div>
 
