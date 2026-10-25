@@ -1,6 +1,7 @@
 import useModalBack from "../hooks/useModalBack";
 import React, { useState, useEffect, useMemo } from 'react';
 import { getSafeStorage } from '../utils/storage';
+import { Badge } from '../components/Badge';
 import { 
   ArrowRightLeft, 
   CheckCircle, 
@@ -786,7 +787,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                 <h2 className="text-sm font-semibold text-text-primary">{pendingVerifications.length} Verifications Pending</h2>
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-xs bg-bullion-amber/15 text-bullion-amber font-semibold border border-bullion-amber/30">Action Required</span>
+            <Badge variant="amber" dot size="sm">Action Required</Badge>
           </div>
           {pendingVerifications.map(txn => (
             <div key={txn['Txn ID']} className="mt-3 bg-surface-layer2/80 rounded-lg p-3 border border-border-subtle">

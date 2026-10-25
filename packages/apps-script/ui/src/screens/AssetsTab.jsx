@@ -2,6 +2,7 @@ import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
+import { Badge } from "../components/Badge";
 import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
@@ -475,10 +476,9 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-text-primary">{asset.Name}</p>
                     {isLive && (
-                      <span className="flex items-center gap-1 text-[10px] text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-1.5 py-0.2 rounded font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
+                      <Badge variant="emerald" dot pulse size="xs">
                         Live
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   

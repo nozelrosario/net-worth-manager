@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { assetSchemas } from '../config/assetSchemas';
 import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle, Calendar, Shield } from 'lucide-react';
+import { Badge } from './Badge';
 
 // Investment performance calculation helper: P&L, Holding Period, CAGR, and Tax Classification
 export function calculatePerformance(cost, currentValue, acqDateStr, category) {
@@ -967,9 +968,9 @@ export default function DynamicForm({
             <span className="font-semibold text-sky-400 flex items-center gap-1.5">
               <Shield size={14} /> Sovereign Retirement &amp; Pension Vault
             </span>
-            <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full font-medium">
+            <Badge variant="emerald" dot size="xs">
               EEE Tax-Shielded
-            </span>
+            </Badge>
           </div>
           <p className="text-[11px] text-text-secondary leading-relaxed">
             EPF &amp; VPF earn <strong>8.25% p.a.</strong>, PPF earns <strong>7.10% p.a.</strong>, and NPS features active Equity/Debt allocation with exclusive <strong>Section 80CCD(1B)</strong> extra ₹50,000 tax deduction.
@@ -1130,9 +1131,9 @@ export default function DynamicForm({
               <TrendingUp size={14} className="text-wealth-emerald" />
               Investment Return & Tax Intelligence
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${perfMetrics.isLtcg ? 'bg-wealth-emerald/20 text-wealth-emerald border-wealth-emerald/40' : 'bg-bullion-amber/20 text-bullion-amber border-bullion-amber/40'}`}>
+            <Badge variant={perfMetrics.isLtcg ? 'emerald' : 'amber'} dot size="xs">
               {perfMetrics.taxTag}
-            </span>
+            </Badge>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border-subtle/50 text-center">
@@ -1190,9 +1191,9 @@ export default function DynamicForm({
             </p>
           </div>
           {attachedFiles.length > 0 && (
-            <span className="text-[10px] text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
+            <Badge variant="indigo" size="xs">
               {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'}
-            </span>
+            </Badge>
           )}
         </div>
 
