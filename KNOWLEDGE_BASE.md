@@ -25,6 +25,17 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.1) - Borderless Glow Badge System & Layout Decoupling (Issue #26)
+✅ **Unified Badge Component (`Badge.jsx`)**:
+  - Implemented Apple Wallet & Raycast-inspired borderless glow micro-pills (`rounded-full`) across all screens.
+  - Eliminated harsh semi-opaque/white borders (`border-white/[0.08]`, `border-wealth-emerald/20`) on dark OLED backgrounds, switching to subtle translucent background luminance (`bg-emerald-500/12 text-emerald-400`).
+  - Added semantic micro-dots (`w-1.5 h-1.5`) with glow shadows (`shadow-[0_0_6px_rgba(...)]`) and pulse animation support for live rate status.
+  - Standardized semantic variants (`emerald`, `amber`, `rose`, `indigo`, `sky`, `neutral`) and constrained sizes (`xs: text-[9px]`, `sm: text-[10px]`, `md: text-xs`) with `whitespace-nowrap` truncation protection.
+✅ **Card Header Layout Decoupling**:
+  - Refactored `HomeTab` cards (`Retirement & Pension Hub`, `AI Portfolio Advisor & Rebalance`) to decouple badge tags from inline `<h3>` headers.
+  - Resolved mobile layout crowding and title wrapping on narrow viewports (<390px).
+  - Streamlined copy across cards (e.g. `8.25% EPF / NPS`, `Zero Tax`, `EEE Tax-Shielded`).
+
 ## Feature Update (v3.0) - Dedicated Retirement & Pension Hub (EPF, VPF, PPF & NPS) (Issue #23)
 ✅ **Retirement & Pension Mathematical Engine (`retirementMath.js`)**:
   - **EPFO Running Accrual Engine**: Models monthly running balance interest compounding at 8.25% p.a., eliminating the passbook credit lag so users have an up-to-date real-time net worth figure throughout the financial year.
