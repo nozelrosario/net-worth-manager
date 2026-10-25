@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 
-export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer }) {
+export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer, onOpenRetirementPlanner }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
   const [memberName, setMemberName] = useState('');
@@ -320,6 +320,17 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
            >
              <Sliders size={14} className="text-primary-accent" />
              <span>Configure Target Allocation & Rebalance</span>
+           </button>
+         )}
+
+         {onOpenRetirementPlanner && (
+           <button
+             type="button"
+             onClick={onOpenRetirementPlanner}
+             className="w-full py-2.5 px-4 rounded-xl bg-surface-layer2 hover:bg-surface-layer2/80 border border-border-subtle hover:border-sky-500/40 text-text-primary text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] mt-2"
+           >
+             <Landmark size={14} className="text-sky-400" />
+             <span>Retirement &amp; Pension Hub (EPF, PPF &amp; NPS)</span>
            </button>
          )}
       </section>

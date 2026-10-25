@@ -2,7 +2,7 @@ import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
 import React, { useState } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark } from 'lucide-react';
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -21,7 +21,7 @@ const getSafeCategoryForAsset = (assetCategory) => {
   return 'Finance';
 };
 
-export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer }) {
+export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer, onOpenRetirementPlanner }) {
   const [filter, setFilter] = useState('All Assets');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
@@ -42,16 +42,29 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   const assets = data?.assets || [];
   
-  const defaultCategories = 'Equity, Mutual Funds, Gold, Cash/FD, Real Estate, Liabilities';
+  const defaultCategories = 'Equity, Mutual Funds, Gold, Cash/FD, Real Estate, Retirement & Pension, Liabilities';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
-  const categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  let categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  if (!categoriesList.includes('Retirement & Pension') && !categoriesList.includes('Provident Funds')) {
+    const liabIdx = categoriesList.indexOf('Liabilities');
+    if (liabIdx !== -1) {
+      categoriesList.splice(liabIdx, 0, 'Retirement & Pension');
+    } else {
+      categoriesList.push('Retirement & Pension');
+    }
+  }
   const profiles = data?.familyProfiles || [];
   
   const filters = ['All Assets', ...categoriesList];
   
   const filteredAssets = filter === 'All Assets' 
     ? assets 
-    : assets.filter(a => a.Category === filter);
+    : assets.filter(a => {
+        if (filter === 'Retirement & Pension') {
+          return a.Category === 'Retirement & Pension' || a.Category === 'Provident Funds' || (a.Category || '').toLowerCase().includes('retire') || (a.Category || '').toLowerCase().includes('provident');
+        }
+        return a.Category === filter;
+      });
 
   const handleSyncRates = () => {
     setIsSyncingRates(true);
@@ -363,6 +376,20 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </button>
               </>
             )}
+            {onOpenRetirementPlanner && (
+              <>
+                <span className="text-text-muted text-[10px]">•</span>
+                <button 
+                  type="button"
+                  onClick={onOpenRetirementPlanner} 
+                  title="Open Retirement & Pension Hub (EPF, PPF & NPS)"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-400 rounded-full text-[11px] font-medium transition-all active:scale-95"
+                >
+                  <Shield size={10} />
+                  <span>Retirement Hub</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
         <button 
@@ -418,6 +445,15 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           } else if (cat === 'Mutual Funds' && (det['Units'] || det['Quantity'])) {
             const u = det['Units'] || det['Quantity'];
             holdingSummary = `${u} units` + (det['Average NAV'] ? ` @ avg ₹${det['Average NAV']}` : '');
+          } else if ((cat || '').toLowerCase().includes('retire') || (cat || '').toLowerCase().includes('provident')) {
+            const rt = det['Retirement Type'] || det['Fund Type'] || 'Retirement';
+            if (det['Interest Rate']) {
+              holdingSummary = `${det['Interest Rate']}% p.a. • ${rt}`;
+            } else if (det['Allocation Equity E']) {
+              holdingSummary = `E:${det['Allocation Equity E']}% C:${det['Allocation Corp Debt C'] || 0}% • ${rt}`;
+            } else {
+              holdingSummary = rt;
+            }
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);

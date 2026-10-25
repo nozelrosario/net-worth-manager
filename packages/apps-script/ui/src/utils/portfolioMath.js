@@ -96,6 +96,22 @@ export const CATEGORY_COLORS = {
     lightBg: 'bg-[#8B5CF6]/10',
     label: 'Real Estate'
   },
+  'Retirement & Pension': {
+    hex: '#0EA5E9',
+    bgClass: 'bg-[#0EA5E9]',
+    textClass: 'text-[#0EA5E9]',
+    borderClass: 'border-[#0EA5E9]/30',
+    lightBg: 'bg-[#0EA5E9]/10',
+    label: 'Retirement (PF & NPS)'
+  },
+  'Provident Funds': {
+    hex: '#0EA5E9',
+    bgClass: 'bg-[#0EA5E9]',
+    textClass: 'text-[#0EA5E9]',
+    borderClass: 'border-[#0EA5E9]/30',
+    lightBg: 'bg-[#0EA5E9]/10',
+    label: 'Retirement (PF & NPS)'
+  },
   'Other': {
     hex: '#94A3B8',
     bgClass: 'bg-[#94A3B8]',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { assetSchemas } from '../config/assetSchemas';
-import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle, Calendar } from 'lucide-react';
+import { Upload, Paperclip, FileText, Trash2, ExternalLink, Link as LinkIcon, Lock, Search, TrendingUp, Sparkles, RefreshCw, AlertCircle, Calendar, Shield } from 'lucide-react';
 
 // Investment performance calculation helper: P&L, Holding Period, CAGR, and Tax Classification
 export function calculatePerformance(cost, currentValue, acqDateStr, category) {
@@ -215,7 +215,7 @@ export default function DynamicForm({
   else if (catLower.includes('mutual')) schemaKey = 'Mutual Funds';
   else if (catLower.includes('real estate') || catLower.includes('property')) schemaKey = 'Real Estate';
   else if (catLower.includes('gold') || catLower.includes('bullion')) schemaKey = 'Gold';
-  else if (catLower.includes('provident') || catLower.includes('epf') || catLower.includes('ppf') || catLower.includes('nps')) schemaKey = 'Provident Funds';
+  else if (catLower.includes('retire') || catLower.includes('pension') || catLower.includes('provident') || catLower.includes('epf') || catLower.includes('ppf') || catLower.includes('nps')) schemaKey = 'Retirement & Pension';
   else if (catLower.includes('bond') || catLower.includes('debenture')) schemaKey = 'Bonds';
   else if (catLower.includes('liabilit') || catLower.includes('loan')) schemaKey = 'Liabilities';
   
@@ -957,6 +957,23 @@ export default function DynamicForm({
               <span className="font-bold text-wealth-emerald tabular-nums">{formatCurrency(liveNavData.nav)}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Retirement & Pension Sovereign Vault Banner */}
+      {schemaKey === 'Retirement & Pension' && (
+        <div className="bg-gradient-to-r from-sky-500/15 via-surface-layer2 to-surface-layer2 border border-sky-500/30 rounded-xl p-3 text-xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="font-semibold text-sky-400 flex items-center gap-1.5">
+              <Shield size={14} /> Sovereign Retirement &amp; Pension Vault
+            </span>
+            <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full font-medium">
+              EEE Tax-Shielded
+            </span>
+          </div>
+          <p className="text-[11px] text-text-secondary leading-relaxed">
+            EPF &amp; VPF earn <strong>8.25% p.a.</strong>, PPF earns <strong>7.10% p.a.</strong>, and NPS features active Equity/Debt allocation with exclusive <strong>Section 80CCD(1B)</strong> extra ₹50,000 tax deduction.
+          </p>
         </div>
       )}
 

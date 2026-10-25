@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Retirement &amp; Pension Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-tint": "#c0c1ff",
+            "primary-fixed": "#e1e0ff",
+            "text-secondary": "#94A3B8",
+            "on-surface": "#e4e1ed",
+            "surface-bright": "#393841",
+            "on-error": "#690005",
+            "surface-container-lowest": "#0d0d15",
+            "inverse-primary": "#494bd6",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-layer-1": "#151C28",
+            "on-background": "#e4e1ed",
+            "tertiary": "#ffb783",
+            "on-tertiary-container": "#452000",
+            "secondary-container": "#00a572",
+            "border-prominent": "#334155",
+            "on-secondary": "#003824",
+            "primary-fixed-dim": "#c0c1ff",
+            "secondary": "#4edea3",
+            "outline-variant": "#464554",
+            "surface-dim": "#13131b",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "primary": "#c0c1ff",
+            "text-primary": "#F8FAFC",
+            "on-secondary-fixed-variant": "#005236",
+            "tertiary-container": "#d97721",
+            "surface-variant": "#34343d",
+            "text-muted": "#64748B",
+            "error": "#ffb4ab",
+            "surface-container-low": "#1b1b23",
+            "on-surface-variant": "#c7c4d7",
+            "on-secondary-container": "#00311f",
+            "on-tertiary-fixed-variant": "#703700",
+            "warning-amber": "#F59E0B",
+            "surface-container-high": "#292932",
+            "surface-container-highest": "#34343d",
+            "background-root": "#0B0F17",
+            "background": "#13131b",
+            "tertiary-fixed-dim": "#ffb783",
+            "inverse-on-surface": "#303038",
+            "on-primary": "#1000a9",
+            "surface-container": "#1f1f27",
+            "inverse-surface": "#e4e1ed",
+            "error-container": "#93000a",
+            "secondary-fixed": "#6ffbbe",
+            "tertiary-fixed": "#ffdcc5",
+            "surface-layer-2": "#1E293B",
+            "on-tertiary": "#4f2500",
+            "on-primary-container": "#0d0096",
+            "profit-emerald": "#10B981",
+            "surface": "#13131b",
+            "on-error-container": "#ffdad6",
+            "on-primary-fixed": "#07006c",
+            "border-subtle": "#222F3E",
+            "primary-container": "#8083ff",
+            "outline": "#908fa0",
+            "on-secondary-fixed": "#002113",
+            "on-tertiary-fixed": "#301400",
+            "liability-rose": "#F43F5E"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "32px",
+            "space-lg": "24px",
+            "margin": "16px",
+            "gutter": "12px",
+            "space-xs": "4px",
+            "space-sm": "8px",
+            "space-md": "16px"
+          },
+          "fontFamily": {
+            "headline-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "display-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .num-tabular {
+      font-feature-settings: "tnum" 1;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased selection:bg-primary-container selection:text-text-primary min-h-screen pb-24">
+<!-- TOP APP BAR -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-space-md py-space-sm bg-background-root border-b border-border-subtle shadow-sm">
+<div class="flex items-center gap-2">
+<button aria-label="Go back" class="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:bg-surface-layer-1 hover:text-text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div>
+<h1 class="text-headline-sm font-headline-sm font-semibold text-text-primary leading-tight">Retirement &amp; Pension Hub</h1>
+<p class="text-label-sm font-label-sm text-text-muted">Tax-Advantaged Long-Term Vaults</p>
+</div>
+</div>
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-layer-2 border border-profit-emerald/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+<span class="material-symbols-outlined text-[14px] text-profit-emerald" style="font-variation-settings: 'FILL' 1;">shield</span>
+<span class="text-label-sm font-label-sm text-profit-emerald font-semibold">EEE Tax Shield Active</span>
+</div>
+</header>
+<!-- MAIN SCROLLABLE VIEWPORT -->
+<main class="max-w-[420px] mx-auto px-space-md pt-4 space-y-4">
+<!-- 1. CONSOLIDATED RETIREMENT CORPUS HERO CARD -->
+<section class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle relative overflow-hidden">
+<!-- Glow ambient accent -->
+<div class="absolute -top-16 -right-16 w-36 h-36 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="text-label-md font-label-md text-text-secondary">Consolidated Retirement Corpus</span>
+<span class="inline-flex items-center gap-1 text-label-sm font-label-sm text-profit-emerald bg-profit-emerald/10 border border-profit-emerald/20 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+<span>+₹42,500/mo Inflow</span>
+</span>
+</div>
+<!-- Corpus Amount -->
+<div class="flex items-baseline gap-2 mb-4">
+<h2 class="text-display-lg font-display-lg text-text-primary num-tabular">₹48,25,840</h2>
+<span class="text-label-sm font-label-sm text-text-muted">Live NAV</span>
+</div>
+<!-- Asset Split Segmented Bar -->
+<div class="space-y-2 mb-4">
+<div class="h-2 w-full bg-surface-layer-2 rounded-full overflow-hidden flex">
+<div class="bg-primary h-full w-[68%]" title="Fixed Income: 68%"></div>
+<div class="bg-profit-emerald h-full w-[32%]" title="NPS Equity: 32%"></div>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span class="text-text-secondary">Fixed Income (EPF/PPF):</span>
+<span class="text-text-primary font-medium num-tabular">68%</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-profit-emerald inline-block"></span>
+<span class="text-text-secondary">NPS Equity:</span>
+<span class="text-text-primary font-medium num-tabular">32%</span>
+</div>
+</div>
+</div>
+<!-- Milestone Card Sub-block -->
+<div class="p-2.5 rounded-lg bg-surface-layer-2 border border-border-subtle flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">flag</span>
+            Target Corpus @ 60: <span class="text-text-primary font-medium num-tabular">₹3.82 Cr</span>
+</span>
+<span class="text-profit-emerald font-semibold num-tabular">34% Funded</span>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-primary to-profit-emerald h-full w-[34%] rounded-full"></div>
+</div>
+</div>
+</section>
+<!-- 2. ACTIVE INSTRUMENTS / ACCOUNTS LIST (4 INSTRUMENTS) -->
+<section class="space-y-3">
+<div class="flex items-center justify-between px-0.5">
+<h3 class="text-headline-sm font-headline-sm text-text-primary">Active Vaults &amp; Plans</h3>
+<span class="text-label-sm font-label-sm text-text-muted">4 Connected</span>
+</div>
+<!-- CARD 1: EPFO -->
+<article class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<h4 class="text-headline-sm font-headline-sm text-text-primary">Employees' Provident Fund</h4>
+<span class="px-1.5 py-0.2 bg-profit-emerald/15 text-profit-emerald text-[9px] rounded font-medium">EPFO</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted flex items-center gap-1">
+                UAN: <span class="font-mono text-text-secondary">101489238472</span>
+<span class="material-symbols-outlined text-[12px] text-primary cursor-pointer hover:text-text-primary" title="Copy UAN">content_copy</span>
+</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-body-sm font-body-sm text-text-muted">Balance</span>
+<div class="text-headline-sm font-headline-sm font-semibold text-text-primary num-tabular">₹24,80,250</div>
+</div>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm px-2 py-1.5 bg-surface-layer-2 rounded-lg border border-border-subtle/80">
+<span class="text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-profit-emerald" style="font-variation-settings: 'FILL' 1;">verified</span>
+            Interest Rate
+          </span>
+<span class="text-profit-emerald font-semibold num-tabular">8.25% p.a. (Govt Guaranteed FY25-26)</span>
+</div>
+<!-- Sub-ledger Pills -->
+<div class="grid grid-cols-3 gap-1.5 text-center">
+<div class="p-1.5 rounded bg-surface-container-low border border-border-subtle">
+<div class="text-[9px] text-text-muted">Employee Share</div>
+<div class="text-label-md font-label-md font-semibold text-text-primary num-tabular">₹11.40 L</div>
+</div>
+<div class="p-1.5 rounded bg-surface-container-low border border-border-subtle">
+<div class="text-[9px] text-text-muted">Employer Share</div>
+<div class="text-label-md font-label-md font-semibold text-text-primary num-tabular">₹11.20 L</div>
+</div>
+<div class="p-1.5 rounded bg-surface-container-low border border-border-subtle">
+<div class="text-[9px] text-text-muted">EPS Pension Fund</div>
+<div class="text-label-md font-label-md font-semibold text-text-primary num-tabular">₹2.20 L</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-border-subtle/60 text-label-sm font-label-sm">
+<span class="text-text-muted text-[11px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-profit-emerald">sync</span>
+            Synced 2 hrs ago
+          </span>
+<div class="flex items-center gap-1.5 text-primary text-[11px] font-medium">
+<span>EPFO Direct Sync Active</span>
+<span class="w-2 h-2 rounded-full bg-profit-emerald inline-block"></span>
+</div>
+</div>
+</article>
+<!-- CARD 2: NPS TIER 1 -->
+<article class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">assured_workload</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<h4 class="text-headline-sm font-headline-sm text-text-primary">NPS Tier 1</h4>
+<span class="px-1.5 py-0.2 bg-primary/20 text-primary text-[9px] rounded font-medium">Market-Linked</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted">HDFC Pension • PRAN: 110092837461</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-body-sm font-body-sm text-text-muted">NAV Valuation</span>
+<div class="text-headline-sm font-headline-sm font-semibold text-text-primary num-tabular">₹16,95,590</div>
+</div>
+</div>
+<!-- Scheme Allocation & 1Y Return -->
+<div class="p-2.5 rounded-lg bg-surface-layer-2 border border-border-subtle space-y-2">
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-text-secondary">Asset Allocation (Auto Mod)</span>
+<span class="text-profit-emerald font-semibold num-tabular">+13.4% 1Y Return</span>
+</div>
+<div class="grid grid-cols-3 gap-2 text-center text-label-sm font-label-sm">
+<div class="p-1 rounded bg-surface-container-low border border-border-subtle">
+<span class="text-text-muted text-[10px]">Equity (E)</span>
+<p class="text-text-primary font-medium num-tabular">60%</p>
+</div>
+<div class="p-1 rounded bg-surface-container-low border border-border-subtle">
+<span class="text-text-muted text-[10px]">Corp Debt (C)</span>
+<p class="text-text-primary font-medium num-tabular">25%</p>
+</div>
+<div class="p-1 rounded bg-surface-container-low border border-border-subtle">
+<span class="text-text-muted text-[10px]">Govt Sec (G)</span>
+<p class="text-text-primary font-medium num-tabular">15%</p>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-profit-emerald flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[14px]">savings</span>
+            Sec 80CCD(1B) Maximized (₹50k claimed)
+          </span>
+<span class="text-primary text-[11px] font-medium flex items-center gap-0.5">
+            Holdings <span class="material-symbols-outlined text-[13px]">chevron_right</span>
+</span>
+</div>
+</article>
+<!-- CARD 3: PUBLIC PROVIDENT FUND -->
+<article class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<h4 class="text-headline-sm font-headline-sm text-text-primary">Public Provident Fund</h4>
+<span class="px-1.5 py-0.2 bg-tertiary/20 text-tertiary text-[9px] rounded font-medium">Sovereign EEE</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted">SBI • A/c: PPF-8492019482</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-body-sm font-body-sm text-text-muted">Balance</span>
+<div class="text-headline-sm font-headline-sm font-semibold text-text-primary num-tabular">₹6,50,000</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-label-sm font-label-sm">
+<div class="p-2 bg-surface-layer-2 rounded-lg border border-border-subtle">
+<span class="text-text-muted text-[10px] block">Interest Yield</span>
+<span class="text-profit-emerald font-semibold num-tabular">7.10% p.a. Compounded</span>
+</div>
+<div class="p-2 bg-surface-layer-2 rounded-lg border border-border-subtle">
+<span class="text-text-muted text-[10px] block">Maturity Timeline</span>
+<span class="text-text-primary font-medium">Oct 2033 (8y remain)</span>
+</div>
+</div>
+<div class="p-2 bg-surface-container-low rounded-lg border border-border-subtle space-y-1.5">
+<div class="flex justify-between text-label-sm font-label-sm">
+<span class="text-text-secondary">FY25-26 Contribution Limit</span>
+<span class="text-profit-emerald font-semibold num-tabular">₹1.50 L / ₹1.50 L (100%)</span>
+</div>
+<div class="w-full bg-surface-layer-2 h-1.5 rounded-full overflow-hidden">
+<div class="bg-profit-emerald h-full w-full"></div>
+</div>
+</div>
+</article>
+<!-- CARD 4: NPS TIER 2 / VPF ACCELERATOR -->
+<article class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<h4 class="text-body-md font-body-md font-semibold text-text-primary">Voluntary PF (VPF) Add-on</h4>
+<span class="text-[9px] px-1 bg-primary/10 text-primary border border-primary/20 rounded">8.25% Tax-Free</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted">₹5,000/mo auto-deduct active from salary</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-profit-emerald font-medium">Active</span>
+<button aria-label="Toggle VPF" class="w-8 h-5 bg-profit-emerald rounded-full relative p-0.5 transition-colors focus:outline-none">
+<div class="w-4 h-4 bg-background-root rounded-full shadow-sm ml-auto"></div>
+</button>
+</div>
+</article>
+</section>
+<!-- 3. RETIREMENT CORPUS & PENSION PROJECTOR AT AGE 60 -->
+<section class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">insights</span>
+<h3 class="text-headline-sm font-headline-sm text-text-primary">Pension Projector at Age 60</h3>
+</div>
+<span class="text-label-sm font-label-sm text-primary font-medium">Age 34 → 60 (26 Yrs)</span>
+</div>
+<div class="p-3 bg-surface-layer-2 rounded-xl border border-border-subtle space-y-2">
+<div class="flex justify-between items-baseline">
+<span class="text-label-md font-label-md text-text-secondary">Projected Nominal Corpus</span>
+<span class="text-headline-lg font-headline-lg text-profit-emerald font-bold num-tabular">₹3.82 Cr</span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted">Assumes 10% annual salary step-up &amp; current blended returns</p>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="p-2.5 bg-surface-container-low rounded-lg border border-border-subtle">
+<span class="text-text-muted text-[11px] block">Monthly Annuity</span>
+<span class="text-headline-sm font-headline-sm font-semibold text-text-primary num-tabular">₹89,250/mo</span>
+<span class="text-[10px] text-text-muted block mt-0.5">40% NPS at 6.5% rate</span>
+</div>
+<div class="p-2.5 bg-surface-container-low rounded-lg border border-border-subtle">
+<span class="text-text-muted text-[11px] block">Tax-Free Lump Sum</span>
+<span class="text-headline-sm font-headline-sm font-semibold text-text-primary num-tabular">₹2.29 Cr</span>
+<span class="text-[10px] text-text-muted block mt-0.5">60% NPS + EPF/PPF</span>
+</div>
+</div>
+<div class="px-2.5 py-1.5 rounded-lg bg-surface-layer-2 flex items-center justify-between text-label-sm font-label-sm border border-border-subtle/60">
+<span class="text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-warning-amber">monetization_on</span>
+          Inflation-Adjusted Value (6% CPI)
+        </span>
+<span class="text-text-primary font-medium num-tabular">₹1.18 Cr Equivalent</span>
+</div>
+</section>
+<!-- 4. TAX EXEMPTION & DEDUCTION AUDIT CARD -->
+<section class="rounded-xl p-space-md bg-surface-layer-1 border border-border-subtle space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-profit-emerald text-[20px]">verified_user</span>
+<h3 class="text-headline-sm font-headline-sm text-text-primary">EEE &amp; Salary Perks Tax Audit</h3>
+</div>
+<span class="text-label-sm font-label-sm text-profit-emerald bg-profit-emerald/10 px-2 py-0.5 rounded font-medium">FY 2025-26</span>
+</div>
+<div class="space-y-1.5 text-body-sm font-body-sm">
+<div class="flex justify-between items-center py-1 border-b border-border-subtle/50">
+<span class="text-text-secondary">Sec 80C (EPF Employee + PPF)</span>
+<span class="font-medium text-text-primary num-tabular">₹1,50,000 / ₹1,50,000</span>
+</div>
+<div class="flex justify-between items-center py-1 border-b border-border-subtle/50">
+<span class="text-text-secondary">Sec 80CCD(1B) (NPS Self Additional)</span>
+<span class="font-medium text-text-primary num-tabular">₹50,000 / ₹50,000</span>
+</div>
+<div class="flex justify-between items-center py-1 border-b border-border-subtle/50">
+<span class="text-text-secondary">Sec 80CCD(2) (Employer 10% NPS)</span>
+<span class="font-medium text-text-primary num-tabular">₹1,20,000 Utilized</span>
+</div>
+</div>
+<!-- Highlight Banner -->
+<div class="p-2.5 rounded-lg bg-surface-layer-2 border border-profit-emerald/20 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-profit-emerald text-[18px]">receipt_long</span>
+<div>
+<div class="text-label-sm font-label-sm text-text-secondary">Total Direct Tax Saved</div>
+<div class="text-headline-sm font-headline-sm text-profit-emerald font-bold num-tabular">₹1,02,960 Saved</div>
+</div>
+</div>
+<span class="text-[11px] text-text-muted text-right">Computed at 30% slab rate</span>
+</div>
+</section>
+<!-- 5. ACTION BUTTONS & SUCCESSION LINK -->
+<section class="space-y-2 pt-1">
+<button aria-label="Download Consolidated Dossier" class="w-full py-2.5 px-4 rounded-lg bg-surface-layer-1 border border-border-subtle hover:bg-surface-layer-2 text-text-primary text-body-md font-body-md font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px] text-primary">download</span>
+<span>Download Consolidated PF &amp; NPS Dossier</span>
+</button>
+<div class="p-2.5 rounded-lg bg-surface-layer-1 border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-profit-emerald/10 border border-profit-emerald/30 flex items-center justify-center text-profit-emerald">
+<span class="material-symbols-outlined text-[16px]">how_to_reg</span>
+</div>
+<div>
+<div class="text-label-md font-label-md font-medium text-text-primary">Family Safe Nominee Protection</div>
+<div class="text-label-sm font-label-sm text-text-muted">100% Assigned to Spouse (Priya Sharma)</div>
+</div>
+</div>
+<button class="text-primary text-label-sm font-label-sm font-semibold hover:underline flex items-center">
+          Edit <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Wealth Desk Standard Shell) -->
+<nav aria-label="Main Navigation" class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 border-t border-border-subtle">
+<!-- Item 1: Dashboard -->
+<button aria-label="Dashboard" class="flex flex-col items-center justify-center text-text-secondary py-1 hover:text-text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</button>
+<!-- Item 2: Portfolio (ACTIVE) -->
+<button aria-label="Portfolio" class="flex flex-col items-center justify-center text-primary font-medium py-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="text-label-sm font-label-sm mt-0.5 font-semibold">Portfolio</span>
+</button>
+<!-- Item 3: Cashflow -->
+<button aria-label="Cashflow" class="flex flex-col items-center justify-center text-text-secondary py-1 hover:text-text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Cashflow</span>
+</button>
+<!-- Item 4: Family Safe -->
+<button aria-label="Family Safe" class="flex flex-col items-center justify-center text-text-secondary py-1 hover:text-text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[22px]">shield</span>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</button>
+</nav>
+</body></html>
