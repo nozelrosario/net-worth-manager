@@ -25,6 +25,22 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.0) - Dedicated Retirement & Pension Hub (EPF, VPF, PPF & NPS) (Issue #23)
+✅ **Retirement & Pension Mathematical Engine (`retirementMath.js`)**:
+  - **EPFO Running Accrual Engine**: Models monthly running balance interest compounding at 8.25% p.a., eliminating the passbook credit lag so users have an up-to-date real-time net worth figure throughout the financial year.
+  - **NPS Look-Through Asset Class Deconstruction**: Deconstructs NPS Tier 1 and Tier 2 holdings into underlying Equity (Class E, up to 75%) vs Fixed Income (Corporate Debt Class C & Govt Sec Class G), feeding directly into the Portfolio Rebalancer for true unskewed asset allocation.
+  - **Age 60 Retirement & Monthly Pension Forecaster**: Projects compound future value accumulation with annual step-up escalation, calculating the PFRDA 60% Tax-Free Lump Sum payout and 40% Mandatory Lifetime Annuity Monthly Pension (at 7.0% annuity yield).
+  - **Tax Exemption & Salary Perk Auditor**: Audits utilization of Section 80C (EPF/PPF up to ₹1.5L), Section 80CCD(1B) (exclusive ₹50,000 NPS Tier 1 deduction), and Section 80CCD(2) (Corporate Employer NPS up to 10% of salary with zero cap under 80C), plus Rule 9D taxable EPF alerts.
+✅ **Granular Dynamic Schemas (`assetSchemas.js` & `DynamicForm.jsx`)**:
+  - First-class `Retirement & Pension` category with tailored sub-types for EPF/VPF, NPS Tier 1, NPS Tier 2, PPF, and Superannuation/Gratuity.
+  - Sub-ledger fields for Employee Share, Employer Share, EPS Pension Fund, PRAN/UAN, PFM picker, and E/C/G asset allocation weights.
+✅ **Interactive UI / UX (`RetirementPlannerModal.jsx`)**:
+  - Full support for dark OLED mode, clean light mode, and responsive desktop/mobile layouts.
+  - Consolidated Hero Card with monthly inflow, accrued interest counter, and debt vs equity progress bar.
+  - Deep Account Cards with copyable UAN/PRAN, sub-ledger tags, and tax verification badges.
+  - Dynamic retirement age and step-up annual escalation sliders with instant pension recalculation.
+  - Direct integration into `HomeTab`, `AssetsTab`, and `SettingsTab`.
+
 ## Feature Update (v2.9) - AI Product Recommendations, Mutual Fund Look-Through & Overlap Radar (Issue #20)
 ✅ **Look-Through & Fund Overlap Radar (`portfolioMath.js` + `PortfolioRebalancerModal.jsx`)**:
   - Analyzes mutual fund and equity holdings to detect inter-scheme duplication (e.g. Flexi Cap + Nifty 50 overlap sharing identical heavyweights: HDFC Bank, ICICI Bank, Reliance, Infosys).

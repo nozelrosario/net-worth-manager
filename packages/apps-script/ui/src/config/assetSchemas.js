@@ -123,17 +123,287 @@ export const assetSchemas = {
       { name: 'Owner', label: 'Owner', type: 'text' }
     ]
   },
+  'Retirement & Pension': {
+    title: 'Retirement & Pension Hub (EPF, PPF & NPS)',
+    fields: [
+      { name: 'Name', label: 'Account Nickname', type: 'text', placeholder: 'e.g. EPFO - TCS, HDFC NPS Tier 1, SBI PPF', required: true },
+      { 
+        name: 'Details JSON.Retirement Type', 
+        label: 'Retirement Instrument Type', 
+        type: 'select', 
+        options: [
+          'EPF / VPF (Employees\' Provident Fund)',
+          'NPS Tier 1 (Pension Corpus)',
+          'NPS Tier 2 (Liquid)',
+          'PPF (Public Provident Fund)',
+          'Superannuation & Gratuity'
+        ],
+        required: true
+      },
+      { name: 'Identifiers', label: 'Account Identifier (UAN / PRAN / PPF A/c #)', type: 'text', placeholder: 'e.g. UAN 101489238472 or PRAN 110092837461' },
+      { name: 'Institution/Location', label: 'Institution / PFM / Bank', type: 'text', placeholder: 'e.g. EPFO, HDFC Pension, State Bank of India' },
+      
+      // Values & Balances
+      { name: 'Cost', label: 'Total Contributions / Invested (₹)', type: 'number' },
+      { name: 'Current Value', label: 'Current Balance / Corpus Value (₹)', type: 'number', required: true },
+      
+      // EPF Specific Fields
+      { 
+        name: 'Details JSON.Member ID', 
+        label: 'EPFO Member ID / Establishment Code', 
+        type: 'text',
+        placeholder: 'e.g. MHBAN00123450000012345',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Employee Share', 
+        label: 'Employee Share Balance (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Employer Share', 
+        label: 'Employer Share Balance (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.EPS Pension Share', 
+        label: 'Pension Fund (EPS) Balance (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Monthly Employee Contribution', 
+        label: 'Monthly Employee Contribution (₹)', 
+        type: 'number',
+        placeholder: 'e.g. 10800',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Monthly Employer Contribution', 
+        label: 'Monthly Employer Contribution (₹)', 
+        type: 'number',
+        placeholder: 'e.g. 10800',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Monthly VPF Contribution', 
+        label: 'Monthly Voluntary PF (VPF) (₹)', 
+        type: 'number',
+        placeholder: 'e.g. 5000',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Interest Rate', 
+        label: 'EPFO Declared Rate (% p.a.)', 
+        type: 'number', 
+        step: '0.01',
+        placeholder: '8.25',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+
+      // NPS Specific Fields
+      { 
+        name: 'Details JSON.Investment Choice', 
+        label: 'NPS Investment Mode', 
+        type: 'select',
+        options: ['Active Choice', 'Auto Choice - Aggressive (LC75)', 'Auto Choice - Moderate (LC50)', 'Auto Choice - Conservative (LC25)'],
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Allocation Equity E', 
+        label: 'Asset Class E - Equity (%) [up to 75%]', 
+        type: 'number',
+        step: '1',
+        placeholder: '60',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Allocation Corp Debt C', 
+        label: 'Asset Class C - Corporate Debt (%)', 
+        type: 'number',
+        step: '1',
+        placeholder: '25',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Allocation Govt Sec G', 
+        label: 'Asset Class G - Govt Securities (%)', 
+        type: 'number',
+        step: '1',
+        placeholder: '15',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Allocation Alternative A', 
+        label: 'Asset Class A - Alternative Inv (%)', 
+        type: 'number',
+        step: '1',
+        placeholder: '0',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Monthly Self SIP', 
+        label: 'Monthly Self SIP (Sec 80CCD 1B) (₹)', 
+        type: 'number',
+        placeholder: 'e.g. 5000',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Monthly Employer 80CCD2', 
+        label: 'Monthly Employer Perk (Sec 80CCD 2) (₹)', 
+        type: 'number',
+        placeholder: 'e.g. 7500',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+
+      // PPF Specific Fields
+      { 
+        name: 'Details JSON.FY Deposit Amount', 
+        label: 'Deposited in Current FY (₹) [Max ₹1.5L for 80C]', 
+        type: 'number',
+        placeholder: 'e.g. 150000',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('PPF')
+      },
+      { 
+        name: 'Acquisition Date', 
+        label: 'Account Opening Date', 
+        type: 'date',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('PPF')
+      },
+      { 
+        name: 'Details JSON.Maturity Date', 
+        label: '15-Year Maturity Date', 
+        type: 'date',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('PPF')
+      },
+      { 
+        name: 'Details JSON.Extension Block', 
+        label: 'Maturity Extension Block', 
+        type: 'select',
+        options: ['Original 15 Years', 'Block 1 (16-20 Years)', 'Block 2 (21-25 Years)', 'Block 3 (26-30 Years)'],
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('PPF')
+      },
+      { 
+        name: 'Details JSON.Interest Rate', 
+        label: 'PPF Interest Rate (% p.a.)', 
+        type: 'number', 
+        step: '0.01',
+        placeholder: '7.10',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('PPF')
+      },
+
+      // Superannuation & Gratuity
+      { 
+        name: 'Details JSON.Tenure Years', 
+        label: 'Tenure of Service (Years)', 
+        type: 'number',
+        step: '0.5',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('Gratuity') || (fd['Details JSON']?.['Retirement Type'] || '').includes('Superannuation')
+      },
+      { 
+        name: 'Details JSON.Monthly Basic', 
+        label: 'Last Drawn Monthly Basic + DA (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('Gratuity')
+      },
+
+      { name: 'Owner', label: 'Owner / Primary Member', type: 'text' },
+      { name: 'Nominee', label: 'Nominee Name & Relationship', type: 'text' }
+    ]
+  },
   'Provident Funds': {
     title: 'Provident Funds & NPS',
     fields: [
-      { name: 'Name', label: 'Account Nickname', type: 'text', required: true },
-      { name: 'Details JSON.Fund Type', label: 'Type', type: 'select', options: ['EPF', 'PPF', 'NPS Tier 1', 'NPS Tier 2'] },
-      { name: 'Identifiers', label: 'Account Number (UAN/PRAN)', type: 'text' },
-      { name: 'Institution/Location', label: 'Institution', type: 'text', placeholder: 'e.g. EPFO, Post Office' },
-      { name: 'Cost', label: 'Total Contributions', type: 'number' },
-      { name: 'Current Value', label: 'Current Balance', type: 'number', required: true },
-      { name: 'Details JSON.Monthly Contribution', label: 'Monthly Contribution', type: 'number' },
-      { name: 'Details JSON.Maturity Date', label: 'Maturity / Lock-in Expiry Date', type: 'date' },
+      { name: 'Name', label: 'Account Nickname', type: 'text', placeholder: 'e.g. EPFO - TCS, HDFC NPS Tier 1, SBI PPF', required: true },
+      { 
+        name: 'Details JSON.Retirement Type', 
+        label: 'Retirement Instrument Type', 
+        type: 'select', 
+        options: [
+          'EPF / VPF (Employees\' Provident Fund)',
+          'NPS Tier 1 (Pension Corpus)',
+          'NPS Tier 2 (Liquid)',
+          'PPF (Public Provident Fund)',
+          'Superannuation & Gratuity'
+        ],
+        required: true
+      },
+      { name: 'Identifiers', label: 'Account Identifier (UAN / PRAN / PPF A/c #)', type: 'text', placeholder: 'e.g. UAN 101489238472 or PRAN 110092837461' },
+      { name: 'Institution/Location', label: 'Institution / PFM / Bank', type: 'text', placeholder: 'e.g. EPFO, HDFC Pension, State Bank of India' },
+      { name: 'Cost', label: 'Total Contributions / Invested (₹)', type: 'number' },
+      { name: 'Current Value', label: 'Current Balance / Corpus Value (₹)', type: 'number', required: true },
+      
+      // EPF
+      { 
+        name: 'Details JSON.Monthly Employee Contribution', 
+        label: 'Monthly Employee Contribution (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Monthly Employer Contribution', 
+        label: 'Monthly Employer Contribution (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Monthly VPF Contribution', 
+        label: 'Monthly Voluntary PF (VPF) (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('EPF')
+      },
+      { 
+        name: 'Details JSON.Interest Rate', 
+        label: 'Declared Interest Rate (% p.a.)', 
+        type: 'number', 
+        step: '0.01',
+        placeholder: '8.25'
+      },
+
+      // NPS
+      { 
+        name: 'Details JSON.Allocation Equity E', 
+        label: 'Asset Class E - Equity (%) [up to 75%]', 
+        type: 'number',
+        step: '1',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Allocation Corp Debt C', 
+        label: 'Asset Class C - Corporate Debt (%)', 
+        type: 'number',
+        step: '1',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Allocation Govt Sec G', 
+        label: 'Asset Class G - Govt Securities (%)', 
+        type: 'number',
+        step: '1',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+      { 
+        name: 'Details JSON.Monthly Self SIP', 
+        label: 'Monthly Self SIP (Sec 80CCD 1B) (₹)', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('NPS')
+      },
+
+      // PPF
+      { 
+        name: 'Details JSON.FY Deposit Amount', 
+        label: 'Deposited in Current FY (₹) [Max ₹1.5L for 80C]', 
+        type: 'number',
+        condition: (fd) => (fd['Details JSON']?.['Retirement Type'] || '').includes('PPF')
+      },
+      { 
+        name: 'Details JSON.Maturity Date', 
+        label: 'Maturity / Lock-in Expiry Date', 
+        type: 'date'
+      },
+      
       { name: 'Owner', label: 'Owner', type: 'text' },
       { name: 'Nominee', label: 'Nominee Name', type: 'text' }
     ]
