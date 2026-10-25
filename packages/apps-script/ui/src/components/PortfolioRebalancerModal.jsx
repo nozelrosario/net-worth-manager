@@ -20,6 +20,7 @@ import {
   getCuratedProductRecommendations
 } from '../utils/portfolioMath';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
+import { Badge } from './Badge';
 
 export default function PortfolioRebalancerModal({ 
   isOpen, 
@@ -733,19 +734,19 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
                       {/* Status Tag */}
                       {isUnder && (
-                        <span className="text-[10px] font-semibold text-sky-400 bg-sky-400/10 border border-sky-400/20 px-2 py-0.5 rounded-full">
+                        <Badge variant="sky" size="xs">
                           {item.currentPct - item.targetPct}% Underweight
-                        </span>
+                        </Badge>
                       )}
                       {isOver && (
-                        <span className="text-[10px] font-semibold text-liability-rose bg-liability-rose/10 border border-liability-rose/20 px-2 py-0.5 rounded-full">
+                        <Badge variant="rose" size="xs">
                           +{item.currentPct - item.targetPct}% Overweight
-                        </span>
+                        </Badge>
                       )}
                       {!isUnder && !isOver && (
-                        <span className="text-[10px] font-semibold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full">
+                        <Badge variant="emerald" dot size="xs">
                           On Target ({item.targetPct}%)
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -912,9 +913,9 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div>
                 <div className="text-xs font-semibold text-text-primary group-hover:text-primary-accent transition-colors flex items-center gap-1.5">
                   <span>Explore Direct Products & Overlap Radar</span>
-                  <span className="text-[9px] font-bold text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded-full border border-wealth-emerald/20">
+                  <Badge variant="emerald" dot size="xs">
                     New
-                  </span>
+                  </Badge>
                 </div>
                 <div className="text-[10px] text-text-muted">
                   Find mutual funds, ETFs, & SGBs matching your shortfalls
@@ -945,9 +946,9 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-semibold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full font-mono">
+                <Badge variant="emerald" size="xs" className="font-mono">
                   P/E {productIntelligence?.macroRegime?.peRatio || '21.8'}
-                </span>
+                </Badge>
                 <button
                   onClick={() => handleGenerateProductIntelligence(true)}
                   disabled={isLoadingProducts}
@@ -966,13 +967,13 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   <Radar size={16} className="text-bullion-amber animate-pulse" />
                   <h2 className="text-xs font-semibold text-text-primary">Portfolio Look-Through & Overlap</h2>
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                  (productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage) >= 40
-                    ? 'text-liability-rose bg-liability-rose/10 border-liability-rose/20'
-                    : 'text-wealth-emerald bg-wealth-emerald/10 border-wealth-emerald/20'
-                }`}>
+                <Badge 
+                  variant={(productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage) >= 40 ? 'rose' : 'emerald'} 
+                  dot 
+                  size="xs"
+                >
                   {(productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage) >= 40 ? 'High Duplication' : 'Well Diversified'}
-                </span>
+                </Badge>
               </div>
 
               {/* Overlap Alert Card */}
@@ -1044,9 +1045,9 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     {productIntelligence?.taxArbitrageSwitch?.title || "Debt vs Arbitrage Switch"}
                   </h2>
                 </div>
-                <span className="text-[10px] font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full tabular-nums">
+                <Badge variant="emerald" dot size="xs">
                   +₹{Number(productIntelligence?.taxArbitrageSwitch?.potentialSavingsRupees || localTaxArbitrage.potentialSavingsRupees).toLocaleString('en-IN')} / Yr
-                </span>
+                </Badge>
               </div>
 
               <p className="text-[11px] text-text-secondary leading-relaxed">
@@ -1062,9 +1063,9 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   <h3 className="text-xs font-semibold text-text-primary">Curated Direct Product Recommendations</h3>
                   <p className="text-[10px] text-text-muted">Targeted solutions for your underweight shortfall</p>
                 </div>
-                <span className="text-[9px] text-wealth-emerald font-semibold uppercase tracking-wider bg-wealth-emerald/10 px-2 py-0.5 rounded-full border border-wealth-emerald/20">
+                <Badge variant="emerald" size="xs">
                   Zero Commission Direct
-                </span>
+                </Badge>
               </div>
 
               {/* Filter Chips */}
@@ -1105,9 +1106,9 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                           </div>
                           <span className="text-[10px] text-text-muted">{prod.category} • Direct Growth</span>
                         </div>
-                        <span className="text-[9px] font-semibold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <Badge variant="emerald" size="xs">
                           {prod.tag}
-                        </span>
+                        </Badge>
                       </div>
 
                       {/* Stats Grid */}

@@ -11,6 +11,7 @@ import {
   auditRetirementTaxShield,
   RETIREMENT_RATES 
 } from '../utils/retirementMath';
+import { Badge } from './Badge';
 
 export default function RetirementPlannerModal({
   isOpen,
@@ -123,10 +124,9 @@ export default function RetirementPlannerModal({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wealth-emerald/10 border border-wealth-emerald/25 text-[10px] md:text-xs text-wealth-emerald font-semibold shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
-              <span>EEE Tax-Shield</span>
-            </span>
+            <Badge variant="emerald" dot pulse size="sm">
+              EEE Tax-Shield
+            </Badge>
           </div>
         </header>
 
@@ -140,10 +140,9 @@ export default function RetirementPlannerModal({
                 <Landmark size={14} className="text-primary-accent" />
                 Consolidated Retirement Corpus
               </span>
-              <span className="text-[10px] md:text-xs font-medium text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <TrendingUp size={12} />
+              <Badge variant="emerald" size="xs" icon={<TrendingUp size={12} />}>
                 +{formatCurrency(retirementSummary.totalMonthlyInflow)}/mo Inflow
-              </span>
+              </Badge>
             </div>
 
             <div className="text-2xl md:text-4xl font-extrabold tracking-tight text-text-primary tabular-nums flex items-baseline gap-2">
@@ -293,9 +292,11 @@ export default function RetirementPlannerModal({
                       <div className="text-xs md:text-sm font-bold text-text-primary tabular-nums">
                         {formatCurrency(acc.currentValue)}
                       </div>
-                      <span className="inline-block text-[10px] font-semibold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-1.5 py-0.2 rounded-full mt-0.5">
-                        {acc.rate}% p.a.
-                      </span>
+                      <div className="mt-0.5">
+                        <Badge variant="emerald" size="xs">
+                          {acc.rate}% p.a.
+                        </Badge>
+                      </div>
                     </div>
                   </div>
 
@@ -385,9 +386,9 @@ export default function RetirementPlannerModal({
                   <p className="text-[10px] md:text-xs text-text-muted">Deterministic compound accumulation with step-up</p>
                 </div>
               </div>
-              <span className="text-[10px] md:text-xs font-semibold text-primary-accent bg-primary-accent/10 border border-primary-accent/25 px-2.5 py-0.5 rounded-full">
+              <Badge variant="indigo" size="xs">
                 {projection.yearsToRetire} Yrs Horizon
-              </span>
+              </Badge>
             </div>
 
             {/* Projected Metric Big Cards */}
@@ -484,9 +485,9 @@ export default function RetirementPlannerModal({
                   <p className="text-[10px] md:text-xs text-text-muted">Indian Income Tax Act Deductions</p>
                 </div>
               </div>
-              <span className="text-[10px] md:text-xs font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2.5 py-0.5 rounded-full tabular-nums">
+              <Badge variant="emerald" dot size="xs">
                 {formatCurrency(taxAudit.estimatedTaxSaved)} Direct Tax Saved
-              </span>
+              </Badge>
             </div>
 
             <div className="space-y-3 pt-1">

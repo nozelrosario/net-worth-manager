@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
+import { Badge } from '../components/Badge';
 
 export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer, onOpenRetirementPlanner }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
@@ -256,9 +257,9 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
                <Sparkles size={18} className="text-wealth-emerald" />
                <h3 className="font-semibold text-sm">AI Portfolio Advisor & Targets</h3>
             </div>
-            <span className="text-[10px] font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-2 py-0.5 rounded-full">
-              Zero Tax Inflow Engine
-            </span>
+            <Badge variant="emerald" dot size="xs">
+              Zero Tax Inflow
+            </Badge>
          </div>
 
          <p className="text-xs text-text-secondary leading-relaxed mb-4">
@@ -369,7 +370,7 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
               <div key={i} className="flex flex-col gap-1 p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
                  <div className="flex items-center justify-between">
                     <span className="font-semibold text-text-primary text-sm">{member.name}</span>
-                    <span className="text-[10px] uppercase tracking-wider bg-surface-layer1 border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">{member.role}</span>
+                    <Badge variant="neutral" size="xs">{member.role}</Badge>
                  </div>
                  <span className="text-xs text-text-muted">{member.emails}</span>
               </div>
@@ -416,7 +417,7 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-text-primary text-sm">{p.Name}</span>
-                        {p.Relation && <span className="text-[10px] uppercase tracking-wider bg-surface-layer1 border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">{p.Relation}</span>}
+                        {p.Relation && <Badge variant="neutral" size="xs">{p.Relation}</Badge>}
                       </div>
                       <button onClick={() => handleEditClick(p)} className="text-text-muted hover:text-primary-accent p-1"><Edit2 size={14} /></button>
                    </div>
