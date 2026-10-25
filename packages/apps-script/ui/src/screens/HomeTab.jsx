@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight } from 'lucide-react';
+import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight, Landmark } from 'lucide-react';
 import { calculatePortfolioAlignment, RISK_PROFILES } from '../utils/portfolioMath';
 
-export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
+export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpenRetirementPlanner }) {
   const assets = data?.assets || [];
   const settings = data?.settings || [];
 
@@ -26,10 +26,26 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
   const property = assets.filter(a => a.Category === 'Real Estate').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const gold = assets.filter(a => a.Category === 'Gold').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const cash = assets.filter(a => a.Category === 'Cash/FD').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
+  const retirement = assets.filter(a => 
+    a.Category === 'Retirement & Pension' || 
+    a.Category === 'Provident Funds' ||
+    (a.Category || '').toLowerCase().includes('retire') ||
+    (a.Category || '').toLowerCase().includes('provident') ||
+    (a.Category || '').toLowerCase().includes('epf') ||
+    (a.Category || '').toLowerCase().includes('ppf') ||
+    (a.Category || '').toLowerCase().includes('nps')
+  ).reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const liabilities = assets.filter(a => a.Category === 'Liabilities').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
-  const otherAssets = assets.filter(a => !['Equity', 'Mutual Funds', 'Real Estate', 'Gold', 'Cash/FD', 'Liabilities'].includes(a.Category)).reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
+  const otherAssets = assets.filter(a => 
+    !['Equity', 'Mutual Funds', 'Real Estate', 'Gold', 'Cash/FD', 'Liabilities', 'Retirement & Pension', 'Provident Funds'].includes(a.Category) &&
+    !(a.Category || '').toLowerCase().includes('retire') &&
+    !(a.Category || '').toLowerCase().includes('provident') &&
+    !(a.Category || '').toLowerCase().includes('epf') &&
+    !(a.Category || '').toLowerCase().includes('ppf') &&
+    !(a.Category || '').toLowerCase().includes('nps')
+  ).reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   
-  const totalGrossAssets = equity + mf + property + gold + cash + otherAssets;
+  const totalGrossAssets = equity + mf + property + gold + cash + retirement + otherAssets;
   const totalNetWorth = totalGrossAssets - liabilities;
 
   const totalForBar = totalGrossAssets || 1;
@@ -38,6 +54,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
   const pPct = (property / totalForBar) * 100;
   const gPct = (gold / totalForBar) * 100;
   const cPct = (cash / totalForBar) * 100;
+  const retPct = (retirement / totalForBar) * 100;
   const oPct = (otherAssets / totalForBar) * 100;
 
   // Live Market Portfolio Returns Calculation
@@ -87,6 +104,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
           <div className="bg-teal-500" style={{width: `${pPct}%`}} title={`Property: ${pPct.toFixed(1)}%`}></div>
           <div className="bg-bullion-amber" style={{width: `${gPct}%`}} title={`Gold: ${gPct.toFixed(1)}%`}></div>
           <div className="bg-wealth-emerald" style={{width: `${cPct}%`}} title={`Cash/FD: ${cPct.toFixed(1)}%`}></div>
+          {retPct > 0 && <div className="bg-sky-500" style={{width: `${retPct}%`}} title={`Retirement: ${retPct.toFixed(1)}%`}></div>}
           {oPct > 0 && <div className="bg-purple-500" style={{width: `${oPct}%`}} title={`Other: ${oPct.toFixed(1)}%`}></div>}
         </div>
         
@@ -96,9 +114,49 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer }) {
           <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-bullion-amber"></span><span className="text-text-secondary">Gold: {formatCurrency(gold)}</span></div>
           <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500"></span><span className="text-text-secondary">Property: {formatCurrency(property)}</span></div>
           <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-wealth-emerald"></span><span className="text-text-secondary">Cash/FD: {formatCurrency(cash)}</span></div>
+          {retirement > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-500"></span><span className="text-text-secondary">Retirement: {formatCurrency(retirement)}</span></div>}
           {liabilities > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-liability-rose"></span><span className="text-liability-rose">Liabilities: -{formatCurrency(liabilities)}</span></div>}
         </div>
       </div>
+
+      {/* Retirement & Pension Hub Banner */}
+      {onOpenRetirementPlanner && (
+        <div 
+          onClick={onOpenRetirementPlanner}
+          className="bg-surface-layer1 border border-border-subtle hover:border-sky-500/40 rounded-xl p-4 shadow-sm relative overflow-hidden cursor-pointer transition-all active:scale-[0.99] group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400 border border-sky-500/25 shadow-sm">
+                <Landmark size={16} />
+              </div>
+              <div>
+                <h3 className="text-xs font-semibold text-text-primary group-hover:text-sky-400 transition-colors flex items-center gap-1.5">
+                  Retirement &amp; Pension Hub
+                  <span className="text-[9px] font-bold text-wealth-emerald bg-wealth-emerald/10 border border-wealth-emerald/20 px-1.5 py-0.2 rounded-full">
+                    8.25% EPF • NPS
+                  </span>
+                </h3>
+                <p className="text-[10px] text-text-muted">Running balance accrual, Age 60 forecaster &amp; tax perks</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-sky-400">
+              <span>View Hub</span>
+              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-text-secondary text-[11px]">Retirement Corpus:</span>
+              <span className="font-bold text-sky-400 tabular-nums">{formatCurrency(retirement)}</span>
+            </div>
+            <span className="text-[10px] text-wealth-emerald font-medium bg-wealth-emerald/10 px-2 py-0.5 rounded-full border border-wealth-emerald/20">
+              EEE Tax-Shielded
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* AI Portfolio Advisor & Rebalance Banner */}
       {onOpenRebalancer && (
