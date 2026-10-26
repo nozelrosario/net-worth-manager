@@ -101,3 +101,162 @@ function trashDriveFile(fileId, idToken) {
     return { status: 'error', message: err.toString() };
   }
 }
+
+/**
+ * Scans Google Drive for SMS Backup & Restore XML files.
+ * Identifies the configured folder (defaults to 'SMSBackupRestore'),
+ * locates the most recent .xml backup file, and returns file metadata + content.
+ */
+function scanDriveForSmsBackup(folderName, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var targetFolder = folderName || 'SMSBackupRestore';
+    var folders = DriveApp.getFoldersByName(targetFolder);
+    var folder = null;
+
+    if (folders.hasNext()) {
+      folder = folders.next();
+    } else {
+      // Check Net Worth Manager subfolders
+      var nwmFolders = DriveApp.getFoldersByName('Net Worth Manager');
+      if (nwmFolders.hasNext()) {
+        var nwm = nwmFolders.next();
+        var subFolders = nwm.getFoldersByName('SMS Backups');
+        if (subFolders.hasNext()) {
+          folder = subFolders.next();
+        }
+      }
+    }
+
+    if (!folder) {
+      return {
+        status: 'not_found',
+        message: 'Google Drive folder "' + targetFolder + '" was not found. Please ensure the backup app has exported to this folder.'
+      };
+    }
+
+    var files = folder.getFiles();
+    var latestFile = null;
+    var latestDate = 0;
+    var totalXmlFiles = 0;
+
+    while (files.hasNext()) {
+      var file = files.next();
+      var name = file.getName();
+      if (name.toLowerCase().indexOf('.xml') !== -1) {
+        totalXmlFiles++;
+        var updated = file.getLastUpdated().getTime();
+        if (updated > latestDate) {
+          latestDate = updated;
+          latestFile = file;
+        }
+      }
+    }
+
+    if (!latestFile) {
+      return {
+        status: 'no_backups',
+        message: 'No .xml backup files found in Drive folder "' + folder.getName() + '".'
+      };
+    }
+
+    var content = latestFile.getBlob().getDataAsString();
+
+    return {
+      status: 'success',
+      folderName: folder.getName(),
+      fileName: latestFile.getName(),
+      fileSize: latestFile.getSize(),
+      lastModified: latestFile.getLastUpdated().toISOString(),
+      totalXmlFiles: totalXmlFiles,
+      xmlContent: content
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Batch imports verified SMS transactions into the Transactions sheet
+ * and updates the SmsLastProcessedDate in the Settings sheet.
+ */
+function batchImportSmsTransactions(transactions, lastProcessedEpoch, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    if (!transactions || !transactions.length) {
+      return { status: 'error', message: 'No transactions provided for import.' };
+    }
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Transactions');
+    if (!sheet) {
+      setupDatabaseSheets();
+      sheet = ss.getSheetByName('Transactions');
+      if (!sheet) return { status: 'error', message: 'Transactions sheet not found' };
+    }
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var rowsToAdd = [];
+
+    for (var i = 0; i < transactions.length; i++) {
+      var t = transactions[i];
+      var row = [];
+      var txnId = t['Txn ID'] || ('TXN_' + Utilities.getUuid().replace(/-/g, '').slice(0, 12).toUpperCase());
+
+      for (var h = 0; h < headers.length; h++) {
+        var header = headers[h];
+        if (header === 'Txn ID') {
+          row.push(txnId);
+        } else if (header === 'Date') {
+          row.push(t.Date || t.dateStr || new Date().toISOString().split('T')[0]);
+        } else if (header === 'Type') {
+          row.push(t.Type || t.type || 'Expense');
+        } else if (header === 'Amount') {
+          row.push(Number(t.Amount || t.amount || 0));
+        } else if (header === 'Category') {
+          row.push(t.Category || t.category || 'General');
+        } else if (header === 'Account/Card') {
+          row.push(t['Account/Card'] || t.account || '');
+        } else if (header === 'Merchant/Description') {
+          row.push(t['Merchant/Description'] || t.payee || t.merchant || '');
+        } else if (header === 'Tags') {
+          row.push(t.Tags || t.tags || 'SMS Ingestion');
+        } else if (header === 'Is Transfer') {
+          row.push(t['Is Transfer'] !== undefined ? t['Is Transfer'] : (t.isTransfer || false));
+        } else if (header === 'Split JSON') {
+          row.push(t['Split JSON'] || t.splitJson || '');
+        } else if (header === 'Beneficiary') {
+          row.push(t.Beneficiary || t.beneficiary || '');
+        } else {
+          row.push(t[header] !== undefined ? t[header] : '');
+        }
+      }
+      rowsToAdd.push(row);
+    }
+
+    if (rowsToAdd.length > 0) {
+      var startRow = sheet.getLastRow() + 1;
+      sheet.getRange(startRow, 1, rowsToAdd.length, headers.length).setValues(rowsToAdd);
+    }
+
+    // Update Settings sheet with lastProcessedEpoch
+    if (lastProcessedEpoch) {
+      upsertSetting('SmsLastProcessedDate', String(lastProcessedEpoch), idToken);
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'BATCH_IMPORT_SMS', 'Transactions', 'Imported ' + rowsToAdd.length + ' transactions via SMS ingestion');
+
+    return {
+      status: 'success',
+      importedCount: rowsToAdd.length,
+      message: 'Successfully imported ' + rowsToAdd.length + ' transactions.'
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+

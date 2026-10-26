@@ -22,11 +22,14 @@ import {
   X,
   Calendar,
   Plus,
-  Trash2
+  Trash2,
+  Cloud
 } from 'lucide-react';
+import SmsInboxModal from '../components/SmsInboxModal';
 
 export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage }) {
   const [showLogModal, setShowLogModal] = useState(false);
+  const [showSmsInbox, setShowSmsInbox] = useState(false);
   useModalBack(showLogModal, () => setShowLogModal(false));
   const [editingTxnId, setEditingTxnId] = useState(null);
   
@@ -528,14 +531,25 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
             </button>
           </div>
         </div>
-        <button 
-          type="button"
-          onClick={openAddModal} 
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
-        >
-          <Plus size={14} />
-          <span>Log Spend</span>
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button 
+            type="button"
+            onClick={() => setShowSmsInbox(true)} 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-xs font-semibold shadow-xs transition-all active:scale-95"
+            title="Scan SMS backups from Google Drive or upload XML"
+          >
+            <Cloud size={14} className="text-primary-accent" />
+            <span>SMS Inbox</span>
+          </button>
+          <button 
+            type="button"
+            onClick={openAddModal} 
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
+          >
+            <Plus size={14} />
+            <span>Log Spend</span>
+          </button>
+        </div>
       </div>
 
       {/* Month Navigator Sub-bar */}
@@ -983,6 +997,16 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
            </div>
         </div>
       )}
+
+      {/* SMS Expense & Transfer Review Inbox Modal */}
+      <SmsInboxModal
+        isOpen={showSmsInbox}
+        onClose={() => setShowSmsInbox(false)}
+        data={data}
+        formatCurrency={formatCurrency}
+        showMessage={showMessage}
+        onRefresh={onRefresh}
+      />
     </div>
   );
 }
