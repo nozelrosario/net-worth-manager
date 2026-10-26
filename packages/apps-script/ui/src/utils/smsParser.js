@@ -525,7 +525,8 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
   const existingMap = new Map();
   if (Array.isArray(existingTransactions)) {
     existingTransactions.forEach(t => {
-      const d = String(t.Date || '').trim();
+      let d = String(t.Date || '').trim();
+      if (d.includes('T')) d = d.split('T')[0];
       const a = Math.round(parseFloat(t.Amount || 0) * 100);
       if (d && !isNaN(a)) {
         const k = `${d}_${a}`;

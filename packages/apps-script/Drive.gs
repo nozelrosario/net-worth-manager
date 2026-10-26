@@ -260,8 +260,8 @@ function batchImportSmsTransactions(transactions, lastProcessedEpoch, idToken) {
       sheet.getRange(startRow, 1, rowsToAdd.length, headers.length).setValues(rowsToAdd);
     }
 
-    // Update Settings sheet with lastProcessedEpoch
-    if (lastProcessedEpoch) {
+    // Update Settings sheet with lastProcessedEpoch (only if non-zero watermark provided)
+    if (lastProcessedEpoch && Number(lastProcessedEpoch) > 0) {
       upsertSetting('SmsLastProcessedDate', String(lastProcessedEpoch), idToken);
     }
 

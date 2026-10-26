@@ -58,6 +58,8 @@ export default function SmsInboxModal({
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [expandedCardId, setExpandedCardId] = useState(null);
   const [showRawSmsId, setShowRawSmsId] = useState(null);
+  const [isManualFile, setIsManualFile] = useState(false);
+  const [cachedXml, setCachedXml] = useState(null);
 
   const fileInputRef = useRef(null);
 
@@ -67,8 +69,11 @@ export default function SmsInboxModal({
   }, [defaultFolderName]);
 
   // Process raw XML string into candidate records
-  const processXmlContent = (xmlString, sourceFileName = '') => {
+  const processXmlContent = (xmlString, sourceFileName = '', isManualUpload = false, bypassWatermark = false) => {
     try {
+      setIsManualFile(isManualUpload);
+      setCachedXml({ xmlString, sourceFileName, isManualUpload });
+
       const rawSmsList = parseSmsXml(xmlString);
       if (!rawSmsList || rawSmsList.length === 0) {
         showMessage?.('No SMS messages found in the provided file.', true);
@@ -88,8 +93,13 @@ export default function SmsInboxModal({
         }
       }
 
+      // For manual file uploads or explicit bypass, ignore the automated Drive watermark epoch
+      // so users can inspect and import historical backups at any time.
+      // Database Tier 4 cross-checking against existingTransactions sheet will still prevent duplicate entries.
+      const effectiveEpoch = (isManualUpload || bypassWatermark) ? 0 : lastProcessedEpoch;
+
       // Deduplicate and classify
-      const result = deduplicateAndClassify(rawCandidates, existingTransactions, lastProcessedEpoch);
+      const result = deduplicateAndClassify(rawCandidates, existingTransactions, effectiveEpoch);
       setCandidates(result.candidates);
       setStats(result.stats);
 
@@ -101,9 +111,17 @@ export default function SmsInboxModal({
         setLatestFileName(sourceFileName);
       }
 
-      showMessage?.(
-        `Loaded ${result.candidates.length} transactions (${result.stats.duplicatesFiltered} duplicates filtered)`
-      );
+      if (result.candidates.length > 0) {
+        showMessage?.(
+          `Loaded ${result.candidates.length} transactions (${result.stats.duplicatesFiltered} duplicates filtered)`
+        );
+      } else if (result.stats.duplicatesFiltered > 0) {
+        showMessage?.(
+          `All ${result.stats.duplicatesFiltered} transactions are already imported or filtered as duplicates.`
+        );
+      } else {
+        showMessage?.('No financial debit or credit transactions found in file.', true);
+      }
     } catch (err) {
       console.error('Error processing SMS XML:', err);
       showMessage?.('Failed to parse SMS backup file: ' + err.message, true);
@@ -120,7 +138,7 @@ export default function SmsInboxModal({
         .withSuccessHandler((res) => {
           setIsScanningDrive(false);
           if (res && res.status === 'success' && res.xmlContent) {
-            processXmlContent(res.xmlContent, res.fileName);
+            processXmlContent(res.xmlContent, res.fileName, false /* isManualUpload */);
           } else if (res && res.status === 'not_found') {
             showMessage?.(res.message || 'Google Drive folder not found.', true);
           } else if (res && res.status === 'no_backups') {
@@ -156,7 +174,7 @@ export default function SmsInboxModal({
     reader.onload = (event) => {
       const content = event.target?.result;
       if (typeof content === 'string') {
-        processXmlContent(content, file.name);
+        processXmlContent(content, file.name, true /* isManualUpload */);
       }
     };
     reader.onerror = () => {
@@ -268,12 +286,16 @@ export default function SmsInboxModal({
     setIsImporting(true);
     const token = sessionStorage.getItem('nwm_session_token') || localStorage.getItem('nwm_session_token');
 
-    let maxEpoch = lastProcessedEpoch;
-    targetItems.forEach(t => {
-      if (t.rawDate && t.rawDate > maxEpoch) {
-        maxEpoch = t.rawDate;
-      }
-    });
+    let maxEpoch = 0;
+    // Only advance the Drive sync watermark for automated Drive scans (not manual file uploads)
+    if (!isManualFile) {
+      maxEpoch = lastProcessedEpoch;
+      targetItems.forEach(t => {
+        if (t.rawDate && t.rawDate > maxEpoch) {
+          maxEpoch = t.rawDate;
+        }
+      });
+    }
 
     const formatted = targetItems.map(item => ({
       'Txn ID': `TXN_SMS_${item.rawDate || Date.now()}_${Math.round(item.amount)}`,
@@ -548,22 +570,50 @@ export default function SmsInboxModal({
         {/* 5. EXPANSIVE SCROLLABLE TRANSACTIONS LIST (Takes 80%+ of Viewport) */}
         <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 bg-bg-root">
           {filteredList.length === 0 ? (
-            <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 text-text-muted space-y-2.5">
+            <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 text-text-muted space-y-3">
               <div className="w-12 h-12 rounded-full bg-surface-layer2 flex items-center justify-center text-emerald-500">
                 <CheckCircle2 size={24} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-text-primary">Inbox Clean</h3>
+                <h3 className="text-sm font-bold text-text-primary">
+                  {stats.duplicatesFiltered > 0 ? 'All Transactions Filtered' : 'Inbox Clean'}
+                </h3>
                 <p className="text-xs text-text-muted max-w-xs mt-0.5">
-                  No pending SMS transactions. Tap "Scan Drive" or upload an XML backup to detect spends.
+                  {stats.duplicatesFiltered > 0
+                    ? `${stats.duplicatesFiltered} messages in this backup were already imported or filtered as duplicates.`
+                    : 'No pending SMS transactions. Tap "Scan Drive" or upload an XML backup to detect spends.'}
                 </p>
               </div>
-              <button
-                onClick={handleScanDrive}
-                className="py-1.5 px-3.5 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:opacity-95 shadow-xs transition-all"
-              >
-                Scan Google Drive Now
-              </button>
+
+              {stats.duplicatesFiltered > 0 && cachedXml && (
+                <button
+                  type="button"
+                  onClick={() => processXmlContent(cachedXml.xmlString, cachedXml.sourceFileName, cachedXml.isManualUpload, true)}
+                  className="py-1.5 px-3 rounded-lg border border-primary-accent/40 bg-primary-accent/10 text-primary-accent text-xs font-semibold hover:bg-primary-accent/20 transition-all flex items-center gap-1.5"
+                >
+                  <RefreshCw size={13} />
+                  <span>Show All Records (Bypass Watermark)</span>
+                </button>
+              )}
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="py-1.5 px-3.5 rounded-xl border border-border-subtle bg-surface-layer1 text-text-secondary hover:text-text-primary text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  <Upload size={13} />
+                  <span>Choose File</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleScanDrive}
+                  className="py-1.5 px-3.5 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  <Cloud size={13} />
+                  <span>Scan Drive</span>
+                </button>
+              </div>
             </div>
           ) : (
             filteredList.map((item) => {
