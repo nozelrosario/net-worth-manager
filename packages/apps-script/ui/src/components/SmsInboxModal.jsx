@@ -276,8 +276,8 @@ export default function SmsInboxModal({
     });
 
     const formatted = targetItems.map(item => ({
-      'Txn ID': `TXN_SMS_${item.rawDate}_${Math.round(item.amount)}`,
-      Date: item.dateStr,
+      'Txn ID': `TXN_SMS_${item.rawDate || Date.now()}_${Math.round(item.amount)}`,
+      Date: item.dateStr || item.Date || new Date().toISOString().split('T')[0],
       Type: item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : (item.type === 'Income / Refund' ? 'Income' : 'Expense')),
       Amount: item.amount,
       Category: item.category,
@@ -574,23 +574,33 @@ export default function SmsInboxModal({
               return (
                 <article
                   key={item.id}
-                  className={`rounded-xl p-2.5 sm:p-3 bg-surface-layer1 border transition-all duration-150 shadow-xs ${
-                    isSelected ? 'border-primary-accent/40 bg-surface-layer1' : 'border-border-subtle/80 opacity-95'
+                  className={`rounded-xl p-2.5 sm:p-3 transition-all duration-150 shadow-xs relative overflow-hidden ${
+                    item.type === 'Transfer'
+                      ? 'border-l-[3px] border-l-amber-500'
+                      : item.type === 'Investment'
+                      ? 'border-l-[3px] border-l-emerald-500'
+                      : item.type === 'Income / Refund'
+                      ? 'border-l-[3px] border-l-teal-500'
+                      : 'border-l-[3px] border-l-rose-500'
+                  } ${
+                    isSelected
+                      ? 'bg-primary-accent/[0.06] border-y border-r border-primary-accent/40'
+                      : 'bg-surface-layer1 border-y border-r border-border-subtle/50 dark:border-white/[0.04] hover:bg-surface-layer2/40'
                   }`}
                 >
-                  {/* COMPACT MAIN ROW (~45px) */}
+                  {/* COMPACT MAIN ROW (~48px) */}
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleSingle(item.id)}
-                        className="w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0"
+                        className="w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0 cursor-pointer"
                       />
 
-                      {/* Payee + Bank Pill */}
+                      {/* Payee + Preview + Metadata */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-bold text-text-primary truncate max-w-[150px] sm:max-w-[240px]">
                             {item.payee}
                           </span>
@@ -599,16 +609,29 @@ export default function SmsInboxModal({
                           </span>
                         </div>
 
-                        {/* Date + Tags Line */}
+                        {/* Transaction Preview Text Snippet */}
+                        {(item.previewSnippet || item.body) && (
+                          <p className="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5 max-w-[210px] sm:max-w-md">
+                            "{item.previewSnippet || item.body}"
+                          </p>
+                        )}
+
+                        {/* Date + Category/Tags Line */}
                         <div className="flex items-center gap-1.5 text-[10px] text-text-secondary mt-0.5">
-                          <span className="text-text-muted num-tabular">{item.dateStr}</span>
-                          <span className="text-text-muted">•</span>
+                          <span className="text-text-muted font-mono">{item.dateStr}</span>
+                          <span className="text-text-muted/60">•</span>
                           {item.type === 'Transfer' ? (
                             <span className="text-bullion-amber font-semibold">Transfer</span>
                           ) : item.type === 'Investment' ? (
                             <span className="text-wealth-emerald font-semibold">Investment</span>
                           ) : (
                             <span>{item.category}</span>
+                          )}
+                          {item.refNo && (
+                            <>
+                              <span className="text-text-muted/60 hidden sm:inline">•</span>
+                              <span className="text-text-muted/70 font-mono text-[9px] hidden sm:inline">Ref: {item.refNo}</span>
+                            </>
                           )}
                         </div>
                       </div>
@@ -718,8 +741,8 @@ export default function SmsInboxModal({
                         </button>
                       </div>
 
-                      {/* Payee, Category & Account Inputs */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                      {/* Payee, Date, Category & Account Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-[11px]">
                         <div>
                           <label className="text-[10px] text-text-muted block mb-0.5">Payee / Merchant:</label>
                           <input
@@ -727,6 +750,16 @@ export default function SmsInboxModal({
                             value={item.payee}
                             onChange={(e) => updateCandidate(item.id, { payee: e.target.value })}
                             className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-text-muted block mb-0.5">Date:</label>
+                          <input
+                            type="date"
+                            value={item.dateStr || ''}
+                            onChange={(e) => updateCandidate(item.id, { dateStr: e.target.value, Date: e.target.value })}
+                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-mono focus:ring-1 focus:ring-primary-accent"
                           />
                         </div>
 

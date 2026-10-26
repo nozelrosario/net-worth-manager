@@ -209,30 +209,47 @@ function batchImportSmsTransactions(transactions, lastProcessedEpoch, idToken) {
 
       for (var h = 0; h < headers.length; h++) {
         var header = headers[h];
-        if (header === 'Txn ID') {
+        var hClean = String(header || '').trim();
+        var hLower = hClean.toLowerCase();
+
+        if (hLower === 'txnid' || hLower === 'txn id' || hLower === 'id') {
           row.push(txnId);
-        } else if (header === 'Date') {
-          row.push(t.Date || t.dateStr || new Date().toISOString().split('T')[0]);
-        } else if (header === 'Type') {
+        } else if (hLower === 'date' || hLower === 'transaction date' || hLower === 'txndate') {
+          var dVal = t.Date || t.dateStr || t.date || '';
+          if (!dVal && t.rawDate) {
+            var dNum = Number(t.rawDate);
+            if (!isNaN(dNum)) {
+              if (dNum < 10000000000) dNum *= 1000;
+              var dObj = new Date(dNum);
+              if (!isNaN(dObj.getTime())) {
+                dVal = dObj.getFullYear() + '-' + ('0' + (dObj.getMonth() + 1)).slice(-2) + '-' + ('0' + dObj.getDate()).slice(-2);
+              }
+            }
+          }
+          if (!dVal) {
+            dVal = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd');
+          }
+          row.push(dVal);
+        } else if (hLower === 'type') {
           row.push(t.Type || t.type || 'Expense');
-        } else if (header === 'Amount') {
+        } else if (hLower === 'amount') {
           row.push(Number(t.Amount || t.amount || 0));
-        } else if (header === 'Category') {
+        } else if (hLower === 'category') {
           row.push(t.Category || t.category || 'General');
-        } else if (header === 'Account/Card') {
+        } else if (hLower === 'account/card' || hLower === 'account' || hLower === 'card') {
           row.push(t['Account/Card'] || t.account || '');
-        } else if (header === 'Merchant/Description') {
+        } else if (hLower === 'merchant/description' || hLower === 'merchant' || hLower === 'description') {
           row.push(t['Merchant/Description'] || t.payee || t.merchant || '');
-        } else if (header === 'Tags') {
+        } else if (hLower === 'tags' || hLower === 'tag') {
           row.push(t.Tags || t.tags || 'SMS Ingestion');
-        } else if (header === 'Is Transfer') {
+        } else if (hLower === 'is transfer' || hLower === 'istransfer' || hLower === 'transfer') {
           row.push(t['Is Transfer'] !== undefined ? t['Is Transfer'] : (t.isTransfer || false));
-        } else if (header === 'Split JSON') {
+        } else if (hLower === 'split json' || hLower === 'split') {
           row.push(t['Split JSON'] || t.splitJson || '');
-        } else if (header === 'Beneficiary') {
+        } else if (hLower === 'beneficiary') {
           row.push(t.Beneficiary || t.beneficiary || '');
         } else {
-          row.push(t[header] !== undefined ? t[header] : '');
+          row.push(t[header] !== undefined ? t[header] : (t[hClean] !== undefined ? t[hClean] : ''));
         }
       }
       rowsToAdd.push(row);

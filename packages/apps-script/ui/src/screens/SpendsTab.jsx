@@ -145,7 +145,22 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
   const openEditModal = (txn) => {
     setEditingTxnId(txn['Txn ID']);
-    setNewTxn({ ...txn, Amount: Math.abs(txn.Amount) }); // Amount usually stored/handled depending on type, abs for form
+    let cleanDate = txn.Date || '';
+    if (cleanDate) {
+      if (typeof cleanDate === 'string' && cleanDate.includes('T')) {
+        cleanDate = cleanDate.split('T')[0];
+      } else {
+        const d = new Date(cleanDate);
+        if (!isNaN(d.getTime())) {
+          cleanDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+      }
+    }
+    setNewTxn({ 
+      ...txn, 
+      Date: cleanDate || new Date().toISOString().split('T')[0],
+      Amount: Math.abs(txn.Amount) 
+    }); // Amount usually stored/handled depending on type, abs for form
     setShowLogModal(true);
   };
 

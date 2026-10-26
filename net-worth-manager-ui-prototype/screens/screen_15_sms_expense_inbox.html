@@ -151,19 +151,24 @@
     <main class="flex-1 p-2 sm:p-3 space-y-2" id="txnList">
 
       <!-- CARD 1: INTERNAL TRANSFER -->
-      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border border-border-subtle shadow-xs transition-all space-y-2" data-type="transfers" data-amount="10000">
+      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border-y border-r border-border-subtle/50 dark:border-white/[0.04] border-l-[3px] border-l-amber-500 shadow-xs transition-all space-y-2 overflow-hidden" data-type="transfers" data-amount="10000">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <input type="checkbox" checked class="card-checkbox w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0" onchange="updateSelectionCount()" />
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-text-primary truncate">GRAMINA NOZEL RO</span>
                 <span class="text-[10px] text-text-muted bg-surface-layer2 px-1 rounded font-mono shrink-0">SBI ••4089</span>
               </div>
+              <p class="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5">
+                "UPI A/C X4089 debited by 10000.00 trf to GRAMINA NOZEL RO..."
+              </p>
               <div class="flex items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span class="text-text-muted num-tabular">Today, 11:44 AM</span>
+                <span class="text-text-muted num-tabular font-mono">Today, 11:44 AM</span>
                 <span class="text-text-muted">•</span>
                 <span class="text-bullion-amber font-semibold">⚡ Internal Transfer</span>
+                <span class="text-text-muted">•</span>
+                <span class="text-text-muted/70 font-mono text-[9px]">Ref: 629981173158</span>
               </div>
             </div>
           </div>
@@ -189,12 +194,18 @@
             <button onclick="setClassification(this, 'transfer')" class="flex-1 py-0.5 rounded bg-surface-layer1 shadow-xs text-bullion-amber font-bold">Transfer</button>
             <button onclick="setClassification(this, 'investment')" class="flex-1 py-0.5 rounded text-text-muted">Investment</button>
           </div>
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="text-text-muted">Target Account:</span>
-            <select class="bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
-              <option selected>Gramin Vikas Bank (Savings)</option>
-              <option>HDFC Bank (Salary)</option>
-            </select>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-text-muted block mb-0.5">Date:</span>
+              <input type="date" value="2026-10-26" class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary font-mono" />
+            </div>
+            <div>
+              <span class="text-text-muted block mb-0.5">Target Account:</span>
+              <select class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
+                <option selected>Gramin Vikas Bank (Savings)</option>
+                <option>HDFC Bank (Salary)</option>
+              </select>
+            </div>
           </div>
           <div class="p-1.5 rounded bg-surface-layer2 font-mono text-[9px] text-text-secondary leading-relaxed">
             Dear UPI user A/C X4089 debited by 10000.00 on date 26Oct26 trf to GRAMINA NOZEL RO Refno 629981173158-SBI
@@ -203,17 +214,20 @@
       </article>
 
       <!-- CARD 2: SPEND (LENSKART) -->
-      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border border-border-subtle shadow-xs transition-all space-y-2" data-type="spends" data-amount="7119">
+      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border-y border-r border-border-subtle/50 dark:border-white/[0.04] border-l-[3px] border-l-rose-500 shadow-xs transition-all space-y-2 overflow-hidden" data-type="spends" data-amount="7119">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <input type="checkbox" checked class="card-checkbox w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0" onchange="updateSelectionCount()" />
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-text-primary truncate">Lenskart Solutions</span>
                 <span class="text-[10px] text-text-muted bg-surface-layer2 px-1 rounded font-mono shrink-0">HDFC CC ••3601</span>
               </div>
+              <p class="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5">
+                "Spent Rs.7119 on HDFC Bank Card 3601 at _LENSKART SOLUTION..."
+              </p>
               <div class="flex items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span class="text-text-muted num-tabular">Oct 20, 9:05 PM</span>
+                <span class="text-text-muted num-tabular font-mono">Oct 20, 9:05 PM</span>
                 <span class="text-text-muted">•</span>
                 <span>Shopping &amp; Eyewear</span>
               </div>
@@ -240,12 +254,18 @@
             <button onclick="setClassification(this, 'transfer')" class="flex-1 py-0.5 rounded text-text-muted">Transfer</button>
             <button onclick="setClassification(this, 'investment')" class="flex-1 py-0.5 rounded text-text-muted">Investment</button>
           </div>
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="text-text-muted">Category:</span>
-            <select class="bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
-              <option selected>Shopping & Eyewear</option>
-              <option>Personal Care</option>
-            </select>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-text-muted block mb-0.5">Date:</span>
+              <input type="date" value="2026-10-20" class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary font-mono" />
+            </div>
+            <div>
+              <span class="text-text-muted block mb-0.5">Category:</span>
+              <select class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
+                <option selected>Shopping & Eyewear</option>
+                <option>Personal Care</option>
+              </select>
+            </div>
           </div>
           <div class="p-1.5 rounded bg-surface-layer2 font-mono text-[9px] text-text-secondary leading-relaxed">
             Spent Rs.7119 On HDFC Bank Card 3601 At _LENSKART SOLUTION. On 2026-10-20:21:05:06.
@@ -254,17 +274,20 @@
       </article>
 
       <!-- CARD 3: SPEND (ELECTRICITY) -->
-      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border border-border-subtle shadow-xs transition-all space-y-2" data-type="spends" data-amount="8430">
+      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border-y border-r border-border-subtle/50 dark:border-white/[0.04] border-l-[3px] border-l-rose-500 shadow-xs transition-all space-y-2 overflow-hidden" data-type="spends" data-amount="8430">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <input type="checkbox" checked class="card-checkbox w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0" onchange="updateSelectionCount()" />
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-text-primary truncate">HDFCBPELEC</span>
                 <span class="text-[10px] text-text-muted bg-surface-layer2 px-1 rounded font-mono shrink-0">HDFC CC ••3601</span>
               </div>
+              <p class="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5">
+                "Spent Rs.8430 on HDFC Card 3601 at HDFCBPELEC on 2026-10-23..."
+              </p>
               <div class="flex items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span class="text-text-muted num-tabular">Oct 23, 5:58 PM</span>
+                <span class="text-text-muted num-tabular font-mono">Oct 23, 5:58 PM</span>
                 <span class="text-text-muted">•</span>
                 <span>Utilities &amp; Power</span>
               </div>
@@ -291,12 +314,18 @@
             <button onclick="setClassification(this, 'transfer')" class="flex-1 py-0.5 rounded text-text-muted">Transfer</button>
             <button onclick="setClassification(this, 'investment')" class="flex-1 py-0.5 rounded text-text-muted">Investment</button>
           </div>
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="text-text-muted">Category:</span>
-            <select class="bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
-              <option selected>Electricity & Power</option>
-              <option>Mobile & Internet</option>
-            </select>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-text-muted block mb-0.5">Date:</span>
+              <input type="date" value="2026-10-23" class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary font-mono" />
+            </div>
+            <div>
+              <span class="text-text-muted block mb-0.5">Category:</span>
+              <select class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
+                <option selected>Electricity & Power</option>
+                <option>Mobile & Internet</option>
+              </select>
+            </div>
           </div>
           <div class="p-1.5 rounded bg-surface-layer2 font-mono text-[9px] text-text-secondary leading-relaxed">
             Spent Rs.8430 On HDFC Bank Card 3601 At HDFCBPELEC On 2026-10-23:17:58:06.
@@ -305,17 +334,20 @@
       </article>
 
       <!-- CARD 4: INVESTMENT / LIFE INSURANCE -->
-      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border border-border-subtle shadow-xs transition-all space-y-2" data-type="investments" data-amount="143120">
+      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border-y border-r border-border-subtle/50 dark:border-white/[0.04] border-l-[3px] border-l-emerald-500 shadow-xs transition-all space-y-2 overflow-hidden" data-type="investments" data-amount="143120">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <input type="checkbox" checked class="card-checkbox w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0" onchange="updateSelectionCount()" />
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-text-primary truncate">Life Insurance Corp</span>
                 <span class="text-[10px] text-text-muted bg-surface-layer2 px-1 rounded font-mono shrink-0">SBI ••7735</span>
               </div>
+              <p class="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5">
+                "Thx for INB txn of Rs.143120.34 to LIFE INSUR Ref IGAMKIIZF2..."
+              </p>
               <div class="flex items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span class="text-text-muted num-tabular">Nov 12</span>
+                <span class="text-text-muted num-tabular font-mono">Nov 12</span>
                 <span class="text-text-muted">•</span>
                 <span class="text-wealth-emerald font-semibold">🛡️ Investment / 80C</span>
               </div>
@@ -342,12 +374,18 @@
             <button onclick="setClassification(this, 'transfer')" class="flex-1 py-0.5 rounded text-text-muted">Transfer</button>
             <button onclick="setClassification(this, 'investment')" class="flex-1 py-0.5 rounded bg-surface-layer1 shadow-xs text-wealth-emerald font-bold">Investment</button>
           </div>
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="text-text-muted">Linked Asset:</span>
-            <select class="bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
-              <option selected>LIC Jeevan Labh (Policy #918072402)</option>
-              <option>Kotak Life Policy</option>
-            </select>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-text-muted block mb-0.5">Date:</span>
+              <input type="date" value="2026-11-12" class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary font-mono" />
+            </div>
+            <div>
+              <span class="text-text-muted block mb-0.5">Linked Asset:</span>
+              <select class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
+                <option selected>LIC Jeevan Labh (Policy #918072402)</option>
+                <option>Kotak Life Policy</option>
+              </select>
+            </div>
           </div>
           <div class="p-1.5 rounded bg-surface-layer2 font-mono text-[9px] text-text-secondary leading-relaxed">
             Dear Customer, Thx for INB txn of Rs.143120.34 frm A/c X7735 to LIFE INSUR. Ref IGAMKIIZF2 on 12Nov21.
@@ -356,17 +394,20 @@
       </article>
 
       <!-- CARD 5: SPEND (MONISH ALEX) -->
-      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border border-border-subtle shadow-xs transition-all space-y-2" data-type="spends" data-amount="2987">
+      <article class="txn-card rounded-xl p-2.5 bg-surface-layer1 border-y border-r border-border-subtle/50 dark:border-white/[0.04] border-l-[3px] border-l-rose-500 shadow-xs transition-all space-y-2 overflow-hidden" data-type="spends" data-amount="2987">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <input type="checkbox" checked class="card-checkbox w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0" onchange="updateSelectionCount()" />
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-text-primary truncate">MONISH ALEX CORR</span>
                 <span class="text-[10px] text-text-muted bg-surface-layer2 px-1 rounded font-mono shrink-0">SBI ••4089</span>
               </div>
+              <p class="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5">
+                "UPI A/C X4089 debited by 2987.00 trf to MONISH ALEX CORR..."
+              </p>
               <div class="flex items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span class="text-text-muted num-tabular">Oct 17, 12:26 PM</span>
+                <span class="text-text-muted num-tabular font-mono">Oct 17, 12:26 PM</span>
                 <span class="text-text-muted">•</span>
                 <span>Services / Contractor</span>
               </div>
@@ -392,6 +433,19 @@
             <button onclick="setClassification(this, 'spend')" class="flex-1 py-0.5 rounded bg-surface-layer1 shadow-xs text-liability-rose font-bold">Spend</button>
             <button onclick="setClassification(this, 'transfer')" class="flex-1 py-0.5 rounded text-text-muted">Transfer</button>
             <button onclick="setClassification(this, 'investment')" class="flex-1 py-0.5 rounded text-text-muted">Investment</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-text-muted block mb-0.5">Date:</span>
+              <input type="date" value="2026-10-17" class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary font-mono" />
+            </div>
+            <div>
+              <span class="text-text-muted block mb-0.5">Category:</span>
+              <select class="w-full bg-surface-layer2 border border-border-subtle rounded-md text-[11px] py-0.5 px-2 text-text-primary">
+                <option selected>Services / Contractor</option>
+                <option>Home Maintenance</option>
+              </select>
+            </div>
           </div>
           <div class="p-1.5 rounded bg-surface-layer2 font-mono text-[9px] text-text-secondary leading-relaxed">
             Dear UPI user A/C X4089 debited by 2987.00 on date 17Oct26 trf to MONISH ALEX CORR Refno 629033302894-SBI

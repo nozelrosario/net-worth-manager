@@ -8,6 +8,110 @@
  */
 
 /**
+ * Normalizes and parses raw date metadata (handles timestamps, strings, readable format, or in-body date).
+ */
+export function parseDateRobust(dVal, readableVal = '', bodyText = '') {
+  let d = null;
+  let epoch = 0;
+
+  // 1. If numeric or numeric string (timestamp in ms or s)
+  if (dVal !== undefined && dVal !== null && /^\d+$/.test(String(dVal).trim())) {
+    let num = Number(String(dVal).trim());
+    if (num < 10000000000) num *= 1000; // convert s to ms
+    epoch = num;
+    d = new Date(num);
+  } else if (dVal instanceof Date && !isNaN(dVal.getTime())) {
+    d = dVal;
+    epoch = d.getTime();
+  } else if (dVal) {
+    const parsed = new Date(dVal);
+    if (!isNaN(parsed.getTime())) {
+      d = parsed;
+      epoch = d.getTime();
+    }
+  }
+
+  // 2. Try readableVal if d is still invalid
+  if ((!d || isNaN(d.getTime())) && readableVal) {
+    const parsedReadable = new Date(readableVal);
+    if (!isNaN(parsedReadable.getTime())) {
+      d = parsedReadable;
+      epoch = d.getTime();
+    }
+  }
+
+  // 3. Fallback: Try regex extraction from SMS body if still invalid (e.g. "on 23Jul21", "on 26/07/21", "at 2-08-2021")
+  if ((!d || isNaN(d.getTime())) && bodyText) {
+    const bodyMatch = bodyText.match(/(?:on|at)\s+(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/i) ||
+                      bodyText.match(/(?:on|at)\s+(\d{1,2})\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*(\d{2,4})/i);
+    if (bodyMatch) {
+      if (bodyMatch[2].length >= 3) {
+        const day = bodyMatch[1];
+        const month = bodyMatch[2];
+        let year = bodyMatch[3];
+        if (year.length === 2) year = '20' + year;
+        const candidateDate = new Date(`${day} ${month} ${year}`);
+        if (!isNaN(candidateDate.getTime())) {
+          d = candidateDate;
+          epoch = d.getTime();
+        }
+      } else {
+        const day = bodyMatch[1].padStart(2, '0');
+        const month = bodyMatch[2].padStart(2, '0');
+        let year = bodyMatch[3];
+        if (year.length === 2) year = '20' + year;
+        const candidateDate = new Date(`${year}-${month}-${day}`);
+        if (!isNaN(candidateDate.getTime())) {
+          d = candidateDate;
+          epoch = d.getTime();
+        }
+      }
+    }
+  }
+
+  // 4. Default to current date if completely unparseable
+  if (!d || isNaN(d.getTime())) {
+    d = new Date();
+    epoch = d.getTime();
+  }
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const dateStr = `${yyyy}-${mm}-${dd}`;
+
+  return {
+    epoch,
+    dateStr,
+    readableDate: readableVal || d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  };
+}
+
+/**
+ * Extracts a clean, concise transaction preview text snippet from the SMS body.
+ * Strips out customer care numbers, website links, balance disclaimers, etc.
+ */
+export function extractPreviewSnippet(body = '') {
+  if (!body) return '';
+  let clean = body
+    .replace(/^Dear Customer,?\s*/i, '')
+    .replace(/^Thank you for using\s*/i, '')
+    .replace(/If not (?:done|you)[\s\S]*/i, '')
+    .replace(/Not you\?[\s\S]*/i, '')
+    .replace(/Click\s+https?:\/\/\S+/gi, '')
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/Avl(?:\.| bal| Limit)[\s\S]*/i, '')
+    .replace(/Call\s+\d+[\s\S]*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (clean.length > 95) {
+    clean = clean.slice(0, 92).trim() + '...';
+  }
+  return clean;
+}
+
+/**
  * Parses raw XML string into an array of SMS message objects.
  * Supports both browser DOMParser and fallback regex streaming for high performance.
  */
@@ -17,7 +121,7 @@ export function parseSmsXml(xmlString) {
   const messages = [];
 
   // High-performance streaming regex parser (works universally and in Web Workers)
-  const smsTagRegex = /<sms\s+([^>]+?)\/>/g;
+  const smsTagRegex = /<sms\s+([^>]+?)(?:\/>|>.*?<\/sms>)/g;
   const attrRegex = /([a-zA-Z_0-9]+)="([^"]*)"/g;
   let match;
 
@@ -29,10 +133,11 @@ export function parseSmsXml(xmlString) {
       attrs[attrMatch[1]] = attrMatch[2];
     }
 
-    if (attrs.body && attrs.date) {
+    const rawDate = attrs.date || attrs.date_sent;
+    if (attrs.body && (rawDate || attrs.readable_date)) {
       messages.push({
         address: attrs.address || '',
-        date: parseInt(attrs.date, 10),
+        date: rawDate ? (isNaN(Number(rawDate)) ? rawDate : Number(rawDate)) : Date.now(),
         readableDate: attrs.readable_date || '',
         body: attrs.body,
         type: attrs.type || '1',
@@ -366,18 +471,20 @@ export function extractFinancialCandidate(sms, options = {}) {
   if (type === 'Investment') category = 'Investment / Insurance';
   if (type === 'Income / Refund') category = 'Reversal / Refund';
 
-  // Format date
-  const dateObj = new Date(date);
-  const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toISOString().split('T')[0] : '';
+  // Format robust date & preview snippet
+  const dateInfo = parseDateRobust(date, sms.readableDate, body);
+  const previewSnippet = extractPreviewSnippet(body);
 
   // Generate unique compound ID
-  const cleanId = `${address}_${date}_${Math.round(amount)}`;
+  const cleanId = `${address}_${dateInfo.epoch}_${Math.round(amount)}`;
 
   return {
     id: cleanId,
-    rawDate: date,
-    dateStr,
-    readableDate: sms.readableDate || dateStr,
+    rawDate: dateInfo.epoch,
+    dateStr: dateInfo.dateStr,
+    Date: dateInfo.dateStr, // Convenient sheet header alias
+    readableDate: dateInfo.readableDate,
+    previewSnippet,
     bank,
     account: accountLabel,
     accountDigits,
