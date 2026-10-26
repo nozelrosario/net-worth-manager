@@ -133,11 +133,8 @@ export default function SmsInboxModal({
       setCandidates(result.candidates);
       setStats(result.stats);
 
-      // Select all 'new' candidates by default
-      const initialSelected = new Set(
-        result.candidates.filter(c => c.status === 'new').map(c => c.id)
-      );
-      setSelectedIds(initialSelected);
+      // Start with empty selection by default to prevent accidental batch imports
+      setSelectedIds(new Set());
 
       // Reset to 'new' tab on file load
       setStatusTab('new');
@@ -335,12 +332,7 @@ export default function SmsInboxModal({
     const id = candidate.id;
     const fp = candidate.fingerprint || id;
 
-    setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: 'new', isNew: true, isIgnored: false, selected: true } : c));
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
+    setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: 'new', isNew: true, isIgnored: false, selected: false } : c));
     setIgnoredHashes(prev => prev.filter(h => h !== fp));
     setStats(prev => ({
       ...prev,
@@ -412,10 +404,18 @@ export default function SmsInboxModal({
 
   // Batch import selected transactions
   const handleBatchImport = (itemsToImport) => {
+    const isSingle = Boolean(itemsToImport && itemsToImport.length === 1);
     const targetItems = itemsToImport || candidates.filter(c => selectedIds.has(c.id) && c.status === 'new');
     if (!targetItems || targetItems.length === 0) {
-      showMessage?.('Please select at least one new transaction to import.', true);
+      showMessage?.('Please select at least one transaction to import.', true);
       return;
+    }
+
+    // Safety check: Prompt confirmation when batch importing multiple transactions
+    if (!isSingle && targetItems.length > 1) {
+      if (!window.confirm(`Are you sure you want to import ${targetItems.length} selected transactions into your ledger?`)) {
+        return;
+      }
     }
 
     setIsImporting(true);
@@ -1250,12 +1250,19 @@ export default function SmsInboxModal({
             </button>
             {statusTab === 'new' && (
               <button
+                type="button"
                 onClick={() => handleBatchImport()}
                 disabled={selectedIds.size === 0 || isImporting}
-                className="py-1 px-3.5 rounded-lg bg-primary-accent text-white font-semibold hover:opacity-95 shadow-xs transition-all disabled:opacity-40 flex items-center gap-1 text-xs"
+                className="py-1 px-3.5 rounded-lg bg-primary-accent text-white font-semibold hover:opacity-95 shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 text-xs"
               >
                 <Check size={13} />
-                <span>{isImporting ? 'Importing...' : `Import Selected (${selectedIds.size})`}</span>
+                <span>
+                  {isImporting
+                    ? 'Importing...'
+                    : selectedIds.size > 0
+                    ? `Import Selected (${selectedIds.size})`
+                    : 'Select to Import'}
+                </span>
               </button>
             )}
           </div>

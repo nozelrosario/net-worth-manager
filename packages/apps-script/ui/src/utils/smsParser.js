@@ -508,7 +508,7 @@ export function extractFinancialCandidate(sms, options = {}) {
     status: 'new', // 'new' | 'imported' | 'ignored'
     isImported: false,
     isIgnored: false,
-    selected: true // Default checked for easy review
+    selected: false // Default unchecked to prevent accidental batch imports
   };
 }
 
@@ -728,7 +728,7 @@ export function deduplicateAndClassify(
       } else {
         c.status = 'new';
         c.isNew = true;
-        c.selected = true;
+        c.selected = false; // Default unchecked
       }
     }
 
