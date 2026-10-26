@@ -502,6 +502,7 @@ export function extractFinancialCandidate(sms, options = {}) {
     type,
     isTransfer,
     category,
+    beneficiary: 'Whole Family',
     body,
     address,
     isPairedVendor: false,

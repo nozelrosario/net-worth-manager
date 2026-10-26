@@ -497,7 +497,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               </div>
               <p className="text-[11px] sm:text-[12px] text-text-secondary mt-0.5 truncate">
                 {txn['Account/Card'] || 'Main Account'}
-                {txn.Beneficiary && ` • For: ${txn.Beneficiary}`}
+                {txn.Beneficiary && txn.Beneficiary !== 'Whole Family' && ` • For: ${txn.Beneficiary}`}
               </p>
               {txn.Tags && (
                 <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5 truncate">{txn.Tags}</p>
@@ -721,12 +721,12 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
         {/* Segmented Top Spends Drawer */}
         <div className="mt-3 pt-3 border-t border-border-subtle space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-1 bg-surface-layer2 p-0.5 rounded-lg border border-border-subtle">
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex gap-1 bg-surface-layer2 p-0.5 rounded-lg border border-border-subtle shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedSegment('beneficiary')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
                   selectedSegment === 'beneficiary'
                     ? 'bg-primary-accent text-white shadow-sm font-semibold'
                     : 'text-text-secondary hover:text-text-primary'
@@ -737,7 +737,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               <button
                 type="button"
                 onClick={() => setSelectedSegment('category')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
                   selectedSegment === 'category'
                     ? 'bg-primary-accent text-white shadow-sm font-semibold'
                     : 'text-text-secondary hover:text-text-primary'
@@ -748,7 +748,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               <button
                 type="button"
                 onClick={() => setSelectedSegment('account')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
                   selectedSegment === 'account'
                     ? 'bg-primary-accent text-white shadow-sm font-semibold'
                     : 'text-text-secondary hover:text-text-primary'
@@ -757,7 +757,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                 <Wallet size={12} /> Card/Bank
               </button>
             </div>
-            <span className="text-[10px] text-text-muted">Tap to filter</span>
+            <span className="text-[10px] text-text-muted shrink-0 pl-3 sm:pl-4 whitespace-nowrap">Tap to filter</span>
           </div>
 
           {/* Active Segment Breakdown List */}
@@ -975,9 +975,16 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                  </div>
                  <div>
                    <label className="block text-xs text-text-secondary mb-1">For Whom (Beneficiary)</label>
-                   <select value={newTxn.Beneficiary || ''} onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none">
+                   <select 
+                     value={(!newTxn.Beneficiary || newTxn.Beneficiary === 'Whole Family') ? '' : newTxn.Beneficiary} 
+                     onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} 
+                     className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none"
+                   >
                      <option value="">Whole Family</option>
                      {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
+                     {newTxn.Beneficiary && newTxn.Beneficiary !== 'Whole Family' && !profiles.some(p => p.Name === newTxn.Beneficiary) && (
+                       <option value={newTxn.Beneficiary}>{newTxn.Beneficiary} (Custom)</option>
+                     )}
                    </select>
                  </div>
                  <div className="flex gap-2">

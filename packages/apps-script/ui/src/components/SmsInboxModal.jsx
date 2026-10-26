@@ -436,13 +436,13 @@ export default function SmsInboxModal({
       'Txn ID': `TXN_SMS_${item.fingerprint}`,
       Date: item.dateStr || item.Date || new Date().toISOString().split('T')[0],
       Type: item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : (item.type === 'Income / Refund' ? 'Income' : 'Expense')),
-      Amount: item.amount,
+      Amount: Number(item.amount),
       Category: item.category,
       'Account/Card': item.account,
-      'Merchant/Description': item.payee,
+      'Merchant/Description': item.payee || 'Expense',
       Tags: `SMS Ingestion, ${item.bank}, SMS_REF:${item.fingerprint}`,
-      'Is Transfer': item.isTransfer,
-      Beneficiary: item.payee,
+      'Is Transfer': item.isTransfer || false,
+      Beneficiary: (item.beneficiary && item.beneficiary.trim()) ? item.beneficiary.trim() : 'Whole Family',
       'Split JSON': '',
       Notes: `Imported from SMS (Ref: ${item.refNo || item.fingerprint})`
     }));
@@ -1144,8 +1144,8 @@ export default function SmsInboxModal({
                         </div>
                       )}
 
-                      {/* Payee, Date, Category & Account Inputs */}
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-[11px]">
+                      {/* Payee, Date, Category, Account & Beneficiary Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-[11px]">
                         <div>
                           <label className="text-[10px] text-text-muted block mb-0.5">Payee / Merchant:</label>
                           <input
@@ -1200,6 +1200,23 @@ export default function SmsInboxModal({
                             {existingAssets.map((asset) => (
                               <option key={asset['Asset ID']} value={asset.Name}>
                                 {asset.Name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-text-muted block mb-0.5">For Whom:</label>
+                          <select
+                            value={item.beneficiary || 'Whole Family'}
+                            disabled={item.status !== 'new'}
+                            onChange={(e) => updateCandidate(item.id, { beneficiary: e.target.value })}
+                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
+                          >
+                            <option value="Whole Family">Whole Family</option>
+                            {familyProfiles.map((profile) => (
+                              <option key={profile.Name || profile['Profile ID']} value={profile.Name}>
+                                {profile.Name}
                               </option>
                             ))}
                           </select>
