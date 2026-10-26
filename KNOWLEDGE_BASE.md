@@ -25,6 +25,25 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.2) - Automated SMS Expense & Transfer Ingestion (Issue #29)
+✅ **SMS Backup & Restore Incremental Sync Engine (`smsParser.js` & `Drive.gs`)**:
+  - **Dual Ingestion Pipeline**: Ingests automated incremental XML backups from Google Drive (`DriveApp`) and provides a client-side streaming drag-and-drop XML file uploader.
+  - **4-Tier Deduplication & Paired Suppression**:
+    1. *Watermark Epoch Filter*: Evaluates only messages newer than `SmsLastProcessedDate` stored in `Settings`, achieving O(1) parsing overhead on recurring runs.
+    2. *Compound Fingerprint & UTR Registry*: Generates unique hashes per SMS and indexes bank reference numbers (`Refno`, `RRN`, `Txn ID`).
+    3. *Paired Merchant-Bank Suppression*: Suppresses duplicate vendor notifications (e.g. Jio/Airtel receipts paired with bank debits within a 3-minute window).
+    4. *Database Cross-Reconciliation*: Compares incoming candidates against existing rows in the `Transactions` sheet matching `(Date, Amount, Account/Card)`, blocking double entries.
+  - **Smart Entity Extraction & Auto-Classification**:
+    - **Internal Transfer Detection**: Recognizes transfers to user's self/own accounts (`GRAMINA NOZEL RO`, `NOZEL ROSARIO`, `SELF`, `OWN A/C`) and automatically sets `Is Transfer: true` with zero net cashflow drag.
+    - **Investment & Insurance**: Identifies SIPs, mutual funds, and LIC/Kotak life insurance debits, tagging Section 80C tax incentives.
+    - **Spend / Expense**: Automatically extracts payee, clean merchant names, bank accounts (`SBI ••4089`, `HDFC CC ••3601`, `StanChart ••4469`), and assigns contextual categories.
+✅ **Interactive Review Inbox Modal (`SmsInboxModal.jsx`)**:
+  - Responsive modal with Apple Wallet/Raycast style borderless glow badges (`Badge.jsx`) for both Dark OLED (`#0B0F17`) and Crisp Light Mode (`#F8FAFC`).
+  - Metric summary ribbon tracking pending spends, transfers, investments, and blocked duplicates.
+  - Multi-select batch actions (`Select All`, `Import Selected`, `Dismiss`).
+  - Card-level inline classification toggle (`[Spend | Internal Transfer | Investment]`), category selector, asset picker, and expandable raw SMS text drawer.
+  - Seamlessly integrated into `SpendsTab` (with "SMS Inbox" CTA) and `SettingsTab` (Drive folder & watermark management).
+
 ## Feature Update (v3.1) - Borderless Glow Badge System & Layout Decoupling (Issue #26)
 ✅ **Unified Badge Component (`Badge.jsx`)**:
   - Implemented Apple Wallet & Raycast-inspired borderless glow micro-pills (`rounded-full`) across all screens.
