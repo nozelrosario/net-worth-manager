@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
@@ -58,6 +58,54 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
         showMessage('Gemini API Key saved (preview)');
         setTimeout(() => setKeySavedFeedback(false), 3500);
       }, 500);
+    }
+  };
+
+  const savedFolder = data?.settings?.find(s => s['Setting Key'] === 'SmsDriveFolder')?.['Setting Value'] || 'SMSBackupRestore';
+  const lastSyncEpochStr = data?.settings?.find(s => s['Setting Key'] === 'SmsLastProcessedDate')?.['Setting Value'] || '0';
+  const [smsFolderInput, setSmsFolderInput] = useState(savedFolder);
+  const [isSavingFolder, setIsSavingFolder] = useState(false);
+
+  useEffect(() => {
+    if (savedFolder) setSmsFolderInput(savedFolder);
+  }, [savedFolder]);
+
+  const handleSaveSmsFolder = (e) => {
+    e.preventDefault();
+    setIsSavingFolder(true);
+    const token = getSafeStorage('nwm_session_token');
+    if (window.google?.script?.run?.upsertSetting) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSavingFolder(false);
+          showMessage(res?.message || 'SMS Backup folder updated!');
+          if (onRefresh) onRefresh();
+        })
+        .withFailureHandler((err) => {
+          setIsSavingFolder(false);
+          showMessage('Error saving folder: ' + err.message, true);
+        })
+        .upsertSetting('SmsDriveFolder', smsFolderInput.trim(), token);
+    } else {
+      setTimeout(() => {
+        setIsSavingFolder(false);
+        showMessage('SMS Backup folder updated (preview)');
+      }, 500);
+    }
+  };
+
+  const handleResetSmsSync = () => {
+    if (!window.confirm('Resetting the sync date will allow re-scanning older messages. Continue?')) return;
+    const token = getSafeStorage('nwm_session_token');
+    if (window.google?.script?.run?.upsertSetting) {
+      window.google.script.run
+        .withSuccessHandler(() => {
+          showMessage('SMS sync watermark reset to beginning.');
+          if (onRefresh) onRefresh();
+        })
+        .upsertSetting('SmsLastProcessedDate', '0', token);
+    } else {
+      showMessage('SMS sync watermark reset (preview)');
     }
   };
 
@@ -334,6 +382,57 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
              <span>Retirement &amp; Pension Hub (EPF, PPF &amp; NPS)</span>
            </button>
          )}
+      </section>
+
+      {/* SMS Expense & Transfer Ingestion Config */}
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-text-primary">
+            <Cloud size={18} className="text-primary-accent" />
+            <h3 className="font-semibold text-sm">SMS Expense Ingestion (Google Drive)</h3>
+          </div>
+          <Badge variant="indigo" size="xs">Auto-Incremental</Badge>
+        </div>
+        <p className="text-xs text-text-secondary leading-relaxed mb-4">
+          Reads incremental XML exports produced by the <b>SMS Backup &amp; Restore</b> Android app to detect spends, internal transfers, and investment debits.
+        </p>
+
+        <form onSubmit={handleSaveSmsFolder} className="space-y-3 bg-surface-layer2/50 p-3 rounded-xl border border-border-subtle">
+          <div>
+            <label className="block text-xs font-semibold text-text-primary mb-1">
+              Drive Backup Folder Name
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={smsFolderInput}
+                onChange={e => setSmsFolderInput(e.target.value)}
+                placeholder="SMSBackupRestore"
+                className="flex-1 bg-surface-layer1 border border-border-subtle focus:border-primary-accent/70 rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isSavingFolder}
+                className="px-3 py-1.5 rounded-lg bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 disabled:opacity-50 flex items-center gap-1 shadow-sm"
+              >
+                {isSavingFolder ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                <span>{isSavingFolder ? 'Saving...' : 'Save Folder'}</span>
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-1 text-[11px]">
+            <span className="text-text-muted">
+              Watermark: {lastSyncEpochStr && lastSyncEpochStr !== '0' ? new Date(parseInt(lastSyncEpochStr, 10)).toLocaleDateString() : 'None (Full scan)'}
+            </span>
+            <button
+              type="button"
+              onClick={handleResetSmsSync}
+              className="text-text-muted hover:text-liability-rose hover:underline"
+            >
+              Reset Sync Date
+            </button>
+          </div>
+        </form>
       </section>
 
       <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
