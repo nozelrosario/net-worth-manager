@@ -475,11 +475,19 @@ export function extractFinancialCandidate(sms, options = {}) {
   const dateInfo = parseDateRobust(date, sms.readableDate, body);
   const previewSnippet = extractPreviewSnippet(body);
 
-  // Generate unique compound ID
-  const cleanId = `${address}_${dateInfo.epoch}_${Math.round(amount)}`;
+  // Generate deterministic fingerprint
+  const fingerprint = computeSmsFingerprint({
+    bank,
+    refNo,
+    accountDigits,
+    rawDate: dateInfo.epoch,
+    amount,
+    body
+  });
 
   return {
-    id: cleanId,
+    id: fingerprint,
+    fingerprint,
     rawDate: dateInfo.epoch,
     dateStr: dateInfo.dateStr,
     Date: dateInfo.dateStr, // Convenient sheet header alias
@@ -497,9 +505,43 @@ export function extractFinancialCandidate(sms, options = {}) {
     body,
     address,
     isPairedVendor: false,
-    isExistingDuplicate: false,
+    status: 'new', // 'new' | 'imported' | 'ignored'
+    isImported: false,
+    isIgnored: false,
     selected: true // Default checked for easy review
   };
+}
+
+/**
+ * Fast 32-bit FNV-1a hash function for strings.
+ */
+export function simpleFnvHash(str = '') {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
+ * Computes a deterministic SMS fingerprint.
+ * If bank reference number exists: SMS_<BANK>_<REFNO>_<AMOUNT>
+ * Fallback: SMS_<ACCOUNT>_<EPOCH>_<AMOUNT>_<HASH>
+ */
+export function computeSmsFingerprint({ bank = '', refNo = '', accountDigits = '', rawDate = 0, amount = 0, body = '' }) {
+  const bankCode = (bank || 'BANK').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  const amtStr = Number(amount || 0).toFixed(2);
+
+  if (refNo && String(refNo).trim().length >= 4) {
+    const cleanRef = String(refNo).trim().replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    return `SMS_${bankCode}_${cleanRef}_${amtStr}`;
+  }
+
+  const cleanBodySnippet = body.replace(/[^A-Za-z0-9]/g, '').toLowerCase().slice(0, 36);
+  const bodyHash = simpleFnvHash(cleanBodySnippet);
+  const acct = accountDigits ? accountDigits.replace(/[^0-9]/g, '') : bankCode;
+  return `SMS_${acct}_${rawDate}_${amtStr}_${bodyHash}`;
 }
 
 /**
@@ -507,13 +549,37 @@ export function extractFinancialCandidate(sms, options = {}) {
  * Tier 1: Watermark epoch check (date > lastProcessedEpoch)
  * Tier 2: Reference number & duplicate check within candidates
  * Tier 3: Merchant-Bank Paired SMS Suppression (e.g. Jio/Swiggy confirmation within 3 minutes of bank debit)
- * Tier 4: Cross-reconciliation against existing transactions from Google Sheets
+ * Tier 4: Cross-reconciliation against existing transactions from Google Sheets and ignored hashes registry
  */
-export function deduplicateAndClassify(candidates = [], existingTransactions = [], lastProcessedEpoch = 0) {
+export function deduplicateAndClassify(
+  candidates = [],
+  existingTransactions = [],
+  ignoredHashes = [],
+  lastProcessedEpoch = 0
+) {
+  let effectiveIgnored = ignoredHashes;
+  let effectiveEpoch = lastProcessedEpoch;
+  if (typeof ignoredHashes === 'number') {
+    effectiveEpoch = ignoredHashes;
+    effectiveIgnored = [];
+  }
+
   if (!Array.isArray(candidates) || candidates.length === 0) {
     return {
-      filteredCandidates: [],
-      stats: { total: 0, pending: 0, transfers: 0, investments: 0, duplicatesFiltered: 0 }
+      candidates: [],
+      stats: {
+        totalCandidates: 0,
+        pendingCount: 0,
+        newCount: 0,
+        importedCount: 0,
+        ignoredCount: 0,
+        totalPendingAmount: 0,
+        totalNewAmount: 0,
+        transfersCount: 0,
+        investmentsCount: 0,
+        spendsCount: 0,
+        duplicatesFiltered: 0
+      }
     };
   }
 
@@ -521,24 +587,63 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
   const seenCompoundKeys = new Set();
   let duplicatesFiltered = 0;
 
-  // Step 1: Pre-index existing transactions by Date + Amount
+  // Step 1: Pre-index existing transactions from ledger
+  const importedFingerprints = new Set();
   const existingMap = new Map();
+
   if (Array.isArray(existingTransactions)) {
     existingTransactions.forEach(t => {
-      let d = String(t.Date || '').trim();
+      // Check Txn ID (e.g. TXN_SMS_SMS_SBI_629981173158_10000.00 or TXN_SMS_...)
+      const txnId = String(t['Txn ID'] || t.id || '').trim();
+      if (txnId.startsWith('TXN_SMS_')) {
+        const rawFp = txnId.replace(/^TXN_SMS_/, '');
+        importedFingerprints.add(rawFp);
+        if (!rawFp.startsWith('SMS_')) {
+          importedFingerprints.add(`SMS_${rawFp}`);
+        }
+      }
+
+      // Check Tags (e.g. SMS_REF:SMS_SBI_629981173158_10000.00)
+      const tags = String(t.Tags || t.tags || '');
+      const refMatch = tags.match(/SMS_REF:([A-Za-z0-9_.-]+)/);
+      if (refMatch) {
+        importedFingerprints.add(refMatch[1]);
+      }
+
+      // Fallback Date + Amount + Account
+      let d = String(t.Date || t.date || '').trim();
       if (d.includes('T')) d = d.split('T')[0];
-      const a = Math.round(parseFloat(t.Amount || 0) * 100);
+      const a = Math.round(parseFloat(t.Amount || t.amount || 0) * 100);
       if (d && !isNaN(a)) {
-        const k = `${d}_${a}`;
-        existingMap.set(k, true);
+        const acct = String(t['Account/Card'] || t.account || '');
+        const acctDigits = detectAccountDigits(acct);
+        if (acctDigits) {
+          existingMap.set(`${d}_${a}_${acctDigits}`, txnId || true);
+        }
+        existingMap.set(`${d}_${a}`, txnId || true);
       }
     });
   }
 
-  // Step 2: Sort candidates chronologically
+  // Step 2: Pre-index ignored hashes registry
+  const ignoredSet = new Set();
+  if (Array.isArray(effectiveIgnored)) {
+    effectiveIgnored.forEach(h => {
+      if (h) ignoredSet.add(String(h).trim());
+    });
+  } else if (typeof effectiveIgnored === 'string') {
+    try {
+      const parsed = JSON.parse(effectiveIgnored);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(h => { if (h) ignoredSet.add(String(h).trim()); });
+      }
+    } catch (e) {}
+  }
+
+  // Step 3: Sort candidates chronologically
   const sorted = [...candidates].sort((a, b) => a.rawDate - b.rawDate);
 
-  // Step 3: Detect and suppress paired merchant receipts
+  // Step 4: Detect and suppress paired merchant receipts
   // (e.g. Bank debits ₹706.82 at t=0, Jio confirmation arrives at t=7s with identical ₹706.82)
   for (let i = 0; i < sorted.length; i++) {
     const itemA = sorted[i];
@@ -571,13 +676,7 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
     // Suppress paired vendor receipts
     if (c.isPairedVendor) continue;
 
-    // Tier 1: Watermark epoch filter
-    if (lastProcessedEpoch && c.rawDate <= lastProcessedEpoch) {
-      duplicatesFiltered++;
-      continue;
-    }
-
-    // Tier 2: RefNo deduplication
+    // Suppress candidate duplicate RefNo within incoming batch
     if (c.refNo) {
       if (seenRefs.has(c.refNo)) {
         duplicatesFiltered++;
@@ -586,7 +685,7 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
       seenRefs.add(c.refNo);
     }
 
-    // Compound deduplication (Date within 1 minute + Bank + Amount)
+    // Suppress candidate compound duplicate within 1-minute bucket (same bank, minute, amount)
     const minuteBucket = Math.floor(c.rawDate / 60000);
     const compoundKey = `${c.bank}_${minuteBucket}_${Math.round(c.amount * 100)}`;
     if (seenCompoundKeys.has(compoundKey)) {
@@ -595,14 +694,42 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
     }
     seenCompoundKeys.add(compoundKey);
 
-    // Tier 4: Cross-check existing Transactions in Google Sheet
-    const sheetKey = `${c.dateStr}_${Math.round(c.amount * 100)}`;
-    if (existingMap.has(sheetKey)) {
-      c.isExistingDuplicate = true;
-      // Mark as unselected by default or skip
+    // Cross-check 1: Deterministic Fingerprint against ledger
+    let isImported = importedFingerprints.has(c.fingerprint);
+
+    // Cross-check 2: Fallback date + amount + account match in ledger
+    if (!isImported) {
+      const specificKey = `${c.dateStr}_${Math.round(c.amount * 100)}_${c.accountDigits}`;
+      const generalKey = `${c.dateStr}_${Math.round(c.amount * 100)}`;
+      if (c.accountDigits && existingMap.has(specificKey)) {
+        isImported = true;
+      } else if (existingMap.has(generalKey)) {
+        isImported = true;
+      }
+    }
+
+    // Cross-check 3: Ignored registry
+    const isIgnored = !isImported && ignoredSet.has(c.fingerprint);
+
+    if (isImported) {
+      c.status = 'imported';
+      c.isImported = true;
       c.selected = false;
-      duplicatesFiltered++;
-      continue;
+    } else if (isIgnored) {
+      c.status = 'ignored';
+      c.isIgnored = true;
+      c.selected = false;
+    } else {
+      // Tier 1: Watermark epoch filter (only for automated background sync where effectiveEpoch > 0)
+      if (effectiveEpoch && c.rawDate <= effectiveEpoch) {
+        c.status = 'imported';
+        c.isImported = true;
+        c.selected = false;
+      } else {
+        c.status = 'new';
+        c.isNew = true;
+        c.selected = true;
+      }
     }
 
     validCandidates.push(c);
@@ -612,23 +739,29 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
   validCandidates.reverse();
 
   // Compute stats
-  let pendingCount = 0;
-  let totalPendingAmount = 0;
+  let newCount = 0;
+  let importedCount = 0;
+  let ignoredCount = 0;
+  let totalNewAmount = 0;
   let transfersCount = 0;
-  let totalTransferAmount = 0;
   let investmentsCount = 0;
-  let totalInvestmentAmount = 0;
+  let spendsCount = 0;
 
   validCandidates.forEach(c => {
-    if (c.type === 'Transfer') {
-      transfersCount++;
-      totalTransferAmount += c.amount;
-    } else if (c.type === 'Investment') {
-      investmentsCount++;
-      totalInvestmentAmount += c.amount;
+    if (c.status === 'imported') {
+      importedCount++;
+    } else if (c.status === 'ignored') {
+      ignoredCount++;
     } else {
-      pendingCount++;
-      totalPendingAmount += c.amount;
+      newCount++;
+      totalNewAmount += c.amount;
+      if (c.type === 'Transfer') {
+        transfersCount++;
+      } else if (c.type === 'Investment') {
+        investmentsCount++;
+      } else {
+        spendsCount++;
+      }
     }
   });
 
@@ -636,12 +769,15 @@ export function deduplicateAndClassify(candidates = [], existingTransactions = [
     candidates: validCandidates,
     stats: {
       totalCandidates: validCandidates.length,
-      pendingCount,
-      totalPendingAmount,
+      pendingCount: newCount,
+      newCount,
+      importedCount,
+      ignoredCount,
+      totalPendingAmount: totalNewAmount,
+      totalNewAmount,
       transfersCount,
-      totalTransferAmount,
       investmentsCount,
-      totalInvestmentAmount,
+      spendsCount,
       duplicatesFiltered
     }
   };

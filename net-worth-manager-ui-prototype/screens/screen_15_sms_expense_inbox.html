@@ -119,8 +119,31 @@
       </div>
     </header>
 
-    <!-- 2. STREAMLINED FILTER PILLS WITH EMBEDDED METRIC COUNTERS (~36px) -->
-    <section class="sticky top-[49px] z-30 bg-bg-root/95 backdrop-blur-md px-3 py-1.5 border-b border-border-subtle flex items-center gap-1 overflow-x-auto no-scrollbar text-[11px]">
+    <!-- 2. PRIMARY STATUS FILTER RIBBON (Default to 'New') -->
+    <div class="sticky top-[49px] z-30 bg-surface-layer1/95 backdrop-blur-md px-3 py-1.5 border-b border-border-subtle flex items-center justify-between gap-1 text-xs font-semibold overflow-x-auto no-scrollbar">
+      <div class="flex items-center gap-1">
+        <button class="px-3 py-1 rounded-lg bg-primary-accent text-white shadow-xs flex items-center gap-1.5 whitespace-nowrap">
+          <span>New</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold">18</span>
+        </button>
+        <button class="px-3 py-1 rounded-lg bg-surface-layer2 text-text-secondary hover:text-text-primary flex items-center gap-1.5 whitespace-nowrap">
+          <span class="material-symbols-outlined text-[13px] text-emerald-500">check_circle</span>
+          <span>Already Imported</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-surface-layer3 text-text-muted font-bold">24</span>
+        </button>
+        <button class="px-3 py-1 rounded-lg bg-surface-layer2 text-text-secondary hover:text-text-primary flex items-center gap-1.5 whitespace-nowrap">
+          <span class="material-symbols-outlined text-[13px] text-amber-500">visibility_off</span>
+          <span>Ignored</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-surface-layer3 text-text-muted font-bold">3</span>
+        </button>
+        <button class="px-2.5 py-1 rounded-lg bg-surface-layer2 text-text-secondary hover:text-text-primary whitespace-nowrap">
+          <span>All (45)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2B. STREAMLINED SUB-FILTERS WITH EMBEDDED METRIC COUNTERS (~32px) -->
+    <section class="sticky top-[86px] z-30 bg-bg-root/95 backdrop-blur-md px-3 py-1 border-b border-border-subtle flex items-center gap-1 overflow-x-auto no-scrollbar text-[11px]">
       <button onclick="filterCategory('all', this)" class="filter-pill px-2.5 py-1 rounded-full font-semibold bg-primary-accent text-white shadow-xs whitespace-nowrap">All (18)</button>
       <button onclick="filterCategory('spends', this)" class="filter-pill px-2.5 py-1 rounded-full font-medium bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary whitespace-nowrap">Spends (13 • ₹48k)</button>
       <button onclick="filterCategory('transfers', this)" class="filter-pill px-2.5 py-1 rounded-full font-medium bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary whitespace-nowrap flex items-center gap-1">

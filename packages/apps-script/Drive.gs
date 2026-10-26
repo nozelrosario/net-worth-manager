@@ -248,6 +248,8 @@ function batchImportSmsTransactions(transactions, lastProcessedEpoch, idToken) {
           row.push(t['Split JSON'] || t.splitJson || '');
         } else if (hLower === 'beneficiary') {
           row.push(t.Beneficiary || t.beneficiary || '');
+        } else if (hLower === 'notes' || hLower === 'note') {
+          row.push(t.Notes || t.notes || '');
         } else {
           row.push(t[header] !== undefined ? t[header] : (t[hClean] !== undefined ? t[hClean] : ''));
         }
@@ -271,6 +273,138 @@ function batchImportSmsTransactions(transactions, lastProcessedEpoch, idToken) {
       status: 'success',
       importedCount: rowsToAdd.length,
       message: 'Successfully imported ' + rowsToAdd.length + ' transactions.'
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Appends SMS fingerprint hashes to the SmsIgnoredHashes registry in Settings sheet.
+ */
+function ignoreSmsTransactions(hashes, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    if (!hashes || !hashes.length) {
+      return { status: 'error', message: 'No transaction hashes provided to ignore.' };
+    }
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Settings');
+    if (!sheet) {
+      setupDatabaseSheets();
+      sheet = ss.getSheetByName('Settings');
+      if (!sheet) return { status: 'error', message: 'Settings sheet not found' };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var keyCol = data[0].indexOf('Setting Key');
+    var valCol = data[0].indexOf('Setting Value');
+    if (keyCol === -1 || valCol === -1) return { status: 'error', message: 'Invalid Settings sheet format' };
+
+    var existingHashes = [];
+    var rowIdx = -1;
+
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][keyCol]) === 'SmsIgnoredHashes') {
+        rowIdx = i + 1;
+        try {
+          var parsed = JSON.parse(data[i][valCol]);
+          if (Array.isArray(parsed)) existingHashes = parsed;
+        } catch (e) {}
+        break;
+      }
+    }
+
+    var hashSet = {};
+    for (var j = 0; j < existingHashes.length; j++) {
+      hashSet[existingHashes[j]] = true;
+    }
+
+    var addedCount = 0;
+    for (var k = 0; k < hashes.length; k++) {
+      var h = String(hashes[k]).trim();
+      if (h && !hashSet[h]) {
+        existingHashes.push(h);
+        hashSet[h] = true;
+        addedCount++;
+      }
+    }
+
+    var jsonStr = JSON.stringify(existingHashes);
+    if (rowIdx !== -1) {
+      sheet.getRange(rowIdx, valCol + 1).setValue(jsonStr);
+    } else {
+      var newRow = [];
+      newRow[keyCol] = 'SmsIgnoredHashes';
+      newRow[valCol] = jsonStr;
+      sheet.appendRow(newRow);
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'IGNORE_SMS_TXN', 'Settings', 'Ignored ' + addedCount + ' SMS transactions');
+
+    return {
+      status: 'success',
+      addedCount: addedCount,
+      totalIgnored: existingHashes.length,
+      ignoredHashes: existingHashes
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Removes an SMS fingerprint hash from the SmsIgnoredHashes registry in Settings sheet.
+ */
+function unignoreSmsTransaction(hash, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    if (!hash) return { status: 'error', message: 'No transaction hash provided to restore.' };
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Settings');
+    if (!sheet) return { status: 'error', message: 'Settings sheet not found' };
+
+    var data = sheet.getDataRange().getValues();
+    var keyCol = data[0].indexOf('Setting Key');
+    var valCol = data[0].indexOf('Setting Value');
+    if (keyCol === -1 || valCol === -1) return { status: 'error', message: 'Invalid Settings sheet format' };
+
+    var existingHashes = [];
+    var rowIdx = -1;
+
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][keyCol]) === 'SmsIgnoredHashes') {
+        rowIdx = i + 1;
+        try {
+          var parsed = JSON.parse(data[i][valCol]);
+          if (Array.isArray(parsed)) existingHashes = parsed;
+        } catch (e) {}
+        break;
+      }
+    }
+
+    if (rowIdx === -1) {
+      return { status: 'success', totalIgnored: 0, ignoredHashes: [] };
+    }
+
+    var target = String(hash).trim();
+    var updated = existingHashes.filter(function(h) { return h !== target; });
+    var jsonStr = JSON.stringify(updated);
+    sheet.getRange(rowIdx, valCol + 1).setValue(jsonStr);
+
+    logAudit(ss, auth.userInfo.activeEmail, 'UNIGNORE_SMS_TXN', 'Settings', 'Restored SMS transaction ' + target);
+
+    return {
+      status: 'success',
+      restoredHash: target,
+      totalIgnored: updated.length,
+      ignoredHashes: updated
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };
