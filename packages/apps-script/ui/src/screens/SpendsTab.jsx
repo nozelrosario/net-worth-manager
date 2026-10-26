@@ -435,30 +435,34 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         <div 
           key={txn['Txn ID']} 
           onClick={() => openEditModal(txn)}
-          className="bg-surface-layer1/50 border border-dashed border-border-prominent rounded-xl p-3.5 relative cursor-pointer hover:border-primary-accent/50 transition-colors group"
+          className="bg-surface-layer1/50 border border-dashed border-border-prominent rounded-xl p-3 sm:p-3.5 relative cursor-pointer hover:border-primary-accent/50 transition-colors group"
         >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-3">
-              <div className="w-10 h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center text-text-secondary">
-                <ArrowRightLeft size={20} />
+          <div className="flex items-start justify-between gap-2.5 min-w-0">
+            <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center text-text-secondary shrink-0 mt-0.5">
+                <ArrowRightLeft size={18} className="sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <h3 className="text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors">{txn['Merchant/Description'] || 'Internal Transfer'}</h3>
-                <div className="mt-1 flex items-center space-x-1.5">
-                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle">
-                    <CheckCircle size={12} className="text-wealth-emerald" />
-                    <span>Self-Payment / Transfer</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors break-words line-clamp-2 leading-snug">
+                    {txn['Merchant/Description'] || 'Internal Transfer'}
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle shrink-0 font-medium">
+                    <CheckCircle size={11} className="text-wealth-emerald" />
+                    <span>Transfer</span>
                   </span>
                 </div>
-                <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
-                  Excluded from spends calculation.
+                <p className="text-[11px] sm:text-xs text-text-muted mt-1 leading-relaxed truncate">
+                  {txn['Account/Card'] ? `${txn['Account/Card']} • ` : ''}Excluded from spends calculation.
                 </p>
               </div>
             </div>
-            <div className="text-right flex flex-col items-end">
-              <span className="text-base font-bold text-text-secondary tabular-nums">{formatCurrency(txn.Amount)}</span>
-              <span className="block text-xs text-text-muted mt-1">Excluded</span>
-              <span className="text-primary-accent/70 text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Edit</span>
+            <div className="text-right flex flex-col items-end shrink-0 pl-1">
+              <span className="text-sm sm:text-base font-bold text-text-secondary tabular-nums whitespace-nowrap">
+                {formatCurrency(txn.Amount)}
+              </span>
+              <span className="block text-[10px] sm:text-xs text-text-muted mt-0.5 font-medium">Excluded</span>
+              <span className="text-primary-accent/70 text-[11px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Edit</span>
             </div>
           </div>
         </div>
@@ -469,52 +473,53 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       <div 
         key={txn['Txn ID']} 
         onClick={() => openEditModal(txn)}
-        className="bg-surface-layer1 border border-border-subtle rounded-xl p-3.5 hover:border-primary-accent/50 cursor-pointer transition-colors group shadow-sm"
+        className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 sm:p-3.5 hover:border-primary-accent/50 cursor-pointer transition-colors group shadow-sm"
       >
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
-            <div className={`w-10 h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
-              {isIncome ? <ArrowDownLeft size={20} /> : (String(txn['Account/Card']||'').toLowerCase().includes('cash') ? <Banknote size={20} /> : <CreditCard size={20} />)}
+        <div className="flex items-start justify-between gap-2.5 min-w-0">
+          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-surface-layer2 border border-border-subtle flex items-center justify-center shrink-0 mt-0.5 ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+              {isIncome ? <ArrowDownLeft size={18} className="sm:w-5 sm:h-5" /> : (String(txn['Account/Card']||'').toLowerCase().includes('cash') ? <Banknote size={18} className="sm:w-5 sm:h-5" /> : <CreditCard size={18} className="sm:w-5 sm:h-5" />)}
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors">{txn['Merchant/Description'] || txn.Category}</h3>
-                {hasSplits && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-primary-accent/10 text-primary-accent border border-primary-accent/20">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="text-sm sm:text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors break-words line-clamp-2 leading-snug">
+                  {txn['Merchant/Description'] || txn.Category}
+                </h3>
+                {hasSplits ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs bg-primary-accent/10 text-primary-accent border border-primary-accent/20 shrink-0 font-medium">
                     Split ({splits.length})
                   </span>
-                )}
-                {!hasSplits && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle">
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle shrink-0">
                     {txn.Category}
                   </span>
                 )}
               </div>
-              <p className="text-[12px] text-text-secondary mt-0.5">
+              <p className="text-[11px] sm:text-[12px] text-text-secondary mt-0.5 truncate">
                 {txn['Account/Card'] || 'Main Account'}
                 {txn.Beneficiary && ` • For: ${txn.Beneficiary}`}
               </p>
               {txn.Tags && (
-                <p className="text-xs text-text-muted mt-1">{txn.Tags}</p>
+                <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5 truncate">{txn.Tags}</p>
               )}
             </div>
           </div>
-          <div className="text-right flex flex-col items-end">
-            <span className={`text-base font-bold tabular-nums ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+          <div className="text-right flex flex-col items-end shrink-0 pl-1">
+            <span className={`text-sm sm:text-base font-bold tabular-nums whitespace-nowrap ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
               {isIncome ? '+' : '-'}{formatCurrency(txn.Amount)}
             </span>
-            <span className="text-primary-accent/70 text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Edit</span>
+            <span className="text-primary-accent/70 text-[11px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Edit</span>
           </div>
         </div>
         {hasSplits && splits.length > 0 && (
-          <div className="ml-4 mt-3 pl-3 border-l-2 border-primary-accent/40 space-y-2 bg-surface-layer2/50 p-2.5 rounded-r-lg">
+          <div className="ml-4 mt-2.5 pl-3 border-l-2 border-primary-accent/40 space-y-1.5 bg-surface-layer2/50 p-2.5 rounded-r-lg">
             {splits.map((split, idx) => (
-              <div key={idx} className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-1.5 text-text-primary">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-accent"></span>
-                  <span>{split.Category}</span>
+              <div key={idx} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                <div className="flex items-center space-x-1.5 text-text-primary min-w-0 flex-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-accent shrink-0"></span>
+                  <span className="truncate">{split.Category}</span>
                 </div>
-                <span className="tabular-nums font-semibold text-text-primary">{formatCurrency(split.Amount)}</span>
+                <span className="tabular-nums font-semibold text-text-primary shrink-0 whitespace-nowrap">{formatCurrency(split.Amount)}</span>
               </div>
             ))}
           </div>
@@ -820,12 +825,12 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           </div>
           {pendingVerifications.map(txn => (
             <div key={txn['Txn ID']} className="mt-3 bg-surface-layer2/80 rounded-lg p-3 border border-border-subtle">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-sm text-text-primary font-medium">{txn['Merchant/Description'] || txn.Category}</h4>
-                  <p className="text-xs text-text-secondary">{txn.Date} • {txn['Account/Card']}</p>
+              <div className="flex items-start justify-between gap-2.5 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm text-text-primary font-medium break-words line-clamp-2 leading-snug">{txn['Merchant/Description'] || txn.Category}</h4>
+                  <p className="text-xs text-text-secondary truncate mt-0.5">{txn.Date} • {txn['Account/Card']}</p>
                 </div>
-                <span className="text-sm font-bold text-liability-rose tabular-nums">-{formatCurrency(txn.Amount)}</span>
+                <span className="text-sm font-bold text-liability-rose tabular-nums shrink-0 whitespace-nowrap pl-1">-{formatCurrency(txn.Amount)}</span>
               </div>
               <div className="mt-2 flex gap-1.5">
                 <button className="px-2 py-1 text-xs bg-surface-layer1 hover:bg-border-prominent rounded border border-border-subtle text-text-primary">Categorize</button>
