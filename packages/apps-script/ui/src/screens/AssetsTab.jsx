@@ -105,9 +105,9 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   const openAddModal = (initialCategory) => {
     setEditingAssetId(null);
-    let catToUse = initialCategory;
+    let catToUse = typeof initialCategory === 'string' ? initialCategory : '';
     if (!catToUse) {
-      if (filter !== 'All Assets') {
+      if (filter && filter !== 'All Assets') {
         catToUse = filter;
       } else {
         catToUse = categoriesList[0] || 'Equity';
@@ -448,7 +448,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         </div>
         <button 
           type="button"
-          onClick={openAddModal} 
+          onClick={() => openAddModal()} 
           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
         >
           <Plus size={14} />
