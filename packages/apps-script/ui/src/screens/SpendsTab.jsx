@@ -122,9 +122,15 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
-  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Other';
+  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Insurance, Investment / Insurance, Other';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'SpendCategories')?.['Setting Value'] || defaultCategories;
-  const categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  let categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  if (!categoriesList.includes('Insurance')) {
+    categoriesList.splice(categoriesList.length - 1, 0, 'Insurance');
+  }
+  if (!categoriesList.includes('Investment / Insurance')) {
+    categoriesList.splice(categoriesList.length - 1, 0, 'Investment / Insurance');
+  }
   const filters = ['All Records', ...categoriesList];
 
   const openAddModal = () => {

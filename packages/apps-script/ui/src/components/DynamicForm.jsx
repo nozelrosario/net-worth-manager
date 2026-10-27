@@ -34,12 +34,15 @@ export function calculatePerformance(cost, currentValue, acqDateStr, category) {
     }
 
     const catLower = String(category || '').toLowerCase();
+    const isInsurance = catLower.includes('insurance') || catLower.includes('lic');
     const isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
     const isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
-    const taxTag = isLtcg ? 'LTCG' : 'STCG';
-    const taxLabel = isLtcg 
-      ? (isEquityOrMf ? 'LTCG (> 12m @ 12.5% above ₹1.25L)' : 'LTCG (> 24m @ 12.5%)') 
-      : (isEquityOrMf ? 'STCG (≤ 12m @ 20%)' : 'STCG (≤ 24m @ slab rate)');
+    const taxTag = isInsurance ? 'Sec 10(10D)' : (isLtcg ? 'LTCG' : 'STCG');
+    const taxLabel = isInsurance
+      ? 'Sec 10(10D) Tax-Free Maturity (if Premium ≤ ₹5L/yr)'
+      : (isLtcg 
+        ? (isEquityOrMf ? 'LTCG (> 12m @ 12.5% above ₹1.25L)' : 'LTCG (> 24m @ 12.5%)') 
+        : (isEquityOrMf ? 'STCG (≤ 12m @ 20%)' : 'STCG (≤ 24m @ slab rate)'));
 
     return {
       days,

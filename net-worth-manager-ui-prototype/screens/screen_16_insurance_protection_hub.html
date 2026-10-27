@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Insurance &amp; Protection Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-tint": "#c0c1ff",
+            "primary-fixed": "#e1e0ff",
+            "text-secondary": "#94A3B8",
+            "surface-layer-1": "#151C28",
+            "surface-layer-2": "#1E293B",
+            "text-primary": "#F8FAFC",
+            "text-muted": "#64748B",
+            "warning-amber": "#F59E0B",
+            "background-root": "#0B0F17",
+            "profit-emerald": "#10B981",
+            "border-subtle": "#222F3E",
+            "border-prominent": "#334155",
+            "liability-rose": "#F43F5E",
+            "primary-accent": "#6366F1",
+            "wealth-cyan": "#06B6D4"
+          },
+          "fontFamily": {
+            "sans": ["Inter", "sans-serif"]
+          }
+        }
+      }
+    }
+</script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .num-tabular {
+      font-feature-settings: "tnum" 1;
+      font-variant-numeric: tabular-nums;
+    }
+    body {
+      min-height: max(884px, 100dvh);
+    }
+</style>
+</head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen pb-24 selection:bg-primary-accent/30">
+
+<!-- TOP APP BAR -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-4 py-3 bg-background-root/90 backdrop-blur-md border-b border-border-subtle shadow-xs">
+  <div class="flex items-center gap-2.5">
+    <button aria-label="Go back" class="w-9 h-9 rounded-xl flex items-center justify-center text-text-secondary hover:bg-surface-layer-1 hover:text-text-primary active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+    </button>
+    <div>
+      <h1 class="text-base font-semibold text-text-primary leading-tight flex items-center gap-2">
+        Insurance &amp; Protection Hub
+      </h1>
+      <p class="text-xs text-text-muted">LIC, Term, Health &amp; General Moat</p>
+    </div>
+  </div>
+  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+    <span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-pulse"></span>
+    <span class="text-[11px] text-profit-emerald font-semibold">Sec 80C &amp; 80D Active</span>
+  </div>
+</header>
+
+<!-- MAIN SCROLLABLE VIEWPORT -->
+<main class="max-w-[440px] mx-auto px-4 pt-4 space-y-4">
+
+  <!-- 1. CONSOLIDATED DEFENSE MOAT HERO CARD -->
+  <section class="rounded-2xl p-4 bg-surface-layer-1 border border-border-subtle relative overflow-hidden shadow-xl">
+    <div class="absolute -top-16 -right-16 w-36 h-36 bg-primary-accent/10 rounded-full blur-2xl pointer-events-none"></div>
+
+    <div class="flex justify-between items-start mb-2">
+      <span class="text-xs font-medium text-text-secondary">Family Risk Protection Moat</span>
+      <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-profit-emerald bg-profit-emerald/10 px-2 py-0.5 rounded-full">
+        <span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+        <span>94% HLV Protected</span>
+      </span>
+    </div>
+
+    <!-- Metrics Triad Grid -->
+    <div class="grid grid-cols-2 gap-3 my-3">
+      <div class="bg-surface-layer-2/60 rounded-xl p-3 border border-border-subtle/50">
+        <div class="flex items-center gap-1.5 text-xs text-text-muted mb-1">
+          <span class="material-symbols-outlined text-[15px] text-primary-accent">shield</span>
+          <span>Total Life Cover</span>
+        </div>
+        <div class="text-xl font-bold text-text-primary num-tabular">₹2.50 Cr</div>
+        <span class="text-[10px] text-text-muted">₹2 Cr Term + ₹50L LIC</span>
+      </div>
+
+      <div class="bg-surface-layer-2/60 rounded-xl p-3 border border-border-subtle/50">
+        <div class="flex items-center gap-1.5 text-xs text-text-muted mb-1">
+          <span class="material-symbols-outlined text-[15px] text-wealth-cyan">health_and_safety</span>
+          <span>Health Cover</span>
+        </div>
+        <div class="text-xl font-bold text-wealth-cyan num-tabular">₹35.0 Lakhs</div>
+        <span class="text-[10px] text-text-muted">Base + Super Top-up</span>
+      </div>
+    </div>
+
+    <!-- Annual Premium Drag & Tax Shield Bar -->
+    <div class="pt-2 border-t border-border-subtle/60 flex items-center justify-between text-xs">
+      <div>
+        <span class="text-text-muted">Annual Premium Drag: </span>
+        <span class="font-semibold text-text-primary num-tabular">₹1,18,500/yr</span>
+      </div>
+      <div class="text-[11px] text-profit-emerald font-medium">
+        ₹36,972 Tax Saved (30% Slab)
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. RENEWAL WATCHDOG & GRACE PERIOD ALERT -->
+  <section class="rounded-xl p-3.5 bg-warning-amber/10 border border-warning-amber/30 relative">
+    <div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-lg bg-warning-amber/20 flex items-center justify-center text-warning-amber shrink-0 mt-0.5">
+        <span class="material-symbols-outlined text-[18px]">alarm</span>
+      </div>
+      <div class="flex-1">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold text-warning-amber">2 Upcoming Premiums Due</h2>
+          <span class="text-[10px] text-warning-amber/80 font-mono">Next: in 19 Days</span>
+        </div>
+        <p class="text-xs text-text-secondary mt-0.5">
+          Star Health Family Floater (<span class="num-tabular font-semibold text-text-primary">₹28,400</span>) due 15 Nov 2026.
+        </p>
+        <div class="mt-2.5 flex items-center gap-2">
+          <button class="px-2.5 py-1 rounded-md bg-warning-amber text-black font-semibold text-[11px] hover:bg-warning-amber/90 transition-colors">
+            Pay / Log Spend
+          </button>
+          <button class="px-2.5 py-1 rounded-md bg-surface-layer-2 text-text-secondary text-[11px] hover:text-text-primary transition-colors">
+            Snooze 7 Days
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CATEGORY FILTER CHIPS -->
+  <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+    <button class="px-3 py-1 rounded-full text-xs font-semibold bg-primary-accent text-white shadow-xs whitespace-nowrap">
+      All Policies (5)
+    </button>
+    <button class="px-3 py-1 rounded-full text-xs font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary whitespace-nowrap">
+      Life &amp; LIC (3)
+    </button>
+    <button class="px-3 py-1 rounded-full text-xs font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary whitespace-nowrap">
+      Health (1)
+    </button>
+    <button class="px-3 py-1 rounded-full text-xs font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary whitespace-nowrap">
+      Motor &amp; Assets (1)
+    </button>
+  </div>
+
+  <!-- 4. POLICY CARD 1: LIC JEEVAN LABH (ENDOWMENT ASSET) -->
+  <article class="rounded-xl p-4 bg-surface-layer-1 border border-border-subtle space-y-3 relative">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-profit-emerald text-[18px]">verified</span>
+          <h2 class="text-sm font-bold text-text-primary">LIC Jeevan Labh</h2>
+        </div>
+        <p class="text-xs text-text-muted mt-0.5">Policy #863920192 • Life Insurance Corporation</p>
+      </div>
+      <div class="flex flex-col items-end gap-1">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-profit-emerald/10 text-profit-emerald border border-profit-emerald/20">
+          Endowment Asset
+        </span>
+        <span class="text-[10px] text-text-muted">Sec 80C</span>
+      </div>
+    </div>
+
+    <!-- Financial Values Grid -->
+    <div class="grid grid-cols-2 gap-3 py-2 px-3 rounded-lg bg-surface-layer-2/50 border border-border-subtle/40">
+      <div>
+        <span class="text-[11px] text-text-muted">Current Surrender Value</span>
+        <div class="text-base font-bold text-profit-emerald num-tabular">₹4,12,000</div>
+        <span class="text-[10px] text-profit-emerald font-medium">+₹62,000 (+17.7%)</span>
+      </div>
+      <div>
+        <span class="text-[11px] text-text-muted">Cumulative Premiums Paid</span>
+        <div class="text-base font-bold text-text-primary num-tabular">₹3,50,000</div>
+        <span class="text-[10px] text-text-muted">7 of 16 Paid (43.8%)</span>
+      </div>
+    </div>
+
+    <!-- PPT Completion Progress Bar -->
+    <div class="space-y-1">
+      <div class="flex justify-between text-[11px] text-text-muted">
+        <span>Premium Term Progress (7 / 16 Years)</span>
+        <span class="font-semibold text-text-secondary">43.8%</span>
+      </div>
+      <div class="h-1.5 w-full bg-surface-layer-2 rounded-full overflow-hidden">
+        <div class="bg-primary-accent h-full w-[43.8%] rounded-full"></div>
+      </div>
+    </div>
+
+    <!-- Metadata Details Grid -->
+    <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs pt-1 border-t border-border-subtle/50 text-text-secondary">
+      <div>Sum Assured: <span class="font-semibold text-text-primary num-tabular">₹15,00,000</span></div>
+      <div>Premium: <span class="font-semibold text-text-primary num-tabular">₹50,000/yr</span></div>
+      <div>Next Due: <span class="font-semibold text-warning-amber">18 Mar 2027</span></div>
+      <div>Maturity: <span class="font-semibold text-text-primary">18 Mar 2041</span></div>
+      <div>Nominee: <span class="font-semibold text-text-primary">Spouse (100%)</span></div>
+      <div>Est. Corpus: <span class="font-semibold text-profit-emerald num-tabular">₹32.5 Lakhs</span></div>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="pt-2 flex items-center justify-between border-t border-border-subtle/50 text-xs">
+      <button class="inline-flex items-center gap-1 text-primary-accent hover:text-primary-accent/80 font-semibold text-[11px]">
+        <span class="material-symbols-outlined text-[14px]">receipt_long</span>
+        Log Premium (₹50k)
+      </button>
+      <div class="flex items-center gap-3 text-[11px] text-text-muted">
+        <button class="hover:text-text-primary flex items-center gap-1">
+          <span class="material-symbols-outlined text-[13px]">attach_file</span> Policy PDF
+        </button>
+        <button class="hover:text-text-primary flex items-center gap-1">
+          <span class="material-symbols-outlined text-[13px]">edit</span> Edit
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <!-- 5. POLICY CARD 2: PURE TERM LIFE (DEFENSE SHIELD) -->
+  <article class="rounded-xl p-4 bg-surface-layer-1 border border-border-subtle space-y-3 relative">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary-accent text-[18px]">security</span>
+          <h2 class="text-sm font-bold text-text-primary">ICICI Pru iProtect Smart</h2>
+        </div>
+        <p class="text-xs text-text-muted mt-0.5">Policy #992819024 • Pure Term Life Insurance</p>
+      </div>
+      <div class="flex flex-col items-end gap-1">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-accent/10 text-primary-accent border border-primary-accent/20">
+          Pure Term Shield
+        </span>
+        <span class="text-[10px] text-text-muted">Balance: ₹0</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 py-2 px-3 rounded-lg bg-surface-layer-2/50 border border-border-subtle/40">
+      <div>
+        <span class="text-[11px] text-text-muted">Life Cover (Death Benefit)</span>
+        <div class="text-lg font-bold text-primary-accent num-tabular">₹2.00 Crore</div>
+        <span class="text-[10px] text-text-muted">Till Age 65 (2051)</span>
+      </div>
+      <div>
+        <span class="text-[11px] text-text-muted">Annual Premium</span>
+        <div class="text-base font-bold text-text-primary num-tabular">₹16,200/yr</div>
+        <span class="text-[10px] text-warning-amber font-semibold">Due in 32 Days</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-text-secondary">
+      <div>Critical Illness: <span class="font-semibold text-text-primary">₹25 Lakhs</span></div>
+      <div>Accidental Cover: <span class="font-semibold text-text-primary">₹50 Lakhs</span></div>
+      <div>Nominee: <span class="font-semibold text-text-primary">Spouse (100%)</span></div>
+      <div>Claim Settlement: <span class="font-semibold text-profit-emerald">98.6%</span></div>
+    </div>
+  </article>
+
+  <!-- 6. POLICY CARD 3: HEALTH INSURANCE (FAMILY MOAT) -->
+  <article class="rounded-xl p-4 bg-surface-layer-1 border border-border-subtle space-y-3 relative">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-wealth-cyan text-[18px]">local_hospital</span>
+          <h2 class="text-sm font-bold text-text-primary">HDFC ERGO Optima Secure</h2>
+        </div>
+        <p class="text-xs text-text-muted mt-0.5">Policy #55219401 • Family Floater (4 Members)</p>
+      </div>
+      <div class="flex flex-col items-end gap-1">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-wealth-cyan/10 text-wealth-cyan border border-wealth-cyan/20">
+          Health Moat
+        </span>
+        <span class="text-[10px] text-profit-emerald font-semibold">Sec 80D</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 py-2 px-3 rounded-lg bg-surface-layer-2/50 border border-border-subtle/40">
+      <div>
+        <span class="text-[11px] text-text-muted">Total Sum Insured</span>
+        <div class="text-lg font-bold text-wealth-cyan num-tabular">₹25.0 Lakhs</div>
+        <span class="text-[10px] text-profit-emerald font-medium">+100% 2X Secure Bonus</span>
+      </div>
+      <div>
+        <span class="text-[11px] text-text-muted">Annual Premium</span>
+        <div class="text-base font-bold text-text-primary num-tabular">₹33,000/yr</div>
+        <span class="text-[10px] text-profit-emerald font-medium">₹10,296 Tax Saved</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-text-secondary">
+      <div>TPA / Card ID: <span class="font-semibold text-text-primary">HDFC-940281</span></div>
+      <div>Cashless Hospitals: <span class="font-semibold text-text-primary">12,000+</span></div>
+      <div>No Claim Bonus: <span class="font-semibold text-profit-emerald">+50% Accrued</span></div>
+      <div>Restoration: <span class="font-semibold text-text-primary">100% Automatic</span></div>
+    </div>
+  </article>
+
+  <!-- 7. HUMAN LIFE VALUE (HLV) AUDIT SUMMARY -->
+  <section class="rounded-xl p-4 bg-surface-layer-1 border border-border-subtle space-y-3">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xs font-bold text-text-primary flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-primary-accent text-[16px]">psychology</span>
+        Human Life Value (HLV) Defense Audit
+      </h2>
+      <span class="text-[10px] text-profit-emerald font-semibold">Adequately Insured</span>
+    </div>
+
+    <p class="text-xs text-text-secondary leading-relaxed">
+      Based on your annual household expenses (<span class="text-text-primary font-semibold">₹12.0L/yr</span>) and outstanding liabilities (<span class="text-text-primary font-semibold">Home Loan ₹68.4L</span>), your recommended life cover is <span class="text-text-primary font-semibold">₹2.65 Crore</span>.
+    </p>
+
+    <div class="space-y-1.5">
+      <div class="flex justify-between text-[11px]">
+        <span class="text-text-muted">Coverage Ratio (₹2.50 Cr / ₹2.65 Cr)</span>
+        <span class="font-semibold text-profit-emerald">94.3% Protected</span>
+      </div>
+      <div class="h-2 w-full bg-surface-layer-2 rounded-full overflow-hidden flex">
+        <div class="bg-profit-emerald h-full w-[94.3%]"></div>
+        <div class="bg-warning-amber/40 h-full w-[5.7%]"></div>
+      </div>
+    </div>
+
+    <div class="text-[11px] text-text-muted flex items-center gap-1 pt-1">
+      <span class="material-symbols-outlined text-[13px] text-profit-emerald">check_circle</span>
+      <span>No immediate term cover enhancement needed. Deficit is under ₹15 Lakhs.</span>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

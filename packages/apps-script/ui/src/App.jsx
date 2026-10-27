@@ -14,6 +14,7 @@ import AppLockScreen from './components/AppLockScreen';
 import PrivacyCurtain from './components/PrivacyCurtain';
 import PortfolioRebalancerModal from './components/PortfolioRebalancerModal';
 import RetirementPlannerModal from './components/RetirementPlannerModal';
+import InsuranceHubModal from './components/InsuranceHubModal';
 import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
 import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes, clearPinConfig } from './utils/securityUtils';
 
@@ -69,6 +70,42 @@ export default function App() {
            });
         }
       }
+
+      // Premium Due Date & Grace Period Monitoring
+      const nextDueDateStr = details['Next Due Date'] || details['Due Date'];
+      if (nextDueDateStr) {
+        const dueDate = new Date(nextDueDateStr);
+        if (!isNaN(dueDate.getTime())) {
+          const premAmount = details['Premium Amount'] ? formatCurrency(details['Premium Amount']) : '';
+          const graceDays = Number(details['Grace Period Days'] || 30);
+          const graceThreshold = new Date(dueDate.getTime() + (graceDays * 24 * 60 * 60 * 1000));
+          
+          if (dueDate >= now && dueDate <= thresholdDate) {
+            const daysLeft = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+            reminders.push({
+              _id: 'prem_' + asset['Asset ID'],
+              title: 'Upcoming Premium Due',
+              address: asset.Category,
+              body: `${asset.Name} premium ${premAmount ? `(${premAmount}) ` : ''}is due in ${daysLeft} days (on ${dueDate.toLocaleDateString()}).`,
+              date: dueDate.getTime(),
+              assetId: asset['Asset ID'],
+              isInsurance: true
+            });
+          } else if (now > dueDate && now <= graceThreshold) {
+            const daysOverdue = Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24));
+            reminders.push({
+              _id: 'prem_grace_' + asset['Asset ID'],
+              title: 'Grace Period Active',
+              address: asset.Category,
+              body: `${asset.Name} premium ${premAmount ? `(${premAmount}) ` : ''}is ${daysOverdue} days overdue. Policy is in grace period!`,
+              date: dueDate.getTime(),
+              assetId: asset['Asset ID'],
+              isOverdue: true,
+              isInsurance: true
+            });
+          }
+        }
+      }
     });
     return reminders.sort((a, b) => a.date - b.date);
   };
@@ -84,6 +121,7 @@ export default function App() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showRebalancerModal, setShowRebalancerModal] = useState(false);
   const [showRetirementModal, setShowRetirementModal] = useState(false);
+  const [showInsuranceHubModal, setShowInsuranceHubModal] = useState(false);
   const [isAppLocked, setIsAppLocked] = useState(() => isPinConfigured());
   const [isCurtainActive, setIsCurtainActive] = useState(false);
   const backgroundTimestampRef = useRef(null);
@@ -494,6 +532,7 @@ export default function App() {
             showMessage={showMessage} 
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
+            onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
           />
         )}
         {activeTab === 'assets' && (
@@ -504,6 +543,7 @@ export default function App() {
             showMessage={showMessage} 
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
+            onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
           />
         )}
         {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
@@ -516,6 +556,7 @@ export default function App() {
             onOpenSecurityModal={() => setShowSecurityModal(true)} 
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
+            onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
           />
         )}
       </main>
@@ -540,7 +581,16 @@ export default function App() {
                     <p className="text-xs text-text-primary mb-2 leading-relaxed">{rem.body}</p>
                     <div className="flex justify-between items-center mt-2">
                        <span className="bg-surface-layer1 text-text-secondary text-[10px] px-2 py-1 rounded border border-border-subtle">{rem.address}</span>
-                       <button onClick={() => { setShowNotifications(false); setActiveTab('assets'); }} className="text-xs text-primary-accent hover:text-primary-accent/80 font-medium">View Asset &rarr;</button>
+                       <button onClick={() => { 
+                         setShowNotifications(false); 
+                         if (rem.isInsurance) {
+                           setShowInsuranceHubModal(true);
+                         } else {
+                           setActiveTab('assets'); 
+                         }
+                       }} className="text-xs text-primary-accent hover:text-primary-accent/80 font-medium">
+                         {rem.isInsurance ? 'View in Insurance Hub →' : 'View Asset →'}
+                       </button>
                     </div>
                   </div>
                 ))
@@ -617,6 +667,28 @@ export default function App() {
         onOpenAddAsset={() => {
           setShowRetirementModal(false);
           setActiveTab('assets');
+        }}
+      />
+
+      {/* Insurance & Protection Hub Modal */}
+      <InsuranceHubModal
+        isOpen={showInsuranceHubModal}
+        onClose={() => setShowInsuranceHubModal(false)}
+        data={data}
+        formatCurrency={formatCurrency}
+        showMessage={showMessage}
+        onOpenAddAsset={(category) => {
+          setShowInsuranceHubModal(false);
+          setActiveTab('assets');
+        }}
+        onOpenEditAsset={(asset) => {
+          setShowInsuranceHubModal(false);
+          setActiveTab('assets');
+        }}
+        onRefresh={refreshData}
+        onNavigateToSafe={() => {
+          setShowInsuranceHubModal(false);
+          setActiveTab('safe');
         }}
       />
     </div>

@@ -29,9 +29,17 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
   const safeDocs = data?.safe || [];
   const profiles = data?.familyProfiles || [];
   
-  const defaultSafeCategories = 'Identity, Finance, Property, Medical, Vehicle, Education, Tax, Other';
+  const defaultSafeCategories = 'Identity, Finance, Insurance, Property, Medical, Vehicle, Education, Tax, Other';
   const customSafeCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'SafeCategories')?.['Setting Value'] || defaultSafeCategories;
-  const categoriesList = customSafeCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  let categoriesList = customSafeCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+  if (!categoriesList.includes('Insurance')) {
+    const medIdx = categoriesList.indexOf('Medical');
+    if (medIdx !== -1) {
+      categoriesList.splice(medIdx, 0, 'Insurance');
+    } else {
+      categoriesList.push('Insurance');
+    }
+  }
   
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);

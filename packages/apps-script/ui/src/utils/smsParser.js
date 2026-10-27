@@ -338,7 +338,21 @@ export function guessCategory(payee = '', body = '', bank = '') {
   }
 
   // Investments & Insurance
-  if (b.includes('LIFE INSUR') || b.includes('LIC') || b.includes('MUTUAL FUND') || b.includes('SIP') || b.includes('TAX SAVER') || b.includes('KOTAK LIFE')) {
+  if (
+    b.includes('LIFE INSUR') || 
+    b.includes('LIC') || 
+    b.includes('MUTUAL FUND') || 
+    b.includes('SIP') || 
+    b.includes('TAX SAVER') || 
+    b.includes('KOTAK LIFE') ||
+    b.includes('HDFC LIFE') ||
+    b.includes('ICICI PRU') ||
+    b.includes('MAX LIFE') ||
+    b.includes('STAR HEALTH') ||
+    b.includes('HDFC ERGO') ||
+    b.includes('CARE HEALTH') ||
+    b.includes('INSURANCE')
+  ) {
     return 'Investment';
   }
 
@@ -455,6 +469,13 @@ export function extractFinancialCandidate(sms, options = {}) {
     bLower.includes('sip') ||
     bLower.includes('tax saver') ||
     bLower.includes('kotak life') ||
+    bLower.includes('hdfc life') ||
+    bLower.includes('icici pru') ||
+    bLower.includes('max life') ||
+    bLower.includes('star health') ||
+    bLower.includes('hdfc ergo') ||
+    bLower.includes('care health') ||
+    bLower.includes('insurance') ||
     bLower.includes('nps') ||
     bLower.includes('ppf')
   ) {
