@@ -34,6 +34,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingRates, setIsSyncingRates] = useState(false);
 
+  useEffect(() => {
+    const prefill = sessionStorage.getItem('nwm_prefill_asset_category');
+    if (prefill) {
+      sessionStorage.removeItem('nwm_prefill_asset_category');
+      openAddModal(prefill);
+    }
+  }, []);
+
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
       setDeleteConfirmAsset(null);
@@ -103,9 +111,28 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     }
   };
 
-  const openAddModal = () => {
+  const openAddModal = (initialCategory) => {
     setEditingAssetId(null);
-    setNewAsset({ Name: '', Category: categoriesList[0] || 'Equity', 'Current Value': '', Owner: '', 'Details JSON': { 'Live Tracking': true } });
+    let catToUse = initialCategory;
+    if (!catToUse) {
+      if (filter !== 'All Assets') {
+        catToUse = filter;
+      } else {
+        catToUse = categoriesList[0] || 'Equity';
+      }
+    }
+    const isInsur = (catToUse || '').toLowerCase().includes('insur') || (catToUse || '').toLowerCase().includes('lic');
+    setNewAsset({ 
+      Name: '', 
+      Category: catToUse, 
+      'Current Value': '', 
+      Owner: '', 
+      'Details JSON': isInsur ? {
+        'Policy Type': 'Endowment Plan (Savings + Life Cover)',
+        'Premium Frequency': 'Yearly',
+        'Grace Period Days': 30
+      } : { 'Live Tracking': true } 
+    });
     setAttachedFiles([]);
     setUploadProgress('');
     setDeleteConfirmAsset(null);
@@ -630,7 +657,24 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
              {!editingAssetId && (
                <div className="px-5 pt-3 pb-2 border-b border-border-subtle/50 bg-surface-layer2/30 flex-shrink-0">
                  <label className="block text-xs text-text-secondary mb-1">Asset Category</label>
-                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent">
+                 <select 
+                   value={newAsset.Category || categoriesList[0] || ''} 
+                   onChange={e => {
+                     const newCat = e.target.value;
+                     const isIns = (newCat || '').toLowerCase().includes('insur') || (newCat || '').toLowerCase().includes('lic');
+                     setNewAsset(prev => ({
+                       ...prev, 
+                       Category: newCat,
+                       'Details JSON': isIns ? {
+                         ...(prev['Details JSON'] || {}),
+                         'Policy Type': prev['Details JSON']?.['Policy Type'] || 'Endowment Plan (Savings + Life Cover)',
+                         'Premium Frequency': prev['Details JSON']?.['Premium Frequency'] || 'Yearly',
+                         'Grace Period Days': prev['Details JSON']?.['Grace Period Days'] || 30
+                       } : prev['Details JSON']
+                     }));
+                   }} 
+                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent"
+                 >
                    {categoriesList.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
                    ))}

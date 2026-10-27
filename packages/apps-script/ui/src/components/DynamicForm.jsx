@@ -214,14 +214,27 @@ export default function DynamicForm({
   let schemaKey = 'default';
   const catLower = (category || '').toLowerCase();
   
-  if (catLower.includes('fd') || catLower.includes('fixed') || catLower.includes('cash')) schemaKey = 'Cash/FD';
-  else if (catLower.includes('equity') || catLower.includes('stock')) schemaKey = 'Equity';
-  else if (catLower.includes('mutual')) schemaKey = 'Mutual Funds';
-  else if (catLower.includes('real estate') || catLower.includes('property')) schemaKey = 'Real Estate';
-  else if (catLower.includes('gold') || catLower.includes('bullion')) schemaKey = 'Gold';
-  else if (catLower.includes('retire') || catLower.includes('pension') || catLower.includes('provident') || catLower.includes('epf') || catLower.includes('ppf') || catLower.includes('nps')) schemaKey = 'Retirement & Pension';
-  else if (catLower.includes('bond') || catLower.includes('debenture')) schemaKey = 'Bonds';
-  else if (catLower.includes('liabilit') || catLower.includes('loan')) schemaKey = 'Liabilities';
+  if (catLower.includes('insur') || catLower.includes('lic') || catLower.includes('policy')) {
+    schemaKey = 'Life Insurance / LIC';
+  } else if (catLower.includes('fd') || catLower.includes('fixed') || catLower.includes('cash')) {
+    schemaKey = 'Cash/FD';
+  } else if (catLower.includes('equity') || catLower.includes('stock')) {
+    schemaKey = 'Equity';
+  } else if (catLower.includes('mutual')) {
+    schemaKey = 'Mutual Funds';
+  } else if (catLower.includes('real estate') || catLower.includes('property')) {
+    schemaKey = 'Real Estate';
+  } else if (catLower.includes('gold') || catLower.includes('bullion')) {
+    schemaKey = 'Gold';
+  } else if (catLower.includes('retire') || catLower.includes('pension') || catLower.includes('provident') || catLower.includes('epf') || catLower.includes('ppf') || catLower.includes('nps')) {
+    schemaKey = 'Retirement & Pension';
+  } else if (catLower.includes('bond') || catLower.includes('debenture')) {
+    schemaKey = 'Bonds';
+  } else if (catLower.includes('liabilit') || catLower.includes('loan')) {
+    schemaKey = 'Liabilities';
+  } else if (assetSchemas[category]) {
+    schemaKey = category;
+  }
   
   const schema = assetSchemas[schemaKey] || assetSchemas['default'];
 
@@ -981,6 +994,23 @@ export default function DynamicForm({
         </div>
       )}
 
+      {/* Insurance & Protection Policy Vault Banner */}
+      {(schemaKey === 'Life Insurance / LIC' || schemaKey === 'Insurance') && (
+        <div className="bg-gradient-to-r from-emerald-500/15 via-surface-layer2 to-surface-layer2 border border-emerald-500/30 rounded-xl p-3 text-xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
+              <Shield size={14} /> Insurance &amp; Family Protection Policy
+            </span>
+            <Badge variant="emerald" dot size="xs">
+              Sec 80C &amp; 80D
+            </Badge>
+          </div>
+          <p className="text-[11px] text-text-secondary leading-relaxed">
+            Track policy numbers, regular premium schedules, death benefit cover (Sum Assured), and realizable surrender value without inflating net worth.
+          </p>
+        </div>
+      )}
+
       {/* Historical Asset Price & Auto-Cost Suggestions Banner */}
       {isFetchingHistorical && (
         <div className="bg-surface-layer2 border border-primary-accent/30 rounded-xl p-2.5 text-xs flex items-center gap-2 text-primary-accent animate-pulse">
@@ -1061,6 +1091,9 @@ export default function DynamicForm({
                      <option key={opt} value={opt}>{opt}</option>
                    ))}
                  </select>
+                 {field.hint && (
+                   <p className="text-[10px] text-text-muted mt-1 leading-normal">{field.hint}</p>
+                 )}
                </div>
              );
           }
@@ -1089,9 +1122,14 @@ export default function DynamicForm({
             <div key={field.name} className={field.name === 'Name' || field.name === 'Current Value' ? "md:col-span-2" : ""}>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-xs text-text-secondary">{field.label} {field.required && <span className="text-liability-rose">*</span>}</label>
-                {field.name === 'Current Value' && (
+                {field.name === 'Current Value' && (schemaKey === 'Equity' || schemaKey === 'Gold' || schemaKey === 'Mutual Funds') && (
                   <span className="text-[10px] text-primary-accent font-medium flex items-center gap-1">
                     <Sparkles size={11} /> Auto-updates with live rates
+                  </span>
+                )}
+                {field.name === 'Current Value' && (schemaKey === 'Life Insurance / LIC' || schemaKey === 'Insurance') && (
+                  <span className="text-[10px] text-wealth-emerald font-medium">
+                    Surrender Value (₹0 for Term/Health)
                   </span>
                 )}
               </div>
@@ -1104,6 +1142,9 @@ export default function DynamicForm({
                 className={`w-full bg-surface-layer2 border rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent ${field.name === 'Current Value' ? 'border-primary-accent/40 font-bold tabular-nums text-wealth-emerald' : 'border-border-subtle'}`} 
                 placeholder={field.placeholder} 
               />
+              {field.hint && (
+                <p className="text-[10px] text-text-muted mt-1 leading-normal">{field.hint}</p>
+              )}
               {field.name === 'Details JSON.Ticker Symbol' && cleanEquityTicker && (
                 <div className="mt-1 flex items-center justify-between text-[11px] px-1">
                   {cleanEquityTicker !== String(value || '').toUpperCase() ? (

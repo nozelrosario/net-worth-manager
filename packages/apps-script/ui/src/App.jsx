@@ -680,6 +680,7 @@ export default function App() {
         onOpenAddAsset={(category) => {
           setShowInsuranceHubModal(false);
           setActiveTab('assets');
+          sessionStorage.setItem('nwm_prefill_asset_category', category || 'Life Insurance / LIC');
         }}
         onOpenEditAsset={(asset) => {
           setShowInsuranceHubModal(false);
