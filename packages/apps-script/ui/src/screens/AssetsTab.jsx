@@ -1,6 +1,6 @@
 import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
 import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse } from 'lucide-react';
@@ -33,14 +33,6 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [deleteConfirmAsset, setDeleteConfirmAsset] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingRates, setIsSyncingRates] = useState(false);
-
-  useEffect(() => {
-    const prefill = sessionStorage.getItem('nwm_prefill_asset_category');
-    if (prefill) {
-      sessionStorage.removeItem('nwm_prefill_asset_category');
-      openAddModal(prefill);
-    }
-  }, []);
 
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
@@ -138,6 +130,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     setDeleteConfirmAsset(null);
     setShowAddModal(true);
   };
+
+  useEffect(() => {
+    const prefill = sessionStorage.getItem('nwm_prefill_asset_category');
+    if (prefill) {
+      sessionStorage.removeItem('nwm_prefill_asset_category');
+      openAddModal(prefill);
+    }
+  }, []);
 
   const openEditModal = (asset) => {
     setEditingAssetId(asset['Asset ID']);
