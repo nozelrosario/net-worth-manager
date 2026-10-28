@@ -1,9 +1,10 @@
 import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse } from 'lucide-react';
+import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -22,7 +23,7 @@ const getSafeCategoryForAsset = (assetCategory) => {
   return 'Finance';
 };
 
-export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer, onOpenRetirementPlanner }) {
+export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
   const [filter, setFilter] = useState('All Assets');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
@@ -43,7 +44,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   const assets = data?.assets || [];
   
-  const defaultCategories = 'Equity, Mutual Funds, Gold, Cash/FD, Real Estate, Retirement & Pension, Liabilities';
+  const defaultCategories = 'Equity, Mutual Funds, Gold, Cash/FD, Real Estate, Retirement & Pension, Life Insurance / LIC, Liabilities';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'AssetCategories')?.['Setting Value'] || defaultCategories;
   let categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
   if (!categoriesList.includes('Retirement & Pension') && !categoriesList.includes('Provident Funds')) {
@@ -52,6 +53,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       categoriesList.splice(liabIdx, 0, 'Retirement & Pension');
     } else {
       categoriesList.push('Retirement & Pension');
+    }
+  }
+  if (!categoriesList.includes('Life Insurance / LIC') && !categoriesList.includes('Insurance')) {
+    const liabIdx = categoriesList.indexOf('Liabilities');
+    if (liabIdx !== -1) {
+      categoriesList.splice(liabIdx, 0, 'Life Insurance / LIC');
+    } else {
+      categoriesList.push('Life Insurance / LIC');
     }
   }
   const profiles = data?.familyProfiles || [];
@@ -63,6 +72,9 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     : assets.filter(a => {
         if (filter === 'Retirement & Pension') {
           return a.Category === 'Retirement & Pension' || a.Category === 'Provident Funds' || (a.Category || '').toLowerCase().includes('retire') || (a.Category || '').toLowerCase().includes('provident');
+        }
+        if (filter === 'Life Insurance / LIC' || filter === 'Insurance') {
+          return a.Category === 'Life Insurance / LIC' || a.Category === 'Insurance' || (a.Category || '').toLowerCase().includes('insurance') || (a.Category || '').toLowerCase().includes('lic');
         }
         return a.Category === filter;
       });
@@ -91,14 +103,41 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     }
   };
 
-  const openAddModal = () => {
+  const openAddModal = (initialCategory) => {
     setEditingAssetId(null);
-    setNewAsset({ Name: '', Category: categoriesList[0] || 'Equity', 'Current Value': '', Owner: '', 'Details JSON': { 'Live Tracking': true } });
+    let catToUse = typeof initialCategory === 'string' ? initialCategory : '';
+    if (!catToUse) {
+      if (filter && filter !== 'All Assets') {
+        catToUse = filter;
+      } else {
+        catToUse = categoriesList[0] || 'Equity';
+      }
+    }
+    const isInsur = (catToUse || '').toLowerCase().includes('insur') || (catToUse || '').toLowerCase().includes('lic');
+    setNewAsset({ 
+      Name: '', 
+      Category: catToUse, 
+      'Current Value': '', 
+      Owner: '', 
+      'Details JSON': isInsur ? {
+        'Policy Type': 'Endowment Plan (Savings + Life Cover)',
+        'Premium Frequency': 'Yearly',
+        'Grace Period Days': 30
+      } : { 'Live Tracking': true } 
+    });
     setAttachedFiles([]);
     setUploadProgress('');
     setDeleteConfirmAsset(null);
     setShowAddModal(true);
   };
+
+  useEffect(() => {
+    const prefill = sessionStorage.getItem('nwm_prefill_asset_category');
+    if (prefill) {
+      sessionStorage.removeItem('nwm_prefill_asset_category');
+      openAddModal(prefill);
+    }
+  }, []);
 
   const openEditModal = (asset) => {
     setEditingAssetId(asset['Asset ID']);
@@ -391,11 +430,25 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </button>
               </>
             )}
+            {onOpenInsuranceHub && (
+              <>
+                <span className="text-text-muted text-[10px]">•</span>
+                <button 
+                  type="button"
+                  onClick={onOpenInsuranceHub} 
+                  title="Open Insurance & Protection Hub (LIC, Term, Health)"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 rounded-full text-[11px] font-medium transition-all active:scale-95"
+                >
+                  <Shield size={10} />
+                  <span>Insurance Hub</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
         <button 
           type="button"
-          onClick={openAddModal} 
+          onClick={() => openAddModal()} 
           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
         >
           <Plus size={14} />
@@ -455,11 +508,19 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             } else {
               holdingSummary = rt;
             }
+          } else if (isInsuranceAsset(asset)) {
+            const polMetrics = calculatePolicyMetrics(asset);
+            const coverStr = polMetrics.sumAssured > 0 
+              ? `Cover: ₹${(polMetrics.sumAssured / 100000).toFixed(0)}L` 
+              : (polMetrics.healthCover > 0 ? `Cover: ₹${(polMetrics.healthCover / 100000).toFixed(0)}L` : '');
+            const dueStr = polMetrics.nextDueDate ? `Due: ${polMetrics.nextDueDate}` : '';
+            holdingSummary = [polMetrics.policyType, coverStr, dueStr].filter(Boolean).join(' • ');
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);
           const pnl = asset['P&L'];
           const pnlPct = asset['P&L %'];
+          const polMetrics = isInsuranceAsset(asset) ? calculatePolicyMetrics(asset) : null;
 
           const perf = (asset['CAGR'] !== undefined && asset['CAGR'] !== null)
             ? { holdingStr: asset['Holding Period'], cagr: asset['CAGR'], taxTag: asset['Tax Tag'], taxLabel: asset['Tax Label'] }
@@ -510,6 +571,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                         {docCount} {docCount === 1 ? 'doc' : 'docs'}
                       </span>
                     )}
+                    {polMetrics?.isOverdue && (
+                      <Badge variant="rose" size="xs">Grace Period Active</Badge>
+                    )}
+                    {polMetrics?.isDueSoon && (
+                      <Badge variant="amber" size="xs">Due in {polMetrics.daysUntilDue}d</Badge>
+                    )}
                   </div>
                 </div>
                 <span className="bg-surface-layer2 text-[10px] px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
@@ -546,6 +613,18 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   )}
                 </div>
               </div>
+
+              {polMetrics?.ppt > 0 && polMetrics?.isInvestment && (
+                <div className="mt-2 pt-2 border-t border-border-subtle/30">
+                  <div className="flex justify-between text-[10px] text-text-muted mb-1">
+                    <span>Premium Term ({polMetrics.paidYears} / {polMetrics.ppt} Yrs)</span>
+                    <span className="font-semibold text-text-secondary">{polMetrics.pptProgressPct.toFixed(0)}%</span>
+                  </div>
+                  <div className="h-1 w-full bg-surface-layer2 rounded-full overflow-hidden">
+                    <div className="bg-primary-accent h-full rounded-full" style={{ width: `${polMetrics.pptProgressPct}%` }}></div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -578,7 +657,24 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
              {!editingAssetId && (
                <div className="px-5 pt-3 pb-2 border-b border-border-subtle/50 bg-surface-layer2/30 flex-shrink-0">
                  <label className="block text-xs text-text-secondary mb-1">Asset Category</label>
-                 <select value={newAsset.Category || categoriesList[0] || ''} onChange={e => setNewAsset({...newAsset, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent">
+                 <select 
+                   value={newAsset.Category || categoriesList[0] || ''} 
+                   onChange={e => {
+                     const newCat = e.target.value;
+                     const isIns = (newCat || '').toLowerCase().includes('insur') || (newCat || '').toLowerCase().includes('lic');
+                     setNewAsset(prev => ({
+                       ...prev, 
+                       Category: newCat,
+                       'Details JSON': isIns ? {
+                         ...(prev['Details JSON'] || {}),
+                         'Policy Type': prev['Details JSON']?.['Policy Type'] || 'Endowment Plan (Savings + Life Cover)',
+                         'Premium Frequency': prev['Details JSON']?.['Premium Frequency'] || 'Yearly',
+                         'Grace Period Days': prev['Details JSON']?.['Grace Period Days'] || 30
+                       } : prev['Details JSON']
+                     }));
+                   }} 
+                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent"
+                 >
                    {categoriesList.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
                    ))}

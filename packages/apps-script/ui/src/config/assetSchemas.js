@@ -438,6 +438,178 @@ export const assetSchemas = {
       { name: 'Owner', label: 'Borrower / Co-borrower', type: 'text' }
     ]
   },
+  'Life Insurance / LIC': {
+    title: 'Life Insurance & LIC Policies',
+    fields: [
+      { name: 'Name', label: 'Policy Name / Scheme', type: 'text', placeholder: 'e.g. LIC Jeevan Labh, HDFC Click 2 Protect', required: true },
+      { 
+        name: 'Details JSON.Policy Type', 
+        label: 'Policy Category / Type', 
+        type: 'select', 
+        options: [
+          'Endowment Plan (Savings + Life Cover)',
+          'Money Back Plan (Periodic Survival Benefits)',
+          'Whole Life Plan (e.g. Jeevan Umang)',
+          'ULIP (Unit Linked Insurance Plan)',
+          'Pension / Immediate Annuity Plan',
+          'Pure Term Insurance (Risk Protection Only)',
+          'Health Insurance (Mediclaim)',
+          'Motor & Vehicle Insurance'
+        ],
+        required: true
+      },
+      { name: 'Institution/Location', label: 'Insurer / Organization', type: 'text', placeholder: 'e.g. Life Insurance Corporation of India (LIC)' },
+      { name: 'Identifiers', label: 'Policy Number', type: 'text', placeholder: 'e.g. 863920192', required: true },
+      { name: 'Details JSON.Servicing Branch', label: 'Servicing Branch & Code', type: 'text', placeholder: 'e.g. Mumbai Branch 883' },
+      
+      // Valuations & Cost
+      { 
+        name: 'Cost', 
+        label: 'Cumulative Premiums Paid to Date (₹)', 
+        type: 'number', 
+        required: true 
+      },
+      { 
+        name: 'Current Value', 
+        label: 'Current Surrender / Accrued Value (₹)', 
+        type: 'number', 
+        required: true 
+      },
+      
+      // Coverage & Terms
+      { 
+        name: 'Details JSON.Sum Assured', 
+        label: 'Life Cover / Sum Assured (₹)', 
+        type: 'number', 
+        placeholder: 'e.g. 1500000',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { 
+        name: 'Details JSON.Health Cover', 
+        label: 'Health Sum Insured (₹)', 
+        type: 'number', 
+        placeholder: 'e.g. 2500000',
+        condition: (fd) => (fd['Details JSON']?.['Policy Type'] || '').includes('Health')
+      },
+      { name: 'Acquisition Date', label: 'Policy Commencement Date (DOC)', type: 'date' },
+      { 
+        name: 'Details JSON.Policy Term', 
+        label: 'Total Policy Term (Years)', 
+        type: 'number', 
+        placeholder: '25',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { 
+        name: 'Details JSON.Premium Paying Term', 
+        label: 'Premium Paying Term - PPT (Years)', 
+        type: 'number', 
+        placeholder: '16',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      
+      // Regular Premium Cashflow Details
+      { name: 'Details JSON.Premium Amount', label: 'Regular Premium Installment (₹)', type: 'number', required: true },
+      { 
+        name: 'Details JSON.Premium Frequency', 
+        label: 'Premium Frequency Mode', 
+        type: 'select', 
+        options: ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly NACH/ECS', 'Single Premium']
+      },
+      { name: 'Details JSON.Next Due Date', label: 'Next Premium Due Date', type: 'date', required: true },
+      { name: 'Details JSON.Grace Period Days', label: 'Grace Period (Days)', type: 'number' },
+      
+      // Maturity & Nominee
+      { 
+        name: 'Details JSON.Maturity Date', 
+        label: 'Maturity Date', 
+        type: 'date',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Term') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { 
+        name: 'Details JSON.Expected Maturity Amount', 
+        label: 'Estimated Maturity Corpus (incl. Bonus) (₹)', 
+        type: 'number',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Term') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { name: 'Owner', label: 'Life Assured / Proposer', type: 'text', placeholder: 'e.g. Self' },
+      { name: 'Nominee', label: 'Nominee Name & Relationship', type: 'text', placeholder: 'e.g. Jane Doe (Spouse) - 100%' }
+    ]
+  },
+  'Insurance': {
+    title: 'Insurance Policies',
+    fields: [
+      { name: 'Name', label: 'Policy Name / Scheme', type: 'text', placeholder: 'e.g. LIC Jeevan Labh, HDFC Click 2 Protect', required: true },
+      { 
+        name: 'Details JSON.Policy Type', 
+        label: 'Policy Category / Type', 
+        type: 'select', 
+        options: [
+          'Endowment Plan (Savings + Life Cover)',
+          'Money Back Plan (Periodic Survival Benefits)',
+          'Whole Life Plan (e.g. Jeevan Umang)',
+          'ULIP (Unit Linked Insurance Plan)',
+          'Pension / Immediate Annuity Plan',
+          'Pure Term Insurance (Risk Protection Only)',
+          'Health Insurance (Mediclaim)',
+          'Motor & Vehicle Insurance'
+        ],
+        required: true
+      },
+      { name: 'Institution/Location', label: 'Insurer / Organization', type: 'text', placeholder: 'e.g. Life Insurance Corporation of India (LIC)' },
+      { name: 'Identifiers', label: 'Policy Number', type: 'text', placeholder: 'e.g. 863920192', required: true },
+      { name: 'Details JSON.Servicing Branch', label: 'Servicing Branch & Code', type: 'text', placeholder: 'e.g. Mumbai Branch 883' },
+      { name: 'Cost', label: 'Cumulative Premiums Paid to Date (₹)', type: 'number', required: true },
+      { name: 'Current Value', label: 'Current Surrender / Accrued Value (₹)', type: 'number', required: true },
+      { 
+        name: 'Details JSON.Sum Assured', 
+        label: 'Life Cover / Sum Assured (₹)', 
+        type: 'number', 
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { 
+        name: 'Details JSON.Health Cover', 
+        label: 'Health Sum Insured (₹)', 
+        type: 'number', 
+        condition: (fd) => (fd['Details JSON']?.['Policy Type'] || '').includes('Health')
+      },
+      { name: 'Acquisition Date', label: 'Policy Commencement Date (DOC)', type: 'date' },
+      { 
+        name: 'Details JSON.Policy Term', 
+        label: 'Total Policy Term (Years)', 
+        type: 'number',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { 
+        name: 'Details JSON.Premium Paying Term', 
+        label: 'Premium Paying Term - PPT (Years)', 
+        type: 'number',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { name: 'Details JSON.Premium Amount', label: 'Regular Premium Installment (₹)', type: 'number', required: true },
+      { 
+        name: 'Details JSON.Premium Frequency', 
+        label: 'Premium Frequency Mode', 
+        type: 'select', 
+        options: ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly NACH/ECS', 'Single Premium']
+      },
+      { name: 'Details JSON.Next Due Date', label: 'Next Premium Due Date', type: 'date', required: true },
+      { name: 'Details JSON.Grace Period Days', label: 'Grace Period (Days)', type: 'number' },
+      { 
+        name: 'Details JSON.Maturity Date', 
+        label: 'Maturity Date', 
+        type: 'date',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Term') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { 
+        name: 'Details JSON.Expected Maturity Amount', 
+        label: 'Estimated Maturity Corpus (incl. Bonus) (₹)', 
+        type: 'number',
+        condition: (fd) => !(fd['Details JSON']?.['Policy Type'] || '').includes('Term') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Health') && !(fd['Details JSON']?.['Policy Type'] || '').includes('Motor')
+      },
+      { name: 'Owner', label: 'Life Assured / Proposer', type: 'text', placeholder: 'e.g. Self' },
+      { name: 'Nominee', label: 'Nominee Name & Relationship', type: 'text', placeholder: 'e.g. Jane Doe (Spouse) - 100%' }
+    ]
+  },
   'default': {
     title: 'Asset Details',
     fields: [

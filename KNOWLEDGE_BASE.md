@@ -25,6 +25,24 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.3) - Comprehensive Insurance & Policy Hub (Issue #33)
+✅ **Dedicated Insurance Financial Math Engine (`insuranceMath.js`)**:
+  - **Balance Sheet vs Cashflow Separation**: Distinct handling of investment-backed policies (LIC endowment, money back, ULIPs) vs pure defensive shields (Term Life, Health, Motor).
+  - **Human Life Value (HLV) Defense Auditor**: Models recommended life cover: $(15 \times \text{Annual Living Expenses}) + \text{Total Liabilities} - \text{Liquid Assets}$, computing coverage score (0-100%) and underinsurance deficit.
+  - **Accretion & Surrender Valuation**: Accurately tracks cumulative premiums paid (`Cost`) vs realizable surrender value (`Current Value`) with net accretion calculations.
+  - **Tax Sub-Ledger & Budget 2023 Watchdog**: Audits Section 80C (Life, up to ₹1.5L) and Section 80D (Health, ₹25k/₹50k), and flags policies with annual premiums $> ₹5,00,000$ losing Section 10(10D) tax exemption.
+✅ **Granular Dynamic Schema (`assetSchemas.js` & `DynamicForm.jsx`)**:
+  - First-class `Life Insurance / LIC` asset schema with fields for Policy Type, Policy Number, Insurer, Servicing Branch, Sum Assured, Health Sum Insured, Policy Term, Premium Paying Term (PPT), Premium Amount, Frequency, Next Due Date, Grace Period Days, Maturity Date, Estimated Maturity Corpus, and Nominee.
+  - Auto-categorization of tax status as `Sec 10(10D)` in DynamicForm.
+✅ **Interactive UI / UX (`InsuranceHubModal.jsx`, `AssetsTab.jsx` & `HomeTab.jsx`)**:
+  - High-fidelity OLED Dark & Clean Light mode modal matching prototype (`screen_16_insurance_protection_hub.html`).
+  - Triad metric hero card (Total Life Cover, Health Cover, Annual Premium Drag, and HLV Defense Score).
+  - Renewal Watchdog & Grace Period Alert banner with 1-tap "Log Premium" double-entry action dialog (adds spend transaction and increments asset cost base).
+  - Active policy cards with Premium Paying Term (PPT) completion progress bars, next due date countdown badges, and nominee details.
+  - Dedicated "Insurance Hub" CTA pills on HomeTab, AssetsTab, and SettingsTab.
+  - Grace Period & Due Date monitoring integrated directly into `App.jsx` bell notification modal.
+  - Enhanced SMS parser for instant detection of LIC, HDFC Life, ICICI Pru, Max Life, Star Health, and HDFC ERGO debits.
+
 ## Feature Update (v3.2) - Automated SMS Expense & Transfer Ingestion (Issue #29)
 ✅ **SMS Backup & Restore Incremental Sync Engine (`smsParser.js` & `Drive.gs`)**:
   - **Dual Ingestion Pipeline**: Ingests automated incremental XML backups from Google Drive (`DriveApp`) and provides a client-side streaming drag-and-drop XML file uploader.
