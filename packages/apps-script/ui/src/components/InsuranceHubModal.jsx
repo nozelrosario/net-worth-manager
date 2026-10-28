@@ -235,7 +235,7 @@ export default function InsuranceHubModal({
                   Sec 80C &amp; 80D
                 </Badge>
               </div>
-              <p className="text-[11px] text-text-muted">LIC, Term Life, Health &amp; Family Defense Moat</p>
+              <p className="text-typ-footnote text-text-muted">LIC, Term Life, Health &amp; Family Defense Moat</p>
             </div>
           </div>
 
@@ -288,7 +288,7 @@ export default function InsuranceHubModal({
                 <div className="text-xl sm:text-2xl font-bold text-text-primary num-tabular">
                   ₹{formatInLakhsOrCrores(insuranceData.totalLifeCover)}
                 </div>
-                <div className="text-[10px] text-text-muted mt-0.5">
+                <div className="text-typ-caption text-text-muted mt-0.5">
                   Term: ₹{formatInLakhsOrCrores(insuranceData.totalTermCover)} • LIC: ₹{formatInLakhsOrCrores(insuranceData.totalEndowmentCover)}
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function InsuranceHubModal({
                 <div className="text-xl sm:text-2xl font-bold text-cyan-400 num-tabular">
                   ₹{formatInLakhsOrCrores(insuranceData.totalHealthCover)}
                 </div>
-                <div className="text-[10px] text-text-muted mt-0.5">
+                <div className="text-typ-caption text-text-muted mt-0.5">
                   Base + Super Top-up Floater
                 </div>
               </div>
@@ -314,7 +314,7 @@ export default function InsuranceHubModal({
                 <div className="text-xl sm:text-2xl font-bold text-text-primary num-tabular">
                   {formatCurrency(insuranceData.totalAnnualPremium)}
                 </div>
-                <div className="text-[10px] text-wealth-emerald font-medium mt-0.5">
+                <div className="text-typ-caption text-wealth-emerald font-medium mt-0.5">
                   ~{formatCurrency(insuranceData.taxAudit.estimatedTaxSaved)} Tax Shielded (30%)
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function InsuranceHubModal({
                     Upcoming Premium Renewals ({insuranceData.upcomingRenewals.length})
                   </h3>
                 </div>
-                <span className="text-[10px] text-bullion-amber font-mono">Next 30 Days</span>
+                <span className="text-typ-caption text-bullion-amber font-mono">Next 30 Days</span>
               </div>
 
               <div className="space-y-2 pt-1">
@@ -362,7 +362,7 @@ export default function InsuranceHubModal({
                       </div>
                       <div className="truncate">
                         <div className="font-semibold text-text-primary truncate">{p.name}</div>
-                        <div className="text-[10px] text-text-muted">
+                        <div className="text-typ-caption text-text-muted">
                           Due: <span className="font-medium text-bullion-amber">{p.nextDueDate}</span>
                           {p.daysUntilDue !== null && (
                             <span className="ml-1">
@@ -379,7 +379,7 @@ export default function InsuranceHubModal({
                       </span>
                       <button
                         onClick={() => setSelectedPolicyForPayment(p)}
-                        className="px-2.5 py-1 rounded-lg bg-bullion-amber text-black font-semibold text-[11px] hover:bg-bullion-amber/90 transition-all active:scale-95 shadow-xs"
+                        className="px-2.5 py-1 rounded-lg bg-bullion-amber text-black font-semibold text-typ-footnote hover:bg-bullion-amber/90 transition-all active:scale-95 shadow-xs"
                       >
                         Log Premium
                       </button>
@@ -482,7 +482,7 @@ export default function InsuranceHubModal({
                         <span className="w-2 h-2 rounded-full bg-wealth-emerald"></span>
                         <h4 className="text-sm sm:text-base font-bold text-text-primary truncate">{policy.name}</h4>
                       </div>
-                      <p className="text-[11px] text-text-muted mt-0.5 truncate">
+                      <p className="text-typ-footnote text-text-muted mt-0.5 truncate">
                         Policy #{policy.policyNo} • {policy.insurer}
                       </p>
                     </div>
@@ -494,7 +494,7 @@ export default function InsuranceHubModal({
                       >
                         {policy.policyType}
                       </Badge>
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-typ-caption text-text-muted">
                         {policy.policyType.includes('Health') ? 'Sec 80D' : 'Sec 80C'}
                       </span>
                     </div>
@@ -503,7 +503,7 @@ export default function InsuranceHubModal({
                   {/* Financial Values Grid */}
                   <div className="grid grid-cols-2 gap-3 py-2.5 px-3 rounded-xl bg-surface-layer2/50 border border-border-subtle/40">
                     <div>
-                      <span className="text-[11px] text-text-muted">
+                      <span className="text-typ-footnote text-text-muted">
                         {policy.isInvestment ? 'Current Surrender Value' : 'Life / Sum Insured'}
                       </span>
                       <div className={`text-base sm:text-lg font-bold num-tabular ${policy.isInvestment ? 'text-wealth-emerald' : 'text-primary-accent'}`}>
@@ -512,20 +512,20 @@ export default function InsuranceHubModal({
                           : (policy.sumAssured > 0 ? `₹${formatInLakhsOrCrores(policy.sumAssured)}` : `₹${formatInLakhsOrCrores(policy.healthCover)}`)}
                       </div>
                       {policy.isInvestment && policy.cost > 0 && (
-                        <div className="text-[10px] text-wealth-emerald font-medium">
+                        <div className="text-typ-caption text-wealth-emerald font-medium">
                           {policy.netAccretion >= 0 ? '+' : ''}{formatCurrency(policy.netAccretion)} ({policy.accretionPct.toFixed(1)}%)
                         </div>
                       )}
                     </div>
 
                     <div>
-                      <span className="text-[11px] text-text-muted">
+                      <span className="text-typ-footnote text-text-muted">
                         {policy.isInvestment ? 'Cumulative Premiums Paid' : 'Annual Premium'}
                       </span>
                       <div className="text-base sm:text-lg font-bold text-text-primary num-tabular">
                         {policy.isInvestment ? formatCurrency(policy.cost) : formatCurrency(policy.annualPremium)}
                       </div>
-                      <div className="text-[10px] text-text-muted">
+                      <div className="text-typ-caption text-text-muted">
                         {policy.ppt > 0 ? `${policy.paidYears} of ${policy.ppt} Years Paid` : policy.premiumFrequency}
                       </div>
                     </div>
@@ -534,7 +534,7 @@ export default function InsuranceHubModal({
                   {/* PPT Completion Progress Bar for Endowment / Traditional Policies */}
                   {policy.ppt > 0 && policy.isInvestment && (
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] text-text-muted">
+                      <div className="flex justify-between text-typ-footnote text-text-muted">
                         <span>Premium Term Progress ({policy.paidYears} / {policy.ppt} Years)</span>
                         <span className="font-semibold text-text-secondary">{policy.pptProgressPct.toFixed(0)}%</span>
                       </div>
@@ -569,13 +569,13 @@ export default function InsuranceHubModal({
                   <div className="pt-2 flex items-center justify-between border-t border-border-subtle/50 text-xs">
                     <button
                       onClick={() => setSelectedPolicyForPayment(policy)}
-                      className="inline-flex items-center gap-1 text-primary-accent hover:text-primary-accent/80 font-semibold text-[11px] transition-colors"
+                      className="inline-flex items-center gap-1 text-primary-accent hover:text-primary-accent/80 font-semibold text-typ-footnote transition-colors"
                     >
                       <Plus size={14} />
                       <span>Log Premium ({formatCurrency(policy.premiumAmount || policy.annualPremium)})</span>
                     </button>
 
-                    <div className="flex items-center gap-3 text-[11px] text-text-muted">
+                    <div className="flex items-center gap-3 text-typ-footnote text-text-muted">
                       {onNavigateToSafe && (
                         <button 
                           onClick={() => {
@@ -626,7 +626,7 @@ export default function InsuranceHubModal({
             </p>
 
             <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px]">
+              <div className="flex justify-between text-typ-footnote">
                 <span className="text-text-muted">Coverage Ratio (₹{formatInLakhsOrCrores(insuranceData.totalLifeCover)} / ₹{formatInLakhsOrCrores(insuranceData.hlv.netProtectionRequired)})</span>
                 <span className={`font-semibold ${insuranceData.hlv.coverageRatio >= 85 ? 'text-wealth-emerald' : 'text-bullion-amber'}`}>
                   {insuranceData.hlv.coverageRatio}% Protected
@@ -640,7 +640,7 @@ export default function InsuranceHubModal({
               </div>
             </div>
 
-            <div className="text-[11px] text-text-muted flex items-start gap-1.5 pt-1">
+            <div className="text-typ-footnote text-text-muted flex items-start gap-1.5 pt-1">
               <CheckCircle2 size={14} className="text-wealth-emerald shrink-0 mt-0.5" />
               <span>{insuranceData.hlv.message}</span>
             </div>
@@ -662,12 +662,12 @@ export default function InsuranceHubModal({
               <div className="p-3 rounded-xl bg-surface-layer2/60 border border-border-subtle/50 space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-text-primary">Section 80C (Life Insurance)</span>
-                  <span className="text-text-muted text-[10px]">Cap: ₹1.5L</span>
+                  <span className="text-text-muted text-typ-caption">Cap: ₹1.5L</span>
                 </div>
                 <div className="text-sm font-bold text-text-primary num-tabular">
                   {formatCurrency(insuranceData.taxAudit.claimed80C)}
                 </div>
-                <p className="text-[10px] text-text-muted">
+                <p className="text-typ-caption text-text-muted">
                   Premiums paid towards LIC &amp; term life eligible for deduction.
                 </p>
               </div>
@@ -675,19 +675,19 @@ export default function InsuranceHubModal({
               <div className="p-3 rounded-xl bg-surface-layer2/60 border border-border-subtle/50 space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-text-primary">Section 80D (Health Insurance)</span>
-                  <span className="text-text-muted text-[10px]">Cap: ₹25k / ₹50k</span>
+                  <span className="text-text-muted text-typ-caption">Cap: ₹25k / ₹50k</span>
                 </div>
                 <div className="text-sm font-bold text-cyan-400 num-tabular">
                   {formatCurrency(insuranceData.taxAudit.claimed80D)}
                 </div>
-                <p className="text-[10px] text-text-muted">
+                <p className="text-typ-caption text-text-muted">
                   Dedicated health insurance exemption outside of 80C.
                 </p>
               </div>
             </div>
 
             {insuranceData.taxAudit.hasHighPremiumAlert && (
-              <div className="p-2.5 rounded-lg bg-liability-rose/10 border border-liability-rose/30 text-[11px] text-liability-rose flex items-start gap-2">
+              <div className="p-2.5 rounded-lg bg-liability-rose/10 border border-liability-rose/30 text-typ-footnote text-liability-rose flex items-start gap-2">
                 <AlertTriangle size={15} className="shrink-0 mt-0.5" />
                 <span>
                   Budget 2023 Alert: One or more non-ULIP life policies issued after 1 Apr 2023 exceed the ₹5,00,000 annual premium threshold; maturity proceeds will be taxable under Other Sources.
@@ -737,7 +737,7 @@ export default function InsuranceHubModal({
                   />
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-surface-layer2/80 border border-border-subtle/60 text-[11px] text-text-secondary space-y-1">
+                <div className="p-2.5 rounded-lg bg-surface-layer2/80 border border-border-subtle/60 text-typ-footnote text-text-secondary space-y-1">
                   <div className="flex justify-between">
                     <span>Double-Entry Action:</span>
                     <span className="text-wealth-emerald font-semibold">Expense + Cost Accretion</span>

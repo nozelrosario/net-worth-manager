@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
 
-export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
+export default function SettingsTab({ 
+  data, 
+  onRefresh, 
+  showMessage, 
+  onOpenSecurityModal, 
+  onOpenRebalancer, 
+  onOpenRetirementPlanner, 
+  onOpenInsuranceHub,
+  darkMode,
+  onToggleDarkMode,
+  textMode = 'standard',
+  onSelectTextMode
+}) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
   const [memberName, setMemberName] = useState('');
@@ -257,14 +269,102 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold tracking-tight text-text-primary">Admin Settings</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="text-[11px] text-text-muted">
+            <span className="text-typ-footnote text-text-muted">
               Access Control & Asset Categories
             </span>
-            <span className="text-text-muted text-[10px]">•</span>
-            <span className="text-[11px] text-text-muted">Family Office Config</span>
+            <span className="text-text-muted text-typ-caption">•</span>
+            <span className="text-typ-footnote text-text-muted">Family Office Config</span>
           </div>
         </div>
       </div>
+
+      {/* Device Appearance & Typography */}
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-text-primary">
+            <ALargeSmall size={20} className="text-primary-accent" />
+            <h3 className="font-semibold text-sm">Appearance & Typography</h3>
+          </div>
+          <Badge variant="indigo" size="xs">Device Preference</Badge>
+        </div>
+        <p className="text-xs text-text-secondary leading-relaxed mb-4">
+          Control interface contrast and typography density. Settings are saved locally on this device.
+        </p>
+
+        <div className="space-y-3">
+          {/* Dark Mode Row */}
+          {onToggleDarkMode && (
+            <div className="flex items-center justify-between p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
+              <div className="flex items-center gap-2.5">
+                <Moon size={16} className="text-text-secondary" />
+                <div>
+                  <p className="text-xs font-semibold text-text-primary">Dark Mode</p>
+                  <p className="text-typ-caption text-text-muted">High-contrast OLED palette</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onToggleDarkMode}
+                className={`w-10 h-5 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors cursor-pointer ${
+                  darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'
+                }`}
+              >
+                <div className="w-4 h-4 bg-white rounded-full shadow-xs"></div>
+              </button>
+            </div>
+          )}
+
+          {/* Typography Scale Density Setting */}
+          <div className="p-3 bg-surface-layer2 rounded-lg border border-border-subtle">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-xs font-semibold text-text-primary">Typography Density</p>
+                <p className="text-typ-caption text-text-muted">
+                  {textMode === 'compact' ? 'Condensed — smallest font, maximum text density' : textMode === 'comfortable' ? 'Comfortable — large font, relaxed readability' : 'Standard — balanced font size and visibility'}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-1 bg-surface-layer1 p-1 rounded-lg border border-border-subtle mt-2">
+              <button
+                type="button"
+                onClick={() => onSelectTextMode && onSelectTextMode('compact')}
+                className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all flex flex-col items-center gap-0.5 ${
+                  textMode === 'compact'
+                    ? 'bg-primary-accent text-white shadow-xs'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-layer2'
+                }`}
+              >
+                <span>Compact</span>
+                <span className="text-typ-micro opacity-75 font-normal">Max Text</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectTextMode && onSelectTextMode('standard')}
+                className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all flex flex-col items-center gap-0.5 ${
+                  textMode === 'standard'
+                    ? 'bg-primary-accent text-white shadow-xs'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-layer2'
+                }`}
+              >
+                <span>Standard</span>
+                <span className="text-typ-micro opacity-75 font-normal">Default</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectTextMode && onSelectTextMode('comfortable')}
+                className={`py-1.5 px-2 rounded-md text-xs font-semibold transition-all flex flex-col items-center gap-0.5 ${
+                  textMode === 'comfortable'
+                    ? 'bg-primary-accent text-white shadow-xs'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-layer2'
+                }`}
+              >
+                <span>Comfortable</span>
+                <span className="text-typ-micro opacity-75 font-normal">Readable</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
          <div className="flex items-center gap-2 mb-4 text-text-primary">
@@ -325,7 +425,7 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
                   href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-[10px] text-primary-accent hover:underline flex items-center gap-0.5"
+                  className="text-typ-caption text-primary-accent hover:underline flex items-center gap-0.5"
                >
                   Get Free Key <ExternalLink size={10} />
                </a>
@@ -350,13 +450,13 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
             </div>
 
             {keySavedFeedback && (
-               <p className="text-[10px] text-wealth-emerald font-medium flex items-center gap-1">
+               <p className="text-typ-caption text-wealth-emerald font-medium flex items-center gap-1">
                   <CheckCircle2 size={12} />
                   API Key saved and active for AI Advisory!
                </p>
             )}
 
-            <p className="text-[10px] text-text-muted">
+            <p className="text-typ-caption text-text-muted">
                100% free forever (1,500 requests/day). If left blank, offline heuristics advisor is used.
             </p>
          </form>
@@ -431,7 +531,7 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-1 text-[11px]">
+          <div className="flex items-center justify-between pt-1 text-typ-footnote">
             <span className="text-text-muted">
               Watermark: {lastSyncEpochStr && lastSyncEpochStr !== '0' ? new Date(parseInt(lastSyncEpochStr, 10)).toLocaleDateString() : 'None (Full scan)'}
             </span>

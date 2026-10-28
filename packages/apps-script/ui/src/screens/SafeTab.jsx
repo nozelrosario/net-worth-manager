@@ -286,12 +286,12 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold tracking-tight text-text-primary">Family Safe</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+            <span className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
               Encrypted Cloud Vault
             </span>
-            <span className="text-text-muted text-[10px]">•</span>
-            <span className="text-[11px] text-text-muted">Synced to Google Drive</span>
+            <span className="text-text-muted text-typ-caption">•</span>
+            <span className="text-typ-footnote text-text-muted">Synced to Google Drive</span>
           </div>
         </div>
         <button 
@@ -328,7 +328,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                     <p className="text-xs text-text-secondary mt-0.5">{doc.Category} • {doc.Owner || 'Self'}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <span className="text-[10px] text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
+                    <span className="text-typ-caption text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
                     <div className="flex items-center gap-1">
                       <button 
                         onClick={() => openEditModal(doc)} 
@@ -377,7 +377,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                  <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
                    {editingDocId ? 'Edit Safe Document' : 'Add to Family Safe'}
                  </h3>
-                 <p className="text-[11px] text-text-muted mt-0.5">
+                 <p className="text-typ-footnote text-text-muted mt-0.5">
                    Secure document storage in connected Google Drive
                  </p>
                </div>
@@ -424,7 +424,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs text-text-secondary font-medium">Attached Documents</label>
                     {attachedFiles.length > 0 && (
-                      <span className="text-[10px] text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
+                      <span className="text-typ-caption text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
                         {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'}
                       </span>
                     )}
@@ -441,9 +441,9 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                               <span className="text-xs text-text-primary truncate block font-medium">{f.name}</span>
                               <div className="flex items-center gap-2 mt-0.5">
                                 {f.isNewUpload ? (
-                                  <span className="text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
+                                  <span className="text-typ-caption text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
                                 ) : (
-                                  <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
+                                  <span className="text-typ-caption text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
                                     <Lock size={9} /> Saved
                                   </span>
                                 )}
@@ -453,7 +453,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     onClick={e => e.stopPropagation()} 
-                                    className="text-[10px] text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
+                                    className="text-typ-caption text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
                                   >
                                     View <ExternalLink size={10} />
                                   </a>

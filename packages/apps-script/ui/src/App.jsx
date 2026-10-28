@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import useModalBack from "./hooks/useModalBack";
 import { X } from "lucide-react";
-import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound } from 'lucide-react';
+import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound, ALargeSmall } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
 import AssetsTab from './screens/AssetsTab';
@@ -114,6 +114,7 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [sessionToken, setSessionToken] = useState(() => getSafeStorage('nwm_session_token'));
   const [darkMode, setDarkMode] = useState(() => getSafeStorage('nwm_dark_mode', 'true') === 'true');
+  const [textMode, setTextMode] = useState(() => getSafeStorage('nwm_text_mode', 'standard'));
   const [debugMode, setDebugMode] = useState(() => getSafeStorage('nwm_debug_mode', 'false') === 'true');
   const [debugLog, setDebugLog] = useState('');
   const [toast, setToast] = useState(null);
@@ -216,6 +217,15 @@ export default function App() {
     if (darkMode) root.classList.add('dark');
     else root.classList.remove('dark');
   }, [darkMode]);
+
+  useEffect(() => {
+    setSafeStorage('nwm_text_mode', textMode);
+    const root = document.documentElement;
+    root.classList.remove('text-compact', 'text-standard', 'text-comfortable');
+    if (textMode && textMode !== 'standard') {
+      root.classList.add(`text-${textMode}`);
+    }
+  }, [textMode]);
 
   useEffect(() => {
     setSafeStorage('nwm_debug_mode', debugMode.toString());
@@ -408,7 +418,7 @@ export default function App() {
       <div className="flex h-screen items-center justify-center bg-background-root">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-surface-layer2 border-t-wealth-emerald rounded-full animate-spin"></div>
-          <p className="text-text-secondary text-sm">Synchronizing Ledger...</p>
+          <p className="text-text-secondary text-typ-body-sm">Synchronizing Ledger...</p>
         </div>
       </div>
     );
@@ -445,14 +455,14 @@ export default function App() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowUserModal(true)}>
             <div className="relative">
-              <div className="w-9 h-9 rounded-full bg-primary-accent text-white flex items-center justify-center font-bold text-sm shadow-sm border border-border-subtle">
+              <div className="w-9 h-9 rounded-full bg-primary-accent text-white flex items-center justify-center font-bold text-typ-body-sm shadow-sm border border-border-subtle">
                 {userInitial}
               </div>
               <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background-root ${isSyncing ? 'bg-bullion-amber animate-pulse' : 'bg-wealth-emerald'}`}></div>
             </div>
             <div className="flex flex-col" onClick={(e) => { e.stopPropagation(); setHeaderExpanded(!headerExpanded); }}>
-              <h1 className="font-bold text-base leading-tight tracking-tight">Net Worth Manager</h1>
-              <span className="text-text-secondary text-xs flex items-center gap-1">
+              <h1 className="font-bold text-typ-body leading-tight tracking-tight">Net Worth Manager</h1>
+              <span className="text-text-secondary text-typ-label flex items-center gap-1">
                 {data?.userInfo?.userRole === 'admin' ? 'Family Admin' : 'Family Member'} {headerExpanded ? '▴' : '▾'}
               </span>
             </div>
@@ -469,7 +479,7 @@ export default function App() {
         </div>
         
         {headerExpanded && (
-          <div className="mt-4 pt-4 border-t border-border-subtle flex justify-around text-xs text-text-secondary">
+          <div className="mt-4 pt-4 border-t border-border-subtle flex justify-around text-typ-label text-text-secondary">
              <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors" onClick={refreshData}>
                <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
                <span>Sync</span>
@@ -490,32 +500,81 @@ export default function App() {
         <div className="fixed inset-0 z-50 no-swipe flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUserModal(false)}>
           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-[85%] max-w-sm overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="p-6 flex flex-col items-center border-b border-border-subtle relative bg-gradient-to-b from-primary-accent/10 to-transparent">
-              <div className="w-16 h-16 rounded-full bg-primary-accent text-white flex items-center justify-center font-bold text-2xl shadow-inner mb-3">
+              <div className="w-16 h-16 rounded-full bg-primary-accent text-white flex items-center justify-center font-bold text-typ-heading shadow-inner mb-3">
                 {userInitial}
               </div>
-              <h3 className="text-lg font-bold text-text-primary">{data?.userInfo?.activeEmail}</h3>
-              <p className="text-sm text-primary-accent font-medium mt-1 uppercase tracking-wider">{data?.userInfo?.userRole}</p>
+              <h3 className="text-typ-subtitle font-bold text-text-primary">{data?.userInfo?.activeEmail}</h3>
+              <p className="text-typ-body-sm text-primary-accent font-medium mt-1 uppercase tracking-wider">{data?.userInfo?.userRole}</p>
             </div>
             <div className="p-2">
               <button 
                 onClick={() => { setShowUserModal(false); setShowSecurityModal(true); }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-text-primary hover:bg-surface-layer2 transition-colors"
+                className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors"
               >
                 <Shield size={18} className="text-text-secondary" /> Security & Access Control
               </button>
-              <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
+              <div className="w-full flex items-center justify-between p-3 rounded-xl text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
                 <div className="flex items-center gap-3"><Moon size={18} className="text-text-secondary" /> Dark Mode</div>
                 <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
               </div>
-              <div className="w-full flex items-center justify-between p-3 rounded-xl text-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDebugMode(!debugMode)}>
+              <div className="w-full p-3 rounded-xl text-sm text-text-primary bg-surface-layer2/40 border border-border-subtle/50 my-1">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <ALargeSmall size={18} className="text-text-secondary" />
+                    <span className="font-medium text-xs sm:text-sm">Typography Scale</span>
+                  </div>
+                  <span className="text-typ-caption text-text-muted font-medium">
+                    {textMode === 'compact' ? 'Condensed (Small)' : textMode === 'comfortable' ? 'Comfortable (Large)' : 'Standard (Balanced)'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1 bg-surface-layer1 p-1 rounded-lg border border-border-subtle">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTextMode('compact'); }}
+                    className={`py-1.5 px-2 rounded-md text-typ-footnote font-semibold transition-all flex flex-col items-center gap-0.5 ${
+                      textMode === 'compact'
+                        ? 'bg-primary-accent text-white shadow-xs'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-layer2'
+                    }`}
+                  >
+                    <span>Compact</span>
+                    <span className="text-typ-micro opacity-75 font-normal">Max Text</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTextMode('standard'); }}
+                    className={`py-1.5 px-2 rounded-md text-typ-footnote font-semibold transition-all flex flex-col items-center gap-0.5 ${
+                      textMode === 'standard'
+                        ? 'bg-primary-accent text-white shadow-xs'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-layer2'
+                    }`}
+                  >
+                    <span>Standard</span>
+                    <span className="text-typ-micro opacity-75 font-normal">Default</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTextMode('comfortable'); }}
+                    className={`py-1.5 px-2 rounded-md text-typ-footnote font-semibold transition-all flex flex-col items-center gap-0.5 ${
+                      textMode === 'comfortable'
+                        ? 'bg-primary-accent text-white shadow-xs'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-layer2'
+                    }`}
+                  >
+                    <span>Comfort</span>
+                    <span className="text-typ-micro opacity-75 font-normal">Readable</span>
+                  </button>
+                </div>
+              </div>
+              <div className="w-full flex items-center justify-between p-3 rounded-xl text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDebugMode(!debugMode)}>
                 <div className="flex items-center gap-3"><Bug size={18} className="text-text-secondary" /> Debug Mode</div>
                 <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${debugMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
               </div>
-              <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm text-liability-rose hover:bg-liability-rose/10 transition-colors mt-1">
+              <button onClick={handleSignOut} className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-typ-body-sm text-liability-rose hover:bg-liability-rose/10 transition-colors mt-1">
                 <LogOut size={18} /> Sign Out (Device)
               </button>
             </div>
-            <div className="p-4 bg-surface-layer2 text-center text-xs text-text-muted">
+            <div className="p-4 bg-surface-layer2 text-center text-typ-label text-text-muted">
               App Version 2.0.1 • Encrypted Session
             </div>
           </div>
@@ -553,6 +612,10 @@ export default function App() {
             data={data} 
             onRefresh={refreshData} 
             showMessage={showMessage} 
+            darkMode={darkMode}
+            onToggleDarkMode={() => setDarkMode(!darkMode)}
+            textMode={textMode}
+            onSelectTextMode={setTextMode}
             onOpenSecurityModal={() => setShowSecurityModal(true)} 
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
@@ -564,23 +627,23 @@ export default function App() {
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={() => setShowNotifications(false)}>
           <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-md p-5 max-h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-text-primary flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
+              <h3 className="text-typ-subtitle font-bold text-text-primary flex items-center gap-2"><Bell size={18} className="text-primary-accent" /> Reminders</h3>
               <button onClick={() => setShowNotifications(false)} className="text-text-muted hover:text-text-primary p-1"><X size={20} /></button>
             </div>
             
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
               {getUpcomingReminders(data?.assets).length === 0 ? (
-                <p className="text-sm text-text-muted text-center py-8">No upcoming reminders.</p>
+                <p className="text-typ-body-sm text-text-muted text-center py-8">No upcoming reminders.</p>
               ) : (
                 getUpcomingReminders(data?.assets).map(rem => (
                   <div key={rem._id} className={`bg-surface-layer2 p-3 rounded-xl border ${rem.isOverdue ? 'border-liability-rose/50' : 'border-bullion-amber/50'}`}>
                     <div className="flex justify-between items-start mb-2">
-                      <span className={`font-semibold text-sm truncate pr-2 ${rem.isOverdue ? 'text-liability-rose' : 'text-bullion-amber'}`}>{rem.title}</span>
-                      <span className="text-xs text-text-muted whitespace-nowrap">{new Date(rem.date).toLocaleDateString()}</span>
+                      <span className={`font-semibold text-typ-body-sm truncate pr-2 ${rem.isOverdue ? 'text-liability-rose' : 'text-bullion-amber'}`}>{rem.title}</span>
+                      <span className="text-typ-label text-text-muted whitespace-nowrap">{new Date(rem.date).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-xs text-text-primary mb-2 leading-relaxed">{rem.body}</p>
+                    <p className="text-typ-label text-text-primary mb-2 leading-relaxed">{rem.body}</p>
                     <div className="flex justify-between items-center mt-2">
-                       <span className="bg-surface-layer1 text-text-secondary text-[10px] px-2 py-1 rounded border border-border-subtle">{rem.address}</span>
+                       <span className="bg-surface-layer1 text-text-secondary text-typ-caption px-2 py-1 rounded border border-border-subtle">{rem.address}</span>
                        <button onClick={() => { 
                          setShowNotifications(false); 
                          if (rem.isInsurance) {
@@ -588,7 +651,7 @@ export default function App() {
                          } else {
                            setActiveTab('assets'); 
                          }
-                       }} className="text-xs text-primary-accent hover:text-primary-accent/80 font-medium">
+                       }} className="text-typ-label text-primary-accent hover:text-primary-accent/80 font-medium">
                          {rem.isInsurance ? 'View in Insurance Hub →' : 'View Asset →'}
                        </button>
                     </div>
@@ -617,7 +680,7 @@ export default function App() {
 
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[99999] px-4 py-2 rounded-full shadow-2xl text-sm font-medium whitespace-nowrap transition-all animate-bounce ${toast.isError ? 'bg-liability-rose text-white' : 'bg-wealth-emerald text-white'}`}>
+        <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[99999] px-4 py-2 rounded-full shadow-2xl text-typ-body-sm font-medium whitespace-nowrap transition-all animate-bounce ${toast.isError ? 'bg-liability-rose text-white' : 'bg-wealth-emerald text-white'}`}>
           {toast.msg}
         </div>
       )}
@@ -700,7 +763,7 @@ function NavButton({ icon: Icon, label, active, onClick }) {
   return (
     <button onClick={onClick} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-200 ${active ? 'text-primary-accent scale-105' : 'text-text-muted hover:text-text-secondary'}`}>
       <Icon size={22} strokeWidth={active ? 2.5 : 2} className={active ? 'drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]' : ''} />
-      <span className="text-[10px] font-medium tracking-wide">{label}</span>
+      <span className="text-typ-caption font-medium tracking-wide">{label}</span>
     </button>
   );
 }

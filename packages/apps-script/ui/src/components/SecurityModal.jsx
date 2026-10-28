@@ -223,7 +223,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
               <h3 className="font-bold text-text-primary text-base leading-tight">
                 {viewMode === 'wizard' ? (isPinEnabled ? 'Change PIN' : 'Set Security PIN') : (viewMode === 'disable_confirm' ? 'Disable PIN' : 'Security & Access Control')}
               </h3>
-              <p className="text-[11px] text-text-muted leading-tight mt-0.5">
+              <p className="text-typ-footnote text-text-muted leading-tight mt-0.5">
                 {viewMode === 'overview' ? 'Dual-tier platform security configuration' : '4-digit cryptographic vault lock'}
               </p>
             </div>
@@ -253,7 +253,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                   <div>
                     <div className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                       <span>{appShellMode ? 'Mobile App Shell' : 'Web Browser Session'}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                      <span className={`text-typ-caption px-1.5 py-0.2 rounded-full font-medium ${
                         appShellMode 
                           ? 'bg-wealth-emerald/20 text-wealth-emerald' 
                           : 'bg-primary-accent/20 text-primary-accent'
@@ -261,7 +261,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                         {appShellMode ? 'Encrypted Container' : 'Browser Sandbox'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-text-muted mt-0.5">
+                    <p className="text-typ-footnote text-text-muted mt-0.5">
                       {appShellMode 
                         ? 'Hardware-sandboxed Expo WebView runtime' 
                         : 'Web browser environment with tab-scoped storage'}
@@ -338,7 +338,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                           </button>
                         ))}
                       </div>
-                      <p className="text-[10px] text-text-muted mt-1.5">
+                      <p className="text-typ-caption text-text-muted mt-1.5">
                         {autoLockTimeout === 0 
                           ? 'Locks immediately when switching apps or locking phone.' 
                           : `Re-entry allowed without PIN for up to ${autoLockTimeout / 60} minutes after backgrounding.`}
@@ -360,7 +360,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                   <div className="flex items-center justify-between">
                     <div>
                       <h5 className="text-xs font-semibold text-text-primary">Keep Me Signed In</h5>
-                      <p className="text-[11px] text-text-muted max-w-[240px]">
+                      <p className="text-typ-footnote text-text-muted max-w-[240px]">
                         {rememberMe 
                           ? 'Stored in device localStorage (persistent across browser restarts).' 
                           : 'Ephemeral session (purged automatically when browser tab is closed).'}
@@ -409,7 +409,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
 
               {/* Session Audit & Sign Out */}
               <div className="pt-2">
-                <div className="text-[11px] text-text-muted mb-2 px-1">
+                <div className="text-typ-footnote text-text-muted mb-2 px-1">
                   Active User: <span className="text-text-primary font-medium">{userEmail || 'Authenticated Session'}</span>
                 </div>
                 <button

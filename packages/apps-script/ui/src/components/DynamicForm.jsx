@@ -841,19 +841,19 @@ export default function DynamicForm({
             <span className="font-semibold text-bullion-amber flex items-center gap-1.5">
               <Sparkles size={14} /> Live Gold Spot Rates (Google Finance)
             </span>
-            <span className="text-[10px] text-text-muted">CURRENCY:XAUINR</span>
+            <span className="text-typ-caption text-text-muted">CURRENCY:XAUINR</span>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-2 text-center">
             <div className={`p-1.5 rounded-lg border ${goldPurity.includes('24K') ? 'bg-bullion-amber/20 border-bullion-amber text-text-primary font-bold shadow-xs' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
-              <p className="text-[10px]">24K (99.9%)</p>
+              <p className="text-typ-caption">24K (99.9%)</p>
               <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold24kRate)}/g</p>
             </div>
             <div className={`p-1.5 rounded-lg border ${goldPurity.includes('22K') ? 'bg-bullion-amber/20 border-bullion-amber text-text-primary font-bold shadow-xs' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
-              <p className="text-[10px]">22K (91.6%)</p>
+              <p className="text-typ-caption">22K (91.6%)</p>
               <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold22kRate)}/g</p>
             </div>
             <div className={`p-1.5 rounded-lg border ${goldPurity.includes('18K') ? 'bg-bullion-amber/20 border-bullion-amber text-text-primary font-bold shadow-xs' : 'bg-surface-layer1 border-border-subtle text-text-secondary'}`}>
-              <p className="text-[10px]">18K (75%)</p>
+              <p className="text-typ-caption">18K (75%)</p>
               <p className="text-xs font-semibold tabular-nums text-bullion-amber">{formatCurrency(gold18kRate)}/g</p>
             </div>
           </div>
@@ -878,12 +878,12 @@ export default function DynamicForm({
                     <p className="font-semibold text-text-primary flex items-center gap-1.5">
                       {currentEquityQuote.shortName || cleanEquityTicker}
                       {cleanEquityTicker !== String(rawEquityTicker).toUpperCase() && (
-                        <span className="text-[10px] text-primary-accent bg-primary-accent/20 px-1.5 py-0.2 rounded font-mono">
+                        <span className="text-typ-caption text-primary-accent bg-primary-accent/20 px-1.5 py-0.2 rounded font-mono">
                           {cleanEquityTicker}
                         </span>
                       )}
                     </p>
-                    <p className="text-[10px] text-text-muted">Live Market Quote</p>
+                    <p className="text-typ-caption text-text-muted">Live Market Quote</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -891,7 +891,7 @@ export default function DynamicForm({
                     {formatCurrency(currentEquityQuote.price)}
                   </p>
                   {currentEquityQuote.changePct !== undefined && currentEquityQuote.changePct !== 0 && (
-                    <p className={`text-[10px] font-medium tabular-nums ${currentEquityQuote.changePct > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                    <p className={`text-typ-caption font-medium tabular-nums ${currentEquityQuote.changePct > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                       {currentEquityQuote.changePct > 0 ? '+' : ''}{currentEquityQuote.changePct}% today
                     </p>
                   )}
@@ -899,7 +899,7 @@ export default function DynamicForm({
               </div>
 
               {calculatedEquityVal !== null && (
-                <div className="pt-2 border-t border-border-subtle/60 flex items-center justify-between text-[11px]">
+                <div className="pt-2 border-t border-border-subtle/60 flex items-center justify-between text-typ-footnote">
                   <span className="text-text-secondary">
                     Market Value ({equityQty} shares × {formatCurrency(currentEquityQuote.price)}):
                   </span>
@@ -910,7 +910,7 @@ export default function DynamicForm({
               )}
 
               {equityPnl !== null && (
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-typ-footnote">
                   <span className="text-text-secondary">Unrealized P&L:</span>
                   <span className={`font-semibold tabular-nums ${equityPnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                     {equityPnl >= 0 ? '+' : ''}{formatCurrency(equityPnl)} ({equityPnlPct >= 0 ? '+' : ''}{equityPnlPct}%)
@@ -959,7 +959,7 @@ export default function DynamicForm({
                   className="p-2 hover:bg-surface-layer2 rounded-lg cursor-pointer transition-colors"
                 >
                   <p className="text-xs font-medium text-text-primary">{scheme.schemeName}</p>
-                  <p className="text-[10px] text-text-muted mt-0.5">Code: {scheme.schemeCode}</p>
+                  <p className="text-typ-caption text-text-muted mt-0.5">Code: {scheme.schemeCode}</p>
                 </div>
               ))}
             </div>
@@ -988,7 +988,7 @@ export default function DynamicForm({
               EEE Tax-Shielded
             </Badge>
           </div>
-          <p className="text-[11px] text-text-secondary leading-relaxed">
+          <p className="text-typ-footnote text-text-secondary leading-relaxed">
             EPF &amp; VPF earn <strong>8.25% p.a.</strong>, PPF earns <strong>7.10% p.a.</strong>, and NPS features active Equity/Debt allocation with exclusive <strong>Section 80CCD(1B)</strong> extra ₹50,000 tax deduction.
           </p>
         </div>
@@ -1005,7 +1005,7 @@ export default function DynamicForm({
               Sec 80C &amp; 80D
             </Badge>
           </div>
-          <p className="text-[11px] text-text-secondary leading-relaxed">
+          <p className="text-typ-footnote text-text-secondary leading-relaxed">
             Track policy numbers, regular premium schedules, death benefit cover (Sum Assured), and realizable surrender value without inflating net worth.
           </p>
         </div>
@@ -1029,14 +1029,14 @@ export default function DynamicForm({
                   Historical Price on {historicalQuote.matchedDate || historicalQuote.targetDate}: {formatCurrency(historicalQuote.price)}
                   {schemaKey === 'Gold' && !String(formData['Details JSON']?.['Form Factor'] || '').includes('ETF') && !String(formData['Details JSON']?.['Form Factor'] || '').includes('SGB') ? '/g' : (schemaKey === 'Mutual Funds' ? ' NAV' : ' / share')}
                 </p>
-                <p className="text-[10px] text-text-muted">Source: {historicalQuote.source}</p>
+                <p className="text-typ-caption text-text-muted">Source: {historicalQuote.source}</p>
               </div>
             </div>
             {suggestedCost !== null && (
               <button
                 type="button"
                 onClick={handleApplyHistoricalCost}
-                className="px-2.5 py-1 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-[11px] font-semibold shadow-xs transition-all active:scale-95 flex items-center gap-1 flex-shrink-0"
+                className="px-2.5 py-1 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-footnote font-semibold shadow-xs transition-all active:scale-95 flex items-center gap-1 flex-shrink-0"
                 title="Populate Total Invested Amount and Average Buy Price from historical price"
               >
                 <Sparkles size={11} />
@@ -1092,7 +1092,7 @@ export default function DynamicForm({
                    ))}
                  </select>
                  {field.hint && (
-                   <p className="text-[10px] text-text-muted mt-1 leading-normal">{field.hint}</p>
+                   <p className="text-typ-caption text-text-muted mt-1 leading-normal">{field.hint}</p>
                  )}
                </div>
              );
@@ -1123,12 +1123,12 @@ export default function DynamicForm({
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-xs text-text-secondary">{field.label} {field.required && <span className="text-liability-rose">*</span>}</label>
                 {field.name === 'Current Value' && (schemaKey === 'Equity' || schemaKey === 'Gold' || schemaKey === 'Mutual Funds') && (
-                  <span className="text-[10px] text-primary-accent font-medium flex items-center gap-1">
+                  <span className="text-typ-caption text-primary-accent font-medium flex items-center gap-1">
                     <Sparkles size={11} /> Auto-updates with live rates
                   </span>
                 )}
                 {field.name === 'Current Value' && (schemaKey === 'Life Insurance / LIC' || schemaKey === 'Insurance') && (
-                  <span className="text-[10px] text-wealth-emerald font-medium">
+                  <span className="text-typ-caption text-wealth-emerald font-medium">
                     Surrender Value (₹0 for Term/Health)
                   </span>
                 )}
@@ -1143,10 +1143,10 @@ export default function DynamicForm({
                 placeholder={field.placeholder} 
               />
               {field.hint && (
-                <p className="text-[10px] text-text-muted mt-1 leading-normal">{field.hint}</p>
+                <p className="text-typ-caption text-text-muted mt-1 leading-normal">{field.hint}</p>
               )}
               {field.name === 'Details JSON.Ticker Symbol' && cleanEquityTicker && (
-                <div className="mt-1 flex items-center justify-between text-[11px] px-1">
+                <div className="mt-1 flex items-center justify-between text-typ-footnote px-1">
                   {cleanEquityTicker !== String(value || '').toUpperCase() ? (
                     <span className="text-primary-accent font-medium flex items-center gap-1">
                       <span>Mapped:</span>
@@ -1182,41 +1182,41 @@ export default function DynamicForm({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-border-subtle/50 text-center">
             <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-              <p className="text-[10px] text-text-muted">Holding Period</p>
+              <p className="text-typ-caption text-text-muted">Holding Period</p>
               <p className="text-xs font-bold text-text-primary tabular-nums mt-0.5">{perfMetrics.holdingStr}</p>
-              <p className="text-[9px] text-text-muted">{perfMetrics.days} days</p>
+              <p className="text-typ-micro text-text-muted">{perfMetrics.days} days</p>
             </div>
 
             <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-              <p className="text-[10px] text-text-muted">Total Gain / P&L</p>
+              <p className="text-typ-caption text-text-muted">Total Gain / P&L</p>
               <p className={`text-xs font-bold tabular-nums mt-0.5 ${perfMetrics.pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                 {perfMetrics.pnl >= 0 ? '+' : ''}{formatCurrency(perfMetrics.pnl)}
               </p>
-              <p className={`text-[9px] tabular-nums ${perfMetrics.pnlPct >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+              <p className={`text-typ-micro tabular-nums ${perfMetrics.pnlPct >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                 {perfMetrics.pnlPct >= 0 ? '+' : ''}{perfMetrics.pnlPct}%
               </p>
             </div>
 
             <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-              <p className="text-[10px] text-text-muted">Annualized (CAGR)</p>
+              <p className="text-typ-caption text-text-muted">Annualized (CAGR)</p>
               <p className="text-xs font-bold text-primary-accent tabular-nums mt-0.5">
                 {perfMetrics.cagr !== null ? `${perfMetrics.cagr >= 0 ? '+' : ''}${perfMetrics.cagr}%` : 'N/A (<6m)'}
               </p>
-              <p className="text-[9px] text-text-muted">{perfMetrics.cagr !== null ? 'per annum' : 'needs 6m+'}</p>
+              <p className="text-typ-micro text-text-muted">{perfMetrics.cagr !== null ? 'per annum' : 'needs 6m+'}</p>
             </div>
 
             <div className="bg-surface-layer1/80 p-2 rounded-lg border border-border-subtle">
-              <p className="text-[10px] text-text-muted">Tax Classification</p>
+              <p className="text-typ-caption text-text-muted">Tax Classification</p>
               <p className={`text-xs font-bold mt-0.5 ${perfMetrics.isLtcg ? 'text-wealth-emerald' : 'text-bullion-amber'}`}>
                 {perfMetrics.taxTag}
               </p>
-              <p className="text-[9px] text-text-muted truncate" title={perfMetrics.taxLabel}>
+              <p className="text-typ-micro text-text-muted truncate" title={perfMetrics.taxLabel}>
                 {perfMetrics.isLtcg ? '> Threshold' : '≤ Threshold'}
               </p>
             </div>
           </div>
 
-          <p className="text-[10px] text-text-muted pt-1 border-t border-border-subtle/30">
+          <p className="text-typ-caption text-text-muted pt-1 border-t border-border-subtle/30">
             Tax Rule: {perfMetrics.taxLabel}
           </p>
         </div>
@@ -1230,7 +1230,7 @@ export default function DynamicForm({
               <Paperclip size={14} className="text-primary-accent" />
               Supporting Documents
             </label>
-            <p className="text-[11px] text-text-muted mt-0.5">
+            <p className="text-typ-footnote text-text-muted mt-0.5">
               Attach FD certificates, gold purchase receipts, demat statements. Synced to Family Safe.
             </p>
           </div>
@@ -1259,9 +1259,9 @@ export default function DynamicForm({
                     <p className="text-xs text-text-primary truncate font-medium">{f.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {f.isNewUpload ? (
-                        <span className="text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
+                        <span className="text-typ-caption text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
                       ) : (
-                        <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
+                        <span className="text-typ-caption text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
                           <Lock size={9} /> In Family Safe
                         </span>
                       )}
@@ -1271,7 +1271,7 @@ export default function DynamicForm({
                           target="_blank" 
                           rel="noopener noreferrer" 
                           onClick={e => e.stopPropagation()} 
-                          className="text-[10px] text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
+                          className="text-typ-caption text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
                         >
                           View <ExternalLink size={10} />
                         </a>

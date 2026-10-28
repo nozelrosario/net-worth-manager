@@ -387,29 +387,29 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold tracking-tight text-text-primary">Assets & Liabilities</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+            <span className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
               Google Finance & AMFI Live
             </span>
-            <span className="text-text-muted text-[10px]">•</span>
+            <span className="text-text-muted text-typ-caption">•</span>
             <button 
               type="button"
               onClick={handleSyncRates} 
               disabled={isSyncingRates}
               title="Refresh and sync live valuations to spreadsheet"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-[11px] font-medium transition-all active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-typ-footnote font-medium transition-all active:scale-95 disabled:opacity-50"
             >
               <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
               <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
             </button>
             {onOpenRebalancer && (
               <>
-                <span className="text-text-muted text-[10px]">•</span>
+                <span className="text-text-muted text-typ-caption">•</span>
                 <button 
                   type="button"
                   onClick={onOpenRebalancer} 
                   title="Open AI Portfolio Rebalancer & Asset Allocation Advisor"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-[11px] font-medium transition-all active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-typ-footnote font-medium transition-all active:scale-95"
                 >
                   <Sparkles size={10} />
                   <span>AI Rebalance</span>
@@ -418,12 +418,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             )}
             {onOpenRetirementPlanner && (
               <>
-                <span className="text-text-muted text-[10px]">•</span>
+                <span className="text-text-muted text-typ-caption">•</span>
                 <button 
                   type="button"
                   onClick={onOpenRetirementPlanner} 
                   title="Open Retirement & Pension Hub (EPF, PPF & NPS)"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-400 rounded-full text-[11px] font-medium transition-all active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-400 rounded-full text-typ-footnote font-medium transition-all active:scale-95"
                 >
                   <Shield size={10} />
                   <span>Retirement Hub</span>
@@ -432,12 +432,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             )}
             {onOpenInsuranceHub && (
               <>
-                <span className="text-text-muted text-[10px]">•</span>
+                <span className="text-text-muted text-typ-caption">•</span>
                 <button 
                   type="button"
                   onClick={onOpenInsuranceHub} 
                   title="Open Insurance & Protection Hub (LIC, Term, Health)"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 rounded-full text-[11px] font-medium transition-all active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 rounded-full text-typ-footnote font-medium transition-all active:scale-95"
                 >
                   <Shield size={10} />
                   <span>Insurance Hub</span>
@@ -547,26 +547,26 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     <span className="text-xs text-text-muted">{asset.Category}</span>
                     {holdingSummary && (
                       <>
-                        <span className="text-text-muted text-[10px]">•</span>
+                        <span className="text-text-muted text-typ-caption">•</span>
                         <span className="text-xs text-text-secondary">{holdingSummary}</span>
                       </>
                     )}
                     {perf?.holdingStr && (
                       <>
-                        <span className="text-text-muted text-[10px]">•</span>
-                        <span className="text-[11px] text-text-muted">Held: {perf.holdingStr}</span>
+                        <span className="text-text-muted text-typ-caption">•</span>
+                        <span className="text-typ-footnote text-text-muted">Held: {perf.holdingStr}</span>
                       </>
                     )}
                     {perf?.taxTag && (
                       <span 
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
+                        className={`text-typ-micro font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
                         title={perf.taxLabel}
                       >
                         {perf.taxTag}
                       </span>
                     )}
                     {docCount > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
+                      <span className="flex items-center gap-1 text-typ-caption text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
                         <Paperclip size={10} />
                         {docCount} {docCount === 1 ? 'doc' : 'docs'}
                       </span>
@@ -579,7 +579,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                   </div>
                 </div>
-                <span className="bg-surface-layer2 text-[10px] px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
+                <span className="bg-surface-layer2 text-typ-caption px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
               </div>
 
               <div className="flex justify-between items-end border-t border-border-subtle/40 pt-2 mt-2">
@@ -587,7 +587,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   <div className="flex items-center gap-2">
                     <p className="text-xs text-text-secondary">Current Value</p>
                     {isLive && asset['Live Price'] && (
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-typ-caption text-text-muted">
                         (@ {formatCurrency(asset['Live Price'])}{cat === 'Gold' && !String(det['Form Factor'] || '').includes('ETF') && !String(det['Form Factor'] || '').includes('SGB') ? '/g' : ''})
                       </span>
                     )}
@@ -598,12 +598,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 <div className="text-right">
                   {pnl !== undefined && Number(asset.Cost) > 0 ? (
                     <div>
-                      <p className="text-[10px] text-text-muted">Total Return</p>
+                      <p className="text-typ-caption text-text-muted">Total Return</p>
                       <p className={`text-xs font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                         {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct}%)
                       </p>
                       {perf?.cagr !== undefined && perf?.cagr !== null && (
-                        <p className="text-[10px] font-medium text-primary-accent tabular-nums">
+                        <p className="text-typ-caption font-medium text-primary-accent tabular-nums">
                           {perf.cagr >= 0 ? '+' : ''}{perf.cagr}% p.a.
                         </p>
                       )}
@@ -616,7 +616,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
               {polMetrics?.ppt > 0 && polMetrics?.isInvestment && (
                 <div className="mt-2 pt-2 border-t border-border-subtle/30">
-                  <div className="flex justify-between text-[10px] text-text-muted mb-1">
+                  <div className="flex justify-between text-typ-caption text-text-muted mb-1">
                     <span>Premium Term ({polMetrics.paidYears} / {polMetrics.ppt} Yrs)</span>
                     <span className="font-semibold text-text-secondary">{polMetrics.pptProgressPct.toFixed(0)}%</span>
                   </div>
@@ -640,7 +640,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                  <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
                    {editingAssetId ? 'Edit Asset' : 'Add New Asset'}
                  </h3>
-                 <p className="text-[11px] text-text-muted mt-0.5">
+                 <p className="text-typ-footnote text-text-muted mt-0.5">
                    {newAsset.Category || categoriesList[0] || 'Asset'} Details & Live Valuation
                  </p>
                </div>
