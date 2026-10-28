@@ -941,6 +941,7 @@ export default function SmsInboxModal({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSingle(item.id)}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-4 h-4 rounded text-primary-accent border-border-prominent bg-surface-layer1 focus:ring-0 shrink-0 cursor-pointer"
                         />
                       ) : isImportedItem ? (
@@ -954,9 +955,21 @@ export default function SmsInboxModal({
                       )}
 
                       {/* Payee + Preview + Metadata */}
-                      <div className="min-w-0 flex-1">
+                      <div
+                        className="min-w-0 flex-1 cursor-pointer select-none group"
+                        onClick={() => setExpandedCardId(isExpanded ? null : item.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setExpandedCardId(isExpanded ? null : item.id);
+                          }
+                        }}
+                        title={isExpanded ? 'Collapse row' : 'Click title to expand & edit'}
+                      >
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-typ-label font-bold text-text-primary truncate max-w-[150px] sm:max-w-[240px]">
+                          <span className="text-typ-label font-bold text-text-primary group-hover:text-primary-accent transition-colors truncate max-w-[150px] sm:max-w-[240px]">
                             {item.payee}
                           </span>
                           <span className="text-typ-caption text-text-muted bg-surface-layer2 px-1.5 py-0.2 rounded font-mono shrink-0">
