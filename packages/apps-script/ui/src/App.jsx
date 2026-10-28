@@ -517,11 +517,11 @@ export default function App() {
                 <div className="flex items-center gap-3"><Moon size={18} className="text-text-secondary" /> Dark Mode</div>
                 <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
               </div>
-              <div className="w-full p-3 rounded-xl text-sm text-text-primary bg-surface-layer2/40 border border-border-subtle/50 my-1">
+              <div className="w-full p-3 rounded-xl text-typ-body-sm text-text-primary bg-surface-layer2/40 border border-border-subtle/50 my-1">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <ALargeSmall size={18} className="text-text-secondary" />
-                    <span className="font-medium text-xs sm:text-sm">Typography Scale</span>
+                    <span className="font-medium text-typ-label sm:text-typ-body-sm">Typography Scale</span>
                   </div>
                   <span className="text-typ-caption text-text-muted font-medium">
                     {textMode === 'compact' ? 'Condensed (Small)' : textMode === 'comfortable' ? 'Comfortable (Large)' : 'Standard (Balanced)'}
@@ -666,7 +666,7 @@ export default function App() {
 
       {/* Debug Bar */}
       {debugMode && (
-        <div className="fixed bottom-16 left-0 right-0 bg-surface-layer2 text-text-primary p-2 text-xs font-mono z-50 max-h-48 overflow-y-auto border-t border-border-prominent shadow-xl whitespace-pre-wrap break-words flex flex-col">
+        <div className="fixed bottom-16 left-0 right-0 bg-surface-layer2 text-text-primary p-2 text-typ-label font-mono z-50 max-h-48 overflow-y-auto border-t border-border-prominent shadow-xl whitespace-pre-wrap break-words flex flex-col">
           <div className="flex justify-between items-center border-b border-border-subtle pb-1 mb-1">
             <strong className="text-primary-accent">Debug Bar</strong>
             <div className="flex gap-4">

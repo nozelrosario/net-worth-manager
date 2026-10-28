@@ -228,7 +228,7 @@ export default function InsuranceHubModal({
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
+                <h2 className="text-typ-body sm:text-typ-subtitle font-bold text-text-primary leading-tight">
                   Insurance &amp; Protection Hub
                 </h2>
                 <Badge variant="emerald" size="xs" dot pulse>
@@ -242,7 +242,7 @@ export default function InsuranceHubModal({
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyClaimKit}
-              className="px-2.5 py-1.5 rounded-xl bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-prominent text-xs font-semibold flex items-center gap-1.5 transition-all"
+              className="px-2.5 py-1.5 rounded-xl bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-prominent text-typ-label font-semibold flex items-center gap-1.5 transition-all"
               title="Copy Emergency Claim Kit"
             >
               {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
@@ -265,7 +265,7 @@ export default function InsuranceHubModal({
             <div className="absolute -top-16 -right-16 w-44 h-44 bg-primary-accent/15 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
+              <span className="text-typ-label font-medium text-text-secondary flex items-center gap-1.5">
                 <Shield size={14} className="text-primary-accent" />
                 Consolidated Protection Moat
               </span>
@@ -281,11 +281,11 @@ export default function InsuranceHubModal({
             {/* Triad Key Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3">
               <div className="bg-surface-layer2/70 rounded-xl p-3 border border-border-subtle/60">
-                <div className="flex items-center gap-1.5 text-xs text-text-muted mb-1">
+                <div className="flex items-center gap-1.5 text-typ-label text-text-muted mb-1">
                   <Shield size={14} className="text-primary-accent" />
                   <span>Total Life Cover</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-text-primary num-tabular">
+                <div className="text-typ-title sm:text-typ-heading font-bold text-text-primary num-tabular">
                   ₹{formatInLakhsOrCrores(insuranceData.totalLifeCover)}
                 </div>
                 <div className="text-typ-caption text-text-muted mt-0.5">
@@ -294,11 +294,11 @@ export default function InsuranceHubModal({
               </div>
 
               <div className="bg-surface-layer2/70 rounded-xl p-3 border border-border-subtle/60">
-                <div className="flex items-center gap-1.5 text-xs text-text-muted mb-1">
+                <div className="flex items-center gap-1.5 text-typ-label text-text-muted mb-1">
                   <HeartPulse size={14} className="text-cyan-400" />
                   <span>Health Cover</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-cyan-400 num-tabular">
+                <div className="text-typ-title sm:text-typ-heading font-bold text-cyan-400 num-tabular">
                   ₹{formatInLakhsOrCrores(insuranceData.totalHealthCover)}
                 </div>
                 <div className="text-typ-caption text-text-muted mt-0.5">
@@ -307,11 +307,11 @@ export default function InsuranceHubModal({
               </div>
 
               <div className="bg-surface-layer2/70 rounded-xl p-3 border border-border-subtle/60">
-                <div className="flex items-center gap-1.5 text-xs text-text-muted mb-1">
+                <div className="flex items-center gap-1.5 text-typ-label text-text-muted mb-1">
                   <Wallet size={14} className="text-bullion-amber" />
                   <span>Annual Premium Drag</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-text-primary num-tabular">
+                <div className="text-typ-title sm:text-typ-heading font-bold text-text-primary num-tabular">
                   {formatCurrency(insuranceData.totalAnnualPremium)}
                 </div>
                 <div className="text-typ-caption text-wealth-emerald font-medium mt-0.5">
@@ -322,7 +322,7 @@ export default function InsuranceHubModal({
 
             {/* Accretion Ribbon for Investment-Backed Policies */}
             {insuranceData.totalSurrenderValue > 0 && (
-              <div className="pt-3 border-t border-border-subtle/60 flex flex-wrap items-center justify-between text-xs gap-2">
+              <div className="pt-3 border-t border-border-subtle/60 flex flex-wrap items-center justify-between text-typ-label gap-2">
                 <div>
                   <span className="text-text-muted">Total Cumulative Cost: </span>
                   <span className="font-semibold text-text-primary num-tabular">{formatCurrency(insuranceData.totalCumulativeCost)}</span>
@@ -345,7 +345,7 @@ export default function InsuranceHubModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-bullion-amber animate-pulse"></span>
-                  <h3 className="text-xs font-bold text-bullion-amber flex items-center gap-1.5">
+                  <h3 className="text-typ-label font-bold text-bullion-amber flex items-center gap-1.5">
                     <Clock size={14} />
                     Upcoming Premium Renewals ({insuranceData.upcomingRenewals.length})
                   </h3>
@@ -355,9 +355,9 @@ export default function InsuranceHubModal({
 
               <div className="space-y-2 pt-1">
                 {insuranceData.upcomingRenewals.map(p => (
-                  <div key={p.assetId} className="flex flex-wrap items-center justify-between p-2.5 rounded-lg bg-surface-layer2/70 border border-bullion-amber/20 text-xs gap-2">
+                  <div key={p.assetId} className="flex flex-wrap items-center justify-between p-2.5 rounded-lg bg-surface-layer2/70 border border-bullion-amber/20 text-typ-label gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-bullion-amber/20 flex items-center justify-center text-bullion-amber shrink-0 font-bold text-xs">
+                      <div className="w-7 h-7 rounded-lg bg-bullion-amber/20 flex items-center justify-center text-bullion-amber shrink-0 font-bold text-typ-label">
                         {p.insurer.slice(0, 3).toUpperCase()}
                       </div>
                       <div className="truncate">
@@ -395,7 +395,7 @@ export default function InsuranceHubModal({
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               <button
                 onClick={() => setActiveCategoryTab('all')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-typ-label font-semibold transition-all whitespace-nowrap ${
                   activeCategoryTab === 'all'
                     ? 'bg-primary-accent text-white shadow-xs'
                     : 'bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary'
@@ -405,7 +405,7 @@ export default function InsuranceHubModal({
               </button>
               <button
                 onClick={() => setActiveCategoryTab('life')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-typ-label font-semibold transition-all whitespace-nowrap ${
                   activeCategoryTab === 'life'
                     ? 'bg-primary-accent text-white shadow-xs'
                     : 'bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary'
@@ -415,7 +415,7 @@ export default function InsuranceHubModal({
               </button>
               <button
                 onClick={() => setActiveCategoryTab('health')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-typ-label font-semibold transition-all whitespace-nowrap ${
                   activeCategoryTab === 'health'
                     ? 'bg-primary-accent text-white shadow-xs'
                     : 'bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary'
@@ -425,7 +425,7 @@ export default function InsuranceHubModal({
               </button>
               <button
                 onClick={() => setActiveCategoryTab('motor')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`px-3 py-1 rounded-full text-typ-label font-semibold transition-all whitespace-nowrap ${
                   activeCategoryTab === 'motor'
                     ? 'bg-primary-accent text-white shadow-xs'
                     : 'bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary'
@@ -440,7 +440,7 @@ export default function InsuranceHubModal({
                 onClose();
                 if (onOpenAddAsset) onOpenAddAsset('Life Insurance / LIC');
               }}
-              className="px-3 py-1 rounded-xl bg-primary-accent/15 border border-primary-accent/30 text-primary-accent hover:bg-primary-accent hover:text-white text-xs font-semibold flex items-center gap-1 transition-all shrink-0 active:scale-95"
+              className="px-3 py-1 rounded-xl bg-primary-accent/15 border border-primary-accent/30 text-primary-accent hover:bg-primary-accent hover:text-white text-typ-label font-semibold flex items-center gap-1 transition-all shrink-0 active:scale-95"
             >
               <Plus size={14} />
               <span>Add Policy</span>
@@ -454,8 +454,8 @@ export default function InsuranceHubModal({
                 <div className="w-12 h-12 rounded-2xl bg-primary-accent/10 border border-primary-accent/20 flex items-center justify-center mx-auto text-primary-accent">
                   <Shield size={24} />
                 </div>
-                <h4 className="text-sm font-bold text-text-primary">No Insurance Policies Tracked</h4>
-                <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
+                <h4 className="text-typ-body-sm font-bold text-text-primary">No Insurance Policies Tracked</h4>
+                <p className="text-typ-label text-text-muted max-w-sm mx-auto leading-relaxed">
                   Track your LIC endowment plans, pure term insurance, and family health floaters with automated premium schedules and cashflow syncing.
                 </p>
                 <button
@@ -463,7 +463,7 @@ export default function InsuranceHubModal({
                     onClose();
                     if (onOpenAddAsset) onOpenAddAsset('Life Insurance / LIC');
                   }}
-                  className="px-4 py-2 rounded-xl bg-primary-accent text-white text-xs font-semibold shadow-xs hover:bg-primary-accent/90 transition-all inline-flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-primary-accent text-white text-typ-label font-semibold shadow-xs hover:bg-primary-accent/90 transition-all inline-flex items-center gap-1.5"
                 >
                   <Plus size={14} />
                   <span>Add First Policy</span>
@@ -480,7 +480,7 @@ export default function InsuranceHubModal({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-wealth-emerald"></span>
-                        <h4 className="text-sm sm:text-base font-bold text-text-primary truncate">{policy.name}</h4>
+                        <h4 className="text-typ-body-sm sm:text-typ-body font-bold text-text-primary truncate">{policy.name}</h4>
                       </div>
                       <p className="text-typ-footnote text-text-muted mt-0.5 truncate">
                         Policy #{policy.policyNo} • {policy.insurer}
@@ -506,7 +506,7 @@ export default function InsuranceHubModal({
                       <span className="text-typ-footnote text-text-muted">
                         {policy.isInvestment ? 'Current Surrender Value' : 'Life / Sum Insured'}
                       </span>
-                      <div className={`text-base sm:text-lg font-bold num-tabular ${policy.isInvestment ? 'text-wealth-emerald' : 'text-primary-accent'}`}>
+                      <div className={`text-typ-body sm:text-typ-subtitle font-bold num-tabular ${policy.isInvestment ? 'text-wealth-emerald' : 'text-primary-accent'}`}>
                         {policy.isInvestment 
                           ? formatCurrency(policy.currentValue)
                           : (policy.sumAssured > 0 ? `₹${formatInLakhsOrCrores(policy.sumAssured)}` : `₹${formatInLakhsOrCrores(policy.healthCover)}`)}
@@ -522,7 +522,7 @@ export default function InsuranceHubModal({
                       <span className="text-typ-footnote text-text-muted">
                         {policy.isInvestment ? 'Cumulative Premiums Paid' : 'Annual Premium'}
                       </span>
-                      <div className="text-base sm:text-lg font-bold text-text-primary num-tabular">
+                      <div className="text-typ-body sm:text-typ-subtitle font-bold text-text-primary num-tabular">
                         {policy.isInvestment ? formatCurrency(policy.cost) : formatCurrency(policy.annualPremium)}
                       </div>
                       <div className="text-typ-caption text-text-muted">
@@ -548,7 +548,7 @@ export default function InsuranceHubModal({
                   )}
 
                   {/* Metadata Chips / Key Details Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 text-xs pt-1 border-t border-border-subtle/50 text-text-secondary">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 text-typ-label pt-1 border-t border-border-subtle/50 text-text-secondary">
                     {policy.sumAssured > 0 && (
                       <div>Life Cover: <span className="font-semibold text-text-primary num-tabular">₹{formatInLakhsOrCrores(policy.sumAssured)}</span></div>
                     )}
@@ -566,7 +566,7 @@ export default function InsuranceHubModal({
                   </div>
 
                   {/* Actions Row */}
-                  <div className="pt-2 flex items-center justify-between border-t border-border-subtle/50 text-xs">
+                  <div className="pt-2 flex items-center justify-between border-t border-border-subtle/50 text-typ-label">
                     <button
                       onClick={() => setSelectedPolicyForPayment(policy)}
                       className="inline-flex items-center gap-1 text-primary-accent hover:text-primary-accent/80 font-semibold text-typ-footnote transition-colors"
@@ -609,7 +609,7 @@ export default function InsuranceHubModal({
           {/* 5. HUMAN LIFE VALUE (HLV) AUDIT & DEFENSE METER */}
           <section className="rounded-2xl p-4 sm:p-5 bg-surface-layer1 border border-border-subtle space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm font-bold text-text-primary flex items-center gap-1.5">
+              <h3 className="text-typ-label sm:text-typ-body-sm font-bold text-text-primary flex items-center gap-1.5">
                 <Shield size={16} className="text-primary-accent" />
                 Human Life Value (HLV) Defense Audit
               </h3>
@@ -621,7 +621,7 @@ export default function InsuranceHubModal({
               </Badge>
             </div>
 
-            <p className="text-xs text-text-secondary leading-relaxed">
+            <p className="text-typ-label text-text-secondary leading-relaxed">
               Based on your annual household living expenses (<span className="text-text-primary font-semibold">{formatCurrency(insuranceData.hlv.annualLivingExpenses)}/yr</span>) and active debt (<span className="text-text-primary font-semibold">{formatCurrency(insuranceData.hlv.totalLiabilities)}</span>), your recommended life cover is <span className="text-text-primary font-semibold">₹{formatInLakhsOrCrores(insuranceData.hlv.netProtectionRequired)}</span>.
             </p>
 
@@ -649,22 +649,22 @@ export default function InsuranceHubModal({
           {/* 6. TAX SHIELD AUDIT (SECTION 80C & 80D) */}
           <section className="rounded-2xl p-4 bg-surface-layer1 border border-border-subtle space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm font-bold text-text-primary flex items-center gap-1.5">
+              <h3 className="text-typ-label sm:text-typ-body-sm font-bold text-text-primary flex items-center gap-1.5">
                 <Award size={16} className="text-wealth-emerald" />
                 Insurance Tax Shields (FY 2026-27)
               </h3>
-              <span className="text-xs font-bold text-wealth-emerald num-tabular">
+              <span className="text-typ-label font-bold text-wealth-emerald num-tabular">
                 +{formatCurrency(insuranceData.taxAudit.estimatedTaxSaved)} Saved
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-typ-label">
               <div className="p-3 rounded-xl bg-surface-layer2/60 border border-border-subtle/50 space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-text-primary">Section 80C (Life Insurance)</span>
                   <span className="text-text-muted text-typ-caption">Cap: ₹1.5L</span>
                 </div>
-                <div className="text-sm font-bold text-text-primary num-tabular">
+                <div className="text-typ-body-sm font-bold text-text-primary num-tabular">
                   {formatCurrency(insuranceData.taxAudit.claimed80C)}
                 </div>
                 <p className="text-typ-caption text-text-muted">
@@ -677,7 +677,7 @@ export default function InsuranceHubModal({
                   <span className="font-semibold text-text-primary">Section 80D (Health Insurance)</span>
                   <span className="text-text-muted text-typ-caption">Cap: ₹25k / ₹50k</span>
                 </div>
-                <div className="text-sm font-bold text-cyan-400 num-tabular">
+                <div className="text-typ-body-sm font-bold text-cyan-400 num-tabular">
                   {formatCurrency(insuranceData.taxAudit.claimed80D)}
                 </div>
                 <p className="text-typ-caption text-text-muted">
@@ -704,8 +704,8 @@ export default function InsuranceHubModal({
             <div className="bg-surface-layer1 border border-border-subtle rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-scaleUp">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="text-base font-bold text-text-primary">Log Premium Payment</h4>
-                  <p className="text-xs text-text-muted truncate max-w-[240px]">{selectedPolicyForPayment.name}</p>
+                  <h4 className="text-typ-body font-bold text-text-primary">Log Premium Payment</h4>
+                  <p className="text-typ-label text-text-muted truncate max-w-[240px]">{selectedPolicyForPayment.name}</p>
                 </div>
                 <button 
                   onClick={() => setSelectedPolicyForPayment(null)}
@@ -715,7 +715,7 @@ export default function InsuranceHubModal({
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3 text-typ-label">
                 <div>
                   <label className="text-text-muted block mb-1">Premium Amount (₹)</label>
                   <input
@@ -752,7 +752,7 @@ export default function InsuranceHubModal({
                 <button
                   type="button"
                   onClick={() => setSelectedPolicyForPayment(null)}
-                  className="flex-1 py-2 rounded-xl bg-surface-layer2 border border-border-subtle text-text-secondary hover:text-text-primary font-medium text-xs transition-colors"
+                  className="flex-1 py-2 rounded-xl bg-surface-layer2 border border-border-subtle text-text-secondary hover:text-text-primary font-medium text-typ-label transition-colors"
                 >
                   Cancel
                 </button>
@@ -767,7 +767,7 @@ export default function InsuranceHubModal({
                       premiumAmount: amt
                     });
                   }}
-                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 transition-all flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-typ-label hover:bg-primary-accent/90 transition-all flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
                 >
                   {isLoggingPremium ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
                   <span>Confirm Pay</span>

@@ -220,7 +220,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
               <Shield size={18} />
             </div>
             <div>
-              <h3 className="font-bold text-text-primary text-base leading-tight">
+              <h3 className="font-bold text-text-primary text-typ-body leading-tight">
                 {viewMode === 'wizard' ? (isPinEnabled ? 'Change PIN' : 'Set Security PIN') : (viewMode === 'disable_confirm' ? 'Disable PIN' : 'Security & Access Control')}
               </h3>
               <p className="text-typ-footnote text-text-muted leading-tight mt-0.5">
@@ -251,7 +251,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                     {appShellMode ? <Smartphone size={20} /> : <Globe size={20} />}
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                    <div className="text-typ-label font-semibold text-text-primary flex items-center gap-1.5">
                       <span>{appShellMode ? 'Mobile App Shell' : 'Web Browser Session'}</span>
                       <span className={`text-typ-caption px-1.5 py-0.2 rounded-full font-medium ${
                         appShellMode 
@@ -278,8 +278,8 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                       {isPinEnabled ? <Lock size={18} /> : <Unlock size={18} />}
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-text-primary">PIN App Lock</h4>
-                      <p className="text-xs text-text-muted">
+                      <h4 className="text-typ-body-sm font-semibold text-text-primary">PIN App Lock</h4>
+                      <p className="text-typ-label text-text-muted">
                         {isPinEnabled ? 'Vault protected with 4-digit PIN' : 'Require PIN on launch & resume'}
                       </p>
                     </div>
@@ -300,11 +300,11 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                 {isPinEnabled && (
                   <div className="pt-3 border-t border-border-subtle space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-text-secondary">Security Credentials</span>
+                      <span className="text-typ-label text-text-secondary">Security Credentials</span>
                       <button
                         type="button"
                         onClick={handleStartChangePin}
-                        className="text-xs text-primary-accent hover:text-primary-accent/80 font-medium flex items-center gap-1"
+                        className="text-typ-label text-primary-accent hover:text-primary-accent/80 font-medium flex items-center gap-1"
                       >
                         <KeyRound size={13} />
                         <span>Change PIN</span>
@@ -313,7 +313,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
 
                     {/* Auto-Lock Grace Period Selector */}
                     <div>
-                      <label className="block text-xs font-medium text-text-secondary mb-1.5 flex items-center gap-1.5">
+                      <label className="block text-typ-label font-medium text-text-secondary mb-1.5 flex items-center gap-1.5">
                         <Clock size={13} className="text-text-muted" />
                         <span>Auto-Lock Grace Period</span>
                       </label>
@@ -328,7 +328,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                             key={opt.val}
                             type="button"
                             onClick={() => handleTimeoutChange(opt.val)}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                            className={`py-1.5 px-2 rounded-lg text-typ-label font-medium transition-all ${
                               autoLockTimeout === opt.val
                                 ? 'bg-primary-accent text-white shadow-xs'
                                 : 'bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary'
@@ -351,7 +351,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
               {/* Web Browser Specific Controls */}
               {!appShellMode && (
                 <div className="border border-border-subtle rounded-xl p-4 bg-surface-layer2/30 space-y-3.5">
-                  <div className="flex items-center gap-2 text-text-primary font-semibold text-sm">
+                  <div className="flex items-center gap-2 text-text-primary font-semibold text-typ-body-sm">
                     <Laptop size={16} className="text-primary-accent" />
                     <span>Browser Session Security</span>
                   </div>
@@ -359,7 +359,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                   {/* Keep me signed in toggle */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <h5 className="text-xs font-semibold text-text-primary">Keep Me Signed In</h5>
+                      <h5 className="text-typ-label font-semibold text-text-primary">Keep Me Signed In</h5>
                       <p className="text-typ-footnote text-text-muted max-w-[240px]">
                         {rememberMe 
                           ? 'Stored in device localStorage (persistent across browser restarts).' 
@@ -379,7 +379,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
 
                   {/* Inactivity Idle Timeout */}
                   <div className="pt-3 border-t border-border-subtle">
-                    <label className="block text-xs font-medium text-text-secondary mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-typ-label font-medium text-text-secondary mb-1.5 flex items-center gap-1.5">
                       <Clock size={13} className="text-text-muted" />
                       <span>Inactivity Lockout (Browser)</span>
                     </label>
@@ -393,7 +393,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                           key={opt.val}
                           type="button"
                           onClick={() => handleIdleTimeoutChange(opt.val)}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+                          className={`py-1.5 px-2 rounded-lg text-typ-label font-medium transition-all ${
                             idleTimeout === opt.val
                               ? 'bg-primary-accent text-white shadow-xs'
                               : 'bg-surface-layer1 border border-border-subtle text-text-secondary hover:text-text-primary'
@@ -417,7 +417,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                   onClick={() => {
                     if (onSignOut) onSignOut();
                   }}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-sm font-medium text-liability-rose bg-liability-rose/10 hover:bg-liability-rose/15 border border-liability-rose/25 transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-typ-body-sm font-medium text-liability-rose bg-liability-rose/10 hover:bg-liability-rose/15 border border-liability-rose/25 transition-colors cursor-pointer"
                 >
                   <LogOut size={16} />
                   <span>Sign Out on this Device</span>
@@ -431,14 +431,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                 <div className="w-12 h-12 rounded-full bg-liability-rose/15 text-liability-rose flex items-center justify-center mx-auto mb-2">
                   <Unlock size={24} />
                 </div>
-                <h4 className="text-sm font-bold text-text-primary">Disable PIN Protection?</h4>
-                <p className="text-xs text-text-muted mt-1 max-w-xs mx-auto">
+                <h4 className="text-typ-body-sm font-bold text-text-primary">Disable PIN Protection?</h4>
+                <p className="text-typ-label text-text-muted mt-1 max-w-xs mx-auto">
                   Please enter your current 4-digit PIN to confirm removing app lock security.
                 </p>
               </div>
 
               {wizardError && (
-                <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-xs text-center flex items-center justify-center gap-1.5">
+                <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-typ-label text-center flex items-center justify-center gap-1.5">
                   <AlertCircle size={14} />
                   <span>{wizardError}</span>
                 </div>
@@ -454,7 +454,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                   value={currentPinInput}
                   onChange={(e) => setCurrentPinInput(e.target.value.replace(/\D/g, ''))}
                   placeholder="••••"
-                  className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
+                  className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-typ-heading font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
                 />
               </div>
 
@@ -462,14 +462,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                 <button
                   type="button"
                   onClick={() => setViewMode('overview')}
-                  className="flex-1 py-2.5 rounded-xl border border-border-subtle text-xs font-medium text-text-secondary hover:bg-surface-layer2"
+                  className="flex-1 py-2.5 rounded-xl border border-border-subtle text-typ-label font-medium text-text-secondary hover:bg-surface-layer2"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={currentPinInput.length !== 4 || wizardLoading}
-                  className="flex-1 py-2.5 rounded-xl bg-liability-rose text-white text-xs font-semibold hover:bg-liability-rose/90 disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-xl bg-liability-rose text-white text-typ-label font-semibold hover:bg-liability-rose/90 disabled:opacity-50"
                 >
                   {wizardLoading ? 'Verifying...' : 'Disable PIN'}
                 </button>
@@ -481,14 +481,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
               {wizardStep === 'current' && (
                 <form onSubmit={handleVerifyCurrentPin} className="space-y-4">
                   <div className="text-center">
-                    <h4 className="text-sm font-bold text-text-primary">Enter Current PIN</h4>
-                    <p className="text-xs text-text-muted mt-1">
+                    <h4 className="text-typ-body-sm font-bold text-text-primary">Enter Current PIN</h4>
+                    <p className="text-typ-label text-text-muted mt-1">
                       Verify your identity to proceed with changing your PIN.
                     </p>
                   </div>
 
                   {wizardError && (
-                    <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-xs text-center flex items-center justify-center gap-1.5">
+                    <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-typ-label text-center flex items-center justify-center gap-1.5">
                       <AlertCircle size={14} />
                       <span>{wizardError}</span>
                     </div>
@@ -504,14 +504,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                       value={currentPinInput}
                       onChange={(e) => setCurrentPinInput(e.target.value.replace(/\D/g, ''))}
                       placeholder="••••"
-                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
+                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-typ-heading font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={currentPinInput.length !== 4 || wizardLoading}
-                    className="w-full py-2.5 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:bg-primary-accent/90 disabled:opacity-50"
+                    className="w-full py-2.5 rounded-xl bg-primary-accent text-white text-typ-label font-semibold hover:bg-primary-accent/90 disabled:opacity-50"
                   >
                     {wizardLoading ? 'Verifying...' : 'Next'}
                   </button>
@@ -521,14 +521,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
               {wizardStep === 'new' && (
                 <form onSubmit={handleNewPinSubmit} className="space-y-4">
                   <div className="text-center">
-                    <h4 className="text-sm font-bold text-text-primary">Create New PIN</h4>
-                    <p className="text-xs text-text-muted mt-1">
+                    <h4 className="text-typ-body-sm font-bold text-text-primary">Create New PIN</h4>
+                    <p className="text-typ-label text-text-muted mt-1">
                       Choose a memorable 4-digit code to protect your vault.
                     </p>
                   </div>
 
                   {wizardError && (
-                    <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-xs text-center flex items-center justify-center gap-1.5">
+                    <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-typ-label text-center flex items-center justify-center gap-1.5">
                       <AlertCircle size={14} />
                       <span>{wizardError}</span>
                     </div>
@@ -544,14 +544,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                       value={newPinInput}
                       onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
                       placeholder="••••"
-                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
+                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-typ-heading font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={newPinInput.length !== 4}
-                    className="w-full py-2.5 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:bg-primary-accent/90 disabled:opacity-50"
+                    className="w-full py-2.5 rounded-xl bg-primary-accent text-white text-typ-label font-semibold hover:bg-primary-accent/90 disabled:opacity-50"
                   >
                     Continue
                   </button>
@@ -561,14 +561,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
               {wizardStep === 'confirm' && (
                 <form onSubmit={handleConfirmPinSubmit} className="space-y-4">
                   <div className="text-center">
-                    <h4 className="text-sm font-bold text-text-primary">Confirm New PIN</h4>
-                    <p className="text-xs text-text-muted mt-1">
+                    <h4 className="text-typ-body-sm font-bold text-text-primary">Confirm New PIN</h4>
+                    <p className="text-typ-label text-text-muted mt-1">
                       Re-enter the 4-digit PIN to ensure accuracy.
                     </p>
                   </div>
 
                   {wizardError && (
-                    <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-xs text-center flex items-center justify-center gap-1.5">
+                    <div className="p-2.5 rounded-lg bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-typ-label text-center flex items-center justify-center gap-1.5">
                       <AlertCircle size={14} />
                       <span>{wizardError}</span>
                     </div>
@@ -584,7 +584,7 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                       value={confirmPinInput}
                       onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, ''))}
                       placeholder="••••"
-                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
+                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl px-4 py-3 text-center text-typ-heading font-mono tracking-widest text-text-primary focus:outline-none focus:border-primary-accent"
                     />
                   </div>
 
@@ -592,14 +592,14 @@ export default function SecurityModal({ isOpen, onClose, userEmail, onSignOut, s
                     <button
                       type="button"
                       onClick={() => { setWizardStep('new'); setWizardError(''); }}
-                      className="flex-1 py-2.5 rounded-xl border border-border-subtle text-xs font-medium text-text-secondary hover:bg-surface-layer2"
+                      className="flex-1 py-2.5 rounded-xl border border-border-subtle text-typ-label font-medium text-text-secondary hover:bg-surface-layer2"
                     >
                       Back
                     </button>
                     <button
                       type="submit"
                       disabled={confirmPinInput.length !== 4 || wizardLoading}
-                      className="flex-1 py-2.5 rounded-xl bg-wealth-emerald text-white text-xs font-semibold hover:bg-wealth-emerald/90 disabled:opacity-50"
+                      className="flex-1 py-2.5 rounded-xl bg-wealth-emerald text-white text-typ-label font-semibold hover:bg-wealth-emerald/90 disabled:opacity-50"
                     >
                       {wizardLoading ? 'Saving...' : 'Save PIN'}
                     </button>

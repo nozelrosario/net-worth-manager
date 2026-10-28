@@ -432,14 +432,14 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <ArrowLeft size={17} />
             </button>
             <div>
-              <h1 className="text-sm font-semibold text-text-primary tracking-tight">AI Portfolio Advisor</h1>
+              <h1 className="text-typ-body-sm font-semibold text-text-primary tracking-tight">AI Portfolio Advisor</h1>
               <p className="text-typ-caption text-text-muted">Smart Inflow Engine • Zero Tax</p>
             </div>
           </div>
 
           <button 
             onClick={() => setShowCustomizer(true)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-text-primary active:scale-95 transition-all text-xs font-medium"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-text-primary active:scale-95 transition-all text-typ-label font-medium"
           >
             <span className="text-typ-footnote font-semibold text-text-primary">{selectedProfile}</span>
             <Sliders size={12} className="text-text-muted" />
@@ -448,7 +448,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
         {/* Segmented Mode Navigation Bar */}
         <div className="px-4 pt-3 pb-1">
-          <div className="flex p-1 bg-surface-layer2/80 rounded-xl border border-white/[0.06] text-xs font-semibold">
+          <div className="flex p-1 bg-surface-layer2/80 rounded-xl border border-white/[0.06] text-typ-label font-semibold">
             <button
               onClick={() => setActiveTab('rebalance')}
               className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
@@ -492,7 +492,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <span className="text-typ-caption font-bold text-text-muted uppercase tracking-wider">Total Portfolio Wealth</span>
-                <div className="text-2xl font-bold text-text-primary tabular-nums tracking-tight">
+                <div className="text-typ-heading font-bold text-text-primary tabular-nums tracking-tight">
                   {formatCurrency(simulation.netWorth)}
                 </div>
                 {simulation.maxOverweight && (
@@ -512,7 +512,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     ? 'border-bullion-amber/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]' 
                     : 'border-liability-rose/40 shadow-[0_0_15px_rgba(244,63,94,0.15)]'
                 }`}>
-                  <span className={`text-2xl font-black tabular-nums leading-none ${
+                  <span className={`text-typ-heading font-black tabular-nums leading-none ${
                     simulation.alignmentScore >= 80 ? 'text-wealth-emerald' : simulation.alignmentScore >= 60 ? 'text-bullion-amber' : 'text-liability-rose'
                   }`}>
                     {simulation.alignmentScore}
@@ -534,7 +534,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             </div>
 
             {/* Inflow Adjustment Indicator Badge */}
-            <div className="mt-3.5 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs">
+            <div className="mt-3.5 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-typ-label">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-bullion-amber opacity-75"></span>
@@ -554,7 +554,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] flex flex-col gap-2.5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xs font-semibold text-text-primary">Allocation Alignment</h2>
+                <h2 className="text-typ-label font-semibold text-text-primary">Allocation Alignment</h2>
                 <p className="text-typ-footnote text-text-muted">Target profile drift comparison</p>
               </div>
               <span className="text-typ-footnote font-medium text-text-muted">
@@ -653,7 +653,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           {/* 4. Smart Inflow Rebalance Simulator */}
           <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] flex flex-col gap-3 shadow-sm">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-text-primary">
+              <div className="flex items-center gap-1.5 text-typ-label font-semibold text-text-primary">
                 <Wallet size={14} className="text-primary-accent" />
                 <span>Deploy Fresh Capital</span>
               </div>
@@ -682,13 +682,13 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             {/* Custom Amount Input & Slider */}
             <div className="space-y-2">
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-text-muted font-bold text-sm">₹</span>
+                <span className="absolute left-3 text-text-muted font-bold text-typ-body-sm">₹</span>
                 <input 
                   type="text"
                   value={customInflowInput}
                   onChange={handleCustomInputChange}
                   placeholder="Enter investment amount"
-                  className="w-full bg-surface-layer2/70 border border-white/[0.1] rounded-lg pl-7 pr-16 py-2 text-sm font-bold text-text-primary tabular-nums focus:outline-none focus:border-primary-accent/80 transition-colors"
+                  className="w-full bg-surface-layer2/70 border border-white/[0.1] rounded-lg pl-7 pr-16 py-2 text-typ-body-sm font-bold text-text-primary tabular-nums focus:outline-none focus:border-primary-accent/80 transition-colors"
                 />
                 <span className="absolute right-3 text-typ-caption text-text-muted font-semibold uppercase">
                   Inflow
@@ -710,7 +710,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           {/* 5. Rebalance Allocation Execution Breakdown */}
           <section className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-xs font-semibold text-text-primary">Recommended Deployments</h3>
+              <h3 className="text-typ-label font-semibold text-text-primary">Recommended Deployments</h3>
               <span className="text-typ-caption text-text-muted">Proportional Shortfall Engine</span>
             </div>
 
@@ -729,7 +729,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2.5 h-2.5 rounded-full ${conf.bgClass}`}></span>
-                        <span className="text-xs font-semibold text-text-primary">{item.category}</span>
+                        <span className="text-typ-label font-semibold text-text-primary">{item.category}</span>
                       </div>
 
                       {/* Status Tag */}
@@ -753,18 +753,18 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     <div className="flex items-baseline justify-between pt-1">
                       <div>
                         <span className="text-typ-caption text-text-muted">Current → Projected:</span>
-                        <span className="text-xs font-medium text-text-secondary ml-1 tabular-nums">
+                        <span className="text-typ-label font-medium text-text-secondary ml-1 tabular-nums">
                           {item.currentPct}% → <strong className="text-text-primary">{item.projectedPct}%</strong> (Target: {item.targetPct}%)
                         </span>
                       </div>
 
                       <div className="text-right">
                         {hasAlloc ? (
-                          <span className="text-sm font-bold text-wealth-emerald tabular-nums">
+                          <span className="text-typ-body-sm font-bold text-wealth-emerald tabular-nums">
                             +{formatCurrency(item.allocatedRupees)}
                           </span>
                         ) : (
-                          <span className="text-xs font-medium text-text-muted">
+                          <span className="text-typ-label font-medium text-text-muted">
                             ₹0 (Hold)
                           </span>
                         )}
@@ -795,7 +795,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     {cashDrag.runwayMonths} Mos
                   </span>
                 </div>
-                <p className="text-sm font-bold text-text-primary tabular-nums">
+                <p className="text-typ-body-sm font-bold text-text-primary tabular-nums">
                   {formatCurrency(cashDrag.totalLiquidCash)}
                 </p>
                 <p className="text-typ-caption text-text-muted mt-0.5">
@@ -826,7 +826,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     Max 15% Cap
                   </span>
                 </div>
-                <p className="text-sm font-bold text-text-primary">
+                <p className="text-typ-body-sm font-bold text-text-primary">
                   {concentration.alerts.length === 0 ? 'No Critical Skew' : `${concentration.alerts.length} Alert(s)`}
                 </p>
                 <p className="text-typ-caption text-text-muted mt-0.5">
@@ -851,7 +851,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <Sparkles size={16} className="text-wealth-emerald animate-pulse" />
-                <h3 className="text-xs font-semibold text-text-primary">
+                <h3 className="text-typ-label font-semibold text-text-primary">
                   {aiModelUsed.includes('Gemini') ? 'Gemini AI Advisory Synthesis' : 'Financial Strategic Synthesis'}
                 </h3>
               </div>
@@ -874,7 +874,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             {isLoadingAI ? (
               <div className="py-8 flex flex-col items-center justify-center gap-2 text-text-muted">
                 <RefreshCw size={20} className="animate-spin text-primary-accent" />
-                <p className="text-xs">Analyzing portfolio & tax dynamics...</p>
+                <p className="text-typ-label">Analyzing portfolio & tax dynamics...</p>
               </div>
             ) : aiInsights ? (
               <div className="text-typ-footnote leading-relaxed text-text-secondary space-y-2 whitespace-pre-line">
@@ -882,7 +882,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               </div>
             ) : (
               <div className="py-4 text-center">
-                <p className="text-xs text-text-muted">Tap refresh to synthesize recommendations.</p>
+                <p className="text-typ-label text-text-muted">Tap refresh to synthesize recommendations.</p>
               </div>
             )}
 
@@ -911,7 +911,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 <Compass size={16} />
               </div>
               <div>
-                <div className="text-xs font-semibold text-text-primary group-hover:text-primary-accent transition-colors flex items-center gap-1.5">
+                <div className="text-typ-label font-semibold text-text-primary group-hover:text-primary-accent transition-colors flex items-center gap-1.5">
                   <span>Explore Direct Products & Overlap Radar</span>
                   <Badge variant="emerald" dot size="xs">
                     New
@@ -933,7 +933,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           <div className="px-4 flex flex-col gap-3.5 pt-2">
             
             {/* 1. Macro & Valuation Regime Ticker */}
-            <section className="bg-surface-layer1 rounded-xl p-3 border border-white/[0.07] flex items-center justify-between text-xs shadow-sm">
+            <section className="bg-surface-layer1 rounded-xl p-3 border border-white/[0.07] flex items-center justify-between text-typ-label shadow-sm">
               <div className="flex items-center gap-2">
                 <span className="p-1.5 rounded-lg bg-primary-accent/15 text-primary-accent border border-primary-accent/20">
                   <TrendingUp size={14} />
@@ -965,7 +965,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Radar size={16} className="text-bullion-amber animate-pulse" />
-                  <h2 className="text-xs font-semibold text-text-primary">Portfolio Look-Through & Overlap</h2>
+                  <h2 className="text-typ-label font-semibold text-text-primary">Portfolio Look-Through & Overlap</h2>
                 </div>
                 <Badge 
                   variant={(productIntelligence?.overlapAnalysis?.overlapPercentage || localLookThrough.overlapPercentage) >= 40 ? 'rose' : 'emerald'} 
@@ -1041,7 +1041,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Zap size={15} className="text-wealth-emerald" />
-                  <h2 className="text-xs font-semibold text-text-primary">
+                  <h2 className="text-typ-label font-semibold text-text-primary">
                     {productIntelligence?.taxArbitrageSwitch?.title || "Debt vs Arbitrage Switch"}
                   </h2>
                 </div>
@@ -1060,7 +1060,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             <section className="space-y-2">
               <div className="flex items-center justify-between px-1">
                 <div>
-                  <h3 className="text-xs font-semibold text-text-primary">Curated Direct Product Recommendations</h3>
+                  <h3 className="text-typ-label font-semibold text-text-primary">Curated Direct Product Recommendations</h3>
                   <p className="text-typ-caption text-text-muted">Targeted solutions for your underweight shortfall</p>
                 </div>
                 <Badge variant="emerald" size="xs">
@@ -1102,7 +1102,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                               prod.category === 'Gold' ? 'bg-[#F59E0B]' :
                               prod.category === 'Cash/FD' ? 'bg-[#10B981]' : 'bg-[#8B5CF6]'
                             }`}></span>
-                            <span className="text-xs font-semibold text-text-primary">{prod.name}</span>
+                            <span className="text-typ-label font-semibold text-text-primary">{prod.name}</span>
                           </div>
                           <span className="text-typ-caption text-text-muted">{prod.category} • Direct Growth</span>
                         </div>
@@ -1115,15 +1115,15 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                       <div className="grid grid-cols-3 gap-1.5 py-1 text-center bg-surface-layer2/50 rounded-lg border border-white/[0.04]">
                         <div>
                           <div className="text-typ-micro text-text-muted">Expense Ratio</div>
-                          <div className="text-xs font-bold text-text-primary tabular-nums">{prod.ter}</div>
+                          <div className="text-typ-label font-bold text-text-primary tabular-nums">{prod.ter}</div>
                         </div>
                         <div>
                           <div className="text-typ-micro text-text-muted">Tracking / Risk</div>
-                          <div className="text-xs font-bold text-wealth-emerald tabular-nums">{prod.trackingError}</div>
+                          <div className="text-typ-label font-bold text-wealth-emerald tabular-nums">{prod.trackingError}</div>
                         </div>
                         <div>
                           <div className="text-typ-micro text-text-muted">3Y CAGR / Return</div>
-                          <div className="text-xs font-bold text-text-primary tabular-nums">{prod.cagr3Y}</div>
+                          <div className="text-typ-label font-bold text-text-primary tabular-nums">{prod.cagr3Y}</div>
                         </div>
                       </div>
 
@@ -1166,14 +1166,14 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <>
                 <button 
                   onClick={() => setShowApplyModal(true)}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-typ-label flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
                 >
                   <CheckCircle2 size={15} />
                   <span>Apply Rebalance Plan</span>
                 </button>
                 <button 
                   onClick={handleCopyPlan}
-                  className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
+                  className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-typ-label font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
                 >
                   {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
                   <span>{copied ? 'Copied' : 'Export'}</span>
@@ -1183,14 +1183,14 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <>
                 <button 
                   onClick={() => setShowDeployGuide(true)}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 text-white font-semibold text-typ-label flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/25 active:scale-[0.98] transition-all"
                 >
                   <ExternalLink size={15} />
                   <span>Deploy via Broker / MF Central</span>
                 </button>
                 <button 
                   onClick={handleCopyProductStrategy}
-                  className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
+                  className="py-2.5 px-3.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-white/[0.14] text-text-secondary hover:text-text-primary text-typ-label font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-sm"
                 >
                   {copied ? <Check size={14} className="text-wealth-emerald" /> : <Copy size={14} />}
                   <span>{copied ? 'Copied' : 'Export'}</span>
@@ -1207,18 +1207,18 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div className="flex items-center justify-between border-b border-white/[0.07] pb-2">
                 <div className="flex items-center gap-2 text-primary-accent">
                   <Compass size={18} />
-                  <h3 className="text-sm font-semibold text-text-primary">Deploy Zero-Commission Direct</h3>
+                  <h3 className="text-typ-body-sm font-semibold text-text-primary">Deploy Zero-Commission Direct</h3>
                 </div>
                 <button onClick={() => setShowDeployGuide(false)} className="text-text-muted hover:text-text-primary">
                   <X size={18} />
                 </button>
               </div>
 
-              <p className="text-xs text-text-secondary leading-relaxed">
+              <p className="text-typ-label text-text-secondary leading-relaxed">
                 To maximize returns and save up to <strong>1.5% annually</strong> on distributor commissions, always invest in <strong>Direct Growth</strong> plans:
               </p>
 
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2 text-typ-label">
                 <div className="p-2.5 rounded-xl bg-surface-layer2/50 border border-white/[0.06] space-y-1">
                   <div className="font-semibold text-text-primary flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
@@ -1243,7 +1243,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div className="pt-2">
                 <button
                   onClick={() => setShowDeployGuide(false)}
-                  className="w-full py-2.5 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 transition-all shadow-md shadow-primary-accent/20"
+                  className="w-full py-2.5 rounded-xl bg-primary-accent text-white font-semibold text-typ-label hover:bg-primary-accent/90 transition-all shadow-md shadow-primary-accent/20"
                 >
                   Understood
                 </button>
@@ -1257,7 +1257,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="w-full max-w-sm bg-surface-layer1 border border-white/[0.1] rounded-2xl p-4 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="flex items-center justify-between border-b border-white/[0.07] pb-2.5">
-                <h3 className="text-sm font-semibold text-text-primary">Customize Target Benchmark</h3>
+                <h3 className="text-typ-body-sm font-semibold text-text-primary">Customize Target Benchmark</h3>
                 <button onClick={() => setShowCustomizer(false)} className="text-text-muted hover:text-text-primary">
                   <X size={18} />
                 </button>
@@ -1275,7 +1275,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                         setTempProfile(k);
                         setTempTargets({ ...RISK_PROFILES[k].target });
                       }}
-                      className={`p-2.5 rounded-xl text-left border text-xs transition-all ${
+                      className={`p-2.5 rounded-xl text-left border text-typ-label transition-all ${
                         tempProfile === k 
                           ? 'border-primary-accent/60 bg-primary-accent/15 text-primary-accent font-semibold shadow-sm' 
                           : 'border-white/[0.06] bg-surface-layer2/60 hover:border-white/[0.12] text-text-secondary'
@@ -1299,7 +1299,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
                 {CORE_CATEGORIES.map(cat => (
                   <div key={cat} className="space-y-1">
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-typ-label">
                       <span className="text-text-secondary">{cat}</span>
                       <span className="font-bold text-text-primary tabular-nums">{tempTargets[cat] || 0}%</span>
                     </div>
@@ -1347,7 +1347,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     setCustomizerFeedback(null);
                   }}
                   placeholder="AIzaSy..."
-                  className="w-full bg-surface-layer2/70 border border-white/[0.08] focus:border-primary-accent/70 rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none font-mono"
+                  className="w-full bg-surface-layer2/70 border border-white/[0.08] focus:border-primary-accent/70 rounded-xl px-3 py-2 text-typ-label text-text-primary focus:outline-none font-mono"
                 />
                 <p className="text-typ-micro text-text-muted">
                   Gemini Flash is 100% free forever (1,500 requests/day). Stored securely in your sheet.
@@ -1356,7 +1356,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
               {/* Inline Feedback Message */}
               {customizerFeedback && (
-                <div className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
+                <div className={`p-2 rounded-lg text-typ-label font-medium flex items-center gap-1.5 ${
                   customizerFeedback.isError 
                     ? 'bg-liability-rose/15 border border-liability-rose/30 text-liability-rose' 
                     : 'bg-wealth-emerald/15 border border-wealth-emerald/30 text-wealth-emerald'
@@ -1374,7 +1374,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                     setShowCustomizer(false);
                     setCustomizerFeedback(null);
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.06] text-text-secondary font-semibold text-xs hover:text-text-primary transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.06] text-text-secondary font-semibold text-typ-label hover:text-text-primary transition-all"
                 >
                   Cancel
                 </button>
@@ -1382,7 +1382,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                   type="button"
                   onClick={handleSaveCustomizer}
                   disabled={isSavingSettings}
-                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md shadow-primary-accent/20"
+                  className="flex-1 py-2 rounded-xl bg-primary-accent text-white font-semibold text-typ-label hover:bg-primary-accent/90 disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md shadow-primary-accent/20"
                 >
                   {isSavingSettings ? (
                     <>
@@ -1404,14 +1404,14 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             <div className="w-full max-w-sm bg-surface-layer1 border border-white/[0.1] rounded-2xl p-5 space-y-4 shadow-2xl">
               <div className="flex items-center gap-2 text-wealth-emerald">
                 <CheckCircle2 size={20} />
-                <h3 className="text-sm font-semibold text-text-primary">Execution Blueprint Ready</h3>
+                <h3 className="text-typ-body-sm font-semibold text-text-primary">Execution Blueprint Ready</h3>
               </div>
 
-              <p className="text-xs text-text-secondary leading-relaxed">
+              <p className="text-typ-label text-text-secondary leading-relaxed">
                 To execute this rebalance with ₹{Number(inflowAmount).toLocaleString('en-IN')}, deploy your fresh savings into the following instruments:
               </p>
 
-              <div className="space-y-1.5 bg-surface-layer2/40 p-3 rounded-xl border border-white/[0.06] text-xs">
+              <div className="space-y-1.5 bg-surface-layer2/40 p-3 rounded-xl border border-white/[0.06] text-typ-label">
                 {simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => (
                   <div key={b.category} className="flex justify-between py-1 border-b border-white/[0.05] last:border-0">
                     <span className="text-text-secondary font-medium">{b.category}</span>
@@ -1427,7 +1427,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setShowApplyModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 transition-all shadow-md shadow-primary-accent/20"
+                  className="flex-1 py-2.5 rounded-xl bg-primary-accent text-white font-semibold text-typ-label hover:bg-primary-accent/90 transition-all shadow-md shadow-primary-accent/20"
                 >
                   Got It
                 </button>
