@@ -13,8 +13,8 @@ export default function PrivacyCurtain({ onResume }) {
         </div>
         <div className="absolute -inset-1 rounded-3xl bg-primary-accent/20 blur-xl -z-10 animate-pulse" />
       </div>
-      <h3 className="text-lg font-bold tracking-tight text-center">Net Worth Vault</h3>
-      <p className="text-xs text-text-muted mt-1.5 text-center max-w-xs">
+      <h3 className="text-typ-subtitle font-bold tracking-tight text-center">Net Worth Vault</h3>
+      <p className="text-typ-label text-text-muted mt-1.5 text-center max-w-xs">
         Financial Intelligence Shielded • Tap to Resume
       </p>
     </div>

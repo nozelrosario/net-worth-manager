@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Typography System & Density Control Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background-root": "var(--bg-root)",
+            "surface-layer1": "var(--surface-layer1)",
+            "surface-layer2": "var(--surface-layer2)",
+            "surface-layer3": "var(--surface-layer3)",
+            "border-subtle": "var(--border-subtle)",
+            "border-prominent": "var(--border-prominent)",
+            "primary-accent": "var(--primary-accent)",
+            "wealth-emerald": "var(--wealth-emerald)",
+            "bullion-amber": "var(--bullion-amber)",
+            "liability-rose": "var(--liability-rose)",
+            "text-primary": "var(--text-primary)",
+            "text-secondary": "var(--text-secondary)",
+            "text-muted": "var(--text-muted)",
+          },
+          fontFamily: {
+            sans: ["Inter", "-apple-system", "sans-serif"]
+          }
+        }
+      }
+    }
+</script>
+<style>
+    :root {
+      --bg-root: #F8FAFC;
+      --surface-layer1: #FFFFFF;
+      --surface-layer2: #F1F5F9;
+      --surface-layer3: #E2E8F0;
+      --border-subtle: #E2E8F0;
+      --border-prominent: #CBD5E1;
+      --primary-accent: #4F46E5;
+      --wealth-emerald: #059669;
+      --bullion-amber: #D97706;
+      --liability-rose: #E11D48;
+      --text-primary: #0F172A;
+      --text-secondary: #334155;
+      --text-muted: #64748B;
+
+      /* Standard Mode (Default - spacious & comfortable) */
+      --t-micro: 0.625rem;
+      --t-caption: 0.6875rem;
+      --t-footnote: 0.75rem;
+      --t-label: 0.8125rem;
+      --t-body-sm: 0.875rem;
+      --t-body: 1rem;
+      --t-subtitle: 1.0625rem;
+      --t-title: 1.25rem;
+      --t-heading: 1.625rem;
+      --t-display: 2.25rem;
+      --lh-tight: 1.3;
+      --lh-normal: 1.5;
+      --lh-relaxed: 1.7;
+    }
+
+    .dark {
+      --bg-root: #0B0F17;
+      --surface-layer1: #151C28;
+      --surface-layer2: #1E293B;
+      --surface-layer3: #334155;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-prominent: rgba(255, 255, 255, 0.10);
+      --primary-accent: #6366F1;
+      --wealth-emerald: #10B981;
+      --bullion-amber: #F59E0B;
+      --liability-rose: #F43F5E;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+    }
+
+    /* Compact Mode (former Standard - balanced density) */
+    .text-compact {
+      --t-micro: 0.5625rem;
+      --t-caption: 0.625rem;
+      --t-footnote: 0.6875rem;
+      --t-label: 0.75rem;
+      --t-body-sm: 0.8125rem;
+      --t-body: 0.875rem;
+      --t-subtitle: 0.9375rem;
+      --t-title: 1.125rem;
+      --t-heading: 1.375rem;
+      --t-display: 1.875rem;
+      --lh-tight: 1.25;
+      --lh-normal: 1.4;
+      --lh-relaxed: 1.6;
+    }
+
+    /* Comfortable Mode (new Extra-Large tier - maximum legibility) */
+    .text-comfortable {
+      --t-micro: 0.6875rem;
+      --t-caption: 0.75rem;
+      --t-footnote: 0.8125rem;
+      --t-label: 0.875rem;
+      --t-body-sm: 0.9375rem;
+      --t-body: 1.125rem;
+      --t-subtitle: 1.1875rem;
+      --t-title: 1.4375rem;
+      --t-heading: 1.875rem;
+      --t-display: 2.625rem;
+      --lh-tight: 1.35;
+      --lh-normal: 1.55;
+      --lh-relaxed: 1.75;
+    }
+
+    @media (min-width: 1024px) {
+      :root {
+        --t-body: 1.0625rem;
+        --t-title: 1.375rem;
+        --t-heading: 1.75rem;
+        --t-display: 2.5rem;
+      }
+      .text-compact {
+        --t-body: 0.9375rem;
+        --t-title: 1.25rem;
+        --t-heading: 1.5rem;
+        --t-display: 2.25rem;
+      }
+      .text-comfortable {
+        --t-body: 1.1875rem;
+        --t-title: 1.5rem;
+        --t-heading: 2rem;
+        --t-display: 2.875rem;
+      }
+    }
+
+    .font-typ-micro    { font-size: var(--t-micro); line-height: var(--lh-tight); }
+    .font-typ-caption  { font-size: var(--t-caption); line-height: var(--lh-tight); }
+    .font-typ-footnote { font-size: var(--t-footnote); line-height: var(--lh-normal); }
+    .font-typ-label    { font-size: var(--t-label); line-height: var(--lh-normal); }
+    .font-typ-body-sm  { font-size: var(--t-body-sm); line-height: var(--lh-normal); }
+    .font-typ-body     { font-size: var(--t-body); line-height: var(--lh-normal); }
+    .font-typ-subtitle { font-size: var(--t-subtitle); line-height: var(--lh-tight); }
+    .font-typ-title    { font-size: var(--t-title); line-height: var(--lh-tight); }
+    .font-typ-heading  { font-size: var(--t-heading); line-height: var(--lh-tight); }
+    .font-typ-display  { font-size: var(--t-display); line-height: var(--lh-tight); }
+
+    .num-tabular {
+      font-feature-settings: "tnum" 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    body {
+      background-color: var(--bg-root);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+</style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen">
+
+  <!-- Interactive Control Bar -->
+  <header class="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-surface-layer1 border border-border-subtle shadow-xl">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary-accent">format_size</span>
+          <h1 class="font-typ-title font-bold text-text-primary">Typography Density Prototype</h1>
+        </div>
+        <p class="font-typ-caption text-text-muted mt-0.5">Live 3-Level Density & Theme Switcher (Issue #36)</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- 3-Level Density Switcher -->
+        <div class="flex bg-surface-layer2 p-1 rounded-xl border border-border-subtle text-text-secondary">
+          <button id="btn-compact" onclick="setMode('compact')" class="px-3 py-1.5 rounded-lg font-typ-caption font-semibold transition-all">
+            Compact
+          </button>
+          <button id="btn-standard" onclick="setMode('standard')" class="px-3 py-1.5 rounded-lg font-typ-caption font-semibold bg-primary-accent text-white shadow-sm transition-all">
+            Standard
+          </button>
+          <button id="btn-comfortable" onclick="setMode('comfortable')" class="px-3 py-1.5 rounded-lg font-typ-caption font-semibold transition-all">
+            Comfortable
+          </button>
+        </div>
+
+        <!-- Dark/Light Mode Toggle -->
+        <button onclick="toggleTheme()" class="p-2 rounded-xl bg-surface-layer2 border border-border-subtle text-text-secondary hover:text-text-primary transition-colors" title="Toggle Dark/Light Mode">
+          <span id="theme-icon" class="material-symbols-outlined text-[18px]">dark_mode</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Mode Specs Banner -->
+    <div class="mt-4 pt-3 border-t border-border-subtle grid grid-cols-2 sm:grid-cols-4 gap-2 font-typ-caption">
+      <div class="bg-surface-layer2/60 p-2 rounded-lg">
+        <span class="text-text-muted block">Active Density:</span>
+        <span id="stat-mode" class="font-bold text-primary-accent uppercase">Standard</span>
+      </div>
+      <div class="bg-surface-layer2/60 p-2 rounded-lg">
+        <span class="text-text-muted block">Body Scale:</span>
+        <span id="stat-body" class="font-bold text-wealth-emerald">16px (1.0rem)</span>
+      </div>
+      <div class="bg-surface-layer2/60 p-2 rounded-lg">
+        <span class="text-text-muted block">Hero Display:</span>
+        <span id="stat-hero" class="font-bold text-text-primary">36px (2.25rem)</span>
+      </div>
+      <div class="bg-surface-layer2/60 p-2 rounded-lg">
+        <span class="text-text-muted block">Viewport Target:</span>
+        <span class="font-bold text-bullion-amber">Responsive (Mobile + Web)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Comparison Frame Grid -->
+  <main class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Card 1: App Header & User Modal Setting Showcase -->
+    <section class="bg-surface-layer1 border border-border-subtle rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary-accent">tune</span>
+            <h2 class="font-typ-subtitle font-bold text-text-primary">User Session Setting</h2>
+          </div>
+          <span class="font-typ-caption bg-primary-accent/10 text-primary-accent px-2 py-0.5 rounded-full font-semibold">Native Modal</span>
+        </div>
+
+        <!-- Simulated User Modal Setting Card -->
+        <div class="bg-surface-layer2/60 border border-border-subtle rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-text-secondary text-[20px]">format_size</span>
+              <div>
+                <p class="font-typ-label font-semibold text-text-primary">Typography Scale</p>
+                <p class="font-typ-micro text-text-muted">Saved to device localStorage (per-device scope)</p>
+              </div>
+            </div>
+            <span id="pill-label" class="font-typ-micro px-2 py-0.5 rounded bg-surface-layer3 text-text-secondary font-medium">Standard</span>
+          </div>
+
+          <!-- The Actual 3-Way Segmented Control -->
+          <div class="grid grid-cols-3 gap-1 bg-surface-layer1 p-1 rounded-lg border border-border-subtle">
+            <button onclick="setMode('compact')" class="mode-opt py-1.5 px-2 rounded-md font-typ-footnote font-semibold transition-all flex flex-col items-center gap-0.5 text-text-secondary hover:text-text-primary">
+              <span>Compact</span>
+              <span class="font-typ-micro opacity-75 font-normal">Balanced</span>
+            </button>
+            <button onclick="setMode('standard')" class="mode-opt py-1.5 px-2 rounded-md font-typ-footnote font-semibold transition-all flex flex-col items-center gap-0.5 bg-primary-accent text-white shadow-xs">
+              <span>Standard</span>
+              <span class="font-typ-micro opacity-75 font-normal">Spacious</span>
+            </button>
+            <button onclick="setMode('comfortable')" class="mode-opt py-1.5 px-2 rounded-md font-typ-footnote font-semibold transition-all flex flex-col items-center gap-0.5 text-text-secondary hover:text-text-primary">
+              <span>Comfortable</span>
+              <span class="font-typ-micro opacity-75 font-normal">Large Text</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Description of Mode -->
+        <div class="mt-4 p-3 bg-surface-layer2/40 rounded-xl border border-border-subtle">
+          <p id="mode-desc" class="font-typ-label text-text-secondary leading-relaxed">
+            <b>Standard Mode:</b> Default executive balance between readability and screen density. Suitable for daily net worth oversight and general ledger maintenance.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-3 border-t border-border-subtle flex items-center justify-between font-typ-micro text-text-muted">
+        <span>App Version 2.0.1 • Encrypted Session</span>
+        <span>Local Key: <code class="font-mono text-primary-accent">nwm_text_mode</code></span>
+      </div>
+    </section>
+
+    <!-- Card 2: Consolidated Net Worth Dashboard Preview -->
+    <section class="bg-surface-layer1 border border-border-subtle rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-wealth-emerald">dashboard</span>
+            <h2 class="font-typ-subtitle font-bold text-text-primary">Dashboard Live Preview</h2>
+          </div>
+          <span class="font-typ-caption bg-wealth-emerald/10 text-wealth-emerald px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span> Live Rates
+          </span>
+        </div>
+
+        <!-- Net Worth Hero Banner -->
+        <div class="bg-surface-layer2 border border-border-subtle rounded-xl p-4 relative overflow-hidden">
+          <p class="font-typ-caption font-bold text-text-muted tracking-wider uppercase mb-1">Consolidated Family Net Worth</p>
+          <h3 class="font-typ-display font-bold num-tabular tracking-tight text-text-primary">₹3,60,825</h3>
+
+          <div class="mt-2 flex items-center gap-2 font-typ-label">
+            <span class="text-text-muted">Market Portfolio Gain:</span>
+            <span class="font-semibold text-wealth-emerald flex items-center gap-0.5 num-tabular">
+              <span class="material-symbols-outlined text-[14px]">trending_up</span> +₹50,825 (+16.4%)
+            </span>
+          </div>
+
+          <!-- Multi-Asset Progress Bar -->
+          <div class="h-2 w-full bg-surface-layer3 rounded-full overflow-hidden flex mt-3 mb-2">
+            <div class="bg-primary-accent w-[39%]" title="Equity 39%"></div>
+            <div class="bg-indigo-400 w-[17%]" title="MF 17%"></div>
+            <div class="bg-bullion-amber w-[44%]" title="Gold 44%"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-x-3 gap-y-1 font-typ-label">
+            <span class="text-text-secondary flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-accent"></span>Equity: ₹1.42L</span>
+            <span class="text-text-secondary flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-bullion-amber"></span>Gold: ₹1.57L</span>
+            <span class="text-text-secondary flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>MF: ₹61.8K</span>
+          </div>
+        </div>
+
+        <!-- Mini Asset List Row -->
+        <div class="mt-4 space-y-2">
+          <div class="flex items-center justify-between p-2.5 bg-surface-layer2 rounded-lg border border-border-subtle">
+            <div class="min-w-0">
+              <p class="font-typ-body-sm font-semibold text-text-primary truncate">Reliance Industries Ltd</p>
+              <p class="font-typ-micro text-text-muted">Equity • 50 Qty @ ₹2,840.50</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="font-typ-body-sm font-bold text-text-primary num-tabular">₹1,42,025</p>
+              <p class="font-typ-micro font-semibold text-wealth-emerald num-tabular">+18.35%</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-2.5 bg-surface-layer2 rounded-lg border border-border-subtle">
+            <div class="min-w-0">
+              <p class="font-typ-body-sm font-semibold text-text-primary truncate">24K Gold Sovereign Coins</p>
+              <p class="font-typ-micro text-text-muted">Bullion • 20g @ ₹7,850/g</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="font-typ-body-sm font-bold text-text-primary num-tabular">₹1,57,000</p>
+              <p class="font-typ-micro font-semibold text-wealth-emerald num-tabular">+12.14%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between font-typ-micro text-text-muted">
+        <span>Dynamic Rem Units • Pure CSS Cascades</span>
+        <span class="text-wealth-emerald font-semibold">Zero Rebuild Required</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function setMode(mode) {
+      const root = document.documentElement;
+      root.classList.remove('text-compact', 'text-standard', 'text-comfortable');
+      if (mode !== 'standard') {
+        root.classList.add('text-' + mode);
+      }
+
+      // Update control buttons
+      ['compact', 'standard', 'comfortable'].forEach(m => {
+        const btn = document.getElementById('btn-' + m);
+        if (m === mode) {
+          btn.className = 'px-3 py-1.5 rounded-lg font-typ-caption font-semibold bg-primary-accent text-white shadow-sm transition-all';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg font-typ-caption font-semibold transition-all text-text-secondary hover:text-text-primary';
+        }
+      });
+
+      // Update stats and descriptions
+      const statMode = document.getElementById('stat-mode');
+      const statBody = document.getElementById('stat-body');
+      const statHero = document.getElementById('stat-hero');
+      const pillLabel = document.getElementById('pill-label');
+      const modeDesc = document.getElementById('mode-desc');
+
+      statMode.textContent = mode.toUpperCase();
+      pillLabel.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+
+      if (mode === 'compact') {
+        statBody.textContent = '14px (0.875rem)';
+        statHero.textContent = '30px (1.875rem)';
+        modeDesc.innerHTML = '<b>Compact Mode:</b> Balanced typography (formerly Standard) designed for high information density while maintaining clean legibility.';
+      } else if (mode === 'comfortable') {
+        statBody.textContent = '18px (1.125rem)';
+        statHero.textContent = '42px (2.625rem)';
+        modeDesc.innerHTML = '<b>Comfortable Mode:</b> Extra-large typography tier with generous line heights and increased spacing. Tailored for effortless reading and maximum accessibility.';
+      } else {
+        statBody.textContent = '16px (1.0rem)';
+        statHero.textContent = '36px (2.25rem)';
+        modeDesc.innerHTML = '<b>Standard Mode:</b> Spacious, highly readable typography (formerly Comfortable) providing optimal daily clarity across mobile and desktop.';
+      }
+    }
+
+    function toggleTheme() {
+      const root = document.documentElement;
+      const isDark = root.classList.toggle('dark');
+      const icon = document.getElementById('theme-icon');
+      icon.textContent = isDark ? 'dark_mode' : 'light_mode';
+    }
+  </script>
+</body>
+</html>

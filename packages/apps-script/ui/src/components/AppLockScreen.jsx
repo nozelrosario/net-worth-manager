@@ -128,10 +128,10 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
         <div className="w-16 h-16 rounded-2xl bg-primary-accent/10 border border-primary-accent/30 flex items-center justify-center text-primary-accent shadow-lg mb-4">
           <Shield size={32} />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-center">
+        <h2 className="text-typ-title font-bold tracking-tight text-center">
           {title || 'Net Worth Vault'}
         </h2>
-        <p className="text-sm text-text-secondary mt-1 text-center">
+        <p className="text-typ-body-sm text-text-secondary mt-1 text-center">
           {subtitle || 'Enter your 4-digit security PIN'}
         </p>
 
@@ -155,12 +155,12 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
         {/* Error or Lockout Message Banner */}
         <div className="h-10 mt-3 flex items-center justify-center">
           {lockoutRemaining > 0 ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-xs font-medium animate-pulse">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-typ-label font-medium animate-pulse">
               <AlertCircle size={14} />
               <span>Locked out for {lockoutRemaining}s</span>
             </div>
           ) : errorMsg ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-xs font-medium">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-liability-rose/15 border border-liability-rose/30 text-liability-rose text-typ-label font-medium">
               <AlertCircle size={14} />
               <span>{errorMsg}</span>
             </div>
@@ -177,7 +177,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
               type="button"
               disabled={lockoutRemaining > 0 || isVerifying}
               onClick={() => handleDigit(String(num))}
-              className="h-16 rounded-2xl bg-surface-layer1 border border-border-subtle flex items-center justify-center text-2xl font-semibold text-text-primary shadow-xs hover:border-border-prominent active:scale-95 active:bg-primary-accent/15 transition-all duration-100 disabled:opacity-40 disabled:pointer-events-none"
+              className="h-16 rounded-2xl bg-surface-layer1 border border-border-subtle flex items-center justify-center text-typ-heading font-semibold text-text-primary shadow-xs hover:border-border-prominent active:scale-95 active:bg-primary-accent/15 transition-all duration-100 disabled:opacity-40 disabled:pointer-events-none"
             >
               {num}
             </button>
@@ -188,7 +188,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
             type="button"
             disabled={lockoutRemaining > 0 || isVerifying || pin.length === 0}
             onClick={handleClear}
-            className="h-16 rounded-2xl bg-surface-layer1 border border-border-subtle flex items-center justify-center text-sm font-semibold text-text-muted hover:text-text-primary hover:border-border-prominent active:scale-95 transition-all duration-100 disabled:opacity-30 disabled:pointer-events-none"
+            className="h-16 rounded-2xl bg-surface-layer1 border border-border-subtle flex items-center justify-center text-typ-body-sm font-semibold text-text-muted hover:text-text-primary hover:border-border-prominent active:scale-95 transition-all duration-100 disabled:opacity-30 disabled:pointer-events-none"
           >
             Clear
           </button>
@@ -197,7 +197,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
             type="button"
             disabled={lockoutRemaining > 0 || isVerifying}
             onClick={() => handleDigit('0')}
-            className="h-16 rounded-2xl bg-surface-layer1 border border-border-subtle flex items-center justify-center text-2xl font-semibold text-text-primary shadow-xs hover:border-border-prominent active:scale-95 active:bg-primary-accent/15 transition-all duration-100 disabled:opacity-40 disabled:pointer-events-none"
+            className="h-16 rounded-2xl bg-surface-layer1 border border-border-subtle flex items-center justify-center text-typ-heading font-semibold text-text-primary shadow-xs hover:border-border-prominent active:scale-95 active:bg-primary-accent/15 transition-all duration-100 disabled:opacity-40 disabled:pointer-events-none"
           >
             0
           </button>
@@ -219,7 +219,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
         <button
           type="button"
           onClick={handleForgotPinClick}
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary-accent font-medium py-2 px-3 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 text-typ-label text-text-muted hover:text-primary-accent font-medium py-2 px-3 rounded-lg transition-colors"
         >
           <KeyRound size={14} />
           <span>Forgot PIN? Sign In with OTP</span>
@@ -240,8 +240,8 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
               <KeyRound size={24} />
             </div>
             <div>
-              <h3 className="font-bold text-base text-text-primary">Reset PIN via OTP?</h3>
-              <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+              <h3 className="font-bold text-typ-body text-text-primary">Reset PIN via OTP?</h3>
+              <p className="text-typ-label text-text-muted mt-1.5 leading-relaxed">
                 Your stored PIN will be cleared and you will be routed to Email OTP verification.
               </p>
             </div>
@@ -249,7 +249,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
               <button
                 type="button"
                 onClick={() => setShowForgotConfirm(false)}
-                className="flex-1 py-2.5 px-3 rounded-xl border border-border-subtle text-xs font-medium text-text-secondary hover:bg-surface-layer2 transition-colors"
+                className="flex-1 py-2.5 px-3 rounded-xl border border-border-subtle text-typ-label font-medium text-text-secondary hover:bg-surface-layer2 transition-colors"
               >
                 Cancel
               </button>
@@ -260,7 +260,7 @@ export default function AppLockScreen({ onUnlockSuccess, onForgotPin, title, sub
                   clearPinConfig();
                   if (onForgotPin) onForgotPin();
                 }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:bg-primary-accent/90 transition-colors shadow-xs"
+                className="flex-1 py-2.5 px-3 rounded-xl bg-primary-accent text-white text-typ-label font-semibold hover:bg-primary-accent/90 transition-colors shadow-xs"
               >
                 Continue
               </button>

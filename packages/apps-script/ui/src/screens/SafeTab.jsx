@@ -284,20 +284,20 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
     <div className="space-y-4 pb-20">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-text-primary">Family Safe</h2>
+          <h2 className="text-typ-title font-bold tracking-tight text-text-primary">Family Safe</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+            <span className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
               Encrypted Cloud Vault
             </span>
-            <span className="text-text-muted text-[10px]">•</span>
-            <span className="text-[11px] text-text-muted">Synced to Google Drive</span>
+            <span className="text-text-muted text-typ-caption">•</span>
+            <span className="text-typ-footnote text-text-muted">Synced to Google Drive</span>
           </div>
         </div>
         <button 
           type="button"
           onClick={resetForm} 
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
         >
           <Plus size={14} />
           <span>Add Document</span>
@@ -306,17 +306,17 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
 
       <div className="bg-gradient-to-br from-surface-layer1 to-surface-layer2 border border-border-subtle rounded-xl p-5 relative overflow-hidden shadow-lg">
         <div className="absolute -right-4 -top-4 p-4 opacity-[0.03]"><Lock size={120} /></div>
-        <p className="text-sm font-medium text-text-primary mb-2 flex items-center gap-2"><Lock size={16} className="text-wealth-emerald" /> Secure Document Vault</p>
-        <p className="text-xs text-text-secondary max-w-[85%] leading-relaxed">
+        <p className="text-typ-body-sm font-medium text-text-primary mb-2 flex items-center gap-2"><Lock size={16} className="text-wealth-emerald" /> Secure Document Vault</p>
+        <p className="text-typ-label text-text-secondary max-w-[85%] leading-relaxed">
           Store critical family documents. Files are securely uploaded directly to a "Family Safe" folder in your connected Google Drive.
         </p>
       </div>
 
       {/* Document List */}
       <div className="space-y-3 mt-6">
-        <h3 className="text-sm font-semibold text-text-primary">Saved Documents</h3>
+        <h3 className="text-typ-body-sm font-semibold text-text-primary">Saved Documents</h3>
         {safeDocs.length === 0 ? (
-           <p className="text-text-secondary text-sm text-center py-8">No documents found. Add your first entry.</p>
+           <p className="text-text-secondary text-typ-body-sm text-center py-8">No documents found. Add your first entry.</p>
         ) : (
           safeDocs.map((doc, i) => {
             const files = getFilesList(doc['Files JSON']);
@@ -324,11 +324,11 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
               <div key={doc['Document ID'] || i} className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm hover:border-border-prominent transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-sm font-semibold text-text-primary">{doc.Name}</h4>
-                    <p className="text-xs text-text-secondary mt-0.5">{doc.Category} • {doc.Owner || 'Self'}</p>
+                    <h4 className="text-typ-body-sm font-semibold text-text-primary">{doc.Name}</h4>
+                    <p className="text-typ-label text-text-secondary mt-0.5">{doc.Category} • {doc.Owner || 'Self'}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <span className="text-[10px] text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
+                    <span className="text-typ-caption text-text-muted bg-surface-layer2 px-2 py-1 rounded">{new Date(doc['Date Added']).toLocaleDateString()}</span>
                     <div className="flex items-center gap-1">
                       <button 
                         onClick={() => openEditModal(doc)} 
@@ -348,14 +348,14 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   </div>
                 </div>
                 {doc.Description && (
-                  <p className="text-xs text-text-muted mt-2 italic">"{doc.Description}"</p>
+                  <p className="text-typ-label text-text-muted mt-2 italic">"{doc.Description}"</p>
                 )}
                 <div className="mt-4 space-y-2">
                   {files.map((f, idx) => (
                     <div key={idx} onClick={() => setPreviewDoc(f)} className="flex items-center justify-between p-2 rounded-lg bg-surface-layer2/50 border border-border-subtle cursor-pointer hover:border-primary-accent/50 hover:bg-surface-layer2 transition-colors">
                       <div className="flex items-center space-x-2 overflow-hidden">
                         <FileText size={14} className="text-primary-accent flex-shrink-0" />
-                        <span className="text-xs text-text-primary truncate">{f.name || 'Untitled Document'}</span>
+                        <span className="text-typ-label text-text-primary truncate">{f.name || 'Untitled Document'}</span>
                       </div>
                       <ExternalLink size={14} className="text-text-muted flex-shrink-0 ml-2" />
                     </div>
@@ -374,10 +374,10 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
              {/* Pinned Modal Header */}
              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
                <div>
-                 <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
+                 <h3 className="text-typ-body sm:text-typ-subtitle font-bold text-text-primary leading-tight">
                    {editingDocId ? 'Edit Safe Document' : 'Add to Family Safe'}
                  </h3>
-                 <p className="text-[11px] text-text-muted mt-0.5">
+                 <p className="text-typ-footnote text-text-muted mt-0.5">
                    Secure document storage in connected Google Drive
                  </p>
                </div>
@@ -395,20 +395,20 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                {/* Scrollable Form Body */}
                <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4">
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1">Entry Title</label>
-                  <input required value={newEntry.Name} onChange={e => setNewEntry({...newEntry, Name: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Life Insurance Policy 2026" />
+                  <label className="block text-typ-label text-text-secondary mb-1">Entry Title</label>
+                  <input required value={newEntry.Name} onChange={e => setNewEntry({...newEntry, Name: e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent" placeholder="e.g. Life Insurance Policy 2026" />
                 </div>
                 
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs text-text-secondary mb-1">Category</label>
-                    <select value={newEntry.Category} onChange={e => setNewEntry({...newEntry, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent">
+                    <label className="block text-typ-label text-text-secondary mb-1">Category</label>
+                    <select value={newEntry.Category} onChange={e => setNewEntry({...newEntry, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent">
                       {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs text-text-secondary mb-1">Owner</label>
-                    <select value={newEntry.Owner} onChange={e => setNewEntry({...newEntry, Owner: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent">
+                    <label className="block text-typ-label text-text-secondary mb-1">Owner</label>
+                    <select value={newEntry.Owner} onChange={e => setNewEntry({...newEntry, Owner: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent">
                       <option value="">Self</option>
                       {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
                     </select>
@@ -416,15 +416,15 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                 </div>
 
                 <div>
-                  <label className="block text-xs text-text-secondary mb-1">Description (Optional)</label>
-                  <textarea value={newEntry.Description} onChange={e => setNewEntry({...newEntry, Description: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent h-20 resize-none" placeholder="Brief details about these documents..." />
+                  <label className="block text-typ-label text-text-secondary mb-1">Description (Optional)</label>
+                  <textarea value={newEntry.Description} onChange={e => setNewEntry({...newEntry, Description: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent h-20 resize-none" placeholder="Brief details about these documents..." />
                 </div>
 
                 <div className="pt-2 border-t border-border-subtle">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs text-text-secondary font-medium">Attached Documents</label>
+                    <label className="text-typ-label text-text-secondary font-medium">Attached Documents</label>
                     {attachedFiles.length > 0 && (
-                      <span className="text-[10px] text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
+                      <span className="text-typ-caption text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full font-semibold border border-primary-accent/20">
                         {attachedFiles.length} {attachedFiles.length === 1 ? 'file' : 'files'}
                       </span>
                     )}
@@ -438,12 +438,12 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                           <div className="flex items-center space-x-2 overflow-hidden flex-1 mr-2">
                             {f.isLink ? <LinkIcon size={14} className="text-blue-400 flex-shrink-0" /> : <File size={14} className="text-wealth-emerald flex-shrink-0" />}
                             <div className="truncate flex-1">
-                              <span className="text-xs text-text-primary truncate block font-medium">{f.name}</span>
+                              <span className="text-typ-label text-text-primary truncate block font-medium">{f.name}</span>
                               <div className="flex items-center gap-2 mt-0.5">
                                 {f.isNewUpload ? (
-                                  <span className="text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
+                                  <span className="text-typ-caption text-primary-accent bg-primary-accent/10 px-1.5 py-0.2 rounded font-medium">Ready to upload</span>
                                 ) : (
-                                  <span className="text-[10px] text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
+                                  <span className="text-typ-caption text-wealth-emerald bg-wealth-emerald/10 px-1.5 py-0.2 rounded font-medium flex items-center gap-1">
                                     <Lock size={9} /> Saved
                                   </span>
                                 )}
@@ -453,7 +453,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     onClick={e => e.stopPropagation()} 
-                                    className="text-[10px] text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
+                                    className="text-typ-caption text-text-muted hover:text-primary-accent flex items-center gap-1 underline underline-offset-2"
                                   >
                                     View <ExternalLink size={10} />
                                   </a>
@@ -478,7 +478,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   <div className="flex flex-col gap-2">
                     <div className="relative w-full">
                       <input type="file" multiple onChange={handleFileSelect} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                      <div className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-border-prominent rounded-lg text-sm text-text-primary hover:border-primary-accent transition-colors bg-surface-layer2/30 cursor-pointer">
+                      <div className="w-full flex items-center justify-center gap-2 py-2 border-2 border-dashed border-border-prominent rounded-lg text-typ-body-sm text-text-primary hover:border-primary-accent transition-colors bg-surface-layer2/30 cursor-pointer">
                         <Upload size={16} className="text-primary-accent" />
                         <span>Upload Files to Drive</span>
                       </div>
@@ -490,9 +490,9 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
                         type="text" 
                         placeholder="Paste Google Drive URL..." 
-                        className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-xs focus:outline-none focus:border-primary-accent" 
+                        className="flex-1 bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-label focus:outline-none focus:border-primary-accent" 
                       />
-                      <button type="button" onClick={handleAddLink} className="px-3 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-xs font-medium transition-colors">Add Link</button>
+                      <button type="button" onClick={handleAddLink} className="px-3 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-typ-label font-medium transition-colors">Add Link</button>
                     </div>
                   </div>
                 </div>
@@ -505,14 +505,14 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                     type="button" 
                     onClick={() => { setShowAddModal(false); setEditingDocId(null); }} 
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-typ-body-sm font-medium transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit" 
                     disabled={isSubmitting || (!newEntry.Name && attachedFiles.length === 0)} 
-                    className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
+                    className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-body-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
                   >
                     {isSubmitting ? (uploadProgress || 'Saving...') : (editingDocId ? 'Save Changes' : 'Save Entry')}
                   </button>
@@ -527,7 +527,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                       setEditingDocId(null);
                       handleDeleteEntry(idToDelete);
                     }}
-                    className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-typ-body-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <Trash2 size={14} />
                     <span>Delete Document Entry</span>
@@ -546,11 +546,11 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
              <div className="flex justify-between items-center p-4 border-b border-border-subtle bg-surface-layer2">
                <div className="flex items-center gap-2 overflow-hidden">
                  {previewDoc.isLink ? <LinkIcon size={18} className="text-blue-400" /> : <FileText size={18} className="text-primary-accent" />}
-                 <h3 className="text-sm font-bold text-text-primary truncate">{previewDoc.name}</h3>
+                 <h3 className="text-typ-body-sm font-bold text-text-primary truncate">{previewDoc.name}</h3>
                </div>
                <div className="flex items-center gap-3">
                  {previewDoc.url && (
-                   <a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs bg-primary-accent text-white px-3 py-1.5 rounded-lg hover:bg-primary-accent/90">
+                   <a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-typ-label bg-primary-accent text-white px-3 py-1.5 rounded-lg hover:bg-primary-accent/90">
                      <ExternalLink size={14} /> Open Native Viewer
                    </a>
                  )}
@@ -564,7 +564,7 @@ export default function SafeTab({ formatCurrency, data, onRefresh, showMessage }
                   <div className="text-center text-text-secondary flex flex-col items-center max-w-sm mx-auto">
                     <Lock size={48} className="text-primary-accent/50 mb-4" />
                     <h4 className="text-text-primary font-medium mb-2">Secure Document</h4>
-                    <p className="text-sm text-text-muted mb-6">
+                    <p className="text-typ-body-sm text-text-muted mb-6">
                       For your privacy and security, embedded previews of Drive documents are disabled to prevent third-party tracking.
                     </p>
                     <a href={previewDoc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary-accent text-white px-5 py-2.5 rounded-xl font-medium hover:bg-primary-accent/90 transition-transform active:scale-95">
