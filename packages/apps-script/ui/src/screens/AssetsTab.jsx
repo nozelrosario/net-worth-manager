@@ -385,31 +385,31 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-text-primary">Assets & Liabilities</h2>
+          <h2 className="text-typ-title font-bold tracking-tight text-text-primary">Assets & Liabilities</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+            <span className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
               Google Finance & AMFI Live
             </span>
-            <span className="text-text-muted text-[10px]">•</span>
+            <span className="text-text-muted text-typ-caption">•</span>
             <button 
               type="button"
               onClick={handleSyncRates} 
               disabled={isSyncingRates}
               title="Refresh and sync live valuations to spreadsheet"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-[11px] font-medium transition-all active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-typ-footnote font-medium transition-all active:scale-95 disabled:opacity-50"
             >
               <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
               <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
             </button>
             {onOpenRebalancer && (
               <>
-                <span className="text-text-muted text-[10px]">•</span>
+                <span className="text-text-muted text-typ-caption">•</span>
                 <button 
                   type="button"
                   onClick={onOpenRebalancer} 
                   title="Open AI Portfolio Rebalancer & Asset Allocation Advisor"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-[11px] font-medium transition-all active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-typ-footnote font-medium transition-all active:scale-95"
                 >
                   <Sparkles size={10} />
                   <span>AI Rebalance</span>
@@ -418,12 +418,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             )}
             {onOpenRetirementPlanner && (
               <>
-                <span className="text-text-muted text-[10px]">•</span>
+                <span className="text-text-muted text-typ-caption">•</span>
                 <button 
                   type="button"
                   onClick={onOpenRetirementPlanner} 
                   title="Open Retirement & Pension Hub (EPF, PPF & NPS)"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-400 rounded-full text-[11px] font-medium transition-all active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-400 rounded-full text-typ-footnote font-medium transition-all active:scale-95"
                 >
                   <Shield size={10} />
                   <span>Retirement Hub</span>
@@ -432,12 +432,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             )}
             {onOpenInsuranceHub && (
               <>
-                <span className="text-text-muted text-[10px]">•</span>
+                <span className="text-text-muted text-typ-caption">•</span>
                 <button 
                   type="button"
                   onClick={onOpenInsuranceHub} 
                   title="Open Insurance & Protection Hub (LIC, Term, Health)"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 rounded-full text-[11px] font-medium transition-all active:scale-95"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 rounded-full text-typ-footnote font-medium transition-all active:scale-95"
                 >
                   <Shield size={10} />
                   <span>Insurance Hub</span>
@@ -449,7 +449,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         <button 
           type="button"
           onClick={() => openAddModal()} 
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
         >
           <Plus size={14} />
           <span>Add Asset</span>
@@ -463,7 +463,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         onMouseMove={e => e.stopPropagation()}
       >
         {filters.map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${f === filter ? 'bg-primary-accent text-white shadow-sm font-semibold' : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap px-3 py-1.5 text-typ-label font-medium rounded-full transition-colors ${f === filter ? 'bg-primary-accent text-white shadow-sm font-semibold' : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'}`}>
             {f}
           </button>
         ))}
@@ -472,7 +472,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       {/* Asset List */}
       <div className="space-y-3">
         {filteredAssets.length === 0 && (
-           <p className="text-text-secondary text-sm text-center py-8">No assets found for this category.</p>
+           <p className="text-text-secondary text-typ-body-sm text-center py-8">No assets found for this category.</p>
         )}
         {filteredAssets.map((asset, i) => {
           let docCount = 0;
@@ -535,7 +535,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-text-primary">{asset.Name}</p>
+                    <p className="text-typ-body-sm font-semibold text-text-primary">{asset.Name}</p>
                     {isLive && (
                       <Badge variant="emerald" dot pulse size="xs">
                         Live
@@ -544,29 +544,29 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   </div>
                   
                   <div className="flex items-center flex-wrap gap-2 mt-0.5">
-                    <span className="text-xs text-text-muted">{asset.Category}</span>
+                    <span className="text-typ-label text-text-muted">{asset.Category}</span>
                     {holdingSummary && (
                       <>
-                        <span className="text-text-muted text-[10px]">•</span>
-                        <span className="text-xs text-text-secondary">{holdingSummary}</span>
+                        <span className="text-text-muted text-typ-caption">•</span>
+                        <span className="text-typ-label text-text-secondary">{holdingSummary}</span>
                       </>
                     )}
                     {perf?.holdingStr && (
                       <>
-                        <span className="text-text-muted text-[10px]">•</span>
-                        <span className="text-[11px] text-text-muted">Held: {perf.holdingStr}</span>
+                        <span className="text-text-muted text-typ-caption">•</span>
+                        <span className="text-typ-footnote text-text-muted">Held: {perf.holdingStr}</span>
                       </>
                     )}
                     {perf?.taxTag && (
                       <span 
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
+                        className={`text-typ-micro font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
                         title={perf.taxLabel}
                       >
                         {perf.taxTag}
                       </span>
                     )}
                     {docCount > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
+                      <span className="flex items-center gap-1 text-typ-caption text-primary-accent bg-primary-accent/10 px-1.5 py-0.5 rounded border border-primary-accent/20 font-medium">
                         <Paperclip size={10} />
                         {docCount} {docCount === 1 ? 'doc' : 'docs'}
                       </span>
@@ -579,44 +579,44 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                   </div>
                 </div>
-                <span className="bg-surface-layer2 text-[10px] px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
+                <span className="bg-surface-layer2 text-typ-caption px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
               </div>
 
               <div className="flex justify-between items-end border-t border-border-subtle/40 pt-2 mt-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs text-text-secondary">Current Value</p>
+                    <p className="text-typ-label text-text-secondary">Current Value</p>
                     {isLive && asset['Live Price'] && (
-                      <span className="text-[10px] text-text-muted">
+                      <span className="text-typ-caption text-text-muted">
                         (@ {formatCurrency(asset['Live Price'])}{cat === 'Gold' && !String(det['Form Factor'] || '').includes('ETF') && !String(det['Form Factor'] || '').includes('SGB') ? '/g' : ''})
                       </span>
                     )}
                   </div>
-                  <p className={`text-lg font-bold tabular-nums mt-0.5 ${asset.Category === 'Liabilities' ? 'text-liability-rose' : 'text-wealth-emerald'}`}>{formatCurrency(asset['Current Value'])}</p>
+                  <p className={`text-typ-subtitle font-bold tabular-nums mt-0.5 ${asset.Category === 'Liabilities' ? 'text-liability-rose' : 'text-wealth-emerald'}`}>{formatCurrency(asset['Current Value'])}</p>
                 </div>
                 
                 <div className="text-right">
                   {pnl !== undefined && Number(asset.Cost) > 0 ? (
                     <div>
-                      <p className="text-[10px] text-text-muted">Total Return</p>
-                      <p className={`text-xs font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                      <p className="text-typ-caption text-text-muted">Total Return</p>
+                      <p className={`text-typ-label font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
                         {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct}%)
                       </p>
                       {perf?.cagr !== undefined && perf?.cagr !== null && (
-                        <p className="text-[10px] font-medium text-primary-accent tabular-nums">
+                        <p className="text-typ-caption font-medium text-primary-accent tabular-nums">
                           {perf.cagr >= 0 ? '+' : ''}{perf.cagr}% p.a.
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="text-primary-accent/70 text-xs hover:text-primary-accent">Edit</div>
+                    <div className="text-primary-accent/70 text-typ-label hover:text-primary-accent">Edit</div>
                   )}
                 </div>
               </div>
 
               {polMetrics?.ppt > 0 && polMetrics?.isInvestment && (
                 <div className="mt-2 pt-2 border-t border-border-subtle/30">
-                  <div className="flex justify-between text-[10px] text-text-muted mb-1">
+                  <div className="flex justify-between text-typ-caption text-text-muted mb-1">
                     <span>Premium Term ({polMetrics.paidYears} / {polMetrics.ppt} Yrs)</span>
                     <span className="font-semibold text-text-secondary">{polMetrics.pptProgressPct.toFixed(0)}%</span>
                   </div>
@@ -637,10 +637,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
              {/* Pinned Modal Header */}
              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
                <div>
-                 <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
+                 <h3 className="text-typ-body sm:text-typ-subtitle font-bold text-text-primary leading-tight">
                    {editingAssetId ? 'Edit Asset' : 'Add New Asset'}
                  </h3>
-                 <p className="text-[11px] text-text-muted mt-0.5">
+                 <p className="text-typ-footnote text-text-muted mt-0.5">
                    {newAsset.Category || categoriesList[0] || 'Asset'} Details & Live Valuation
                  </p>
                </div>
@@ -656,7 +656,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
              
              {!editingAssetId && (
                <div className="px-5 pt-3 pb-2 border-b border-border-subtle/50 bg-surface-layer2/30 flex-shrink-0">
-                 <label className="block text-xs text-text-secondary mb-1">Asset Category</label>
+                 <label className="block text-typ-label text-text-secondary mb-1">Asset Category</label>
                  <select 
                    value={newAsset.Category || categoriesList[0] || ''} 
                    onChange={e => {
@@ -673,7 +673,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                        } : prev['Details JSON']
                      }));
                    }} 
-                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-xs focus:outline-none focus:border-primary-accent"
+                   className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-1.5 text-text-primary text-typ-label focus:outline-none focus:border-primary-accent"
                  >
                    {categoriesList.map(cat => (
                      <option key={cat} value={cat}>{cat}</option>
@@ -717,15 +717,15 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 <AlertTriangle size={22} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-text-primary">Delete Asset</h3>
-                <p className="text-xs text-text-muted">
+                <h3 className="text-typ-body font-bold text-text-primary">Delete Asset</h3>
+                <p className="text-typ-label text-text-muted">
                   {deleteConfirmAsset.hasDocuments ? 'Confirm document retention' : 'Permanent action'}
                 </p>
               </div>
             </div>
 
             {deleteConfirmAsset.hasDocuments ? (
-              <div className="bg-surface-layer2/60 border border-border-subtle rounded-xl p-3 text-xs leading-relaxed text-text-secondary space-y-2">
+              <div className="bg-surface-layer2/60 border border-border-subtle rounded-xl p-3 text-typ-label leading-relaxed text-text-secondary space-y-2">
                 <p>
                   <strong className="text-text-primary">"{deleteConfirmAsset.assetName}"</strong> has{' '}
                   <strong className="text-primary-accent">{deleteConfirmAsset.fileCount} supporting document(s)</strong> linked in <strong className="text-text-primary">Family Safe</strong>.
@@ -735,7 +735,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-text-secondary">
+              <p className="text-typ-body-sm text-text-secondary">
                 Are you sure you want to delete <strong className="text-text-primary">"{deleteConfirmAsset.assetName}"</strong>? This will permanently remove the asset record.
               </p>
             )}
@@ -747,7 +747,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     type="button" 
                     disabled={isSubmitting}
                     onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, true)}
-                    className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                    className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-typ-label font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                   >
                     <Trash2 size={14} />
                     <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset & Supporting Documents'}</span>
@@ -757,7 +757,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     type="button" 
                     disabled={isSubmitting}
                     onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, deleteConfirmAsset.safeDocId, false)}
-                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-white/[0.08] hover:border-white/[0.14] text-text-primary rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                    className="w-full py-2.5 px-4 bg-surface-layer2 hover:bg-surface-layer1 border border-white/[0.08] hover:border-white/[0.14] text-text-primary rounded-lg text-typ-label font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                   >
                     <Lock size={14} className="text-wealth-emerald" />
                     <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset Only (Keep in Family Safe)'}</span>
@@ -768,7 +768,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   type="button" 
                   disabled={isSubmitting}
                   onClick={() => confirmDeleteAsset(deleteConfirmAsset.assetId, null, false)}
-                  className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  className="w-full py-2.5 px-4 bg-liability-rose hover:bg-liability-rose/90 text-white rounded-lg text-typ-label font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
                   <Trash2 size={14} />
                   <span>{isSubmitting ? (uploadProgress || 'Deleting...') : 'Delete Asset'}</span>
@@ -779,7 +779,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 type="button" 
                 disabled={isSubmitting}
                 onClick={() => setDeleteConfirmAsset(null)}
-                className="w-full py-2 px-4 text-text-muted hover:text-text-primary text-xs font-medium transition-colors"
+                className="w-full py-2 px-4 text-text-muted hover:text-text-primary text-typ-label font-medium transition-colors"
               >
                 Cancel
               </button>

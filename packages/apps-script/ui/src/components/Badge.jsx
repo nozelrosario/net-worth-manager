@@ -33,9 +33,9 @@ export function Badge({
   };
 
   const sizeStyles = {
-    xs: 'text-[9px] px-2 py-0.5',
-    sm: 'text-[10px] px-2.5 py-0.5',
-    md: 'text-xs px-3 py-1',
+    xs: 'text-typ-micro px-2 py-0.5',
+    sm: 'text-typ-caption px-2.5 py-0.5',
+    md: 'text-typ-label px-3 py-1',
   };
 
   return (

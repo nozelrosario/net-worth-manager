@@ -81,7 +81,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-accent/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
         
         <div className="flex items-center justify-between mb-1 gap-2">
-          <p className="text-[11px] font-bold text-text-muted tracking-wider uppercase">Consolidated Family Net Worth</p>
+          <p className="text-typ-footnote font-bold text-text-muted tracking-wider uppercase">Consolidated Family Net Worth</p>
           {liveAssets.length > 0 && (
             <Badge variant="emerald" dot pulse size="sm">
               Live Rates Active
@@ -89,11 +89,11 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
           )}
         </div>
         
-        <h2 className="text-4xl font-bold tabular-nums tracking-tight text-text-primary mb-2">{formatCurrency(totalNetWorth)}</h2>
+        <h2 className="text-typ-display font-bold tabular-nums tracking-tight text-text-primary mb-2">{formatCurrency(totalNetWorth)}</h2>
 
         {/* Live Market Portfolio Return Ribbon */}
         {liveAssets.length > 0 && totalLiveCost > 0 && (
-          <div className="mb-3 flex items-center gap-2 text-xs">
+          <div className="mb-3 flex items-center gap-2 text-typ-label">
             <span className="text-text-muted">Market Portfolio Gain:</span>
             <span className={`font-semibold tabular-nums flex items-center gap-1 ${totalLivePnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
               {totalLivePnl >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
@@ -113,7 +113,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
           {oPct > 0 && <div className="bg-purple-500" style={{width: `${oPct}%`}} title={`Other: ${oPct.toFixed(1)}%`}></div>}
         </div>
         
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-typ-label">
           <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary-accent"></span><span className="text-text-secondary">Equity: {formatCurrency(equity)}</span></div>
           {mf > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-400"></span><span className="text-text-secondary">Mutual Funds: {formatCurrency(mf)}</span></div>}
           <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-bullion-amber"></span><span className="text-text-secondary">Gold: {formatCurrency(gold)}</span></div>
@@ -137,25 +137,25 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs font-semibold text-text-primary group-hover:text-sky-400 transition-colors truncate">
+                  <h3 className="text-typ-label font-semibold text-text-primary group-hover:text-sky-400 transition-colors truncate">
                     Retirement &amp; Pension Hub
                   </h3>
                   <Badge variant="emerald" dot size="xs">
                     8.25% EPF / NPS
                   </Badge>
                 </div>
-                <p className="text-[10px] text-text-muted truncate">Running balance accrual, Age 60 forecaster &amp; tax perks</p>
+                <p className="text-typ-caption text-text-muted truncate">Running balance accrual, Age 60 forecaster &amp; tax perks</p>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-sky-400 shrink-0">
+            <div className="flex items-center gap-1 text-typ-footnote font-semibold text-sky-400 shrink-0">
               <span className="hidden sm:inline">View Hub</span>
               <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-typ-label">
             <div className="flex items-center gap-1.5">
-              <span className="text-text-secondary text-[11px]">Retirement Corpus:</span>
+              <span className="text-text-secondary text-typ-footnote">Retirement Corpus:</span>
               <span className="font-bold text-sky-400 tabular-nums">{formatCurrency(retirement)}</span>
             </div>
             <Badge variant="emerald" dot size="xs">
@@ -178,30 +178,30 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs font-semibold text-text-primary group-hover:text-emerald-400 transition-colors truncate">
+                  <h3 className="text-typ-label font-semibold text-text-primary group-hover:text-emerald-400 transition-colors truncate">
                     Insurance &amp; Protection Hub
                   </h3>
                   <Badge variant="emerald" dot size="xs">
                     {insuranceData.hlv.coverageRatio}% HLV Shielded
                   </Badge>
                 </div>
-                <p className="text-[10px] text-text-muted truncate">LIC endowment, term life, health floater &amp; premium tracker</p>
+                <p className="text-typ-caption text-text-muted truncate">LIC endowment, term life, health floater &amp; premium tracker</p>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 shrink-0">
+            <div className="flex items-center gap-1 text-typ-footnote font-semibold text-emerald-400 shrink-0">
               <span className="hidden sm:inline">View Hub</span>
               <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-typ-label">
             <div className="flex items-center gap-1.5">
-              <span className="text-text-secondary text-[11px]">Total Life Cover:</span>
+              <span className="text-text-secondary text-typ-footnote">Total Life Cover:</span>
               <span className="font-bold text-emerald-400 tabular-nums">₹{formatInLakhsOrCrores(insuranceData.totalLifeCover)}</span>
               {insuranceData.totalHealthCover > 0 && (
                 <>
-                  <span className="text-text-muted text-[10px]">•</span>
-                  <span className="text-text-secondary text-[11px]">Health:</span>
+                  <span className="text-text-muted text-typ-caption">•</span>
+                  <span className="text-text-secondary text-typ-footnote">Health:</span>
                   <span className="font-bold text-cyan-400 tabular-nums">₹{formatInLakhsOrCrores(insuranceData.totalHealthCover)}</span>
                 </>
               )}
@@ -226,27 +226,27 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs font-semibold text-text-primary group-hover:text-primary-accent transition-colors truncate">
+                  <h3 className="text-typ-label font-semibold text-text-primary group-hover:text-primary-accent transition-colors truncate">
                     AI Portfolio Advisor & Rebalance
                   </h3>
                   <Badge variant="emerald" dot size="xs">
                     Zero Tax
                   </Badge>
                 </div>
-                <p className="text-[10px] text-text-muted truncate">Smart fresh capital deployment & risk audit</p>
+                <p className="text-typ-caption text-text-muted truncate">Smart fresh capital deployment & risk audit</p>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-primary-accent shrink-0">
+            <div className="flex items-center gap-1 text-typ-footnote font-semibold text-primary-accent shrink-0">
               <span className="hidden sm:inline">Rebalance</span>
               <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
+          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-typ-label">
             <div className="flex items-center gap-1.5">
-              <span className="text-text-secondary text-[11px]">Alignment Score:</span>
+              <span className="text-text-secondary text-typ-footnote">Alignment Score:</span>
               <span className="font-bold text-wealth-emerald tabular-nums">{alignment.alignmentScore}/100</span>
-              <span className="text-[10px] text-text-muted">({alignment.healthLabel})</span>
+              <span className="text-typ-caption text-text-muted">({alignment.healthLabel})</span>
             </div>
 
             {alignment.maxOverweight ? (
@@ -268,9 +268,9 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
           onClick={onOpenRebalancer}
           className={`bg-surface-layer1 border border-white/[0.08] rounded-xl p-4 shadow-sm ${onOpenRebalancer ? 'cursor-pointer hover:border-bullion-amber/30 transition-all active:scale-[0.98]' : ''}`}
         >
-          <p className="text-xs text-text-secondary mb-1">Liquid Buffer & Drag</p>
-          <p className="text-lg font-bold text-text-primary tabular-nums">{formatCurrency(cash)}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">{totalExpense > 0 ? (cash / (totalExpense/12)).toFixed(1) : 0} Mos Runway</p>
+          <p className="text-typ-label text-text-secondary mb-1">Liquid Buffer & Drag</p>
+          <p className="text-typ-subtitle font-bold text-text-primary tabular-nums">{formatCurrency(cash)}</p>
+          <p className="text-typ-footnote text-text-muted mt-0.5">{totalExpense > 0 ? (cash / (totalExpense/12)).toFixed(1) : 0} Mos Runway</p>
           <div className="mt-3">
             <Badge variant="amber" dot size="xs">
               Check Cash Drag
@@ -278,9 +278,9 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
           </div>
         </div>
         <div className="bg-surface-layer1 border border-white/[0.08] rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-text-secondary mb-1">This Month's Cashflow</p>
-          <p className="text-lg font-bold text-liability-rose tabular-nums">-{formatCurrency(totalExpense)}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">Inflow: {formatCurrency(totalIncome)}</p>
+          <p className="text-typ-label text-text-secondary mb-1">This Month's Cashflow</p>
+          <p className="text-typ-subtitle font-bold text-liability-rose tabular-nums">-{formatCurrency(totalExpense)}</p>
+          <p className="text-typ-footnote text-text-muted mt-0.5">Inflow: {formatCurrency(totalIncome)}</p>
           <div className="mt-3">
             <Badge variant="neutral" size="xs">
               {savingsRate.toFixed(1)}% Savings Rate

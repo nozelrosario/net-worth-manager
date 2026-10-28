@@ -559,7 +559,7 @@ export default function SmsInboxModal({
               <ArrowLeft size={17} />
             </button>
             <div className="flex items-center gap-2 min-w-0">
-              <h2 className="text-sm sm:text-base font-bold tracking-tight text-text-primary truncate">
+              <h2 className="text-typ-body-sm sm:text-typ-body font-bold tracking-tight text-text-primary truncate">
                 SMS Spends Inbox
               </h2>
               <Badge variant="indigo" size="xs">
@@ -573,7 +573,7 @@ export default function SmsInboxModal({
             <button
               onClick={handleScanDrive}
               disabled={isScanningDrive}
-              className="py-1 px-2.5 rounded-lg bg-primary-accent text-white text-[11px] font-semibold flex items-center gap-1 shadow-xs hover:opacity-95 active:scale-95 transition-all disabled:opacity-50"
+              className="py-1 px-2.5 rounded-lg bg-primary-accent text-white text-typ-footnote font-semibold flex items-center gap-1 shadow-xs hover:opacity-95 active:scale-95 transition-all disabled:opacity-50"
               title="Scan Drive Backup"
             >
               <RefreshCw size={12} className={isScanningDrive ? 'animate-spin' : ''} />
@@ -583,7 +583,7 @@ export default function SmsInboxModal({
             {/* Quick Upload CTA */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-primary text-[11px] font-medium flex items-center gap-1 active:scale-95 transition-all"
+              className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-primary text-typ-footnote font-medium flex items-center gap-1 active:scale-95 transition-all"
               title="Upload XML Backup"
             >
               <Upload size={13} className="text-text-secondary" />
@@ -618,13 +618,13 @@ export default function SmsInboxModal({
 
         {/* 2. Optional Settings Drawer */}
         {showSettingsDrawer && (
-          <div className="p-3 bg-surface-layer2 border-b border-border-subtle space-y-2 shrink-0 animate-in slide-in-from-top-2 text-xs">
+          <div className="p-3 bg-surface-layer2 border-b border-border-subtle space-y-2 shrink-0 animate-in slide-in-from-top-2 text-typ-label">
             <div className="flex items-center justify-between">
               <span className="font-bold text-text-primary flex items-center gap-1">
                 <Settings size={13} className="text-primary-accent" />
                 Drive Backup Settings
               </span>
-              <button onClick={() => setShowSettingsDrawer(false)} className="text-text-muted hover:text-text-primary text-[11px]">
+              <button onClick={() => setShowSettingsDrawer(false)} className="text-text-muted hover:text-text-primary text-typ-footnote">
                 Close
               </button>
             </div>
@@ -634,15 +634,15 @@ export default function SmsInboxModal({
                 value={driveFolder}
                 onChange={(e) => setDriveFolder(e.target.value)}
                 placeholder="SMSBackupRestore"
-                className="flex-1 text-xs px-2.5 py-1 rounded-lg bg-surface-layer1 border border-border-subtle text-text-primary"
+                className="flex-1 text-typ-label px-2.5 py-1 rounded-lg bg-surface-layer1 border border-border-subtle text-text-primary"
               />
-              <button type="submit" className="py-1 px-3 rounded-lg bg-primary-accent text-white font-semibold text-xs">
+              <button type="submit" className="py-1 px-3 rounded-lg bg-primary-accent text-white font-semibold text-typ-label">
                 Save
               </button>
               <button
                 type="button"
                 onClick={handleResetSyncDate}
-                className="py-1 px-2 rounded-lg border border-border-subtle bg-surface-layer1 text-text-secondary text-xs"
+                className="py-1 px-2 rounded-lg border border-border-subtle bg-surface-layer1 text-text-secondary text-typ-label"
               >
                 Reset Date
               </button>
@@ -652,7 +652,7 @@ export default function SmsInboxModal({
 
         {/* 3. PRIMARY STATUS FILTER RIBBON (Default to 'New') */}
         <div className="px-3 py-1.5 border-b border-border-subtle shrink-0 flex items-center justify-between gap-1.5 bg-surface-layer1/80">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 text-typ-label font-semibold">
             {/* New / Pending (Default) */}
             <button
               type="button"
@@ -664,7 +664,7 @@ export default function SmsInboxModal({
               }`}
             >
               <span>New</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.2 rounded-full text-typ-caption font-bold ${
                 statusTab === 'new' ? 'bg-white/20 text-white' : 'bg-surface-layer3 text-text-muted'
               }`}>
                 {stats.newCount || 0}
@@ -683,7 +683,7 @@ export default function SmsInboxModal({
             >
               <Check size={12} className={statusTab === 'imported' ? 'text-emerald-500' : 'text-text-muted'} />
               <span>Already Imported</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.2 rounded-full text-typ-caption font-bold ${
                 statusTab === 'imported' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-surface-layer3 text-text-muted'
               }`}>
                 {stats.importedCount || 0}
@@ -702,7 +702,7 @@ export default function SmsInboxModal({
             >
               <EyeOff size={12} className={statusTab === 'ignored' ? 'text-amber-500' : 'text-text-muted'} />
               <span>Ignored</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.2 rounded-full text-typ-caption font-bold ${
                 statusTab === 'ignored' ? 'bg-amber-500/20 text-amber-400' : 'bg-surface-layer3 text-text-muted'
               }`}>
                 {stats.ignoredCount || 0}
@@ -726,7 +726,7 @@ export default function SmsInboxModal({
 
         {/* 3B. CATEGORY SUB-FILTERS (Shown for 'new' or 'all') */}
         {(statusTab === 'new' || statusTab === 'all') && candidates.length > 0 && (
-          <div className="px-3 py-1 border-b border-border-subtle shrink-0 flex items-center gap-1 overflow-x-auto no-scrollbar text-[11px] bg-surface-layer1/40">
+          <div className="px-3 py-1 border-b border-border-subtle shrink-0 flex items-center gap-1 overflow-x-auto no-scrollbar text-typ-footnote bg-surface-layer1/40">
             <button
               type="button"
               onClick={() => setTypeFilter('all')}
@@ -788,7 +788,7 @@ export default function SmsInboxModal({
         )}
 
         {/* 4. COMPACT SELECTION & BATCH ACTIONS SUB-BAR (~28px) */}
-        <div className="px-3 py-1 bg-surface-layer2/40 border-b border-border-subtle shrink-0 flex items-center justify-between text-[11px]">
+        <div className="px-3 py-1 bg-surface-layer2/40 border-b border-border-subtle shrink-0 flex items-center justify-between text-typ-footnote">
           {statusTab === 'new' ? (
             <>
               <label className="flex items-center gap-1.5 cursor-pointer text-text-secondary font-medium select-none">
@@ -829,7 +829,7 @@ export default function SmsInboxModal({
                 <CheckCircle2 size={12} />
                 <span>{filteredList.length} transactions already recorded in your ledger</span>
               </span>
-              <span className="text-[10px] font-mono">Duplicates Blocked</span>
+              <span className="text-typ-caption font-mono">Duplicates Blocked</span>
             </div>
           ) : statusTab === 'ignored' ? (
             <div className="w-full flex items-center justify-between text-text-muted">
@@ -837,12 +837,12 @@ export default function SmsInboxModal({
                 <EyeOff size={12} />
                 <span>{filteredList.length} transactions dismissed from inbox</span>
               </span>
-              <span className="text-[10px]">Tap 'Restore' to return any to Inbox</span>
+              <span className="text-typ-caption">Tap 'Restore' to return any to Inbox</span>
             </div>
           ) : (
             <div className="w-full flex items-center justify-between text-text-muted">
               <span>Showing all {filteredList.length} parsed transactions</span>
-              <span className="text-[10px]">Audit Stream</span>
+              <span className="text-typ-caption">Audit Stream</span>
             </div>
           )}
         </div>
@@ -855,7 +855,7 @@ export default function SmsInboxModal({
                 <CheckCircle2 size={24} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-text-primary">
+                <h3 className="text-typ-body-sm font-bold text-text-primary">
                   {statusTab === 'new' && (stats.importedCount > 0 || stats.ignoredCount > 0)
                     ? 'All Caught Up!'
                     : statusTab === 'imported'
@@ -864,7 +864,7 @@ export default function SmsInboxModal({
                     ? 'No Ignored Transactions'
                     : 'Inbox Clean'}
                 </h3>
-                <p className="text-xs text-text-muted max-w-xs mt-0.5">
+                <p className="text-typ-label text-text-muted max-w-xs mt-0.5">
                   {statusTab === 'new' && stats.importedCount > 0
                     ? `All ${stats.importedCount} transactions in this file are already saved in your ledger.`
                     : statusTab === 'new' && stats.ignoredCount > 0
@@ -877,7 +877,7 @@ export default function SmsInboxModal({
                 <button
                   type="button"
                   onClick={() => setStatusTab('imported')}
-                  className="py-1.5 px-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-500 text-xs font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
+                  className="py-1.5 px-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-500 text-typ-label font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
                 >
                   <Check size={13} />
                   <span>View Already Imported ({stats.importedCount})</span>
@@ -888,7 +888,7 @@ export default function SmsInboxModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="py-1.5 px-3.5 rounded-xl border border-border-subtle bg-surface-layer1 text-text-secondary hover:text-text-primary text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
+                  className="py-1.5 px-3.5 rounded-xl border border-border-subtle bg-surface-layer1 text-text-secondary hover:text-text-primary text-typ-label font-semibold shadow-xs transition-all flex items-center gap-1.5"
                 >
                   <Upload size={13} />
                   <span>Choose File</span>
@@ -896,7 +896,7 @@ export default function SmsInboxModal({
                 <button
                   type="button"
                   onClick={handleScanDrive}
-                  className="py-1.5 px-3.5 rounded-xl bg-primary-accent text-white text-xs font-semibold hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5"
+                  className="py-1.5 px-3.5 rounded-xl bg-primary-accent text-white text-typ-label font-semibold hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5"
                 >
                   <Cloud size={13} />
                   <span>Scan Drive</span>
@@ -956,19 +956,19 @@ export default function SmsInboxModal({
                       {/* Payee + Preview + Metadata */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-bold text-text-primary truncate max-w-[150px] sm:max-w-[240px]">
+                          <span className="text-typ-label font-bold text-text-primary truncate max-w-[150px] sm:max-w-[240px]">
                             {item.payee}
                           </span>
-                          <span className="text-[10px] text-text-muted bg-surface-layer2 px-1.5 py-0.2 rounded font-mono shrink-0">
+                          <span className="text-typ-caption text-text-muted bg-surface-layer2 px-1.5 py-0.2 rounded font-mono shrink-0">
                             {item.bank} {item.accountDigits ? `••${item.accountDigits}` : ''}
                           </span>
                           {isImportedItem && (
-                            <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                            <span className="text-typ-caption text-emerald-500 bg-emerald-500/10 px-1.5 py-0.2 rounded font-semibold shrink-0">
                               ✓ Saved
                             </span>
                           )}
                           {isIgnoredItem && (
-                            <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                            <span className="text-typ-caption text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded font-semibold shrink-0">
                               Ignored
                             </span>
                           )}
@@ -976,13 +976,13 @@ export default function SmsInboxModal({
 
                         {/* Transaction Preview Text Snippet */}
                         {(item.previewSnippet || item.body) && (
-                          <p className="text-[11px] text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5 max-w-[210px] sm:max-w-md">
+                          <p className="text-typ-footnote text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5 max-w-[210px] sm:max-w-md">
                             "{item.previewSnippet || item.body}"
                           </p>
                         )}
 
                         {/* Date + Category/Tags Line */}
-                        <div className="flex items-center gap-1.5 text-[10px] text-text-secondary mt-0.5">
+                        <div className="flex items-center gap-1.5 text-typ-caption text-text-secondary mt-0.5">
                           <span className="text-text-muted font-mono">{item.dateStr}</span>
                           <span className="text-text-muted/60">•</span>
                           {item.type === 'Transfer' ? (
@@ -995,7 +995,7 @@ export default function SmsInboxModal({
                           {item.refNo && (
                             <>
                               <span className="text-text-muted/60 hidden sm:inline">•</span>
-                              <span className="text-text-muted/70 font-mono text-[9px] hidden sm:inline">Ref: {item.refNo}</span>
+                              <span className="text-text-muted/70 font-mono text-typ-micro hidden sm:inline">Ref: {item.refNo}</span>
                             </>
                           )}
                         </div>
@@ -1005,7 +1005,7 @@ export default function SmsInboxModal({
                     {/* Amount + Status-Specific Actions */}
                     <div className="flex items-center gap-2 shrink-0">
                       <div
-                        className={`text-sm sm:text-base font-bold num-tabular text-right ${
+                        className={`text-typ-body-sm sm:text-typ-body font-bold num-tabular text-right ${
                           item.type === 'Transfer'
                             ? 'text-bullion-amber'
                             : item.type === 'Investment' || item.type === 'Income / Refund'
@@ -1050,7 +1050,7 @@ export default function SmsInboxModal({
                         </>
                       ) : isImportedItem ? (
                         <div className="flex items-center gap-1">
-                          <span className="py-0.5 px-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                          <span className="py-0.5 px-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-typ-caption font-bold flex items-center gap-1">
                             <Check size={11} /> Saved
                           </span>
                           <button
@@ -1067,7 +1067,7 @@ export default function SmsInboxModal({
                           <button
                             type="button"
                             onClick={() => handleRestoreSingle(item)}
-                            className="py-0.5 px-2 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-all"
+                            className="py-0.5 px-2 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 text-typ-caption font-bold flex items-center gap-1 active:scale-95 transition-all"
                             title="Restore to Inbox"
                           >
                             <RotateCcw size={11} /> Restore
@@ -1087,9 +1087,9 @@ export default function SmsInboxModal({
 
                   {/* INLINE EXPANDED CONTROLS */}
                   {isExpanded && (
-                    <div className="mt-2.5 pt-2 border-t border-border-subtle/60 space-y-2.5 text-xs animate-in slide-in-from-top-1">
+                    <div className="mt-2.5 pt-2 border-t border-border-subtle/60 space-y-2.5 text-typ-label animate-in slide-in-from-top-1">
                       {item.status === 'new' && (
-                        <div className="p-0.5 rounded-lg bg-surface-layer2 flex text-center text-[11px] font-medium">
+                        <div className="p-0.5 rounded-lg bg-surface-layer2 flex text-center text-typ-footnote font-medium">
                           <button
                             type="button"
                             onClick={() =>
@@ -1145,9 +1145,9 @@ export default function SmsInboxModal({
                       )}
 
                       {/* Payee, Date, Category, Account & Beneficiary Inputs */}
-                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-[11px]">
+                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-typ-footnote">
                         <div>
-                          <label className="text-[10px] text-text-muted block mb-0.5">Payee / Merchant:</label>
+                          <label className="text-typ-caption text-text-muted block mb-0.5">Payee / Merchant:</label>
                           <input
                             type="text"
                             value={item.payee}
@@ -1158,7 +1158,7 @@ export default function SmsInboxModal({
                         </div>
 
                         <div>
-                          <label className="text-[10px] text-text-muted block mb-0.5">Date:</label>
+                          <label className="text-typ-caption text-text-muted block mb-0.5">Date:</label>
                           <input
                             type="date"
                             value={item.dateStr || ''}
@@ -1169,7 +1169,7 @@ export default function SmsInboxModal({
                         </div>
 
                         <div>
-                          <label className="text-[10px] text-text-muted block mb-0.5">Category:</label>
+                          <label className="text-typ-caption text-text-muted block mb-0.5">Category:</label>
                           <select
                             value={item.category}
                             disabled={item.status !== 'new'}
@@ -1189,7 +1189,7 @@ export default function SmsInboxModal({
                         </div>
 
                         <div>
-                          <label className="text-[10px] text-text-muted block mb-0.5">Asset Account:</label>
+                          <label className="text-typ-caption text-text-muted block mb-0.5">Asset Account:</label>
                           <select
                             value={item.account}
                             disabled={item.status !== 'new'}
@@ -1206,7 +1206,7 @@ export default function SmsInboxModal({
                         </div>
 
                         <div>
-                          <label className="text-[10px] text-text-muted block mb-0.5">For Whom:</label>
+                          <label className="text-typ-caption text-text-muted block mb-0.5">For Whom:</label>
                           <select
                             value={item.beneficiary || 'Whole Family'}
                             disabled={item.status !== 'new'}
@@ -1225,7 +1225,7 @@ export default function SmsInboxModal({
 
                       {/* Fingerprint & Raw SMS Snippet Toggle */}
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[10px] text-text-muted">
+                        <div className="flex items-center justify-between text-typ-caption text-text-muted">
                           <span className="font-mono truncate max-w-[280px]">ID: {item.fingerprint}</span>
                           <button
                             type="button"
@@ -1237,7 +1237,7 @@ export default function SmsInboxModal({
                           </button>
                         </div>
                         {isRawOpen && (
-                          <div className="mt-1 p-2 rounded-lg bg-surface-layer2 font-mono text-[9px] text-text-secondary leading-relaxed border border-border-subtle/60 select-text">
+                          <div className="mt-1 p-2 rounded-lg bg-surface-layer2 font-mono text-typ-micro text-text-secondary leading-relaxed border border-border-subtle/60 select-text">
                             {item.body}
                           </div>
                         )}
@@ -1251,8 +1251,8 @@ export default function SmsInboxModal({
         </div>
 
         {/* 6. COMPACT BOTTOM FOOTER (~44px) */}
-        <footer className="px-3 py-2 sm:px-4 sm:py-2.5 border-t border-border-subtle shrink-0 flex items-center justify-between bg-surface-layer1 text-xs">
-          <div className="text-text-muted text-[11px] flex items-center gap-1">
+        <footer className="px-3 py-2 sm:px-4 sm:py-2.5 border-t border-border-subtle shrink-0 flex items-center justify-between bg-surface-layer1 text-typ-label">
+          <div className="text-text-muted text-typ-footnote flex items-center gap-1">
             <Shield size={12} className="text-emerald-500" />
             <span className="hidden sm:inline">On-Device Parsing • Deterministic Ledger Sync</span>
             <span className="sm:hidden">{selectedIds.size} selected</span>
@@ -1261,7 +1261,7 @@ export default function SmsInboxModal({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="py-1 px-3 rounded-lg border border-border-subtle text-text-secondary hover:bg-surface-layer2 transition-colors text-xs font-medium"
+              className="py-1 px-3 rounded-lg border border-border-subtle text-text-secondary hover:bg-surface-layer2 transition-colors text-typ-label font-medium"
             >
               Close
             </button>
@@ -1270,7 +1270,7 @@ export default function SmsInboxModal({
                 type="button"
                 onClick={() => handleBatchImport()}
                 disabled={selectedIds.size === 0 || isImporting}
-                className="py-1 px-3.5 rounded-lg bg-primary-accent text-white font-semibold hover:opacity-95 shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 text-xs"
+                className="py-1 px-3.5 rounded-lg bg-primary-accent text-white font-semibold hover:opacity-95 shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 text-typ-label"
               >
                 <Check size={13} />
                 <span>

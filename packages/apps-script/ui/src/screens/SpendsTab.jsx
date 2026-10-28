@@ -450,25 +450,25 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-sm sm:text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors break-words line-clamp-2 leading-snug">
+                  <h3 className="text-typ-body-sm sm:text-typ-body font-semibold text-text-primary group-hover:text-primary-accent transition-colors break-words line-clamp-2 leading-snug">
                     {txn['Merchant/Description'] || 'Internal Transfer'}
                   </h3>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle shrink-0 font-medium">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-typ-caption bg-surface-layer2 text-text-secondary border border-border-subtle shrink-0 font-medium">
                     <CheckCircle size={11} className="text-wealth-emerald" />
                     <span>Transfer</span>
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-text-muted mt-1 leading-relaxed truncate">
+                <p className="text-typ-footnote sm:text-typ-label text-text-muted mt-1 leading-relaxed truncate">
                   {txn['Account/Card'] ? `${txn['Account/Card']} • ` : ''}Excluded from spends calculation.
                 </p>
               </div>
             </div>
             <div className="text-right flex flex-col items-end shrink-0 pl-1">
-              <span className="text-sm sm:text-base font-bold text-text-secondary tabular-nums whitespace-nowrap">
+              <span className="text-typ-body-sm sm:text-typ-body font-bold text-text-secondary tabular-nums whitespace-nowrap">
                 {formatCurrency(txn.Amount)}
               </span>
-              <span className="block text-[10px] sm:text-xs text-text-muted mt-0.5 font-medium">Excluded</span>
-              <span className="text-primary-accent/70 text-[11px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Edit</span>
+              <span className="block text-typ-caption sm:text-typ-label text-text-muted mt-0.5 font-medium">Excluded</span>
+              <span className="text-primary-accent/70 text-typ-footnote mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Edit</span>
             </div>
           </div>
         </div>
@@ -488,39 +488,39 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="text-sm sm:text-base font-semibold text-text-primary group-hover:text-primary-accent transition-colors break-words line-clamp-2 leading-snug">
+                <h3 className="text-typ-body-sm sm:text-typ-body font-semibold text-text-primary group-hover:text-primary-accent transition-colors break-words line-clamp-2 leading-snug">
                   {txn['Merchant/Description'] || txn.Category}
                 </h3>
                 {hasSplits ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs bg-primary-accent/10 text-primary-accent border border-primary-accent/20 shrink-0 font-medium">
+                  <span className="px-2 py-0.5 rounded-full text-typ-caption sm:text-typ-label bg-primary-accent/10 text-primary-accent border border-primary-accent/20 shrink-0 font-medium">
                     Split ({splits.length})
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-surface-layer2 text-text-secondary border border-border-subtle shrink-0">
+                  <span className="px-2 py-0.5 rounded-full text-typ-caption bg-surface-layer2 text-text-secondary border border-border-subtle shrink-0">
                     {txn.Category}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] sm:text-[12px] text-text-secondary mt-0.5 truncate">
+              <p className="text-typ-footnote sm:text-typ-label text-text-secondary mt-0.5 truncate">
                 {txn['Account/Card'] || 'Main Account'}
                 {txn.Beneficiary && txn.Beneficiary !== 'Whole Family' && ` • For: ${txn.Beneficiary}`}
               </p>
               {txn.Tags && (
-                <p className="text-[10px] sm:text-[11px] text-text-muted mt-0.5 truncate">{txn.Tags}</p>
+                <p className="text-typ-caption sm:text-typ-footnote text-text-muted mt-0.5 truncate">{txn.Tags}</p>
               )}
             </div>
           </div>
           <div className="text-right flex flex-col items-end shrink-0 pl-1">
-            <span className={`text-sm sm:text-base font-bold tabular-nums whitespace-nowrap ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+            <span className={`text-typ-body-sm sm:text-typ-body font-bold tabular-nums whitespace-nowrap ${isIncome ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
               {isIncome ? '+' : '-'}{formatCurrency(txn.Amount)}
             </span>
-            <span className="text-primary-accent/70 text-[11px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Edit</span>
+            <span className="text-primary-accent/70 text-typ-footnote mt-1 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Edit</span>
           </div>
         </div>
         {hasSplits && splits.length > 0 && (
           <div className="ml-4 mt-2.5 pl-3 border-l-2 border-primary-accent/40 space-y-1.5 bg-surface-layer2/50 p-2.5 rounded-r-lg">
             {splits.map((split, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+              <div key={idx} className="flex items-center justify-between text-typ-label sm:text-typ-body-sm gap-2">
                 <div className="flex items-center space-x-1.5 text-text-primary min-w-0 flex-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-accent shrink-0"></span>
                   <span className="truncate">{split.Category}</span>
@@ -538,16 +538,16 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     <div className="space-y-4 pb-20">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-text-primary">Cashflow & Spends</h2>
+          <h2 className="text-typ-title font-bold tracking-tight text-text-primary">Cashflow & Spends</h2>
           <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="text-[11px] text-text-muted">
+            <span className="text-typ-footnote text-text-muted">
               {selectedMonth === 'ALL' ? 'All-Time Outflow Analysis' : `Tracking for ${formatMonthName(selectedMonth)}`}
             </span>
-            <span className="text-text-muted text-[10px]">•</span>
+            <span className="text-text-muted text-typ-caption">•</span>
             <button
               type="button"
               onClick={() => setSelectedMonth(selectedMonth === 'ALL' ? (availableMonths[0] || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`) : 'ALL')}
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all active:scale-95 ${
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-typ-footnote font-medium border transition-all active:scale-95 ${
                 selectedMonth === 'ALL'
                   ? 'bg-primary-accent text-white border-primary-accent shadow-xs'
                   : 'bg-surface-layer1 text-text-secondary hover:text-text-primary border-border-subtle shadow-xs'
@@ -561,7 +561,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           <button 
             type="button"
             onClick={() => setShowSmsInbox(true)} 
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-xs font-semibold shadow-xs transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-typ-label font-semibold shadow-xs transition-all active:scale-95"
             title="Scan SMS backups from Google Drive or upload XML"
           >
             <Cloud size={14} className="text-primary-accent" />
@@ -570,7 +570,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           <button 
             type="button"
             onClick={openAddModal} 
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-xs font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
           >
             <Plus size={14} />
             <span>Log Spend</span>
@@ -592,11 +592,11 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           </button>
           <div className="flex items-center space-x-1.5 text-text-primary">
             <Calendar size={14} className="text-primary-accent" />
-            <span className="text-xs font-bold tracking-wide">
+            <span className="text-typ-label font-bold tracking-wide">
               {formatMonthName(selectedMonth)}
             </span>
             {daysElapsed > 0 && totalDaysInMonth > 0 && (
-              <span className="text-[10px] text-text-muted">
+              <span className="text-typ-caption text-text-muted">
                 ({daysElapsed}/{totalDaysInMonth}d)
               </span>
             )}
@@ -620,10 +620,10 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         {/* Top Header: Total Spend & MoM Pill */}
         <div className="flex items-start justify-between pb-3 border-b border-border-subtle">
           <div>
-            <span className="text-xs text-text-muted uppercase tracking-wider font-medium">
+            <span className="text-typ-label text-text-muted uppercase tracking-wider font-medium">
               {selectedMonth === 'ALL' ? 'All-Time Outflow' : `${formatMonthName(selectedMonth)} Outflow`}
             </span>
-            <div className="text-2xl font-bold text-text-primary tabular-nums mt-0.5">
+            <div className="text-typ-heading font-bold text-text-primary tabular-nums mt-0.5">
               {formatCurrency(selectedMonthSpend)}
             </div>
           </div>
@@ -631,7 +631,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           {selectedMonth !== 'ALL' && (
             <div className="flex flex-col items-end">
               {momPct !== null ? (
-                <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-typ-label font-semibold border ${
                   momDiff <= 0 
                     ? 'bg-wealth-emerald/10 text-wealth-emerald border-wealth-emerald/20' 
                     : 'bg-liability-rose/10 text-liability-rose border-liability-rose/20'
@@ -643,12 +643,12 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                   </span>
                 </span>
               ) : (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-layer2 text-text-muted border border-border-subtle">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-typ-label font-medium bg-surface-layer2 text-text-muted border border-border-subtle">
                   Baseline
                 </span>
               )}
               {prevMonthSpend > 0 && (
-                <span className="text-[10px] text-text-muted mt-1 tabular-nums">
+                <span className="text-typ-caption text-text-muted mt-1 tabular-nums">
                   Prev: {formatCurrency(prevMonthSpend)}
                 </span>
               )}
@@ -659,35 +659,35 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         {/* 3-Metric Subgrid: Daily Burn, Projected Pace, Volume */}
         <div className="grid grid-cols-3 gap-2 pt-3 pb-2 text-left">
           <div className="flex flex-col">
-            <span className="text-[11px] text-text-muted flex items-center gap-1">
+            <span className="text-typ-footnote text-text-muted flex items-center gap-1">
               <Flame size={12} className="text-bullion-amber" /> Daily Burn
             </span>
-            <span className="text-base font-bold text-bullion-amber tabular-nums mt-0.5">
+            <span className="text-typ-body font-bold text-bullion-amber tabular-nums mt-0.5">
               {formatCurrency(dailyBurn)}
-              <span className="text-[10px] font-normal text-text-muted">/d</span>
+              <span className="text-typ-caption font-normal text-text-muted">/d</span>
             </span>
           </div>
           <div className="flex flex-col border-l border-border-subtle pl-2.5">
-            <span className="text-[11px] text-text-muted">Projected Pace</span>
-            <span className="text-base font-bold text-text-primary tabular-nums mt-0.5">
+            <span className="text-typ-footnote text-text-muted">Projected Pace</span>
+            <span className="text-typ-body font-bold text-text-primary tabular-nums mt-0.5">
               {formatCurrency(projectedSpend)}
             </span>
           </div>
           <div className="flex flex-col border-l border-border-subtle pl-2.5">
-            <span className="text-[11px] text-text-muted">Volume</span>
-            <span className="text-base font-bold text-primary-accent tabular-nums mt-0.5">
-              {txnMonthCount} <span className="text-[10px] font-normal text-text-muted">txns</span>
+            <span className="text-typ-footnote text-text-muted">Volume</span>
+            <span className="text-typ-body font-bold text-primary-accent tabular-nums mt-0.5">
+              {txnMonthCount} <span className="text-typ-caption font-normal text-text-muted">txns</span>
             </span>
           </div>
         </div>
 
         {/* 6-Month Spend Trend Sparkline */}
         <div className="mt-3 pt-3 border-t border-border-subtle">
-          <div className="flex items-center justify-between text-[11px] text-text-muted mb-2">
+          <div className="flex items-center justify-between text-typ-footnote text-text-muted mb-2">
             <span className="font-medium flex items-center gap-1">
               <Calendar size={12} /> 6-Month Spend Trajectory
             </span>
-            <span className="text-[10px]">Tap bar to view</span>
+            <span className="text-typ-caption">Tap bar to view</span>
           </div>
           <div className="grid grid-cols-6 gap-1.5 items-end h-14">
             {recent6Months.map(m => {
@@ -714,7 +714,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                       style={{ height: `${Math.max(m.percent, 8)}%` }}
                     ></div>
                   </div>
-                  <span className={`text-[10px] mt-1 font-medium ${
+                  <span className={`text-typ-caption mt-1 font-medium ${
                     isSelected ? 'text-primary-accent font-bold' : 'text-text-muted'
                   }`}>
                     {m.label}
@@ -732,7 +732,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               <button
                 type="button"
                 onClick={() => setSelectedSegment('beneficiary')}
-                className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2 sm:px-2.5 py-1 text-typ-footnote sm:text-typ-label font-medium rounded-md transition-all flex items-center gap-1 ${
                   selectedSegment === 'beneficiary'
                     ? 'bg-primary-accent text-white shadow-sm font-semibold'
                     : 'text-text-secondary hover:text-text-primary'
@@ -743,7 +743,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               <button
                 type="button"
                 onClick={() => setSelectedSegment('category')}
-                className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2 sm:px-2.5 py-1 text-typ-footnote sm:text-typ-label font-medium rounded-md transition-all flex items-center gap-1 ${
                   selectedSegment === 'category'
                     ? 'bg-primary-accent text-white shadow-sm font-semibold'
                     : 'text-text-secondary hover:text-text-primary'
@@ -754,7 +754,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               <button
                 type="button"
                 onClick={() => setSelectedSegment('account')}
-                className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2 sm:px-2.5 py-1 text-typ-footnote sm:text-typ-label font-medium rounded-md transition-all flex items-center gap-1 ${
                   selectedSegment === 'account'
                     ? 'bg-primary-accent text-white shadow-sm font-semibold'
                     : 'text-text-secondary hover:text-text-primary'
@@ -763,13 +763,13 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                 <Wallet size={12} /> Card/Bank
               </button>
             </div>
-            <span className="text-[10px] text-text-muted shrink-0 pl-3 sm:pl-4 whitespace-nowrap">Tap to filter</span>
+            <span className="text-typ-caption text-text-muted shrink-0 pl-3 sm:pl-4 whitespace-nowrap">Tap to filter</span>
           </div>
 
           {/* Active Segment Breakdown List */}
           <div className="space-y-1.5 pt-1">
             {breakdownData[selectedSegment].length === 0 ? (
-              <p className="text-xs text-text-muted py-2 text-center">No spend data in this view.</p>
+              <p className="text-typ-label text-text-muted py-2 text-center">No spend data in this view.</p>
             ) : (
               breakdownData[selectedSegment].slice(0, 4).map((item) => {
                 const isFilterActive = (selectedSegment === 'beneficiary' && beneficiaryFilter === item.name) ||
@@ -790,14 +790,14 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                         : 'bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle/40'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-xs mb-1">
+                    <div className="flex items-center justify-between text-typ-label mb-1">
                       <span className="font-medium text-text-primary truncate max-w-[180px] flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${isFilterActive ? 'bg-primary-accent' : 'bg-text-secondary'}`}></span>
                         {item.name}
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="font-bold tabular-nums text-text-primary">{formatCurrency(item.amount)}</span>
-                        <span className="text-[10px] text-text-muted tabular-nums w-8 text-right">{item.percent.toFixed(0)}%</span>
+                        <span className="text-typ-caption text-text-muted tabular-nums w-8 text-right">{item.percent.toFixed(0)}%</span>
                       </div>
                     </div>
                     {/* Horizontal Mini Bar */}
@@ -824,7 +824,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                 <AlertCircle size={16} />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-text-primary">{pendingVerifications.length} Verifications Pending</h2>
+                <h2 className="text-typ-body-sm font-semibold text-text-primary">{pendingVerifications.length} Verifications Pending</h2>
               </div>
             </div>
             <Badge variant="amber" dot size="sm">Action Required</Badge>
@@ -833,14 +833,14 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
             <div key={txn['Txn ID']} className="mt-3 bg-surface-layer2/80 rounded-lg p-3 border border-border-subtle">
               <div className="flex items-start justify-between gap-2.5 min-w-0">
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm text-text-primary font-medium break-words line-clamp-2 leading-snug">{txn['Merchant/Description'] || txn.Category}</h4>
-                  <p className="text-xs text-text-secondary truncate mt-0.5">{txn.Date} • {txn['Account/Card']}</p>
+                  <h4 className="text-typ-body-sm text-text-primary font-medium break-words line-clamp-2 leading-snug">{txn['Merchant/Description'] || txn.Category}</h4>
+                  <p className="text-typ-label text-text-secondary truncate mt-0.5">{txn.Date} • {txn['Account/Card']}</p>
                 </div>
-                <span className="text-sm font-bold text-liability-rose tabular-nums shrink-0 whitespace-nowrap pl-1">-{formatCurrency(txn.Amount)}</span>
+                <span className="text-typ-body-sm font-bold text-liability-rose tabular-nums shrink-0 whitespace-nowrap pl-1">-{formatCurrency(txn.Amount)}</span>
               </div>
               <div className="mt-2 flex gap-1.5">
-                <button className="px-2 py-1 text-xs bg-surface-layer1 hover:bg-border-prominent rounded border border-border-subtle text-text-primary">Categorize</button>
-                <button className="px-2 py-1 text-xs bg-surface-layer1 hover:bg-border-prominent rounded border border-border-subtle text-text-primary">Split</button>
+                <button className="px-2 py-1 text-typ-label bg-surface-layer1 hover:bg-border-prominent rounded border border-border-subtle text-text-primary">Categorize</button>
+                <button className="px-2 py-1 text-typ-label bg-surface-layer1 hover:bg-border-prominent rounded border border-border-subtle text-text-primary">Split</button>
               </div>
             </div>
           ))}
@@ -858,7 +858,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
             <input 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-surface-layer1 border border-border-subtle focus:border-primary-accent focus:ring-0 rounded-lg pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none" 
+              className="w-full bg-surface-layer1 border border-border-subtle focus:border-primary-accent focus:ring-0 rounded-lg pl-9 pr-3 py-2 text-typ-body-sm text-text-primary placeholder:text-text-muted outline-none" 
               placeholder="Search merchant, tag, or bank..." 
               type="text"
             />
@@ -875,7 +875,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
               <button 
                 key={tab}
                 onClick={() => setFilterType(tab)}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors ${filterType === tab ? 'bg-primary-accent text-white shadow-sm font-semibold' : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'}`}
+                className={`px-3 py-1 rounded-full text-typ-label font-medium whitespace-nowrap flex-shrink-0 transition-colors ${filterType === tab ? 'bg-primary-accent text-white shadow-sm font-semibold' : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'}`}
               >
                 {tab}
               </button>
@@ -884,22 +884,22 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
           {/* Active Filter Chips */}
           {(beneficiaryFilter || filterType !== 'All Records' || selectedMonth !== 'ALL') && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-              <span className="text-text-muted text-[11px]">Filtered:</span>
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-typ-label">
+              <span className="text-text-muted text-typ-footnote">Filtered:</span>
               {selectedMonth !== 'ALL' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer2 border border-border-subtle text-text-secondary text-[11px]">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer2 border border-border-subtle text-text-secondary text-typ-footnote">
                   <span>{formatMonthName(selectedMonth)}</span>
                   <button type="button" onClick={() => setSelectedMonth('ALL')} className="hover:text-text-primary transition-colors" title="Remove month filter"><X size={10} /></button>
                 </span>
               )}
               {beneficiaryFilter && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-accent/15 border border-primary-accent/40 text-primary-accent text-[11px] font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-accent/15 border border-primary-accent/40 text-primary-accent text-typ-footnote font-medium">
                   <span>For: {beneficiaryFilter}</span>
                   <button type="button" onClick={() => setBeneficiaryFilter('')} className="hover:text-text-primary transition-colors" title="Remove beneficiary filter"><X size={10} /></button>
                 </span>
               )}
               {filterType !== 'All Records' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-accent/15 border border-primary-accent/40 text-primary-accent text-[11px] font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-accent/15 border border-primary-accent/40 text-primary-accent text-typ-footnote font-medium">
                   <span>Cat: {filterType}</span>
                   <button type="button" onClick={() => setFilterType('All Records')} className="hover:text-text-primary transition-colors" title="Remove category filter"><X size={10} /></button>
                 </span>
@@ -911,7 +911,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                   setFilterType('All Records');
                   setSelectedMonth('ALL');
                 }}
-                className="text-[11px] text-text-muted hover:text-text-primary underline ml-1 transition-colors"
+                className="text-typ-footnote text-text-muted hover:text-text-primary underline ml-1 transition-colors"
               >
                 Reset
               </button>
@@ -921,11 +921,11 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
         {/* Grouped Transactions */}
         {groupedTxns.length === 0 ? (
-          <p className="text-center text-text-muted py-8 text-sm">No transactions found.</p>
+          <p className="text-center text-text-muted py-8 text-typ-body-sm">No transactions found.</p>
         ) : (
           groupedTxns.map(group => (
             <div key={group.date} className="space-y-2.5 pt-2">
-              <div className="flex items-center justify-between text-xs text-text-muted uppercase tracking-wider px-1">
+              <div className="flex items-center justify-between text-typ-label text-text-muted uppercase tracking-wider px-1">
                 <span>{group.date}</span>
                 <span className="tabular-nums font-mono">{group.events.length} Events</span>
               </div>
@@ -942,10 +942,10 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
              {/* Pinned Modal Header */}
              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-layer1 flex-shrink-0">
                <div>
-                 <h3 className="text-base sm:text-lg font-bold text-text-primary leading-tight">
+                 <h3 className="text-typ-body sm:text-typ-subtitle font-bold text-text-primary leading-tight">
                    {editingTxnId ? 'Edit Transaction' : 'Log Transaction'}
                  </h3>
-                 <p className="text-[11px] text-text-muted mt-0.5">
+                 <p className="text-typ-footnote text-text-muted mt-0.5">
                    Record expense or income against family ledger
                  </p>
                </div>
@@ -964,27 +964,27 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4">
                  <div className="flex gap-2">
                    <div className="flex-1">
-                     <label className="block text-xs text-text-secondary mb-1">Type</label>
-                     <select value={newTxn.Type} onChange={e => setNewTxn({...newTxn, Type: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none">
+                     <label className="block text-typ-label text-text-secondary mb-1">Type</label>
+                     <select value={newTxn.Type} onChange={e => setNewTxn({...newTxn, Type: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none">
                        <option>Expense</option>
                        <option>Income</option>
                      </select>
                    </div>
                    <div className="flex-1">
-                     <label className="block text-xs text-text-secondary mb-1">Date</label>
-                     <input required value={newTxn.Date} onChange={e => setNewTxn({...newTxn, Date: e.target.value})} type="date" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none" />
+                     <label className="block text-typ-label text-text-secondary mb-1">Date</label>
+                     <input required value={newTxn.Date} onChange={e => setNewTxn({...newTxn, Date: e.target.value})} type="date" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none" />
                    </div>
                  </div>
                  <div>
-                   <label className="block text-xs text-text-secondary mb-1">Merchant / Description</label>
-                   <input required value={newTxn['Merchant/Description']} onChange={e => setNewTxn({...newTxn, 'Merchant/Description': e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Swiggy" />
+                   <label className="block text-typ-label text-text-secondary mb-1">Merchant / Description</label>
+                   <input required value={newTxn['Merchant/Description']} onChange={e => setNewTxn({...newTxn, 'Merchant/Description': e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Swiggy" />
                  </div>
                  <div>
-                   <label className="block text-xs text-text-secondary mb-1">For Whom (Beneficiary)</label>
+                   <label className="block text-typ-label text-text-secondary mb-1">For Whom (Beneficiary)</label>
                    <select 
                      value={(!newTxn.Beneficiary || newTxn.Beneficiary === 'Whole Family') ? '' : newTxn.Beneficiary} 
                      onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} 
-                     className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none"
+                     className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none"
                    >
                      <option value="">Whole Family</option>
                      {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
@@ -995,32 +995,32 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                  </div>
                  <div className="flex gap-2">
                    <div className="flex-1">
-                     <label className="block text-xs text-text-secondary mb-1">Category</label>
-                     <select value={newTxn.Category || categoriesList[0] || ''} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none">
+                     <label className="block text-typ-label text-text-secondary mb-1">Category</label>
+                     <select value={newTxn.Category || categoriesList[0] || ''} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none">
                        {categoriesList.map(cat => (
                          <option key={cat} value={cat}>{cat}</option>
                        ))}
                      </select>
                    </div>
                    <div className="flex-1">
-                     <label className="block text-xs text-text-secondary mb-1">Amount (₹)</label>
-                     <input required value={newTxn.Amount} onChange={e => setNewTxn({...newTxn, Amount: e.target.value})} type="number" step="0.01" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="1000" />
+                     <label className="block text-typ-label text-text-secondary mb-1">Amount (₹)</label>
+                     <input required value={newTxn.Amount} onChange={e => setNewTxn({...newTxn, Amount: e.target.value})} type="number" step="0.01" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="1000" />
                    </div>
                  </div>
                  <div className="flex items-center gap-2 mt-2">
                     <input type="checkbox" id="isTransfer" checked={newTxn['Is Transfer']} onChange={e => setNewTxn({...newTxn, 'Is Transfer': e.target.checked})} className="rounded bg-surface-layer2 border-border-subtle text-primary-accent focus:ring-0" />
-                    <label htmlFor="isTransfer" className="text-xs text-text-secondary">Mark as Internal Transfer</label>
+                    <label htmlFor="isTransfer" className="text-typ-label text-text-secondary">Mark as Internal Transfer</label>
                  </div>
                </div>
 
                {/* Pinned Action Footer */}
                <div className="p-4 border-t border-border-subtle bg-surface-layer1 flex-shrink-0 flex flex-col gap-2.5">
                  <div className="flex gap-3">
-                   <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-sm font-medium transition-colors">Cancel</button>
-                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+                   <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-typ-body-sm font-medium transition-colors">Cancel</button>
+                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-body-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
                  </div>
                  {editingTxnId && (
-                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5">
+                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-typ-body-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5">
                      <Trash2 size={14} />
                      <span>{isSubmitting ? 'Deleting...' : 'Delete Transaction'}</span>
                    </button>

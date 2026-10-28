@@ -87,14 +87,14 @@ export default function LoginScreen({ onLoginSuccess }) {
           <div className="w-12 h-12 bg-primary-accent/20 rounded-full flex items-center justify-center text-primary-accent mb-3">
             <Shield size={24} />
           </div>
-          <h2 className="text-xl font-bold text-center">Net Worth Manager</h2>
-          <p className="text-sm text-text-secondary text-center mt-1">
+          <h2 className="text-typ-title font-bold text-center">Net Worth Manager</h2>
+          <p className="text-typ-body-sm text-text-secondary text-center mt-1">
             {step === 'email' ? 'Sign in to access your family vault' : 'Enter the verification code sent to your email'}
           </p>
         </div>
 
         {error && (
-          <div className="bg-liability-rose/10 border border-liability-rose/30 text-liability-rose text-xs p-3 rounded-lg mb-4 text-center">
+          <div className="bg-liability-rose/10 border border-liability-rose/30 text-liability-rose text-typ-label p-3 rounded-lg mb-4 text-center">
             {error}
           </div>
         )}
@@ -102,13 +102,13 @@ export default function LoginScreen({ onLoginSuccess }) {
         {step === 'email' ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1">Email Address</label>
+              <label className="block text-typ-label font-medium text-text-secondary mb-1">Email Address</label>
               <input 
                 type="email" 
                 required 
                 value={email} 
                 onChange={e => setEmail(e.target.value)} 
-                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary text-sm focus:outline-none focus:border-primary-accent" 
+                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent" 
                 placeholder="you@family.com" 
               />
             </div>
@@ -121,14 +121,14 @@ export default function LoginScreen({ onLoginSuccess }) {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded border-border-prominent text-primary-accent focus:ring-0 focus:ring-offset-0 w-4 h-4 bg-surface-layer2"
                 />
-                <span className="text-xs text-text-secondary">Keep me signed in on this computer</span>
+                <span className="text-typ-label text-text-secondary">Keep me signed in on this computer</span>
               </label>
             )}
 
             <button 
               type="submit" 
               disabled={isLoading || !email} 
-              className="w-full py-2.5 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 transition-colors"
+              className="w-full py-2.5 bg-primary-accent text-white rounded-lg text-typ-body-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 transition-colors"
             >
               {isLoading ? 'Sending Code...' : 'Continue'}
             </button>
@@ -136,14 +136,14 @@ export default function LoginScreen({ onLoginSuccess }) {
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1">6-Digit Code</label>
+              <label className="block text-typ-label font-medium text-text-secondary mb-1">6-Digit Code</label>
               <input 
                 type="text" 
                 required 
                 maxLength={6}
                 value={otp} 
                 onChange={e => setOtp(e.target.value)} 
-                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary text-center tracking-widest text-lg font-mono focus:outline-none focus:border-primary-accent" 
+                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary text-center tracking-widest text-typ-subtitle font-mono focus:outline-none focus:border-primary-accent" 
                 placeholder="000000" 
               />
             </div>
@@ -156,21 +156,21 @@ export default function LoginScreen({ onLoginSuccess }) {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="rounded border-border-prominent text-primary-accent focus:ring-0 focus:ring-offset-0 w-4 h-4 bg-surface-layer2"
                 />
-                <span className="text-xs text-text-secondary">Keep me signed in on this computer</span>
+                <span className="text-typ-label text-text-secondary">Keep me signed in on this computer</span>
               </label>
             )}
 
             <button 
               type="submit" 
               disabled={isLoading || otp.length < 6} 
-              className="w-full py-2.5 bg-primary-accent text-white rounded-lg text-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 transition-colors"
+              className="w-full py-2.5 bg-primary-accent text-white rounded-lg text-typ-body-sm font-medium hover:bg-primary-accent/90 disabled:opacity-50 transition-colors"
             >
               {isLoading ? 'Verifying...' : 'Sign In'}
             </button>
             <button 
               type="button" 
               onClick={() => setStep('email')} 
-              className="w-full py-2 text-text-muted hover:text-text-primary text-xs transition-colors"
+              className="w-full py-2 text-text-muted hover:text-text-primary text-typ-label transition-colors"
             >
               Use a different email
             </button>
@@ -178,7 +178,7 @@ export default function LoginScreen({ onLoginSuccess }) {
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 mt-6 text-xs text-text-muted">
+      <div className="flex items-center gap-1.5 mt-6 text-typ-label text-text-muted">
         {appShell ? <Smartphone size={14} className="text-wealth-emerald" /> : <Globe size={14} className="text-primary-accent" />}
         <span>{appShell ? 'Mobile App Shell (Protected)' : 'Web Browser (Session Scoped)'}</span>
       </div>

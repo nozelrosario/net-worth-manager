@@ -117,10 +117,10 @@ export default function RetirementPlannerModal({
               <ArrowLeft size={16} />
             </button>
             <div>
-              <h1 className="text-sm md:text-base font-bold text-text-primary tracking-tight flex items-center gap-1.5">
+              <h1 className="text-typ-body-sm md:text-typ-body font-bold text-text-primary tracking-tight flex items-center gap-1.5">
                 Retirement &amp; Pension Hub
               </h1>
-              <p className="text-[10px] md:text-xs text-text-muted">EPF • NPS • PPF • Superannuation</p>
+              <p className="text-typ-caption md:text-typ-label text-text-muted">EPF • NPS • PPF • Superannuation</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export default function RetirementPlannerModal({
           {/* 2. Hero Card: Consolidated Retirement Corpus */}
           <section className="bg-gradient-to-br from-surface-layer1 via-surface-layer1 to-primary-accent/5 rounded-2xl p-4 md:p-6 border border-border-subtle relative overflow-hidden shadow-sm">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] md:text-xs font-semibold tracking-wider text-text-muted uppercase flex items-center gap-1.5">
+              <span className="text-typ-footnote md:text-typ-label font-semibold tracking-wider text-text-muted uppercase flex items-center gap-1.5">
                 <Landmark size={14} className="text-primary-accent" />
                 Consolidated Retirement Corpus
               </span>
@@ -145,28 +145,28 @@ export default function RetirementPlannerModal({
               </Badge>
             </div>
 
-            <div className="text-2xl md:text-4xl font-extrabold tracking-tight text-text-primary tabular-nums flex items-baseline gap-2">
+            <div className="text-typ-heading md:text-typ-display font-extrabold tracking-tight text-text-primary tabular-nums flex items-baseline gap-2">
               <span>{formatCurrency(retirementSummary.totalRetirementCorpus)}</span>
-              <span className="text-xs md:text-sm font-medium text-text-muted">total vault</span>
+              <span className="text-typ-label md:text-typ-body-sm font-medium text-text-muted">total vault</span>
             </div>
 
             {/* Micro Stats Grid */}
-            <div className="mt-4 pt-3.5 border-t border-border-subtle grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            <div className="mt-4 pt-3.5 border-t border-border-subtle grid grid-cols-2 sm:grid-cols-3 gap-3 text-typ-label">
               <div>
-                <div className="text-[10px] md:text-xs text-text-muted">Est. Interest This FY</div>
-                <div className="text-xs md:text-sm font-bold text-wealth-emerald tabular-nums">
+                <div className="text-typ-caption md:text-typ-label text-text-muted">Est. Interest This FY</div>
+                <div className="text-typ-label md:text-typ-body-sm font-bold text-wealth-emerald tabular-nums">
                   +{formatCurrency(retirementSummary.totalAccruedInterestFY)}
                 </div>
               </div>
               <div>
-                <div className="text-[10px] md:text-xs text-text-muted">Effective Weighted Return</div>
-                <div className="text-xs md:text-sm font-bold text-primary-accent tabular-nums">
+                <div className="text-typ-caption md:text-typ-label text-text-muted">Effective Weighted Return</div>
+                <div className="text-typ-label md:text-typ-body-sm font-bold text-primary-accent tabular-nums">
                   {retirementSummary.effectiveWeightedYield}% p.a.
                 </div>
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <div className="text-[10px] md:text-xs text-text-muted">Active Accounts</div>
-                <div className="text-xs md:text-sm font-bold text-text-primary tabular-nums">
+                <div className="text-typ-caption md:text-typ-label text-text-muted">Active Accounts</div>
+                <div className="text-typ-label md:text-typ-body-sm font-bold text-text-primary tabular-nums">
                   {retirementSummary.accountsCount} Vault Accounts
                 </div>
               </div>
@@ -174,7 +174,7 @@ export default function RetirementPlannerModal({
 
             {/* True Underlying Asset Allocation (Fixed Income vs Equity) */}
             <div className="mt-4 pt-3 border-t border-border-subtle/60">
-              <div className="flex items-center justify-between text-[11px] md:text-xs mb-1.5">
+              <div className="flex items-center justify-between text-typ-footnote md:text-typ-label mb-1.5">
                 <span className="text-text-secondary flex items-center gap-1.5 font-medium">
                   <span className="w-2.5 h-2.5 rounded-full bg-primary-accent"></span>
                   Fixed Income &amp; Sovereign Debt ({retirementSummary.underlyingAllocation.debtPct}%)
@@ -211,7 +211,7 @@ export default function RetirementPlannerModal({
                 <button
                   key={t.id}
                   onClick={() => setActiveAccountTab(t.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-typ-label font-semibold whitespace-nowrap transition-all ${
                     activeAccountTab === t.id
                       ? 'bg-primary-accent text-white shadow-sm'
                       : 'bg-surface-layer1 text-text-secondary hover:text-text-primary border border-border-subtle hover:bg-surface-layer2'
@@ -224,7 +224,7 @@ export default function RetirementPlannerModal({
 
             <button
               onClick={() => onOpenAddAsset && onOpenAddAsset('Retirement & Pension')}
-              className="px-3 py-1.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 text-primary-accent border border-primary-accent/30 text-xs font-semibold flex items-center gap-1 flex-shrink-0 active:scale-95 transition-all shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 text-primary-accent border border-primary-accent/30 text-typ-label font-semibold flex items-center gap-1 flex-shrink-0 active:scale-95 transition-all shadow-xs"
             >
               <Plus size={14} /> Add Account
             </button>
@@ -235,11 +235,11 @@ export default function RetirementPlannerModal({
             {filteredAccounts.length === 0 ? (
               <div className="bg-surface-layer1 border border-border-subtle rounded-2xl p-6 text-center text-text-secondary">
                 <Shield size={28} className="mx-auto mb-2 text-primary-accent/40" />
-                <p className="text-xs font-medium">No retirement accounts found under this filter.</p>
-                <p className="text-[11px] text-text-muted mt-1">Tap below to add an EPF, PPF or NPS account.</p>
+                <p className="text-typ-label font-medium">No retirement accounts found under this filter.</p>
+                <p className="text-typ-footnote text-text-muted mt-1">Tap below to add an EPF, PPF or NPS account.</p>
                 <button
                   onClick={() => onOpenAddAsset && onOpenAddAsset('Retirement & Pension')}
-                  className="mt-3 px-4 py-2 bg-primary-accent text-white rounded-xl text-xs font-semibold"
+                  className="mt-3 px-4 py-2 bg-primary-accent text-white rounded-xl text-typ-label font-semibold"
                 >
                   Add Retirement Account
                 </button>
@@ -264,12 +264,12 @@ export default function RetirementPlannerModal({
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-xs md:text-sm font-bold text-text-primary">{acc.name}</h3>
-                          <span className="text-[9px] font-semibold bg-surface-layer2 text-text-secondary px-1.5 py-0.5 rounded border border-border-subtle">
+                          <h3 className="text-typ-label md:text-typ-body-sm font-bold text-text-primary">{acc.name}</h3>
+                          <span className="text-typ-micro font-semibold bg-surface-layer2 text-text-secondary px-1.5 py-0.5 rounded border border-border-subtle">
                             {acc.subType}
                           </span>
                         </div>
-                        <div className="text-[10px] md:text-xs text-text-muted flex items-center gap-1 mt-0.5">
+                        <div className="text-typ-caption md:text-typ-label text-text-muted flex items-center gap-1 mt-0.5">
                           <span>{acc.institution}</span>
                           {acc.identifier && acc.identifier !== '—' && (
                             <>
@@ -289,7 +289,7 @@ export default function RetirementPlannerModal({
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <div className="text-xs md:text-sm font-bold text-text-primary tabular-nums">
+                      <div className="text-typ-label md:text-typ-body-sm font-bold text-text-primary tabular-nums">
                         {formatCurrency(acc.currentValue)}
                       </div>
                       <div className="mt-0.5">
@@ -305,19 +305,19 @@ export default function RetirementPlannerModal({
                     <div className="mt-3 pt-2.5 border-t border-border-subtle space-y-2">
                       <div className="grid grid-cols-3 gap-2 bg-surface-layer2/60 rounded-xl p-2 border border-border-subtle/50 text-center">
                         <div>
-                          <div className="text-[9px] md:text-[10px] text-text-muted">Employee Share</div>
-                          <div className="text-[11px] md:text-xs font-semibold text-text-primary tabular-nums">{formatCurrency(acc.empShare)}</div>
+                          <div className="text-typ-micro md:text-typ-caption text-text-muted">Employee Share</div>
+                          <div className="text-typ-footnote md:text-typ-label font-semibold text-text-primary tabular-nums">{formatCurrency(acc.empShare)}</div>
                         </div>
                         <div>
-                          <div className="text-[9px] md:text-[10px] text-text-muted">Employer Share</div>
-                          <div className="text-[11px] md:text-xs font-semibold text-text-primary tabular-nums">{formatCurrency(acc.emprShare)}</div>
+                          <div className="text-typ-micro md:text-typ-caption text-text-muted">Employer Share</div>
+                          <div className="text-typ-footnote md:text-typ-label font-semibold text-text-primary tabular-nums">{formatCurrency(acc.emprShare)}</div>
                         </div>
                         <div>
-                          <div className="text-[9px] md:text-[10px] text-text-muted">Pension (EPS)</div>
-                          <div className="text-[11px] md:text-xs font-semibold text-text-primary tabular-nums">{formatCurrency(acc.epsShare)}</div>
+                          <div className="text-typ-micro md:text-typ-caption text-text-muted">Pension (EPS)</div>
+                          <div className="text-typ-footnote md:text-typ-label font-semibold text-text-primary tabular-nums">{formatCurrency(acc.epsShare)}</div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-[10px] md:text-xs text-text-muted">
+                      <div className="flex items-center justify-between text-typ-caption md:text-typ-label text-text-muted">
                         <span>Monthly Recurring: <strong className="text-text-primary">+{formatCurrency(acc.monthlyInflow)}/mo</strong></span>
                         {acc.isTaxableRule9D ? (
                           <span className="text-liability-rose flex items-center gap-0.5 font-medium">
@@ -335,7 +335,7 @@ export default function RetirementPlannerModal({
                   {acc.subType.includes('NPS') && (
                     <div className="mt-3 pt-2.5 border-t border-border-subtle space-y-2">
                       <div>
-                        <div className="flex items-center justify-between text-[10px] md:text-xs text-text-muted mb-1">
+                        <div className="flex items-center justify-between text-typ-caption md:text-typ-label text-text-muted mb-1">
                           <span>Asset Allocation: {acc.choice}</span>
                           <span className="font-mono text-text-secondary">
                             E: {acc.allocations?.e}% | C: {acc.allocations?.c}% | G: {acc.allocations?.g}%
@@ -347,7 +347,7 @@ export default function RetirementPlannerModal({
                           <div className="h-full bg-bullion-amber" style={{ width: `${acc.allocations?.g || 15}%` }} title={`Govt Securities: ${acc.allocations?.g}%`} />
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-[10px] md:text-xs text-text-muted">
+                      <div className="flex items-center justify-between text-typ-caption md:text-typ-label text-text-muted">
                         <span>Monthly SIP: <strong className="text-text-primary">+{formatCurrency(acc.monthlyInflow)}/mo</strong></span>
                         {acc.isTier1 && (
                           <span className="text-primary-accent flex items-center gap-0.5 font-medium">
@@ -360,7 +360,7 @@ export default function RetirementPlannerModal({
 
                   {acc.subType.includes('PPF') && (
                     <div className="mt-3 pt-2.5 border-t border-border-subtle space-y-2">
-                      <div className="flex items-center justify-between text-[10px] md:text-xs text-text-muted bg-surface-layer2/60 rounded-xl px-2.5 py-1.5 border border-border-subtle/50">
+                      <div className="flex items-center justify-between text-typ-caption md:text-typ-label text-text-muted bg-surface-layer2/60 rounded-xl px-2.5 py-1.5 border border-border-subtle/50">
                         <span>FY Deposit: <strong className="text-text-primary">{formatCurrency(acc.fyDeposit)} / ₹1.5L</strong></span>
                         <span className="font-medium text-text-secondary">
                           {acc.yearsRemaining > 0 ? `${acc.yearsRemaining}y left (${acc.extensionBlock})` : 'Matured'}
@@ -382,8 +382,8 @@ export default function RetirementPlannerModal({
                   <Sliders size={18} />
                 </div>
                 <div>
-                  <h3 className="text-xs md:text-sm font-bold text-text-primary">Age 60 Retirement &amp; Pension Forecaster</h3>
-                  <p className="text-[10px] md:text-xs text-text-muted">Deterministic compound accumulation with step-up</p>
+                  <h3 className="text-typ-label md:text-typ-body-sm font-bold text-text-primary">Age 60 Retirement &amp; Pension Forecaster</h3>
+                  <p className="text-typ-caption md:text-typ-label text-text-muted">Deterministic compound accumulation with step-up</p>
                 </div>
               </div>
               <Badge variant="indigo" size="xs">
@@ -394,48 +394,48 @@ export default function RetirementPlannerModal({
             {/* Projected Metric Big Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
               <div className="bg-surface-layer2/80 rounded-xl p-3.5 border border-border-subtle">
-                <div className="text-[10px] md:text-xs text-text-muted">Projected Nominal Corpus at Age {retirementAge}</div>
-                <div className="text-xl md:text-2xl font-extrabold text-wealth-emerald tabular-nums mt-0.5">
+                <div className="text-typ-caption md:text-typ-label text-text-muted">Projected Nominal Corpus at Age {retirementAge}</div>
+                <div className="text-typ-title md:text-typ-heading font-extrabold text-wealth-emerald tabular-nums mt-0.5">
                   {formatCurrency(projection.finalCorpus)}
                 </div>
-                <div className="text-[10px] text-text-secondary mt-1">
+                <div className="text-typ-caption text-text-secondary mt-1">
                   Deposited: {formatCurrency(projection.totalDeposited)} • Gains: +{formatCurrency(projection.totalGrowthInterest)}
                 </div>
               </div>
 
               <div className="bg-surface-layer2/80 rounded-xl p-3.5 border border-border-subtle">
-                <div className="text-[10px] md:text-xs text-text-muted">Projected Monthly Lifetime Pension</div>
-                <div className="text-xl md:text-2xl font-extrabold text-primary-accent tabular-nums mt-0.5">
-                  {formatCurrency(projection.projectedMonthlyPension)}<span className="text-xs text-text-muted font-normal">/mo</span>
+                <div className="text-typ-caption md:text-typ-label text-text-muted">Projected Monthly Lifetime Pension</div>
+                <div className="text-typ-title md:text-typ-heading font-extrabold text-primary-accent tabular-nums mt-0.5">
+                  {formatCurrency(projection.projectedMonthlyPension)}<span className="text-typ-label text-text-muted font-normal">/mo</span>
                 </div>
-                <div className="text-[10px] text-text-secondary mt-1">
+                <div className="text-typ-caption text-text-secondary mt-1">
                   At {RETIREMENT_RATES.ANNUITY_RATE_DEFAULT}% lifelong annuity rate
                 </div>
               </div>
             </div>
 
             {/* 60/40 PFRDA Rule Split Box */}
-            <div className="bg-background-root/80 rounded-xl p-3 border border-border-subtle grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-background-root/80 rounded-xl p-3 border border-border-subtle grid grid-cols-2 gap-3 text-typ-label">
               <div>
-                <div className="text-[10px] md:text-xs text-text-muted">60% Tax-Free Lump Sum</div>
-                <div className="text-xs md:text-sm font-bold text-text-primary tabular-nums mt-0.5">
+                <div className="text-typ-caption md:text-typ-label text-text-muted">60% Tax-Free Lump Sum</div>
+                <div className="text-typ-label md:text-typ-body-sm font-bold text-text-primary tabular-nums mt-0.5">
                   {formatCurrency(projection.lumpSumAmount)}
                 </div>
-                <div className="text-[9px] text-text-muted">Immediate cash withdrawal</div>
+                <div className="text-typ-micro text-text-muted">Immediate cash withdrawal</div>
               </div>
               <div className="border-l border-border-subtle pl-3">
-                <div className="text-[10px] md:text-xs text-text-muted">40% Mandatory Annuity Corpus</div>
-                <div className="text-xs md:text-sm font-bold text-text-primary tabular-nums mt-0.5">
+                <div className="text-typ-caption md:text-typ-label text-text-muted">40% Mandatory Annuity Corpus</div>
+                <div className="text-typ-label md:text-typ-body-sm font-bold text-text-primary tabular-nums mt-0.5">
                   {formatCurrency(projection.annuityCorpus)}
                 </div>
-                <div className="text-[9px] text-text-muted">Deploys to LIC / HDFC Life</div>
+                <div className="text-typ-micro text-text-muted">Deploys to LIC / HDFC Life</div>
               </div>
             </div>
 
             {/* Interactive Sliders */}
             <div className="flex flex-col gap-3 pt-2">
               <div>
-                <div className="flex justify-between text-[11px] md:text-xs text-text-secondary mb-1">
+                <div className="flex justify-between text-typ-footnote md:text-typ-label text-text-secondary mb-1">
                   <span>Target Retirement Age:</span>
                   <span className="font-bold text-text-primary font-mono">{retirementAge} Years ({projection.yearsToRetire}y away)</span>
                 </div>
@@ -451,7 +451,7 @@ export default function RetirementPlannerModal({
               </div>
 
               <div>
-                <div className="flex justify-between text-[11px] md:text-xs text-text-secondary mb-1">
+                <div className="flex justify-between text-typ-footnote md:text-typ-label text-text-secondary mb-1">
                   <span>Annual Step-up Inflow Escalation:</span>
                   <span className="font-bold text-wealth-emerald font-mono">+{stepUpPct}% / year</span>
                 </div>
@@ -467,7 +467,7 @@ export default function RetirementPlannerModal({
               </div>
             </div>
 
-            <div className="text-[10px] md:text-xs text-text-muted bg-surface-layer2/50 p-2.5 rounded-lg border border-border-subtle flex items-center justify-between">
+            <div className="text-typ-caption md:text-typ-label text-text-muted bg-surface-layer2/50 p-2.5 rounded-lg border border-border-subtle flex items-center justify-between">
               <span>Inflation-adjusted real buying power (5.5% inflation):</span>
               <strong className="text-text-primary font-mono">{formatCurrency(projection.realMonthlyPension)}/mo in today's money</strong>
             </div>
@@ -481,8 +481,8 @@ export default function RetirementPlannerModal({
                   <Shield size={18} />
                 </div>
                 <div>
-                  <h3 className="text-xs md:text-sm font-bold text-text-primary">Tax Exemption &amp; Perk Audit (FY 2024-25)</h3>
-                  <p className="text-[10px] md:text-xs text-text-muted">Indian Income Tax Act Deductions</p>
+                  <h3 className="text-typ-label md:text-typ-body-sm font-bold text-text-primary">Tax Exemption &amp; Perk Audit (FY 2024-25)</h3>
+                  <p className="text-typ-caption md:text-typ-label text-text-muted">Indian Income Tax Act Deductions</p>
                 </div>
               </div>
               <Badge variant="emerald" dot size="xs">
@@ -493,7 +493,7 @@ export default function RetirementPlannerModal({
             <div className="space-y-3 pt-1">
               {/* Section 80C */}
               <div>
-                <div className="flex justify-between text-[11px] md:text-xs mb-1">
+                <div className="flex justify-between text-typ-footnote md:text-typ-label mb-1">
                   <span className="text-text-secondary">Sec 80C (EPF Employee Share + PPF)</span>
                   <span className={`font-mono font-bold ${taxAudit.sec80C.isMaxed ? 'text-wealth-emerald' : 'text-text-primary'}`}>
                     {formatCurrency(taxAudit.sec80C.claimed)} / ₹1,50,000 {taxAudit.sec80C.isMaxed ? '(Maxed)' : ''}
@@ -509,7 +509,7 @@ export default function RetirementPlannerModal({
 
               {/* Section 80CCD(1B) */}
               <div>
-                <div className="flex justify-between text-[11px] md:text-xs mb-1">
+                <div className="flex justify-between text-typ-footnote md:text-typ-label mb-1">
                   <span className="text-text-secondary">Sec 80CCD(1B) (Exclusive NPS Tier 1 Self)</span>
                   <span className={`font-mono font-bold ${taxAudit.sec80CCD1B.isMaxed ? 'text-wealth-emerald' : 'text-text-primary'}`}>
                     {formatCurrency(taxAudit.sec80CCD1B.claimed)} / ₹50,000 {taxAudit.sec80CCD1B.isMaxed ? '(Maxed)' : ''}
@@ -525,7 +525,7 @@ export default function RetirementPlannerModal({
 
               {/* Section 80CCD(2) */}
               <div>
-                <div className="flex justify-between text-[11px] md:text-xs mb-1">
+                <div className="flex justify-between text-typ-footnote md:text-typ-label mb-1">
                   <span className="text-text-secondary">Sec 80CCD(2) (Corporate Employer NPS Perk)</span>
                   <span className="font-mono font-bold text-primary-accent">
                     {formatCurrency(taxAudit.sec80CCD2.claimed)} / year (0 cap under 80C)
@@ -540,7 +540,7 @@ export default function RetirementPlannerModal({
               </div>
             </div>
 
-            <div className="text-[10px] md:text-xs text-text-muted mt-1">
+            <div className="text-typ-caption md:text-typ-label text-text-muted mt-1">
               *Calculated based on 30% tax bracket + 4% Health &amp; Education Cess (31.2% marginal tax rate).
             </div>
           </section>
@@ -552,8 +552,8 @@ export default function RetirementPlannerModal({
                 <FolderLock size={18} />
               </div>
               <div>
-                <div className="text-xs font-semibold text-text-primary">Family Safe Vault Documents</div>
-                <div className="text-[10px] text-text-muted">EPFO Passbooks, PRAN Cards &amp; PPF Scans</div>
+                <div className="text-typ-label font-semibold text-text-primary">Family Safe Vault Documents</div>
+                <div className="text-typ-caption text-text-muted">EPFO Passbooks, PRAN Cards &amp; PPF Scans</div>
               </div>
             </div>
             <button
@@ -561,7 +561,7 @@ export default function RetirementPlannerModal({
                 onClose();
                 // User will be able to navigate to SafeTab
               }}
-              className="px-3 py-1.5 rounded-lg bg-surface-layer2 hover:bg-surface-layer2/80 text-text-primary text-[11px] font-medium border border-border-prominent transition-all shadow-xs"
+              className="px-3 py-1.5 rounded-lg bg-surface-layer2 hover:bg-surface-layer2/80 text-text-primary text-typ-footnote font-medium border border-border-prominent transition-all shadow-xs"
             >
               Open Safe
             </button>
@@ -573,7 +573,7 @@ export default function RetirementPlannerModal({
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] md:max-w-2xl lg:max-w-4xl bg-surface-layer1/95 md:bg-surface-layer1/90 backdrop-blur-xl border-t border-border-subtle p-3.5 z-50 flex items-center gap-2.5">
           <button
             onClick={() => onOpenAddAsset && onOpenAddAsset('Retirement & Pension')}
-            className="flex-1 py-3 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 active:scale-98 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/20 transition-all"
+            className="flex-1 py-3 px-4 rounded-xl bg-primary-accent hover:bg-primary-accent/90 active:scale-98 text-white font-semibold text-typ-label flex items-center justify-center gap-1.5 shadow-lg shadow-primary-accent/20 transition-all"
             type="button"
           >
             <Plus size={16} />
@@ -581,7 +581,7 @@ export default function RetirementPlannerModal({
           </button>
           <button
             onClick={handleCopySummary}
-            className="py-3 px-3.5 rounded-xl bg-surface-layer2 hover:bg-surface-layer1 border border-border-prominent active:scale-98 text-text-primary font-medium text-xs flex items-center justify-center transition-all shadow-xs"
+            className="py-3 px-3.5 rounded-xl bg-surface-layer2 hover:bg-surface-layer1 border border-border-prominent active:scale-98 text-text-primary font-medium text-typ-label flex items-center justify-center transition-all shadow-xs"
             title="Copy Blueprint"
             type="button"
           >
