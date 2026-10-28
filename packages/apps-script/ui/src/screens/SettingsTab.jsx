@@ -320,7 +320,7 @@ export default function SettingsTab({
               <div>
                 <p className="text-typ-label font-semibold text-text-primary">Typography Density</p>
                 <p className="text-typ-caption text-text-muted">
-                  {textMode === 'compact' ? 'Condensed — smallest font, maximum text density' : textMode === 'comfortable' ? 'Comfortable — large font, relaxed readability' : 'Standard — balanced font size and visibility'}
+                  {textMode === 'compact' ? 'Compact — balanced text density' : textMode === 'comfortable' ? 'Comfortable — large accessible typography' : 'Standard — spacious readable typography'}
                 </p>
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function SettingsTab({
                 }`}
               >
                 <span>Compact</span>
-                <span className="text-typ-micro opacity-75 font-normal">Max Text</span>
+                <span className="text-typ-micro opacity-75 font-normal">Balanced</span>
               </button>
               <button
                 type="button"
@@ -347,7 +347,7 @@ export default function SettingsTab({
                 }`}
               >
                 <span>Standard</span>
-                <span className="text-typ-micro opacity-75 font-normal">Default</span>
+                <span className="text-typ-micro opacity-75 font-normal">Spacious</span>
               </button>
               <button
                 type="button"
@@ -359,7 +359,7 @@ export default function SettingsTab({
                 }`}
               >
                 <span>Comfortable</span>
-                <span className="text-typ-micro opacity-75 font-normal">Readable</span>
+                <span className="text-typ-micro opacity-75 font-normal">Large Text</span>
               </button>
             </div>
           </div>

@@ -524,7 +524,7 @@ export default function App() {
                     <span className="font-medium text-typ-label sm:text-typ-body-sm">Typography Scale</span>
                   </div>
                   <span className="text-typ-caption text-text-muted font-medium">
-                    {textMode === 'compact' ? 'Condensed (Small)' : textMode === 'comfortable' ? 'Comfortable (Large)' : 'Standard (Balanced)'}
+                    {textMode === 'compact' ? 'Compact (Balanced)' : textMode === 'comfortable' ? 'Comfortable (Large)' : 'Standard (Spacious)'}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-1 bg-surface-layer1 p-1 rounded-lg border border-border-subtle">
@@ -538,7 +538,7 @@ export default function App() {
                     }`}
                   >
                     <span>Compact</span>
-                    <span className="text-typ-micro opacity-75 font-normal">Max Text</span>
+                    <span className="text-typ-micro opacity-75 font-normal">Balanced</span>
                   </button>
                   <button
                     type="button"
@@ -550,7 +550,7 @@ export default function App() {
                     }`}
                   >
                     <span>Standard</span>
-                    <span className="text-typ-micro opacity-75 font-normal">Default</span>
+                    <span className="text-typ-micro opacity-75 font-normal">Spacious</span>
                   </button>
                   <button
                     type="button"
@@ -562,7 +562,7 @@ export default function App() {
                     }`}
                   >
                     <span>Comfort</span>
-                    <span className="text-typ-micro opacity-75 font-normal">Readable</span>
+                    <span className="text-typ-micro opacity-75 font-normal">Large Text</span>
                   </button>
                 </div>
               </div>
