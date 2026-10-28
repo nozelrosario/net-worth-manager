@@ -4,7 +4,7 @@ import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
 
-export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer, onOpenRetirementPlanner }) {
+export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecurityModal, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
   const [memberName, setMemberName] = useState('');
@@ -380,6 +380,17 @@ export default function SettingsTab({ data, onRefresh, showMessage, onOpenSecuri
            >
              <Landmark size={14} className="text-sky-400" />
              <span>Retirement &amp; Pension Hub (EPF, PPF &amp; NPS)</span>
+           </button>
+         )}
+
+         {onOpenInsuranceHub && (
+           <button
+             type="button"
+             onClick={onOpenInsuranceHub}
+             className="w-full py-2.5 px-4 rounded-xl bg-surface-layer2 hover:bg-surface-layer2/80 border border-border-subtle hover:border-emerald-500/40 text-text-primary text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] mt-2"
+           >
+             <Shield size={14} className="text-emerald-400" />
+             <span>Insurance &amp; Protection Hub (LIC, Term &amp; Health)</span>
            </button>
          )}
       </section>

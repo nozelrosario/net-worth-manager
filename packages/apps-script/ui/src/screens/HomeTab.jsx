@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight, Landmark } from 'lucide-react';
+import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight, Landmark, HeartPulse } from 'lucide-react';
 import { calculatePortfolioAlignment, RISK_PROFILES } from '../utils/portfolioMath';
 import { Badge } from '../components/Badge';
+import { calculateConsolidatedInsurance, formatInLakhsOrCrores } from '../utils/insuranceMath';
 
-export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpenRetirementPlanner }) {
+export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
   const assets = data?.assets || [];
   const settings = data?.settings || [];
 
@@ -21,6 +22,10 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
   const alignment = useMemo(() => {
     return calculatePortfolioAlignment(assets, targetMap);
   }, [assets, targetMap]);
+
+  const insuranceData = useMemo(() => {
+    return calculateConsolidatedInsurance(assets);
+  }, [assets]);
   
   const equity = assets.filter(a => a.Category === 'Equity').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const mf = assets.filter(a => a.Category === 'Mutual Funds').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
@@ -155,6 +160,54 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
             </div>
             <Badge variant="emerald" dot size="xs">
               EEE Tax-Shielded
+            </Badge>
+          </div>
+        </div>
+      )}
+
+      {/* Insurance & Protection Hub Banner */}
+      {onOpenInsuranceHub && (
+        <div 
+          onClick={onOpenInsuranceHub}
+          className="bg-surface-layer1 border border-border-subtle hover:border-emerald-500/40 rounded-xl p-4 shadow-sm relative overflow-hidden cursor-pointer transition-all active:scale-[0.99] group"
+        >
+          <div className="flex items-center justify-between mb-2 gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 border border-emerald-500/25 shadow-sm shrink-0">
+                <Shield size={16} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs font-semibold text-text-primary group-hover:text-emerald-400 transition-colors truncate">
+                    Insurance &amp; Protection Hub
+                  </h3>
+                  <Badge variant="emerald" dot size="xs">
+                    {insuranceData.hlv.coverageRatio}% HLV Shielded
+                  </Badge>
+                </div>
+                <p className="text-[10px] text-text-muted truncate">LIC endowment, term life, health floater &amp; premium tracker</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 shrink-0">
+              <span className="hidden sm:inline">View Hub</span>
+              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-text-secondary text-[11px]">Total Life Cover:</span>
+              <span className="font-bold text-emerald-400 tabular-nums">₹{formatInLakhsOrCrores(insuranceData.totalLifeCover)}</span>
+              {insuranceData.totalHealthCover > 0 && (
+                <>
+                  <span className="text-text-muted text-[10px]">•</span>
+                  <span className="text-text-secondary text-[11px]">Health:</span>
+                  <span className="font-bold text-cyan-400 tabular-nums">₹{formatInLakhsOrCrores(insuranceData.totalHealthCover)}</span>
+                </>
+              )}
+            </div>
+            <Badge variant="emerald" dot size="xs">
+              Sec 80C &amp; 80D
             </Badge>
           </div>
         </div>
