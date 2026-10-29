@@ -25,6 +25,12 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Bug Fix Update - Spends Modal Delete & Save Button State Decoupling (Issue #41)
+✅ **Independent Submission States (`SpendsTab.jsx`)**:
+  - Decoupled single `isSubmitting` boolean state into separate `isSaving` and `isDeleting` states.
+  - Resolved erroneous button labeling where the Delete button changed to `"Deleting..."` while saving a transaction.
+  - Ensured both action buttons and the Cancel button remain properly disabled during active in-flight requests (`isSaving || isDeleting`) while displaying accurate contextual action labels.
+
 ## Feature Update (v3.5) - Multi-Member Spend Tagging & Equal Split Analytics (Issue #42)
 ✅ **Multi-Member Beneficiary Tagging**:
   - Interactive multi-select pill interface in Spends Tab (`SpendsTab.jsx`) replacing single `<select>` dropdown.
