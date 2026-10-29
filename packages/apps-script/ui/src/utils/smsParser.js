@@ -368,7 +368,7 @@ export function guessCategory(payee = '', body = '', bank = '') {
 
   // Dining & Restaurants
   if (p.includes('BAGESHREE') || p.includes('HOTEL') || p.includes('RESTAURANT') || p.includes('CAFE') || p.includes('SWIGGY') || p.includes('ZOMATO') || bank.includes('Sodexo')) {
-    return 'Dining & Food';
+    return 'Dining';
   }
 
   // Shopping & Retail
@@ -378,7 +378,7 @@ export function guessCategory(payee = '', body = '', bank = '') {
 
   // Travel & Transport
   if (p.includes('RAILWAY') || p.includes('RWALLET') || p.includes('UBER') || p.includes('OLA') || p.includes('RAPIDO') || p.includes('PETROL') || p.includes('FUEL')) {
-    return 'Travel & Fuel';
+    return 'Travel';
   }
 
   // Healthcare & Medicine

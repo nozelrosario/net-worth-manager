@@ -48,6 +48,27 @@ export default function SmsInboxModal({
     }
   }, [settings]);
 
+  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Insurance, Investment / Insurance, General Expense, Other';
+
+  const customCategoriesStr = useMemo(() => {
+    const s = settings.find(item => item['Setting Key'] === 'SpendCategories');
+    return s && s['Setting Value'] ? s['Setting Value'] : defaultCategories;
+  }, [settings]);
+
+  const expenseCategories = useMemo(() => {
+    let list = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
+    if (!list.includes('Internal Transfer')) {
+      list.push('Internal Transfer');
+    }
+    if (!list.includes('Investment / Insurance')) {
+      list.push('Investment / Insurance');
+    }
+    if (!list.includes('General Expense')) {
+      list.splice(Math.max(0, list.length - 2), 0, 'General Expense');
+    }
+    return list;
+  }, [customCategoriesStr]);
+
   // Component state
   const [candidates, setCandidates] = useState([]);
   const [ignoredHashes, setIgnoredHashes] = useState([]);
@@ -1113,7 +1134,7 @@ export default function SmsInboxModal({
                               updateCandidate(item.id, {
                                 type: 'Spend',
                                 isTransfer: false,
-                                category: item.category === 'Internal Transfer' ? 'General Expense' : item.category
+                                category: item.category === 'Internal Transfer' ? (expenseCategories[0] || 'Other') : item.category
                               })
                             }
                             className={`flex-1 py-1 rounded-md transition-all ${
@@ -1193,15 +1214,17 @@ export default function SmsInboxModal({
                             onChange={(e) => updateCandidate(item.id, { category: e.target.value })}
                             className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
                           >
-                            <option value="Groceries">Groceries</option>
-                            <option value="Dining & Food">Dining & Food</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Utilities">Utilities & Bills</option>
-                            <option value="Travel & Fuel">Travel & Fuel</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="Internal Transfer">Internal Transfer</option>
-                            <option value="Investment / Insurance">Investment / Insurance</option>
-                            <option value="General Expense">General Expense</option>
+                            {/* If current candidate category is not yet in expenseCategories (e.g. from SMS parser), preserve it as an option */}
+                            {item.category && !expenseCategories.includes(item.category) && (
+                              <option key={item.category} value={item.category}>
+                                {item.category}
+                              </option>
+                            )}
+                            {expenseCategories.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
                           </select>
                         </div>
 

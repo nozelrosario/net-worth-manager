@@ -156,7 +156,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   };
 
-  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Insurance, Investment / Insurance, Other';
+  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Insurance, Investment / Insurance, General Expense, Other';
   const customCategoriesStr = data?.settings?.find(s => s['Setting Key'] === 'SpendCategories')?.['Setting Value'] || defaultCategories;
   let categoriesList = customCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
   if (!categoriesList.includes('Insurance')) {
@@ -164,6 +164,9 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   }
   if (!categoriesList.includes('Investment / Insurance')) {
     categoriesList.splice(categoriesList.length - 1, 0, 'Investment / Insurance');
+  }
+  if (!categoriesList.includes('General Expense')) {
+    categoriesList.splice(Math.max(0, categoriesList.length - 1), 0, 'General Expense');
   }
   const filters = ['All Records', ...categoriesList];
 
@@ -1112,6 +1115,9 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                    <div className="flex-1">
                      <label className="block text-typ-label text-text-secondary mb-1">Category</label>
                      <select value={newTxn.Category || categoriesList[0] || ''} onChange={e => setNewTxn({...newTxn, Category: e.target.value})} className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none">
+                       {newTxn.Category && !categoriesList.includes(newTxn.Category) && (
+                         <option key={newTxn.Category} value={newTxn.Category}>{newTxn.Category}</option>
+                       )}
                        {categoriesList.map(cat => (
                          <option key={cat} value={cat}>{cat}</option>
                        ))}
