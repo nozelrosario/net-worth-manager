@@ -799,3 +799,29 @@ export function deduplicateAndClassify(
     }
   };
 }
+
+/**
+ * Evaluates whether an SMS candidate matches a free-text search query.
+ * Supports case-insensitive substring matching and space-separated multi-token queries
+ * across merchant/payee, raw SMS body, preview snippet, bank, account, digits,
+ * reference number, category, type, beneficiary, address, date, and amount.
+ *
+ * @param {Object} item Candidate SMS record
+ * @param {string} query Search input string
+ * @returns {boolean} True if the candidate matches all search tokens
+ */
+export function matchesSmsTextSearch(item, query = '') {
+  if (!query || typeof query !== 'string') return true;
+  const cleanQuery = query.trim().toLowerCase();
+  if (!cleanQuery) return true;
+
+  // Split query terms by whitespace while stripping common currency symbols and commas
+  const terms = cleanQuery.replace(/[₹,]/g, ' ').split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return true;
+
+  const itemAmountStr = item.amount !== undefined ? `${item.amount} ${Math.round(item.amount)}` : '';
+  const targetStr = `${item.payee || ''} ${item.body || ''} ${item.previewSnippet || ''} ${item.category || ''} ${item.bank || ''} ${item.account || ''} ${item.accountDigits || ''} ${item.refNo || ''} ${item.beneficiary || ''} ${item.address || ''} ${item.type || ''} ${itemAmountStr} ${item.dateStr || ''}`.toLowerCase();
+
+  return terms.every(term => targetStr.includes(term));
+}
+
