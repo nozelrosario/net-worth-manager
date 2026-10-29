@@ -25,6 +25,18 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.5) - Multi-Member Spend Tagging & Equal Split Analytics (Issue #42)
+✅ **Multi-Member Beneficiary Tagging**:
+  - Interactive multi-select pill interface in Spends Tab (`SpendsTab.jsx`) replacing single `<select>` dropdown.
+  - Multi-member chip toggle selector in SMS Review Ingest card details (`SmsInboxModal.jsx`).
+  - Backward-compatible comma-separated storage (`"Nozel, Maria"`) in Google Sheets `Beneficiary` column with zero schema changes required.
+  - Automatic fallback to `"Whole Family"` when all members or no members are selected.
+✅ **Equal-Split Analytics Math (`breakdownData`)**:
+  - Spending amounts split equally across all tagged members ($A / N$), ensuring $\sum \text{Split} \equiv \text{Total Spend}$ without inflating or deflating totals.
+✅ **Multi-Beneficiary Filter Matching (`filteredTxns`)**:
+  - Filtering by individual family member matches both single-beneficiary and multi-tagged transactions where the member is included.
+  - "Whole Family" filter correctly isolates household-wide unassigned spends.
+
 ## Feature Update (v3.3) - Comprehensive Insurance & Policy Hub (Issue #33)
 ✅ **Dedicated Insurance Financial Math Engine (`insuranceMath.js`)**:
   - **Balance Sheet vs Cashflow Separation**: Distinct handling of investment-backed policies (LIC endowment, money back, ULIPs) vs pure defensive shields (Term Life, Health, Motor).

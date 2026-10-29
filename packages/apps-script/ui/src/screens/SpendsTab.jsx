@@ -67,6 +67,13 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   const [selectedSegment, setSelectedSegment] = useState('beneficiary'); // 'beneficiary' | 'category' | 'account'
   const [beneficiaryFilter, setBeneficiaryFilter] = useState('');
 
+  // Parse comma-separated Beneficiary string from newTxn into an array
+  const selectedBeneficiaries = useMemo(() => {
+    const raw = String(newTxn.Beneficiary || '').trim();
+    if (!raw || raw.toLowerCase() === 'whole family') return [];
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  }, [newTxn.Beneficiary]);
+
   const txns = data?.transactions || [];
   const profiles = data?.familyProfiles || [];
 
@@ -74,11 +81,38 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     if (!dateVal) return null;
     const str = String(dateVal).trim();
     if (/^\d{4}-\d{2}/.test(str)) return str.slice(0, 7);
+    const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmyMatch) return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}`;
     const d = new Date(dateVal);
     if (!isNaN(d.getTime())) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
     return null;
+  };
+
+  const handleImportSuccess = (importedList) => {
+    if (!importedList || importedList.length === 0) return;
+    const firstDate = importedList[0]?.Date;
+    const targetMonth = getMonthKeyFromDate(firstDate);
+    if (targetMonth) {
+      setSelectedMonth(targetMonth);
+    } else {
+      setSelectedMonth('ALL');
+    }
+    // Optimistically update txns in data so the entry appears immediately
+    if (data) {
+      if (!data.transactions) data.transactions = [];
+      importedList.forEach(item => {
+        if (!data.transactions.some(t => t['Txn ID'] === item['Txn ID'])) {
+          data.transactions.unshift(item);
+        }
+      });
+    }
+    // Reset filters that could hide the imported transaction
+    setSearchQuery('');
+    setFilterType('All Records');
+    setBeneficiaryFilter('');
+    setShowSmsInbox(false);
   };
 
   const availableMonths = useMemo(() => {
@@ -357,8 +391,20 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         if (selectedMonth === 'ALL' || k === selectedMonth) {
           const amt = Number(t.Amount || 0);
 
-          const ben = String(t.Beneficiary || '').trim() || 'Whole Family';
-          beneficiaryMap[ben] = (beneficiaryMap[ben] || 0) + amt;
+          const rawBen = String(t.Beneficiary || '').trim();
+          if (!rawBen || rawBen.toLowerCase() === 'whole family') {
+            beneficiaryMap['Whole Family'] = (beneficiaryMap['Whole Family'] || 0) + amt;
+          } else {
+            const bens = rawBen.split(',').map(b => b.trim()).filter(Boolean);
+            if (bens.length === 0) {
+              beneficiaryMap['Whole Family'] = (beneficiaryMap['Whole Family'] || 0) + amt;
+            } else {
+              const splitAmt = amt / bens.length;
+              bens.forEach(b => {
+                beneficiaryMap[b] = (beneficiaryMap[b] || 0) + splitAmt;
+              });
+            }
+          }
 
           const cat = String(t.Category || 'Other').trim();
           categoryMap[cat] = (categoryMap[cat] || 0) + amt;
@@ -395,10 +441,15 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         if (k !== selectedMonth) return false;
       }
 
-      // Beneficiary filter
+      // Beneficiary filter (supports multiple comma-separated tagged members)
       if (beneficiaryFilter) {
-        const ben = String(txn.Beneficiary || '').trim() || 'Whole Family';
-        if (ben !== beneficiaryFilter) return false;
+        const rawBen = String(txn.Beneficiary || '').trim();
+        const bens = rawBen ? rawBen.split(',').map(b => b.trim()).filter(Boolean) : [];
+        if (beneficiaryFilter === 'Whole Family') {
+          if (bens.length > 0 && !bens.includes('Whole Family')) return false;
+        } else {
+          if (!bens.includes(beneficiaryFilter)) return false;
+        }
       }
 
       // Category filter
@@ -417,7 +468,19 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   const groupedTxns = useMemo(() => {
     const groups = {};
     filteredTxns.forEach(txn => {
-      const dateKey = txn.Date ? new Date(txn.Date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown Date';
+      let dateKey = 'Unknown Date';
+      if (txn.Date) {
+        let d = new Date(txn.Date);
+        if (isNaN(d.getTime())) {
+          const dmyMatch = String(txn.Date).trim().match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+          if (dmyMatch) {
+            d = new Date(`${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}`);
+          }
+        }
+        if (!isNaN(d.getTime())) {
+          dateKey = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+      }
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(txn);
     });
@@ -980,18 +1043,70 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                    <input required value={newTxn['Merchant/Description']} onChange={e => setNewTxn({...newTxn, 'Merchant/Description': e.target.value})} type="text" className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none" placeholder="e.g. Swiggy" />
                  </div>
                  <div>
-                   <label className="block text-typ-label text-text-secondary mb-1">For Whom (Beneficiary)</label>
-                   <select 
-                     value={(!newTxn.Beneficiary || newTxn.Beneficiary === 'Whole Family') ? '' : newTxn.Beneficiary} 
-                     onChange={e => setNewTxn({...newTxn, Beneficiary: e.target.value})} 
-                     className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-typ-body-sm focus:outline-none focus:border-primary-accent outline-none"
-                   >
-                     <option value="">Whole Family</option>
-                     {profiles.map(p => <option key={p.Name} value={p.Name}>{p.Name}</option>)}
-                     {newTxn.Beneficiary && newTxn.Beneficiary !== 'Whole Family' && !profiles.some(p => p.Name === newTxn.Beneficiary) && (
-                       <option value={newTxn.Beneficiary}>{newTxn.Beneficiary} (Custom)</option>
-                     )}
-                   </select>
+                   <div className="flex items-center justify-between mb-1.5">
+                     <label className="block text-typ-label text-text-secondary">For Whom (Beneficiaries)</label>
+                     <span className="text-typ-caption text-text-muted">
+                       {selectedBeneficiaries.length === 0
+                         ? 'Whole Family'
+                         : selectedBeneficiaries.length === 1
+                         ? '1 member'
+                         : `Equal split (${selectedBeneficiaries.length} members)`}
+                     </span>
+                   </div>
+                   <div className="flex flex-wrap gap-1.5 p-2 bg-surface-layer2/50 border border-border-subtle rounded-lg">
+                     <button
+                       type="button"
+                       onClick={() => setNewTxn({ ...newTxn, Beneficiary: '' })}
+                       className={`px-2.5 py-1 rounded-md text-typ-caption font-medium transition-all ${
+                         selectedBeneficiaries.length === 0
+                           ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                           : 'bg-surface-layer2 text-text-secondary hover:text-text-primary hover:bg-surface-layer1 border border-border-subtle'
+                       }`}
+                     >
+                       Whole Family
+                     </button>
+                     {profiles.map((p) => {
+                       const isSelected = selectedBeneficiaries.includes(p.Name);
+                       return (
+                         <button
+                           key={p.Name}
+                           type="button"
+                           onClick={() => {
+                             let next;
+                             if (isSelected) {
+                               next = selectedBeneficiaries.filter((name) => name !== p.Name);
+                             } else {
+                               next = [...selectedBeneficiaries, p.Name];
+                             }
+                             setNewTxn({ ...newTxn, Beneficiary: next.join(', ') });
+                           }}
+                           className={`px-2.5 py-1 rounded-md text-typ-caption font-medium transition-all flex items-center gap-1 ${
+                             isSelected
+                               ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                               : 'bg-surface-layer2 text-text-secondary hover:text-text-primary hover:bg-surface-layer1 border border-border-subtle'
+                           }`}
+                         >
+                           {p.Name}
+                         </button>
+                       );
+                     })}
+                     {/* Preserve any custom beneficiaries from existing record not in profiles list */}
+                     {selectedBeneficiaries
+                       .filter((b) => !profiles.some((p) => p.Name === b))
+                       .map((customName) => (
+                         <button
+                           key={customName}
+                           type="button"
+                           onClick={() => {
+                             const next = selectedBeneficiaries.filter((name) => name !== customName);
+                             setNewTxn({ ...newTxn, Beneficiary: next.join(', ') });
+                           }}
+                           className="px-2.5 py-1 rounded-md text-typ-caption font-semibold bg-primary-accent text-white shadow-xs flex items-center gap-1"
+                         >
+                           {customName}
+                         </button>
+                       ))}
+                   </div>
                  </div>
                  <div className="flex gap-2">
                    <div className="flex-1">
@@ -1039,6 +1154,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         formatCurrency={formatCurrency}
         showMessage={showMessage}
         onRefresh={onRefresh}
+        onImportSuccess={handleImportSuccess}
       />
     </div>
   );
