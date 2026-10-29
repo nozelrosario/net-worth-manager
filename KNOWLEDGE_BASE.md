@@ -59,10 +59,10 @@
 ✅ **SMS Backup & Restore Incremental Sync Engine (`smsParser.js` & `Drive.gs`)**:
   - **Dual Ingestion Pipeline**: Ingests automated incremental XML backups from Google Drive (`DriveApp`) and provides a client-side streaming drag-and-drop XML file uploader.
   - **4-Tier Deduplication & Paired Suppression**:
-    1. *Watermark Epoch Filter*: Evaluates only messages newer than `SmsLastProcessedDate` stored in `Settings`, achieving O(1) parsing overhead on recurring runs.
+    1. *Database & Deterministic Ledger Reconciliation*: Cross-reconciles incoming candidate entries against existing ledger rows via deterministic SMS fingerprints and (Date, Amount, Account) indexing, ensuring unimported entries remain actionable while previously imported records are accurately recognized.
     2. *Compound Fingerprint & UTR Registry*: Generates unique hashes per SMS and indexes bank reference numbers (`Refno`, `RRN`, `Txn ID`).
     3. *Paired Merchant-Bank Suppression*: Suppresses duplicate vendor notifications (e.g. Jio/Airtel receipts paired with bank debits within a 3-minute window).
-    4. *Database Cross-Reconciliation*: Compares incoming candidates against existing rows in the `Transactions` sheet matching `(Date, Amount, Account/Card)`, blocking double entries.
+    4. *Duplicate Suppression*: Prevents duplicate candidates within the same backup file.
   - **Smart Entity Extraction & Auto-Classification**:
     - **Internal Transfer Detection**: Recognizes transfers to user's self/own accounts (`GRAMINA NOZEL RO`, `NOZEL ROSARIO`, `SELF`, `OWN A/C`) and automatically sets `Is Transfer: true` with zero net cashflow drag.
     - **Investment & Insurance**: Identifies SIPs, mutual funds, and LIC/Kotak life insurance debits, tagging Section 80C tax incentives.
@@ -72,6 +72,7 @@
   - Metric summary ribbon tracking pending spends, transfers, investments, and blocked duplicates.
   - Multi-select batch actions (`Select All`, `Import Selected`, `Dismiss`).
   - Card-level inline classification toggle (`[Spend | Internal Transfer | Investment]`), category selector (dynamically synchronized with Admin `SpendCategories` including canonical `General Expense`), asset picker, and expandable raw SMS text drawer.
+  - Keeps inbox modal open after importing so users can seamlessly continue reviewing and importing more entries without disruptive auto-navigation back to SpendsTab.
   - Seamlessly integrated into `SpendsTab` (with "SMS Inbox" CTA) and `SettingsTab` (Drive folder & watermark management).
 
 ## Feature Update (v3.1) - Borderless Glow Badge System & Layout Decoupling (Issue #26)
