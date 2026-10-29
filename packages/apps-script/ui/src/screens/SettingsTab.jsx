@@ -382,7 +382,7 @@ export default function SettingsTab({
          />
          <CategoryEditor 
            title="Spend Categories"
-           defaultCategories="Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Other"
+           defaultCategories="Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, General Expense, Other"
            settingKey="SpendCategories"
            data={data}
            onRefresh={onRefresh}

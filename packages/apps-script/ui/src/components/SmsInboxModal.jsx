@@ -48,7 +48,7 @@ export default function SmsInboxModal({
     }
   }, [settings]);
 
-  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Insurance, Investment / Insurance, Other';
+  const defaultCategories = 'Dining, Groceries, Utilities, Rent, Travel, Entertainment, Healthcare, Education, Shopping, Insurance, Investment / Insurance, General Expense, Other';
 
   const customCategoriesStr = useMemo(() => {
     const s = settings.find(item => item['Setting Key'] === 'SpendCategories');
@@ -62,6 +62,9 @@ export default function SmsInboxModal({
     }
     if (!list.includes('Investment / Insurance')) {
       list.push('Investment / Insurance');
+    }
+    if (!list.includes('General Expense')) {
+      list.splice(Math.max(0, list.length - 2), 0, 'General Expense');
     }
     return list;
   }, [customCategoriesStr]);
