@@ -723,8 +723,10 @@ export function deduplicateAndClassify(
     if (!isImported) {
       const specificKey = `${c.dateStr}_${Math.round(c.amount * 100)}_${c.accountDigits}`;
       const generalKey = `${c.dateStr}_${Math.round(c.amount * 100)}`;
-      if (c.accountDigits && existingMap.has(specificKey)) {
-        isImported = true;
+      if (c.accountDigits) {
+        if (existingMap.has(specificKey)) {
+          isImported = true;
+        }
       } else if (existingMap.has(generalKey)) {
         isImported = true;
       }
@@ -742,16 +744,9 @@ export function deduplicateAndClassify(
       c.isIgnored = true;
       c.selected = false;
     } else {
-      // Tier 1: Watermark epoch filter (only for automated background sync where effectiveEpoch > 0)
-      if (effectiveEpoch && c.rawDate <= effectiveEpoch) {
-        c.status = 'imported';
-        c.isImported = true;
-        c.selected = false;
-      } else {
-        c.status = 'new';
-        c.isNew = true;
-        c.selected = false; // Default unchecked
-      }
+      c.status = 'new';
+      c.isNew = true;
+      c.selected = false; // Default unchecked
     }
 
     validCandidates.push(c);

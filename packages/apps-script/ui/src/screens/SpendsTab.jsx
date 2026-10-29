@@ -112,7 +112,6 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     setSearchQuery('');
     setFilterType('All Records');
     setBeneficiaryFilter('');
-    setShowSmsInbox(false);
   };
 
   const availableMonths = useMemo(() => {

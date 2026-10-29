@@ -140,17 +140,12 @@ export default function SmsInboxModal({
         }
       }
 
-      // For manual file uploads or explicit bypass, ignore the automated Drive watermark epoch
-      // so users can inspect and import historical backups at any time.
+      // Deduplicate and classify with existing ledger transactions and ignored registry.
       // Database cross-checking and deterministic hashes prevent duplicate entries.
-      const effectiveEpoch = (isManualUpload || bypassWatermark) ? 0 : lastProcessedEpoch;
-
-      // Deduplicate and classify with existing ledger transactions and ignored registry
       const result = deduplicateAndClassify(
         rawCandidates,
         existingTransactions,
-        ignoredHashes,
-        effectiveEpoch
+        ignoredHashes
       );
       setCandidates(result.candidates);
       setStats(result.stats);
