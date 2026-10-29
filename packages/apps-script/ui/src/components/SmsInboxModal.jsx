@@ -5,10 +5,10 @@ import {
   ArrowRightLeft, TrendingDown, Landmark, Sparkles, Filter, 
   Settings, CheckSquare, Square, ChevronDown, ChevronRight,
   Eye, FileText, AlertCircle, AlertTriangle, Trash2, CheckCircle2,
-  Edit2, SlidersHorizontal, RotateCcw, EyeOff
+  Edit2, SlidersHorizontal, RotateCcw, EyeOff, Search
 } from 'lucide-react';
 import { Badge } from './Badge';
-import { parseSmsXml, extractFinancialCandidate, deduplicateAndClassify } from '../utils/smsParser';
+import { parseSmsXml, extractFinancialCandidate, deduplicateAndClassify, matchesSmsTextSearch } from '../utils/smsParser';
 
 export default function SmsInboxModal({
   isOpen,
@@ -92,6 +92,8 @@ export default function SmsInboxModal({
   const [statusTab, setStatusTab] = useState('new');
   // Secondary Sub-filter for types
   const [typeFilter, setTypeFilter] = useState('all'); // all | spends | transfers | investments | high_value
+  // Free-text Search Query Filter
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isScanningDrive, setIsScanningDrive] = useState(false);
@@ -156,6 +158,7 @@ export default function SmsInboxModal({
       // Reset to 'new' tab on file load
       setStatusTab('new');
       setTypeFilter('all');
+      setSearchQuery('');
 
       if (sourceFileName) {
         setLatestFileName(sourceFileName);
@@ -545,14 +548,24 @@ export default function SmsInboxModal({
       if (typeFilter === 'investments' && item.type !== 'Investment') return false;
       if (typeFilter === 'high_value' && item.amount < 5000) return false;
 
+      // 3. Free-text Search Filter
+      if (searchQuery && !matchesSmsTextSearch(item, searchQuery)) return false;
+
       return true;
     });
-  }, [candidates, statusTab, typeFilter]);
+  }, [candidates, statusTab, typeFilter, searchQuery]);
+
+  const selectableFilteredCount = useMemo(() => {
+    return filteredList.filter(c => c.status === 'new').length;
+  }, [filteredList]);
+
+  const selectedFilteredCount = useMemo(() => {
+    return filteredList.filter(c => c.status === 'new' && selectedIds.has(c.id)).length;
+  }, [filteredList, selectedIds]);
 
   const allFilteredSelected = useMemo(() => {
-    const selectable = filteredList.filter(c => c.status === 'new');
-    return selectable.length > 0 && selectable.every(c => selectedIds.has(c.id));
-  }, [filteredList, selectedIds]);
+    return selectableFilteredCount > 0 && selectedFilteredCount === selectableFilteredCount;
+  }, [selectableFilteredCount, selectedFilteredCount]);
 
   // Compact currency formatter helper (e.g. ₹12.5k / ₹1.4L)
   const formatCompactVal = (val) => {
@@ -807,6 +820,41 @@ export default function SmsInboxModal({
           </div>
         )}
 
+        {/* 3C. TEXT SEARCH FILTER BAR */}
+        {candidates.length > 0 && (
+          <div className="px-3 py-1.5 border-b border-border-subtle shrink-0 bg-surface-layer1/60 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setSearchQuery('');
+                }}
+                placeholder="Search merchant, bank, message, ref no..."
+                className="w-full bg-surface-layer2/80 hover:bg-surface-layer2 focus:bg-surface-layer1 border border-border-subtle focus:border-primary-accent rounded-lg pl-8 pr-7 py-1 text-typ-footnote text-text-primary placeholder:text-text-muted outline-none transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5 rounded-full hover:bg-surface-layer3 transition-colors"
+                  title="Clear search"
+                  aria-label="Clear search"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+            {searchQuery.trim() && (
+              <span className="text-typ-caption text-text-muted shrink-0 font-medium font-mono">
+                {filteredList.length} {filteredList.length === 1 ? 'match' : 'matches'}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* 4. COMPACT SELECTION & BATCH ACTIONS SUB-BAR (~28px) */}
         <div className="px-3 py-1 bg-surface-layer2/40 border-b border-border-subtle shrink-0 flex items-center justify-between text-typ-footnote">
           {statusTab === 'new' ? (
@@ -815,10 +863,16 @@ export default function SmsInboxModal({
                 <input
                   type="checkbox"
                   checked={allFilteredSelected}
+                  disabled={selectableFilteredCount === 0}
                   onChange={(e) => handleToggleSelectAll(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded text-primary-accent border-border-prominent focus:ring-0 bg-surface-layer1"
+                  className="w-3.5 h-3.5 rounded text-primary-accent border-border-prominent focus:ring-0 bg-surface-layer1 disabled:opacity-40"
                 />
-                <span>Select All ({selectedIds.size}/{filteredList.length})</span>
+                <span>Select All ({selectedFilteredCount}/{selectableFilteredCount})</span>
+                {selectedIds.size > selectedFilteredCount && (
+                  <span className="text-typ-micro text-text-muted hidden sm:inline">
+                    ({selectedIds.size} total)
+                  </span>
+                )}
               </label>
 
               <div className="flex items-center gap-2">
@@ -847,7 +901,11 @@ export default function SmsInboxModal({
             <div className="w-full flex items-center justify-between text-text-muted">
               <span className="flex items-center gap-1 text-emerald-500 font-medium">
                 <CheckCircle2 size={12} />
-                <span>{filteredList.length} transactions already recorded in your ledger</span>
+                <span>
+                  {searchQuery.trim()
+                    ? `${filteredList.length} imported transactions match "${searchQuery.trim()}"`
+                    : `${filteredList.length} transactions already recorded in your ledger`}
+                </span>
               </span>
               <span className="text-typ-caption font-mono">Duplicates Blocked</span>
             </div>
@@ -855,13 +913,21 @@ export default function SmsInboxModal({
             <div className="w-full flex items-center justify-between text-text-muted">
               <span className="flex items-center gap-1 text-amber-500 font-medium">
                 <EyeOff size={12} />
-                <span>{filteredList.length} transactions dismissed from inbox</span>
+                <span>
+                  {searchQuery.trim()
+                    ? `${filteredList.length} ignored transactions match "${searchQuery.trim()}"`
+                    : `${filteredList.length} transactions dismissed from inbox`}
+                </span>
               </span>
               <span className="text-typ-caption">Tap 'Restore' to return any to Inbox</span>
             </div>
           ) : (
             <div className="w-full flex items-center justify-between text-text-muted">
-              <span>Showing all {filteredList.length} parsed transactions</span>
+              <span>
+                {searchQuery.trim()
+                  ? `${filteredList.length} parsed transactions match "${searchQuery.trim()}"`
+                  : `Showing all ${filteredList.length} parsed transactions`}
+              </span>
               <span className="text-typ-caption">Audit Stream</span>
             </div>
           )}
@@ -872,11 +938,17 @@ export default function SmsInboxModal({
           {filteredList.length === 0 ? (
             <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 text-text-muted space-y-3">
               <div className="w-12 h-12 rounded-full bg-surface-layer2 flex items-center justify-center text-emerald-500">
-                <CheckCircle2 size={24} />
+                {searchQuery.trim() ? (
+                  <Search size={22} className="text-text-muted" />
+                ) : (
+                  <CheckCircle2 size={24} />
+                )}
               </div>
               <div>
                 <h3 className="text-typ-body-sm font-bold text-text-primary">
-                  {statusTab === 'new' && (stats.importedCount > 0 || stats.ignoredCount > 0)
+                  {searchQuery.trim()
+                    ? `No transactions match "${searchQuery.trim()}"`
+                    : statusTab === 'new' && (stats.importedCount > 0 || stats.ignoredCount > 0)
                     ? 'All Caught Up!'
                     : statusTab === 'imported'
                     ? 'No Imported Transactions Found'
@@ -885,7 +957,9 @@ export default function SmsInboxModal({
                     : 'Inbox Clean'}
                 </h3>
                 <p className="text-typ-label text-text-muted max-w-xs mt-0.5">
-                  {statusTab === 'new' && stats.importedCount > 0
+                  {searchQuery.trim()
+                    ? 'Try searching by a different merchant name, bank, category, or check for typos.'
+                    : statusTab === 'new' && stats.importedCount > 0
                     ? `All ${stats.importedCount} transactions in this file are already saved in your ledger.`
                     : statusTab === 'new' && stats.ignoredCount > 0
                     ? `All pending transactions have been ignored. Check the Ignored tab to review.`
@@ -893,35 +967,48 @@ export default function SmsInboxModal({
                 </p>
               </div>
 
-              {statusTab === 'new' && stats.importedCount > 0 && (
+              {searchQuery.trim() ? (
                 <button
                   type="button"
-                  onClick={() => setStatusTab('imported')}
-                  className="py-1.5 px-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-500 text-typ-label font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
+                  onClick={() => setSearchQuery('')}
+                  className="py-1.5 px-3.5 rounded-xl border border-border-subtle bg-surface-layer2 hover:bg-surface-layer3 text-text-primary text-typ-label font-semibold shadow-xs transition-all flex items-center gap-1.5"
                 >
-                  <Check size={13} />
-                  <span>View Already Imported ({stats.importedCount})</span>
+                  <RotateCcw size={13} />
+                  <span>Clear Search Filter</span>
                 </button>
-              )}
+              ) : (
+                <>
+                  {statusTab === 'new' && stats.importedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusTab('imported')}
+                      className="py-1.5 px-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-500 text-typ-label font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
+                    >
+                      <Check size={13} />
+                      <span>View Already Imported ({stats.importedCount})</span>
+                    </button>
+                  )}
 
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="py-1.5 px-3.5 rounded-xl border border-border-subtle bg-surface-layer1 text-text-secondary hover:text-text-primary text-typ-label font-semibold shadow-xs transition-all flex items-center gap-1.5"
-                >
-                  <Upload size={13} />
-                  <span>Choose File</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleScanDrive}
-                  className="py-1.5 px-3.5 rounded-xl bg-primary-accent text-white text-typ-label font-semibold hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5"
-                >
-                  <Cloud size={13} />
-                  <span>Scan Drive</span>
-                </button>
-              </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="py-1.5 px-3.5 rounded-xl border border-border-subtle bg-surface-layer1 text-text-secondary hover:text-text-primary text-typ-label font-semibold shadow-xs transition-all flex items-center gap-1.5"
+                    >
+                      <Upload size={13} />
+                      <span>Choose File</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleScanDrive}
+                      className="py-1.5 px-3.5 rounded-xl bg-primary-accent text-white text-typ-label font-semibold hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5"
+                    >
+                      <Cloud size={13} />
+                      <span>Scan Drive</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             filteredList.map((item) => {

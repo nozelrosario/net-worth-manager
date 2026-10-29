@@ -25,6 +25,16 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.6) - SMS Inbox Free-Text Search & Alike Batch Ingestion (Issue #55)
+✅ **Free-Text Search Engine (`smsParser.js` & `SmsInboxModal.jsx`)**:
+  - Implemented multi-token case-insensitive free-text search matching across merchant/payee, raw SMS body text, preview snippet, bank name, asset account, account digits, reference/UPI IDs, category, transaction type, beneficiary, sender address, date, and currency amounts.
+  - Fast space-separated multi-keyword AND matching allowing queries like `"hdfc 450"` or `"zomato online"`.
+  - Responsive search bar with instant clear action (`X` button & `Escape` key) and live match counter pill.
+✅ **Seamless Batch Selection & Ingestion**:
+  - Filter-aware "Select All" checkbox correctly scoped to currently matching filtered records (`Select All (X/Y)`), preventing confusion when searching and staging alike records.
+  - Allows users to isolate and select alike message entries together for bulk classification and batch import into the ledger.
+  - Dedicated contextual empty state when search yields zero matches, with a 1-tap "Clear Search Filter" button.
+
 ## Bug Fix Update - Spends Modal Delete & Save Button State Decoupling (Issue #41)
 ✅ **Independent Submission States (`SpendsTab.jsx`)**:
   - Decoupled single `isSubmitting` boolean state into separate `isSaving` and `isDeleting` states.
