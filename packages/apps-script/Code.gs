@@ -1627,14 +1627,20 @@ function getDashboardData(idToken) {
       var rows = [];
       for (var i = 1; i < data.length; i++) {
         var obj = {};
+        var hasContent = false;
         for (var j = 0; j < headers.length; j++) {
           var val = data[i][j];
           if (val instanceof Date) {
             val = val.toISOString();
           }
+          if (val !== '' && val !== null && val !== undefined) {
+            hasContent = true;
+          }
           obj[headers[j]] = val;
         }
-        rows.push(obj);
+        if (hasContent) {
+          rows.push(obj);
+        }
       }
       return rows;
     }

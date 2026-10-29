@@ -81,11 +81,38 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     if (!dateVal) return null;
     const str = String(dateVal).trim();
     if (/^\d{4}-\d{2}/.test(str)) return str.slice(0, 7);
+    const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmyMatch) return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}`;
     const d = new Date(dateVal);
     if (!isNaN(d.getTime())) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
     return null;
+  };
+
+  const handleImportSuccess = (importedList) => {
+    if (!importedList || importedList.length === 0) return;
+    const firstDate = importedList[0]?.Date;
+    const targetMonth = getMonthKeyFromDate(firstDate);
+    if (targetMonth) {
+      setSelectedMonth(targetMonth);
+    } else {
+      setSelectedMonth('ALL');
+    }
+    // Optimistically update txns in data so the entry appears immediately
+    if (data) {
+      if (!data.transactions) data.transactions = [];
+      importedList.forEach(item => {
+        if (!data.transactions.some(t => t['Txn ID'] === item['Txn ID'])) {
+          data.transactions.unshift(item);
+        }
+      });
+    }
+    // Reset filters that could hide the imported transaction
+    setSearchQuery('');
+    setFilterType('All Records');
+    setBeneficiaryFilter('');
+    setShowSmsInbox(false);
   };
 
   const availableMonths = useMemo(() => {
@@ -441,7 +468,19 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
   const groupedTxns = useMemo(() => {
     const groups = {};
     filteredTxns.forEach(txn => {
-      const dateKey = txn.Date ? new Date(txn.Date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown Date';
+      let dateKey = 'Unknown Date';
+      if (txn.Date) {
+        let d = new Date(txn.Date);
+        if (isNaN(d.getTime())) {
+          const dmyMatch = String(txn.Date).trim().match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+          if (dmyMatch) {
+            d = new Date(`${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}`);
+          }
+        }
+        if (!isNaN(d.getTime())) {
+          dateKey = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+      }
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(txn);
     });
@@ -1115,6 +1154,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
         formatCurrency={formatCurrency}
         showMessage={showMessage}
         onRefresh={onRefresh}
+        onImportSuccess={handleImportSuccess}
       />
     </div>
   );

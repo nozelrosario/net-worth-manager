@@ -16,7 +16,8 @@ export default function SmsInboxModal({
   data,
   formatCurrency,
   showMessage,
-  onRefresh
+  onRefresh,
+  onImportSuccess
 }) {
   useModalBack(isOpen, onClose);
 
@@ -473,6 +474,7 @@ export default function SmsInboxModal({
             }));
 
             showMessage?.(`Imported ${res.importedCount} transactions!`);
+            onImportSuccess?.(formatted);
             onRefresh?.();
           } else {
             showMessage?.(res?.message || 'Error importing transactions', true);
@@ -506,7 +508,9 @@ export default function SmsInboxModal({
           totalNewAmount: Math.max(0, (prev.totalNewAmount || 0) - importedAmt)
         }));
 
-        showMessage?.(`[Preview] Imported ${targetItems.length} transactions.`);
+        showMessage?.(`Imported ${targetItems.length} transactions! (Preview mode)`);
+        onImportSuccess?.(formatted);
+        onRefresh?.();
       }, 400);
     }
   };
@@ -1302,6 +1306,24 @@ export default function SmsInboxModal({
                           </div>
                         )}
                       </div>
+
+                      {/* Save & Import Button in Expanded View */}
+                      {item.status === 'new' && (
+                        <div className="flex items-center justify-between pt-2 border-t border-border-subtle/50">
+                          <span className="text-typ-micro text-text-muted">
+                            Will record as <span className="font-semibold text-text-primary">{item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : 'Expense')}</span>
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isImporting}
+                            onClick={() => handleImportSingle(item)}
+                            className="py-1 px-3 rounded-lg bg-primary-accent hover:opacity-95 text-white font-semibold text-typ-footnote flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            <Check size={12} />
+                            <span>Save & Import Transaction</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </article>
