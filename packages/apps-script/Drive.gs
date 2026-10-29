@@ -258,8 +258,10 @@ function batchImportSmsTransactions(transactions, lastProcessedEpoch, idToken) {
     }
 
     if (rowsToAdd.length > 0) {
-      var startRow = sheet.getLastRow() + 1;
-      sheet.getRange(startRow, 1, rowsToAdd.length, headers.length).setValues(rowsToAdd);
+      for (var r = 0; r < rowsToAdd.length; r++) {
+        sheet.appendRow(rowsToAdd[r]);
+      }
+      SpreadsheetApp.flush();
     }
 
     // Update Settings sheet with lastProcessedEpoch (only if non-zero watermark provided)
