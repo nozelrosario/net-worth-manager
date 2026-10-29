@@ -71,7 +71,7 @@
   - Responsive modal with Apple Wallet/Raycast style borderless glow badges (`Badge.jsx`) for both Dark OLED (`#0B0F17`) and Crisp Light Mode (`#F8FAFC`).
   - Metric summary ribbon tracking pending spends, transfers, investments, and blocked duplicates.
   - Multi-select batch actions (`Select All`, `Import Selected`, `Dismiss`).
-  - Card-level inline classification toggle (`[Spend | Internal Transfer | Investment]`), category selector, asset picker, and expandable raw SMS text drawer.
+  - Card-level inline classification toggle (`[Spend | Internal Transfer | Investment]`), category selector (dynamically synchronized with Admin `SpendCategories`), asset picker, and expandable raw SMS text drawer.
   - Seamlessly integrated into `SpendsTab` (with "SMS Inbox" CTA) and `SettingsTab` (Drive folder & watermark management).
 
 ## Feature Update (v3.1) - Borderless Glow Badge System & Layout Decoupling (Issue #26)
