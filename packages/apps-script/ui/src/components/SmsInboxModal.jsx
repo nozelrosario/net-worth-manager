@@ -1219,20 +1219,67 @@ export default function SmsInboxModal({
                         </div>
 
                         <div>
-                          <label className="text-typ-caption text-text-muted block mb-0.5">For Whom:</label>
-                          <select
-                            value={item.beneficiary || 'Whole Family'}
-                            disabled={item.status !== 'new'}
-                            onChange={(e) => updateCandidate(item.id, { beneficiary: e.target.value })}
-                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
-                          >
-                            <option value="Whole Family">Whole Family</option>
-                            {familyProfiles.map((profile) => (
-                              <option key={profile.Name || profile['Profile ID']} value={profile.Name}>
-                                {profile.Name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <label className="text-typ-caption text-text-muted block">For Whom:</label>
+                            <span className="text-typ-micro text-text-muted">
+                              {(() => {
+                                const raw = String(item.beneficiary || '').trim();
+                                if (!raw || raw === 'Whole Family') return 'Whole Family';
+                                const count = raw.split(',').filter(Boolean).length;
+                                return count === 1 ? '1 member' : `Split ${count} ways`;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 p-1 bg-surface-layer2 border border-border-subtle rounded-lg">
+                            {(() => {
+                              const raw = String(item.beneficiary || '').trim();
+                              const selectedBens = (!raw || raw === 'Whole Family') ? [] : raw.split(',').map(s => s.trim()).filter(Boolean);
+                              return (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={item.status !== 'new'}
+                                    onClick={() => updateCandidate(item.id, { beneficiary: 'Whole Family' })}
+                                    className={`px-2 py-0.5 rounded text-typ-micro font-medium transition-all ${
+                                      selectedBens.length === 0
+                                        ? 'bg-primary-accent text-white font-semibold'
+                                        : 'bg-surface-layer1 text-text-secondary hover:text-text-primary'
+                                    }`}
+                                  >
+                                    All
+                                  </button>
+                                  {familyProfiles.map((profile) => {
+                                    const isSel = selectedBens.includes(profile.Name);
+                                    return (
+                                      <button
+                                        key={profile.Name || profile['Profile ID']}
+                                        type="button"
+                                        disabled={item.status !== 'new'}
+                                        onClick={() => {
+                                          let next;
+                                          if (isSel) {
+                                            next = selectedBens.filter(n => n !== profile.Name);
+                                          } else {
+                                            next = [...selectedBens, profile.Name];
+                                          }
+                                          updateCandidate(item.id, {
+                                            beneficiary: next.length > 0 ? next.join(', ') : 'Whole Family'
+                                          });
+                                        }}
+                                        className={`px-2 py-0.5 rounded text-typ-micro font-medium transition-all ${
+                                          isSel
+                                            ? 'bg-primary-accent text-white font-semibold'
+                                            : 'bg-surface-layer1 text-text-secondary hover:text-text-primary'
+                                        }`}
+                                      >
+                                        {profile.Name}
+                                      </button>
+                                    );
+                                  })}
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
 
