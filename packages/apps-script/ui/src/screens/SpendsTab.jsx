@@ -61,7 +61,8 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
     'Is Transfer': false,
     Tags: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('All Records');
   const [selectedSegment, setSelectedSegment] = useState('beneficiary'); // 'beneficiary' | 'category' | 'account'
@@ -208,34 +209,34 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
 
   const handleDelete = (id) => {
     if (!window.confirm("Are you sure you want to delete this transaction?")) return;
-    setIsSubmitting(true);
+    setIsDeleting(true);
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
-          setIsSubmitting(false);
+          setIsDeleting(false);
           setShowLogModal(false);
           if (onRefresh) onRefresh();
           showMessage(res.message);
         })
         .withFailureHandler((err) => {
-          setIsSubmitting(false);
+          setIsDeleting(false);
           showMessage('Error: ' + err.message, true);
         })
         .deleteRecord('Transactions', 'Txn ID', id, getSafeStorage('nwm_session_token'));
     } else {
-      setTimeout(() => { setIsSubmitting(false); setShowLogModal(false); showMessage('Deleted (preview)'); }, 1000);
+      setTimeout(() => { setIsDeleting(false); setShowLogModal(false); showMessage('Deleted (preview)'); }, 1000);
     }
   };
 
   const handleSaveTxn = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsSaving(true);
     
     if (window.google?.script?.run) {
       const token = getSafeStorage('nwm_session_token');
       const handler = window.google.script.run
         .withSuccessHandler((res) => {
-          setIsSubmitting(false);
+          setIsSaving(false);
           if (res && res.status === 'error') {
             showMessage('Error: ' + res.message, true);
           } else {
@@ -245,7 +246,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
           }
         })
         .withFailureHandler((err) => {
-          setIsSubmitting(false);
+          setIsSaving(false);
           showMessage('Network/Server Error: ' + err.message, true);
         });
 
@@ -262,7 +263,7 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
       }
     } else {
       setTimeout(() => {
-        setIsSubmitting(false);
+        setIsSaving(false);
         setShowLogModal(false);
         showMessage(editingTxnId ? 'Transaction updated (preview)' : 'Transaction logged (preview)');
       }, 1000);
@@ -1136,13 +1137,13 @@ export default function SpendsTab({ formatCurrency, data, onRefresh, showMessage
                {/* Pinned Action Footer */}
                <div className="p-4 border-t border-border-subtle bg-surface-layer1 flex-shrink-0 flex flex-col gap-2.5">
                  <div className="flex gap-3">
-                   <button type="button" onClick={() => setShowLogModal(false)} className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-typ-body-sm font-medium transition-colors">Cancel</button>
-                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-body-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+                   <button type="button" onClick={() => setShowLogModal(false)} disabled={isSaving || isDeleting} className="flex-1 px-4 py-2 bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-text-primary rounded-lg text-typ-body-sm font-medium transition-colors disabled:opacity-50">Cancel</button>
+                   <button type="submit" disabled={isSaving || isDeleting} className="flex-1 px-4 py-2 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-body-sm font-medium shadow-md shadow-primary-accent/20 transition-all active:scale-95 disabled:opacity-50">{isSaving ? 'Saving...' : 'Save'}</button>
                  </div>
                  {editingTxnId && (
-                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSubmitting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-typ-body-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5">
+                   <button type="button" onClick={() => handleDelete(editingTxnId)} disabled={isSaving || isDeleting} className="w-full px-4 py-2 bg-liability-rose/10 text-liability-rose border border-liability-rose/20 rounded-lg text-typ-body-sm font-medium hover:bg-liability-rose/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5">
                      <Trash2 size={14} />
-                     <span>{isSubmitting ? 'Deleting...' : 'Delete Transaction'}</span>
+                     <span>{isDeleting ? 'Deleting...' : 'Delete Transaction'}</span>
                    </button>
                  )}
                </div>
