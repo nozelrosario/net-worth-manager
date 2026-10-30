@@ -3,7 +3,7 @@ import useModalBack from '../hooks/useModalBack';
 import { 
   ArrowLeft, Cloud, RefreshCw, Upload, Check, X, Shield, 
   Sparkles, Filter, Settings, CheckSquare, Square, ChevronDown, 
-  ChevronRight, Eye, FileText, AlertCircle, AlertTriangle, 
+  ChevronRight, Eye, EyeOff, FileText, AlertCircle, AlertTriangle, 
   CheckCircle2, Key, HelpCircle, TrendingUp, TrendingDown,
   FolderOpen, Lock, ExternalLink
 } from 'lucide-react';
@@ -52,6 +52,7 @@ export default function CasSyncModal({
   const [driveFolder, setDriveFolder] = useState(defaultFolderName);
   const [panPassword, setPanPassword] = useState(savedPanFromSettings);
   const [tempPanInput, setTempPanInput] = useState(savedPanFromSettings);
+  const [showPassword, setShowPassword] = useState(false);
   const [geminiApiKey, setGeminiApiKey] = useState(savedGeminiKey);
   const [tempGeminiKey, setTempGeminiKey] = useState(savedGeminiKey);
 
@@ -126,9 +127,10 @@ export default function CasSyncModal({
 
       if (extractResult.status === 'password_required') {
         setIsProcessing(false);
-        setPasswordError('Password required or incorrect password. Please enter the password you set during CAMS export or your PAN in uppercase.');
+        setTempPanInput(pwd || '');
+        setPasswordError('Statement is password-protected or incorrect password. Please enter the password you set during CAMS export or your PAN.');
         setShowPanModal(true);
-        showMessage?.('Statement is password-protected. Please enter your PAN or CAMS password.', true);
+        showMessage?.('Statement is password-protected. Please enter your password or PAN to unlock.', false);
         return;
       }
 
@@ -248,7 +250,7 @@ export default function CasSyncModal({
 
   // Save PAN / Gemini settings
   const handleSaveSecuritySettings = () => {
-    const cleanPan = (tempPanInput || '').trim().toUpperCase();
+    const cleanPan = (tempPanInput || '').trim();
     const cleanKey = (tempGeminiKey || '').trim();
 
     setPanPassword(cleanPan);
@@ -470,9 +472,13 @@ export default function CasSyncModal({
 
             <button 
               type="button"
-              onClick={() => setShowPanModal(true)} 
+              onClick={() => {
+                setTempPanInput(panPassword || '');
+                setTempGeminiKey(geminiApiKey || savedGeminiKey || '');
+                setShowPanModal(true);
+              }} 
               className="p-1.5 rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-secondary hover:text-wealth-emerald transition-colors"
-              title="PAN & Gemini Settings"
+              title="Statement Password & Gemini Settings"
             >
               <Key size={16} />
             </button>
@@ -962,21 +968,43 @@ export default function CasSyncModal({
               )}
 
               <p className="text-xs text-text-muted mb-4">
-                CAS statements are password-protected with your PAN (or custom password). Decryption occurs 100% in-memory on your device.
+                CAS statements are password-protected with your PAN or custom export password. Decryption occurs 100% in-memory on your device.
               </p>
 
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                    Your PAN or CAS Export Password
-                  </label>
-                  <input
-                    type="text"
-                    value={tempPanInput}
-                    onChange={(e) => setTempPanInput(e.target.value.toUpperCase())}
-                    placeholder="e.g. ABCDE1234F"
-                    className="w-full bg-surface-layer2 border border-border-subtle rounded-xl text-xs font-mono font-bold text-text-primary px-3 py-2 uppercase focus:ring-1 focus:ring-primary-accent"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-semibold text-text-secondary">
+                      Your PAN or CAS Export Password
+                    </label>
+                    {tempPanInput && (
+                      <button
+                        type="button"
+                        onClick={() => setTempPanInput(tempPanInput.toUpperCase())}
+                        className="text-[10px] text-primary-accent hover:underline font-medium"
+                        title="Convert to uppercase if using PAN"
+                      >
+                        Convert to Uppercase
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={tempPanInput}
+                      onChange={(e) => setTempPanInput(e.target.value)}
+                      placeholder="e.g. ABCDE1234F or custom password"
+                      className="w-full bg-surface-layer2 border border-border-subtle rounded-xl text-xs font-mono font-medium text-text-primary px-3 py-2 pr-9 focus:ring-1 focus:ring-primary-accent"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>

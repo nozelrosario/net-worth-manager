@@ -14,7 +14,7 @@
 let pdfjsLoadingPromise = null;
 
 export function loadPdfJsLibrary() {
-  if (window.pdfjsLib) {
+  if (window.pdfjsLib && window.pdfjsWorker) {
     return Promise.resolve(window.pdfjsLib);
   }
 
@@ -22,28 +22,63 @@ export function loadPdfJsLibrary() {
     return pdfjsLoadingPromise;
   }
 
-  pdfjsLoadingPromise = new Promise((resolve, reject) => {
-    try {
+  const loadScript = (src) => {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        resolve();
+        return;
+      }
       const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.src = src;
       script.async = true;
-      script.onload = () => {
-        if (window.pdfjsLib) {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          resolve(window.pdfjsLib);
-        } else {
-          reject(new Error('PDF.js loaded but pdfjsLib object not found.'));
-        }
-      };
-      script.onerror = () => {
-        reject(new Error('Failed to load PDF.js from CDN. Please check your internet connection.'));
-      };
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load ${src}`));
       document.head.appendChild(script);
+    });
+  };
+
+  pdfjsLoadingPromise = (async () => {
+    try {
+      // 1. Preload worker script on main thread so that PDF.js activates its main-thread
+      // fake worker without attempting 'new Worker()', preventing cross-origin iframe security errors.
+      try {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js');
+      } catch (wErr) {
+        console.warn('pdf.worker.min.js script preload skipped/failed:', wErr);
+      }
+
+      // 2. Load core pdf.min.js
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+
+      if (!window.pdfjsLib) {
+        throw new Error('PDF.js library loaded but pdfjsLib object not found.');
+      }
+
+      // 3. Configure worker source:
+      // If pdfjsWorker was loaded on main thread, GlobalWorkerOptions.workerSrc can be left empty
+      // to let PDF.js safely run WorkerMessageHandler on the main thread.
+      // Otherwise, attempt same-origin Blob worker fallback.
+      if (window.pdfjsWorker?.WorkerMessageHandler) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      } else {
+        try {
+          const workerBlob = new Blob(
+            [`importScripts('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js');`],
+            { type: 'application/javascript' }
+          );
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob);
+        } catch {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+        }
+      }
+
+      return window.pdfjsLib;
     } catch (err) {
-      reject(err);
+      pdfjsLoadingPromise = null;
+      throw err;
     }
-  });
+  })();
 
   return pdfjsLoadingPromise;
 }
@@ -78,9 +113,9 @@ export async function extractTextFromCasPdf(pdfInput, password = '') {
     if (typeof pdfInput === 'string') {
       dataBuffer = base64ToUint8Array(pdfInput);
     } else if (pdfInput instanceof Uint8Array) {
-      dataBuffer = pdfInput;
+      dataBuffer = pdfInput.slice(0);
     } else if (pdfInput instanceof ArrayBuffer) {
-      dataBuffer = new Uint8Array(pdfInput);
+      dataBuffer = new Uint8Array(pdfInput.slice(0));
     } else {
       throw new Error('Unsupported PDF data format provided.');
     }
@@ -97,11 +132,18 @@ export async function extractTextFromCasPdf(pdfInput, password = '') {
     } catch (docErr) {
       const errName = docErr?.name || '';
       const errMsg = (docErr?.message || '').toLowerCase();
-      if (errName === 'PasswordException' || errMsg.includes('password') || errMsg.includes('decrypt')) {
+      const errCode = docErr?.code;
+      if (
+        errName === 'PasswordException' ||
+        errCode === 1 ||
+        errCode === 2 ||
+        errMsg.includes('password') ||
+        errMsg.includes('decrypt')
+      ) {
         return {
           status: 'password_required',
           error: 'INCORRECT_PASSWORD',
-          message: 'Incorrect password or statement is password protected. Enter the password set during CAMS export or your PAN in uppercase.'
+          message: 'Incorrect password or statement is password protected. Enter the password set during CAMS export or your PAN.'
         };
       }
       throw docErr;
