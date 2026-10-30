@@ -7,6 +7,8 @@
  * composite key reconciliation (Folio + ISIN), and live quote valuation sync.
  */
 
+import { getSafeStorage } from './storage';
+
 /**
  * Dynamically loads PDF.js library from Cloudflare CDN on-demand
  * Keeps single-file bundle lightweight and avoids Apps Script web worker errors.
@@ -211,55 +213,86 @@ export function pruneCasTextForGemini(rawText) {
   return result.length > 5000 ? result : rawText;
 }
 
-let cachedGeminiModel = null;
+let cachedGeminiEndpoint = null;
+
+function cleanJsonText(rawText) {
+  let cleaned = String(rawText || '').trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  }
+  return cleaned;
+}
 
 /**
- * Dynamically resolves an active Gemini Flash model supporting generateContent
- * via ModelService.ListModels, avoiding hardcoded versions that deprecate.
+ * Builds an exhaustive list of candidate Gemini API endpoints.
+ * Prioritizes stable /v1/ GA endpoints (like v1/gemini-1.5-flash), rolling latest aliases (/v1beta/gemini-1.5-flash-latest),
+ * and dynamically listed models from ModelService.ListModels.
  */
-export async function getActiveGeminiModel(geminiApiKey) {
-  if (cachedGeminiModel) {
-    return cachedGeminiModel;
+export async function getCandidateGeminiEndpoints(geminiApiKey) {
+  if (cachedGeminiEndpoint) {
+    return [cachedGeminiEndpoint];
   }
 
   const cleanKey = (geminiApiKey || '').trim();
-  if (!cleanKey) return 'gemini-2.5-flash';
+  const endpoints = [];
 
-  try {
-    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
-    const listRes = await fetch(listUrl);
-    if (listRes.ok) {
-      const data = await listRes.json();
-      const models = data.models || [];
-      // Look for active models supporting generateContent
-      // Priority: Flash models (excluding retired 1.5 versions)
-      const candidate = models.find(m => 
-        m.supportedGenerationMethods?.includes('generateContent') &&
-        m.name?.toLowerCase().includes('flash') &&
-        !m.name?.includes('1.5')
-      ) || models.find(m => 
-        m.supportedGenerationMethods?.includes('generateContent') &&
-        m.name?.toLowerCase().includes('flash')
-      ) || models.find(m => 
-        m.supportedGenerationMethods?.includes('generateContent')
-      );
+  const addEndpoint = (url) => {
+    if (url && !endpoints.includes(url)) {
+      endpoints.push(url);
+    }
+  };
 
-      if (candidate && candidate.name) {
-        const modelId = candidate.name.replace(/^models\//, '');
-        cachedGeminiModel = modelId;
-        return modelId;
+  // 1. Try dynamic model discovery on v1 and v1beta
+  if (cleanKey) {
+    for (const apiVer of ['v1', 'v1beta']) {
+      try {
+        const listUrl = `https://generativelanguage.googleapis.com/${apiVer}/models?key=${encodeURIComponent(cleanKey)}`;
+        const res = await fetch(listUrl);
+        if (res.ok) {
+          const data = await res.json();
+          const models = data.models || [];
+          const supporting = models.filter(m => m.supportedGenerationMethods?.includes('generateContent'));
+          supporting.sort((a, b) => {
+            const aName = (a.name || '').toLowerCase();
+            const bName = (b.name || '').toLowerCase();
+            const aFlash = aName.includes('flash') ? 2 : (aName.includes('pro') ? 1 : 0);
+            const bFlash = bName.includes('flash') ? 2 : (bName.includes('pro') ? 1 : 0);
+            return bFlash - aFlash;
+          });
+
+          for (const m of supporting) {
+            const cleanName = m.name?.startsWith('models/') ? m.name : `models/${m.name}`;
+            addEndpoint(`https://generativelanguage.googleapis.com/${apiVer}/${cleanName}:generateContent`);
+          }
+        }
+      } catch (err) {
+        // dynamic discovery skipped
       }
     }
-  } catch (err) {
-    console.warn('Dynamic Gemini model listing skipped:', err);
   }
 
-  return 'gemini-2.5-flash';
+  // 2. Add battle-tested standard candidate endpoints across v1 and v1beta
+  const standardEndpoints = [
+    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent'
+  ];
+
+  for (const ep of standardEndpoints) {
+    addEndpoint(ep);
+  }
+
+  return endpoints;
 }
 
 /**
  * Calls Google Gemini Flash API with structured JSON output
- * Auto-discovers available models and fails over across active generations.
+ * Auto-discovers available models, fails over across active generations, and provides
+ * an automatic Apps Script backend fallback if client-side browser fetch fails.
  */
 export async function parseCasWithGemini(extractedText, geminiApiKey) {
   if (!geminiApiKey) {
@@ -316,26 +349,14 @@ Rules:
     }
   };
 
-  // Build candidate models list: dynamic discovery first, then modern fallbacks
-  const candidateModels = [];
-  try {
-    const discoveredModel = await getActiveGeminiModel(geminiApiKey);
-    if (discoveredModel) candidateModels.push(discoveredModel);
-  } catch (e) {}
-
-  const standardFallbacks = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-flash'];
-  for (const m of standardFallbacks) {
-    if (!candidateModels.includes(m)) {
-      candidateModels.push(m);
-    }
-  }
-
+  const candidateEndpoints = await getCandidateGeminiEndpoints(geminiApiKey);
   let lastError = null;
 
-  for (const model of candidateModels) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiApiKey.trim())}`;
+  // Tier 1: Try client-side fetch across all candidate endpoints
+  for (const endpoint of candidateEndpoints) {
+    const fullUrl = `${endpoint}?key=${encodeURIComponent(geminiApiKey.trim())}`;
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(fullUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(promptBody)
@@ -349,9 +370,8 @@ Rules:
         } catch(e) {}
         const msg = parsedErr?.error?.message || errText;
 
-        // If model not found (404), continue to next candidate model
         if (res.status === 404 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported')) {
-          console.warn(`Gemini model '${model}' returned 404/not supported, trying next candidate...`);
+          console.warn(`Gemini endpoint '${endpoint}' returned 404, trying next candidate...`);
           lastError = new Error(`Gemini API Error (${res.status}): ${msg}`);
           continue;
         }
@@ -364,26 +384,50 @@ Rules:
         throw new Error('Gemini API returned an empty response. Please verify the statement content.');
       }
 
-      let parsedData;
-      try {
-        parsedData = JSON.parse(rawOutputText);
-      } catch (parseErr) {
-        throw new Error('Failed to parse Gemini structured JSON: ' + parseErr.message);
-      }
-
-      // Successfully parsed: lock in this working model
-      cachedGeminiModel = model;
+      const cleanJson = cleanJsonText(rawOutputText);
+      const parsedData = JSON.parse(cleanJson);
+      cachedGeminiEndpoint = endpoint;
       return parsedData;
     } catch (err) {
       if (err.message?.includes('404') || err.message?.toLowerCase().includes('not found')) {
         lastError = err;
         continue;
       }
-      throw err;
+      // Non-404 error (e.g. CORS, network disconnect): note and attempt Tier 2 backend
+      console.warn('Client fetch exception on', endpoint, err);
+      lastError = err;
+      break;
     }
   }
 
-  throw lastError || new Error('No supported Gemini model found for your API key. Please check your Google AI Studio configuration.');
+  // Tier 2: Apps Script Backend Fallback via UrlFetchApp (zero CORS, zero client restrictions)
+  const token = getSafeStorage('nwm_session_token');
+  if (window.google?.script?.run?.executeGeminiPromptBackend && token) {
+    try {
+      const backendResult = await new Promise((resolve, reject) => {
+        window.google.script.run
+          .withSuccessHandler((res) => resolve(res))
+          .withFailureHandler((err) => reject(err))
+          .executeGeminiPromptBackend(JSON.stringify(promptBody), geminiApiKey.trim(), token);
+      });
+
+      if (backendResult && backendResult.status === 'success' && backendResult.rawText) {
+        const cleanJson = cleanJsonText(backendResult.rawText);
+        const parsedData = JSON.parse(cleanJson);
+        if (backendResult.endpointUsed) {
+          cachedGeminiEndpoint = backendResult.endpointUsed;
+        }
+        return parsedData;
+      } else if (backendResult && backendResult.message) {
+        throw new Error(backendResult.message);
+      }
+    } catch (backendErr) {
+      console.error('Backend Gemini execution fallback failed:', backendErr);
+      throw backendErr;
+    }
+  }
+
+  throw lastError || new Error('No supported Gemini endpoint responded. Please check your Google AI Studio configuration.');
 }
 
 /**

@@ -679,3 +679,73 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
     return { status: 'error', message: err.toString() };
   }
 }
+
+/**
+ * Backend fallback for executing Gemini generative requests via Apps Script UrlFetchApp.
+ * Avoids browser CORS and client environment limitations.
+ */
+function executeGeminiPromptBackend(promptBodyJson, apiKey, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var keyToUse = (apiKey || '').trim();
+    if (!keyToUse) {
+      keyToUse = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || '';
+    }
+    if (!keyToUse) {
+      return { status: 'error', message: 'Gemini API Key missing.' };
+    }
+
+    var payload = typeof promptBodyJson === 'string' ? JSON.parse(promptBodyJson) : promptBodyJson;
+
+    var candidateUrls = [
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent'
+    ];
+
+    var lastErr = null;
+    for (var i = 0; i < candidateUrls.length; i++) {
+      var fullUrl = candidateUrls[i] + '?key=' + encodeURIComponent(keyToUse);
+      try {
+        var response = UrlFetchApp.fetch(fullUrl, {
+          method: 'post',
+          contentType: 'application/json',
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+
+        var code = response.getResponseCode();
+        var respText = response.getContentText();
+
+        if (code === 200) {
+          var respJson = JSON.parse(respText);
+          var candidateText = respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts && respJson.candidates[0].content.parts[0].text;
+          if (candidateText) {
+            return {
+              status: 'success',
+              endpointUsed: candidateUrls[i],
+              rawText: candidateText
+            };
+          }
+        } else if (code === 404) {
+          lastErr = candidateUrls[i] + ' returned 404: ' + respText;
+          continue;
+        } else {
+          return { status: 'error', message: 'Gemini API Error (' + code + '): ' + respText };
+        }
+      } catch (callErr) {
+        lastErr = callErr.message;
+      }
+    }
+
+    return { status: 'error', message: 'All Gemini model endpoints failed. ' + lastErr };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
