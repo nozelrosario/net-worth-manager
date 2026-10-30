@@ -16,7 +16,7 @@ import { getSafeStorage } from './storage';
 let pdfjsLoadingPromise = null;
 
 export function loadPdfJsLibrary() {
-  if (window.pdfjsLib && window.pdfjsWorker) {
+  if (window.pdfjsLib && (window.pdfjsWorker || window.pdfjsLib.getDocument)) {
     return Promise.resolve(window.pdfjsLib);
   }
 
@@ -24,18 +24,34 @@ export function loadPdfJsLibrary() {
     return pdfjsLoadingPromise;
   }
 
-  const loadScript = (src) => {
+  const loadScript = (src, timeoutMs = 12000) => {
     return new Promise((resolve, reject) => {
       const existing = document.querySelector(`script[src="${src}"]`);
       if (existing) {
-        resolve();
+        if (existing.getAttribute('data-loaded') === 'true') {
+          resolve();
+          return;
+        }
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
         return;
       }
       const script = document.createElement('script');
       script.src = src;
       script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load ${src}`));
+      const timeout = setTimeout(() => {
+        reject(new Error(`Timed out loading ${src}`));
+      }, timeoutMs);
+
+      script.onload = () => {
+        clearTimeout(timeout);
+        script.setAttribute('data-loaded', 'true');
+        resolve();
+      };
+      script.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error(`Failed to load ${src}`));
+      };
       document.head.appendChild(script);
     });
   };
@@ -58,9 +74,6 @@ export function loadPdfJsLibrary() {
       }
 
       // 3. Configure worker source:
-      // If pdfjsWorker was loaded on main thread, GlobalWorkerOptions.workerSrc can be left empty
-      // to let PDF.js safely run WorkerMessageHandler on the main thread.
-      // Otherwise, attempt same-origin Blob worker fallback.
       if (window.pdfjsWorker?.WorkerMessageHandler) {
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
       } else {
@@ -107,8 +120,9 @@ export function base64ToUint8Array(base64Str) {
 /**
  * Unlocks password-protected CAS PDF in-memory and extracts clean text layer
  */
-export async function extractTextFromCasPdf(pdfInput, password = '') {
+export async function extractTextFromCasPdf(pdfInput, password = '', onProgress = null) {
   try {
+    onProgress?.('Loading PDF decryption engine...');
     const pdfjs = await loadPdfJsLibrary();
 
     let dataBuffer;
@@ -123,6 +137,7 @@ export async function extractTextFromCasPdf(pdfInput, password = '') {
     }
 
     const cleanPassword = (password || '').trim();
+    onProgress?.('Decrypting PDF statement...');
     const loadingTask = pdfjs.getDocument({
       data: dataBuffer,
       password: cleanPassword
@@ -130,8 +145,12 @@ export async function extractTextFromCasPdf(pdfInput, password = '') {
 
     let pdfDoc;
     try {
-      pdfDoc = await loadingTask.promise;
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('PDF decryption timed out after 15 seconds. Please verify the statement password.')), 15000)
+      );
+      pdfDoc = await Promise.race([loadingTask.promise, timeoutPromise]);
     } catch (docErr) {
+      try { loadingTask.destroy(); } catch(e) {}
       const errName = docErr?.name || '';
       const errMsg = (docErr?.message || '').toLowerCase();
       const errCode = docErr?.code;
@@ -155,11 +174,14 @@ export async function extractTextFromCasPdf(pdfInput, password = '') {
     let fullText = '';
 
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      onProgress?.(`Extracting text (page ${pageNum} of ${numPages})...`);
       const page = await pdfDoc.getPage(pageNum);
       const textContent = await page.getTextContent();
       const pageText = textContent.items.map((item) => item.str).join(' ');
       fullText += `\n--- PAGE ${pageNum} ---\n` + pageText;
     }
+
+    try { pdfDoc.destroy(); } catch(e) {}
 
     return {
       status: 'success',
@@ -224,82 +246,46 @@ function cleanJsonText(rawText) {
 }
 
 /**
- * Builds an exhaustive list of candidate Gemini API endpoints.
- * Prioritizes stable /v1/ GA endpoints (like v1/gemini-1.5-flash), rolling latest aliases (/v1beta/gemini-1.5-flash-latest),
- * and dynamically listed models from ModelService.ListModels.
+ * Extracts text payload from both Google GenAI Interactions API and generateContent API formats
  */
-export async function getCandidateGeminiEndpoints(geminiApiKey) {
-  if (cachedGeminiEndpoint) {
-    return [cachedGeminiEndpoint];
-  }
-
-  const cleanKey = (geminiApiKey || '').trim();
-  const endpoints = [];
-
-  const addEndpoint = (url) => {
-    if (url && !endpoints.includes(url)) {
-      endpoints.push(url);
-    }
-  };
-
-  // 1. Try dynamic model discovery on v1 and v1beta
-  if (cleanKey) {
-    for (const apiVer of ['v1', 'v1beta']) {
-      try {
-        const listUrl = `https://generativelanguage.googleapis.com/${apiVer}/models?key=${encodeURIComponent(cleanKey)}`;
-        const res = await fetch(listUrl);
-        if (res.ok) {
-          const data = await res.json();
-          const models = data.models || [];
-          const supporting = models.filter(m => m.supportedGenerationMethods?.includes('generateContent'));
-          supporting.sort((a, b) => {
-            const aName = (a.name || '').toLowerCase();
-            const bName = (b.name || '').toLowerCase();
-            const aFlash = aName.includes('flash') ? 2 : (aName.includes('pro') ? 1 : 0);
-            const bFlash = bName.includes('flash') ? 2 : (bName.includes('pro') ? 1 : 0);
-            return bFlash - aFlash;
-          });
-
-          for (const m of supporting) {
-            const cleanName = m.name?.startsWith('models/') ? m.name : `models/${m.name}`;
-            addEndpoint(`https://generativelanguage.googleapis.com/${apiVer}/${cleanName}:generateContent`);
+function extractTextFromGeminiResponse(jsonRes) {
+  if (!jsonRes) return null;
+  // Format 1: Interactions API steps structure
+  if (Array.isArray(jsonRes.steps)) {
+    for (const step of jsonRes.steps) {
+      if (step.type === 'model_output' && Array.isArray(step.content)) {
+        for (const item of step.content) {
+          if (item.type === 'text' && item.text) {
+            return item.text;
           }
         }
-      } catch (err) {
-        // dynamic discovery skipped
       }
     }
   }
-
-  // 2. Add battle-tested standard candidate endpoints across v1 and v1beta (Gemini 3.x Flash priority)
-  const standardEndpoints = [
-    'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-3.7-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
-  ];
-
-  for (const ep of standardEndpoints) {
-    addEndpoint(ep);
+  // Format 2: Direct output_text property
+  if (jsonRes.output_text) {
+    return jsonRes.output_text;
   }
-
-  return endpoints;
+  // Format 3: generateContent candidates structure
+  if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
+    return jsonRes.candidates[0].content.parts[0].text;
+  }
+  // Format 4: Single array wrapped response
+  if (Array.isArray(jsonRes) && jsonRes[0]) {
+    return extractTextFromGeminiResponse(jsonRes[0]);
+  }
+  return null;
 }
 
 /**
  * Calls Google Gemini Flash API with structured JSON output
- * Auto-discovers available models, fails over across active generations, and provides
- * an automatic Apps Script backend fallback if client-side browser fetch fails.
+ * Uses Google Interactions API (/v1beta/interactions with gemini-3.8-flash) as priority,
+ * fails over to generateContent without unsupported sampling parameters, and leverages
+ * the Apps Script backend UrlFetchApp fallback if browser CORS blocks the request.
  */
-export async function parseCasWithGemini(extractedText, geminiApiKey) {
+export async function parseCasWithGemini(extractedText, geminiApiKey, onProgress = null) {
   if (!geminiApiKey) {
-    throw new Error('Google Gemini API Key is missing. Please enter your Gemini API key in Settings or the CAS Hub.');
+    throw new Error('Google Gemini API Key is missing. Please enter your Gemini API key in Settings or the key dialog.');
   }
 
   const prunedText = pruneCasTextForGemini(extractedText);
@@ -337,95 +323,129 @@ Rules:
   ]
 }`;
 
-  const promptBody = {
-    contents: [
-      {
-        parts: [
-          { text: systemInstruction },
-          { text: "Here is the raw text extracted from the CAS PDF statement:\n\n" + prunedText }
-        ]
-      }
-    ],
-    generationConfig: {
-      response_mime_type: "application/json",
-      temperature: 0.1
-    }
-  };
+  const cleanPromptText = `${systemInstruction}\n\nHere is the raw text extracted from the CAS PDF statement:\n\n${prunedText}`;
 
-  const candidateEndpoints = await getCandidateGeminiEndpoints(geminiApiKey);
+  // Prioritized candidates:
+  // 1. Google Interactions API (gemini-3.8-flash)
+  // 2. generateContent endpoint (v1beta gemini-3.8-flash, without temperature)
+  // 3. generateContent endpoint (v1 gemini-3.8-flash)
+  // 4. generateContent endpoint (v1beta gemini-3.7-flash)
+  const candidateConfigs = [
+    {
+      label: 'Gemini 3.8 Flash (Interactions)',
+      url: 'https://generativelanguage.googleapis.com/v1beta/interactions',
+      body: {
+        model: 'gemini-3.8-flash',
+        input: cleanPromptText,
+        response_mime_type: 'application/json'
+      }
+    },
+    {
+      label: 'Gemini 3.8 Flash (generateContent)',
+      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
+      body: {
+        contents: [{ parts: [{ text: cleanPromptText }] }],
+        generationConfig: { response_mime_type: 'application/json' }
+      }
+    },
+    {
+      label: 'Gemini 3.8 Flash v1',
+      url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent',
+      body: {
+        contents: [{ parts: [{ text: cleanPromptText }] }],
+        generationConfig: { response_mime_type: 'application/json' }
+      }
+    },
+    {
+      label: 'Gemini 3.7 Flash',
+      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+      body: {
+        contents: [{ parts: [{ text: cleanPromptText }] }],
+        generationConfig: { response_mime_type: 'application/json' }
+      }
+    }
+  ];
+
   let lastError = null;
 
-  // Tier 1: Try client-side fetch across all candidate endpoints
-  for (const endpoint of candidateEndpoints) {
-    const fullUrl = `${endpoint}?key=${encodeURIComponent(geminiApiKey.trim())}`;
+  // Tier 1: Client-side fetch with 18-second timeout per candidate
+  for (const cfg of candidateConfigs) {
+    onProgress?.(`Contacting ${cfg.label}...`);
+    const fullUrl = `${cfg.url}?key=${encodeURIComponent(geminiApiKey.trim())}`;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 18000);
+
       const res = await fetch(fullUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promptBody)
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': geminiApiKey.trim()
+        },
+        body: JSON.stringify(cfg.body),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const errText = await res.text();
         let parsedErr;
-        try {
-          parsedErr = JSON.parse(errText);
-        } catch(e) {}
-        const msg = parsedErr?.error?.message || errText;
+        try { parsedErr = JSON.parse(errText); } catch(e) {}
+        const msg = parsedErr?.error?.message || (Array.isArray(parsedErr) && parsedErr[0]?.error?.message) || errText;
 
-        if (res.status === 404 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported')) {
-          console.warn(`Gemini endpoint '${endpoint}' returned 404, trying next candidate...`);
-          lastError = new Error(`Gemini API Error (${res.status}): ${msg}`);
+        console.warn(`Endpoint ${cfg.label} returned ${res.status}: ${msg}`);
+        lastError = new Error(`Gemini API (${res.status}): ${msg}`);
+        if (res.status === 404 || res.status === 400 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported') || msg.toLowerCase().includes('is no longer available')) {
           continue;
         }
         throw new Error(`Gemini API Error (${res.status}): ${msg}`);
       }
 
       const jsonRes = await res.json();
-      const rawOutputText = jsonRes?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const rawOutputText = extractTextFromGeminiResponse(jsonRes);
       if (!rawOutputText) {
-        throw new Error('Gemini API returned an empty response. Please verify the statement content.');
+        throw new Error('Gemini API returned an empty output. Please verify statement format.');
       }
 
       const cleanJson = cleanJsonText(rawOutputText);
       const parsedData = JSON.parse(cleanJson);
-      cachedGeminiEndpoint = endpoint;
       return parsedData;
     } catch (err) {
-      if (err.message?.includes('404') || err.message?.toLowerCase().includes('not found')) {
-        lastError = err;
-        continue;
-      }
-      // Non-404 error (e.g. CORS, network disconnect): note and attempt Tier 2 backend
-      console.warn('Client fetch exception on', endpoint, err);
+      console.warn(`Client request exception on ${cfg.label}:`, err);
       lastError = err;
-      break;
+      if (err.name === 'AbortError') {
+        lastError = new Error(`${cfg.label} timed out after 18 seconds.`);
+      }
+      continue;
     }
   }
 
-  // Tier 2: Apps Script Backend Fallback via UrlFetchApp (zero CORS, zero client restrictions)
+  // Tier 2: Apps Script Backend Fallback via UrlFetchApp (zero CORS, server-to-server)
   const token = getSafeStorage('nwm_session_token');
-  if (window.google?.script?.run?.executeGeminiPromptBackend && token) {
+  if (token) {
+    onProgress?.('Contacting Google cloud backend fallback...');
     try {
       const backendResult = await new Promise((resolve, reject) => {
-        window.google.script.run
-          .withSuccessHandler((res) => resolve(res))
-          .withFailureHandler((err) => reject(err))
-          .executeGeminiPromptBackend(JSON.stringify(promptBody), geminiApiKey.trim(), token);
+        const timeout = setTimeout(() => reject(new Error('Backend processing timed out.')), 35000);
+        if (window.google?.script?.run?.executeGeminiPromptBackend) {
+          window.google.script.run
+            .withSuccessHandler((res) => { clearTimeout(timeout); resolve(res); })
+            .withFailureHandler((err) => { clearTimeout(timeout); reject(err); })
+            .executeGeminiPromptBackend(cleanPromptText, geminiApiKey.trim(), token);
+        } else {
+          clearTimeout(timeout);
+          reject(new Error('Apps Script execution environment not available.'));
+        }
       });
 
       if (backendResult && backendResult.status === 'success' && backendResult.rawText) {
         const cleanJson = cleanJsonText(backendResult.rawText);
-        const parsedData = JSON.parse(cleanJson);
-        if (backendResult.endpointUsed) {
-          cachedGeminiEndpoint = backendResult.endpointUsed;
-        }
-        return parsedData;
+        return JSON.parse(cleanJson);
       } else if (backendResult && backendResult.message) {
         throw new Error(backendResult.message);
       }
     } catch (backendErr) {
-      console.error('Backend Gemini execution fallback failed:', backendErr);
+      console.error('Backend fallback execution failed:', backendErr);
       throw backendErr;
     }
   }

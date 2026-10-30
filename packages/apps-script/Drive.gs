@@ -683,8 +683,10 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
 /**
  * Backend fallback for executing Gemini generative requests via Apps Script UrlFetchApp.
  * Avoids browser CORS and client environment limitations.
+ * Supports both Google Interactions API (/v1beta/interactions with gemini-3.8-flash)
+ * and generateContent without deprecated parameters.
  */
-function executeGeminiPromptBackend(promptBodyJson, apiKey, idToken) {
+function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
   try {
     var auth = assertWriteAccess(idToken);
     if (!auth.allowed) return { status: 'error', message: auth.message };
@@ -697,29 +699,68 @@ function executeGeminiPromptBackend(promptBodyJson, apiKey, idToken) {
       return { status: 'error', message: 'Gemini API Key missing.' };
     }
 
-    var payload = typeof promptBodyJson === 'string' ? JSON.parse(promptBodyJson) : promptBodyJson;
+    var cleanPrompt = '';
+    if (typeof promptInput === 'string') {
+      try {
+        var parsed = JSON.parse(promptInput);
+        if (parsed && parsed.contents && parsed.contents[0] && parsed.contents[0].parts) {
+          cleanPrompt = parsed.contents[0].parts.map(function(p) { return p.text || ''; }).join('\n\n');
+        } else {
+          cleanPrompt = promptInput;
+        }
+      } catch (e) {
+        cleanPrompt = promptInput;
+      }
+    } else if (promptInput && promptInput.contents) {
+      cleanPrompt = promptInput.contents[0].parts.map(function(p) { return p.text || ''; }).join('\n\n');
+    } else {
+      cleanPrompt = String(promptInput || '');
+    }
 
-    var candidateUrls = [
-      'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-3.7-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
+    var requests = [
+      {
+        label: 'Gemini 3.8 Flash (Interactions)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-3.8-flash',
+          input: cleanPrompt,
+          response_mime_type: 'application/json'
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash (generateContent)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: { response_mime_type: 'application/json' }
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash v1',
+        url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: { response_mime_type: 'application/json' }
+        }
+      },
+      {
+        label: 'Gemini 3.7 Flash',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: { response_mime_type: 'application/json' }
+        }
+      }
     ];
 
     var lastErr = null;
-    for (var i = 0; i < candidateUrls.length; i++) {
-      var fullUrl = candidateUrls[i] + '?key=' + encodeURIComponent(keyToUse);
+    for (var i = 0; i < requests.length; i++) {
       try {
-        var response = UrlFetchApp.fetch(fullUrl, {
+        var response = UrlFetchApp.fetch(requests[i].url, {
           method: 'post',
           contentType: 'application/json',
-          payload: JSON.stringify(payload),
+          headers: { 'x-goog-api-key': keyToUse },
+          payload: JSON.stringify(requests[i].payload),
           muteHttpExceptions: true
         });
 
@@ -728,16 +769,39 @@ function executeGeminiPromptBackend(promptBodyJson, apiKey, idToken) {
 
         if (code === 200) {
           var respJson = JSON.parse(respText);
-          var candidateText = respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts && respJson.candidates[0].content.parts[0].text;
+          var candidateText = null;
+
+          // Check interactions API steps array
+          if (respJson && respJson.steps && respJson.steps.length) {
+            for (var si = 0; si < respJson.steps.length; si++) {
+              var step = respJson.steps[si];
+              if (step.type === 'model_output' && step.content && step.content.length) {
+                for (var ci = 0; ci < step.content.length; ci++) {
+                  if (step.content[ci].type === 'text' && step.content[ci].text) {
+                    candidateText = step.content[ci].text;
+                    break;
+                  }
+                }
+              }
+              if (candidateText) break;
+            }
+          }
+          if (!candidateText && respJson && respJson.output_text) {
+            candidateText = respJson.output_text;
+          }
+          if (!candidateText && respJson && respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
+            candidateText = respJson.candidates[0].content.parts[0].text;
+          }
+
           if (candidateText) {
             return {
               status: 'success',
-              endpointUsed: candidateUrls[i],
+              endpointUsed: requests[i].label,
               rawText: candidateText
             };
           }
-        } else if (code === 404) {
-          lastErr = candidateUrls[i] + ' returned 404: ' + respText;
+        } else if (code === 404 || code === 400) {
+          lastErr = requests[i].label + ' returned ' + code + ': ' + respText;
           continue;
         } else {
           return { status: 'error', message: 'Gemini API Error (' + code + '): ' + respText };

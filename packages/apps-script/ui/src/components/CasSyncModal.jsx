@@ -123,7 +123,9 @@ export default function CasSyncModal({
     try {
       // Step 1: In-memory PDF text extraction via PDF.js CDN
       setProcessingStatusText('Unlocking PDF & extracting text...');
-      const extractResult = await extractTextFromCasPdf(pdfData, pwd);
+      const extractResult = await extractTextFromCasPdf(pdfData, pwd, (statusText) => {
+        setProcessingStatusText(statusText);
+      });
 
       if (extractResult.status === 'password_required') {
         setIsProcessing(false);
@@ -138,20 +140,22 @@ export default function CasSyncModal({
         throw new Error(extractResult.message || 'Failed to extract text from statement.');
       }
 
-      // Step 2: Google Gemini 1.5 Flash structured JSON parsing
+      // Step 2: Google Gemini Flash structured JSON parsing
       const keyToUse = geminiApiKey || savedGeminiKey;
       if (!keyToUse) {
         setIsProcessing(false);
         setShowPanModal(true);
-        showMessage?.('Google Gemini API Key is required to parse statement. Please enter it in Settings.', true);
+        showMessage?.('Google Gemini API Key is required to parse statement. Please enter it in Settings or the key dialog.', true);
         return;
       }
 
       setProcessingStatusText('Gemini AI analyzing portfolio & schemes...');
-      const geminiResult = await parseCasWithGemini(extractResult.text, keyToUse);
+      const geminiResult = await parseCasWithGemini(extractResult.text, keyToUse, (statusText) => {
+        setProcessingStatusText(statusText);
+      });
 
       if (!geminiResult || !Array.isArray(geminiResult.holdings) || geminiResult.holdings.length === 0) {
-        throw new Error('No mutual fund holdings found in the parsed statement.');
+        throw new Error('No mutual fund holdings found in the parsed statement. Please verify that the export format was "Summary".');
       }
 
       // Step 3: Snapshot Reconciliation with existing database
@@ -181,7 +185,7 @@ export default function CasSyncModal({
       setIsProcessing(false);
       setProcessingStatusText('');
 
-      const msg = `Successfully analyzed ${geminiResult.holdings.length} holdings (${reconciled.stats.updatedCount} updated, ${reconciled.stats.newCount} new)`;
+      const msg = `Successfully analyzed ${geminiResult.holdings.length} holdings (${reconciled.stats.updatedCount} updated, ${reconciled.stats.newCount} new). Review items and click "Update Ledger" to import.`;
       showMessage?.(msg);
     } catch (err) {
       console.error('Error processing CAS statement:', err);
@@ -246,6 +250,35 @@ export default function CasSyncModal({
     };
     reader.readAsArrayBuffer(file);
     e.target.value = '';
+  };
+
+  const handleDropFile = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      showMessage?.('Please upload a valid .pdf CAS statement.', true);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const arrayBuffer = event.target?.result;
+      if (arrayBuffer) {
+        processPdfContent(arrayBuffer, file.name);
+      }
+    };
+    reader.onerror = () => {
+      showMessage?.('Failed to read dropped file.', true);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleDragOverFile = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   // Save PAN / Gemini settings
@@ -487,12 +520,21 @@ export default function CasSyncModal({
 
         {/* 2. SOURCE BANNER & LOADING STATUS */}
         {isProcessing && (
-          <div className="px-4 py-2 bg-primary-accent/10 border-b border-primary-accent/20 flex items-center justify-between text-xs text-primary-accent">
-            <div className="flex items-center gap-2">
-              <RefreshCw size={14} className="animate-spin text-primary-accent" />
-              <span className="font-medium">{processingStatusText || 'Processing statement...'}</span>
+          <div className="px-4 py-2.5 bg-primary-accent/10 border-b border-primary-accent/20 flex items-center justify-between text-xs text-primary-accent animate-pulse">
+            <div className="flex items-center gap-2.5">
+              <RefreshCw size={14} className="animate-spin text-primary-accent shrink-0" />
+              <span className="font-semibold">{processingStatusText || 'Processing statement...'}</span>
             </div>
-            <span className="text-[11px] text-text-muted">Gemini Flash AI</span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsProcessing(false);
+                setProcessingStatusText('');
+              }}
+              className="text-[11px] underline text-text-muted hover:text-text-primary px-2 py-0.5"
+            >
+              Cancel
+            </button>
           </div>
         )}
 
@@ -618,7 +660,11 @@ export default function CasSyncModal({
         {/* 5. MAIN CONTENT / HOLDINGS LIST */}
         <main className="flex-1 overflow-y-auto p-4 space-y-2.5">
           {candidates.length === 0 && !isProcessing && (
-            <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-border-subtle bg-surface-layer1/40">
+            <div 
+              onDragOver={handleDragOverFile}
+              onDrop={handleDropFile}
+              className="h-full min-h-[320px] flex flex-col items-center justify-center text-center p-6 rounded-2xl border-2 border-dashed border-border-subtle hover:border-primary-accent/50 bg-surface-layer1/40 transition-colors"
+            >
               <div className="w-12 h-12 rounded-2xl bg-primary-accent/10 text-primary-accent flex items-center justify-center mb-3">
                 <FileText size={24} />
               </div>

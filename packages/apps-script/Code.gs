@@ -2499,7 +2499,8 @@ function resolveGeminiFlashModel(apiKey) {
         var m = models[i];
         var methods = m.supportedGenerationMethods || [];
         var name = (m.name || "").toLowerCase();
-        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1) {
+        // Target active Gemini 3.x Flash models, ignoring sunsetted 1.5 and 2.0 generations
+        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1 && name.indexOf("3.") !== -1) {
           return m.name.replace(/^models\//, "");
         }
       }
