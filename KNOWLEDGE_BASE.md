@@ -25,6 +25,29 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.7) - Automated CAS Investment Ingestion via CAMS+KFintech PDF, Google Drive & Gemini AI (Issue #58)
+✅ **Single Golden Path Ingestion Pipeline (`casParser.js` & `Drive.gs`)**:
+  - **CAMS + KFintech Statement Support**: Ingests the standard unified Consolidated Account Statement (CAS) PDF covering 100% of Indian mutual funds across all AMCs.
+  - **Google Drive Auto-Scanner**: `scanDriveForCas(folderName, idToken)` scans the configured Drive folder (`Net Worth Manager/CAS Imports`), locates the newest `.pdf`, and returns metadata + binary-safe Base64 payload.
+  - **Zero-Knowledge In-Memory Decryption**: Dynamically loads PDF.js from Cloudflare CDN upon modal mount (preventing bundle bloat in `vite-plugin-singlefile`) and decrypts the password-protected statement in-memory using the user's PAN or custom CAMS password.
+  - **Google Gemini 1.5 Flash Extraction**: Pre-prunes historical transaction tables and invokes `gemini-1.5-flash` with structured JSON output (`response_mime_type: "application/json"`), extracting investor name, statement date, schemes, folios, ISINs, units, and NAVs in ~2 seconds.
+✅ **Units-First Snapshot Reconciliation Engine (`reconcileCasWithLedger`)**:
+  - **Live Valuation Priority**: Updates `Units` and `Cost` from CAS while computing real-time net worth: $\text{Current Value} = \text{Units} \times (\text{Live AMFI Quote} \lor \text{Statement NAV})$, preventing stale statement dates from downgrading live portfolio values.
+  - **Composite Key Matching**: Matches holdings by $\mathbf{Composite\ Key} = \text{Folio Number} + (\text{ISIN} \lor \text{Normalized Scheme Name})$, preventing multi-folio scheme collisions.
+  - **Family Profile Auto-Assignment**: Fuzzy-matches `statement_holder_name` against the `FamilyProfiles` sheet (`Nozel`, `Maria`) to pre-select asset ownership automatically.
+  - **Metadata Preservation**: User-assigned Owner, Nominees, notes, and linked Family Safe documents are strictly preserved.
+✅ **Interactive Review Modal & In-App Guide (`CasSyncModal.jsx` & Screen 18 Prototype)**:
+  - High-fidelity OLED Dark (`#0B0F17`) and Clean Light mode interface matching Stitch design tokens.
+  - Metric summary ribbon tracking total statement valuation, valuation delta vs existing ledger, net SIP inflow, and updated/new counts.
+  - Filter tabs (`All`, `Updated / SIP`, `New Detected`, `Redeemed / Zero`, `Unchanged`).
+  - Embedded "How to Export CAS from CAMS" guide modal with direct link to CAMS Online and password rules.
+  - In-place password retry recovery on `PasswordException` without resetting scanned file state.
+✅ **Single-Flush Database Batch Sync (`batchSyncCasAssets` in `Drive.gs`)**:
+  - Commits all asset updates, new row appends, and watermark settings in a single spreadsheet flush, reducing sync time from ~10s to <1s.
+  - Automatically registers new schemes in `MarketQuotes` for continuous live AMFI NAV tracking.
+  - Fully integrated into `AssetsTab.jsx` ("Sync CAS" quick-action pills) and `SettingsTab.jsx` (Drive folder and PAN configuration).
+
+
 ## Feature Update (v3.6) - SMS Inbox Free-Text Search & Alike Batch Ingestion (Issue #55)
 ✅ **Free-Text Search Engine (`smsParser.js` & `SmsInboxModal.jsx`)**:
   - Implemented multi-token case-insensitive free-text search matching across merchant/payee, raw SMS body text, preview snippet, bank name, asset account, account digits, reference/UPI IDs, category, transaction type, beneficiary, sender address, date, and currency amounts.

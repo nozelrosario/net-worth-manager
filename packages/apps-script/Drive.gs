@@ -413,3 +413,269 @@ function unignoreSmsTransaction(hash, idToken) {
   }
 }
 
+
+/**
+ * Scans Google Drive for CAS Consolidated Account Statement PDF files.
+ * Identifies the configured folder (defaults to 'Net Worth Manager/CAS Imports' or 'CAS Imports'),
+ * locates the most recent .pdf backup file, and returns file metadata + Base64 content.
+ */
+function scanDriveForCas(folderPathOrName, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var target = folderPathOrName || 'Net Worth Manager/CAS Imports';
+    var folder = null;
+
+    if (target.indexOf('/') !== -1) {
+      var parts = target.split('/').map(function(s) { return s.trim(); }).filter(Boolean);
+      folder = getFolderByPath(parts);
+    } else {
+      var folders = DriveApp.getFoldersByName(target);
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        // Fallback: check Net Worth Manager subfolders
+        var nwmFolders = DriveApp.getFoldersByName('Net Worth Manager');
+        if (nwmFolders.hasNext()) {
+          var nwm = nwmFolders.next();
+          var subFolders = nwm.getFoldersByName(target);
+          if (subFolders.hasNext()) {
+            folder = subFolders.next();
+          } else {
+            // Also check 'CAS Imports'
+            var casSub = nwm.getFoldersByName('CAS Imports');
+            if (casSub.hasNext()) {
+              folder = casSub.next();
+            }
+          }
+        }
+      }
+    }
+
+    if (!folder) {
+      return {
+        status: 'not_found',
+        message: 'Google Drive folder "' + target + '" was not found. Please create this folder or drop your CAS statement PDF into it.'
+      };
+    }
+
+    var files = folder.getFiles();
+    var latestFile = null;
+    var latestDate = 0;
+    var totalPdfFiles = 0;
+
+    while (files.hasNext()) {
+      var file = files.next();
+      var name = file.getName();
+      if (name.toLowerCase().indexOf('.pdf') !== -1) {
+        totalPdfFiles++;
+        var updated = file.getLastUpdated().getTime();
+        if (updated > latestDate) {
+          latestDate = updated;
+          latestFile = file;
+        }
+      }
+    }
+
+    if (!latestFile) {
+      return {
+        status: 'no_backups',
+        message: 'No .pdf CAS statement files found in Drive folder "' + folder.getName() + '".'
+      };
+    }
+
+    // Preserve binary stream integrity with Base64 encoding
+    var bytes = latestFile.getBlob().getBytes();
+    var base64Data = Utilities.base64Encode(bytes);
+
+    return {
+      status: 'success',
+      folderName: folder.getName(),
+      fileName: latestFile.getName(),
+      fileSize: latestFile.getSize(),
+      lastModified: latestFile.getLastUpdated().toISOString(),
+      lastModifiedEpoch: latestDate,
+      totalPdfFiles: totalPdfFiles,
+      base64Data: base64Data
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Batch synchronizes reconciled CAS mutual fund assets into the Assets sheet in a single flush.
+ * Updates units, cost base, live valuations, and registers quotes in MarketQuotes.
+ */
+function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Assets');
+    if (!sheet) {
+      setupDatabaseSheets();
+      sheet = ss.getSheetByName('Assets');
+      if (!sheet) return { status: 'error', message: 'Assets sheet not found' };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Asset ID');
+    var costCol = headers.indexOf('Cost');
+    var valCol = headers.indexOf('Current Value');
+    var detailsCol = headers.indexOf('Details JSON');
+    var nameCol = headers.indexOf('Name');
+    var catCol = headers.indexOf('Category');
+    var identCol = headers.indexOf('Identifiers');
+    var instCol = headers.indexOf('Institution/Location');
+
+    // Build map of existing Asset ID to 1-based row index in sheet
+    var rowMap = {};
+    for (var r = 1; r < data.length; r++) {
+      var aid = String(data[r][idCol] || '').trim();
+      if (aid) {
+        rowMap[aid] = r + 1;
+      }
+    }
+
+    var updatedCount = 0;
+    var insertedCount = 0;
+
+    // 1. Process updates in existing asset rows
+    if (assetsToUpdate && assetsToUpdate.length > 0) {
+      for (var u = 0; u < assetsToUpdate.length; u++) {
+        var item = assetsToUpdate[u];
+        var targetAssetId = String(item['Asset ID'] || '').trim();
+        var rowIdx = rowMap[targetAssetId];
+        if (rowIdx) {
+          var existingRow = data[rowIdx - 1];
+          var existingDetailsRaw = detailsCol !== -1 ? existingRow[detailsCol] : '{}';
+          var existingDetails = {};
+          try {
+            existingDetails = typeof existingDetailsRaw === 'string' ? JSON.parse(existingDetailsRaw || '{}') : (existingDetailsRaw || {});
+          } catch(e) {}
+
+          var newDetails = typeof item['Details JSON'] === 'string' ? JSON.parse(item['Details JSON'] || '{}') : (item['Details JSON'] || {});
+          for (var k in newDetails) {
+            existingDetails[k] = newDetails[k];
+          }
+          if (statementDate) {
+            existingDetails['Statement Date'] = statementDate;
+          }
+          existingDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
+
+          // Update Current Value
+          if (valCol !== -1 && item['Current Value'] !== undefined) {
+            sheet.getRange(rowIdx, valCol + 1).setValue(Number(item['Current Value']) || 0);
+          }
+          // Update Cost Base
+          if (costCol !== -1 && item['Cost'] !== undefined) {
+            sheet.getRange(rowIdx, costCol + 1).setValue(Number(item['Cost']) || 0);
+          }
+          // Update Details JSON
+          if (detailsCol !== -1) {
+            sheet.getRange(rowIdx, detailsCol + 1).setValue(JSON.stringify(existingDetails));
+          }
+          // Update Identifiers (Folio) if provided and empty
+          if (identCol !== -1 && item['Identifiers'] && !existingRow[identCol]) {
+            sheet.getRange(rowIdx, identCol + 1).setValue(item['Identifiers']);
+          }
+          // Update Institution if empty
+          if (instCol !== -1 && item['Institution/Location'] && !existingRow[instCol]) {
+            sheet.getRange(rowIdx, instCol + 1).setValue(item['Institution/Location']);
+          }
+
+          updatedCount++;
+        }
+      }
+    }
+
+    // 2. Process new asset insertions
+    if (assetsToInsert && assetsToInsert.length > 0) {
+      for (var i = 0; i < assetsToInsert.length; i++) {
+        var ins = assetsToInsert[i];
+        var newRow = [];
+        var newAssetId = ins['Asset ID'] || ('AST_' + Utilities.getUuid().replace(/-/g, '').slice(0, 12).toUpperCase());
+
+        var insDetails = typeof ins['Details JSON'] === 'string' ? JSON.parse(ins['Details JSON'] || '{}') : (ins['Details JSON'] || {});
+        if (statementDate) {
+          insDetails['Statement Date'] = statementDate;
+        }
+        insDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
+        if (insDetails['Live Tracking'] === undefined) {
+          insDetails['Live Tracking'] = true;
+        }
+
+        for (var h = 0; h < headers.length; h++) {
+          var header = headers[h];
+          var hClean = String(header || '').trim();
+
+          if (hClean === 'Asset ID') {
+            newRow.push(newAssetId);
+          } else if (hClean === 'Type') {
+            newRow.push(ins.Type || 'Investment');
+          } else if (hClean === 'Name') {
+            newRow.push(ins.Name || 'Mutual Fund Scheme');
+          } else if (hClean === 'Category') {
+            newRow.push(ins.Category || 'Mutual Funds');
+          } else if (hClean === 'Owner') {
+            newRow.push(ins.Owner || auth.userInfo.activeEmail || 'Single');
+          } else if (hClean === 'Status') {
+            newRow.push(ins.Status || 'Active');
+          } else if (hClean === 'Acquisition Date') {
+            newRow.push(ins['Acquisition Date'] || statementDate || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd'));
+          } else if (hClean === 'Cost') {
+            newRow.push(Number(ins.Cost) || 0);
+          } else if (hClean === 'Current Value') {
+            newRow.push(Number(ins['Current Value']) || 0);
+          } else if (hClean === 'Institution/Location') {
+            newRow.push(ins['Institution/Location'] || '');
+          } else if (hClean === 'Identifiers') {
+            newRow.push(ins.Identifiers || '');
+          } else if (hClean === 'Nominee') {
+            newRow.push(ins.Nominee || '');
+          } else if (hClean === 'Nominee %') {
+            newRow.push(ins['Nominee %'] || '');
+          } else if (hClean === 'Details JSON') {
+            newRow.push(JSON.stringify(insDetails));
+          } else {
+            newRow.push(ins[hClean] !== undefined ? ins[hClean] : '');
+          }
+        }
+        sheet.appendRow(newRow);
+        insertedCount++;
+
+        // Auto-register in MarketQuotes
+        try {
+          var schemeCode = insDetails['Scheme Code'];
+          var isin = insDetails['ISIN'];
+          var symbolToTrack = schemeCode || isin;
+          if (symbolToTrack) {
+            registerMarketQuote(ss, symbolToTrack, 'Mutual Funds', ins.Name);
+          }
+        } catch(eQuote) {}
+      }
+    }
+
+    SpreadsheetApp.flush();
+
+    // 3. Update watermark in Settings
+    if (statementDate) {
+      upsertSetting('CasLastProcessedDate', String(statementDate), idToken);
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'BATCH_SYNC_CAS', 'Assets', 'Synchronized ' + (updatedCount + insertedCount) + ' mutual fund holdings (' + updatedCount + ' updated, ' + insertedCount + ' inserted)');
+
+    return {
+      status: 'success',
+      updatedCount: updatedCount,
+      insertedCount: insertedCount,
+      message: 'Successfully synchronized ' + (updatedCount + insertedCount) + ' holdings (' + updatedCount + ' updated, ' + insertedCount + ' new added).'
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
