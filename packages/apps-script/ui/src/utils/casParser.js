@@ -271,15 +271,18 @@ export async function getCandidateGeminiEndpoints(geminiApiKey) {
     }
   }
 
-  // 2. Add battle-tested standard candidate endpoints across v1 and v1beta
+  // 2. Add battle-tested standard candidate endpoints across v1 and v1beta (Gemini 3.x Flash priority)
   const standardEndpoints = [
+    'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-3.7-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent',
     'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent'
+    'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
   ];
 
   for (const ep of standardEndpoints) {

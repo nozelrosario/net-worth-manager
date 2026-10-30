@@ -2073,7 +2073,7 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
           "4. Cash Drag & Risk Action: Comment on runway and concentration if any.\n" +
           "Keep your answer crisp, professional, formatted in clean markdown bullet points, avoiding generic disclaimers.";
 
-        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash"];
+        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
         for (var mi = 0; mi < candidateModels.length; mi++) {
           var model = candidateModels[mi];
           var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey);
@@ -2335,7 +2335,7 @@ function generateProductIntelligence(rebalanceData, userApiKey, sessionToken) {
           '  ]\n' +
           "}";
 
-        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash"];
+        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
         for (var mi = 0; mi < candidateModels.length; mi++) {
           var model = candidateModels[mi];
           var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey);
@@ -2488,7 +2488,7 @@ function generateOfflineProductIntelligence(rebalanceData) {
  * using ListModels, preventing 404 errors when specific version aliases are sunset.
  */
 function resolveGeminiFlashModel(apiKey) {
-  if (!apiKey) return "gemini-2.5-flash";
+  if (!apiKey) return "gemini-3.8-flash";
   try {
     var listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + encodeURIComponent(apiKey);
     var res = UrlFetchApp.fetch(listUrl, { muteHttpExceptions: true });
@@ -2499,7 +2499,7 @@ function resolveGeminiFlashModel(apiKey) {
         var m = models[i];
         var methods = m.supportedGenerationMethods || [];
         var name = (m.name || "").toLowerCase();
-        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1 && name.indexOf("1.5") === -1) {
+        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1) {
           return m.name.replace(/^models\//, "");
         }
       }
@@ -2507,5 +2507,5 @@ function resolveGeminiFlashModel(apiKey) {
   } catch (e) {
     Logger.log("Failed to list Gemini models: " + e.message);
   }
-  return "gemini-2.5-flash";
+  return "gemini-3.8-flash";
 }
