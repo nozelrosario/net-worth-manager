@@ -147,7 +147,7 @@ export default function CasSyncModal({
         return;
       }
 
-      setProcessingStatusText('Gemini 1.5 Flash analyzing portfolio & schemes...');
+      setProcessingStatusText('Gemini AI analyzing portfolio & schemes...');
       const geminiResult = await parseCasWithGemini(extractResult.text, keyToUse);
 
       if (!geminiResult || !Array.isArray(geminiResult.holdings) || geminiResult.holdings.length === 0) {
@@ -492,7 +492,7 @@ export default function CasSyncModal({
               <RefreshCw size={14} className="animate-spin text-primary-accent" />
               <span className="font-medium">{processingStatusText || 'Processing statement...'}</span>
             </div>
-            <span className="text-[11px] text-text-muted">Gemini 1.5 Flash</span>
+            <span className="text-[11px] text-text-muted">Gemini Flash AI</span>
           </div>
         )}
 
@@ -1019,7 +1019,7 @@ export default function CasSyncModal({
                     className="w-full bg-surface-layer2 border border-border-subtle rounded-xl text-xs font-mono text-text-primary px-3 py-2 focus:ring-1 focus:ring-primary-accent"
                   />
                   <span className="text-[10px] text-text-muted block mt-0.5">
-                    Gemini 1.5 Flash free tier (1500 req/day).
+                    Gemini Flash API free tier (1500 req/day).
                   </span>
                 </div>
               </div>

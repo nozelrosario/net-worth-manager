@@ -211,8 +211,55 @@ export function pruneCasTextForGemini(rawText) {
   return result.length > 5000 ? result : rawText;
 }
 
+let cachedGeminiModel = null;
+
 /**
- * Calls Google Gemini 1.5 Flash API with structured JSON output
+ * Dynamically resolves an active Gemini Flash model supporting generateContent
+ * via ModelService.ListModels, avoiding hardcoded versions that deprecate.
+ */
+export async function getActiveGeminiModel(geminiApiKey) {
+  if (cachedGeminiModel) {
+    return cachedGeminiModel;
+  }
+
+  const cleanKey = (geminiApiKey || '').trim();
+  if (!cleanKey) return 'gemini-2.5-flash';
+
+  try {
+    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
+    const listRes = await fetch(listUrl);
+    if (listRes.ok) {
+      const data = await listRes.json();
+      const models = data.models || [];
+      // Look for active models supporting generateContent
+      // Priority: Flash models (excluding retired 1.5 versions)
+      const candidate = models.find(m => 
+        m.supportedGenerationMethods?.includes('generateContent') &&
+        m.name?.toLowerCase().includes('flash') &&
+        !m.name?.includes('1.5')
+      ) || models.find(m => 
+        m.supportedGenerationMethods?.includes('generateContent') &&
+        m.name?.toLowerCase().includes('flash')
+      ) || models.find(m => 
+        m.supportedGenerationMethods?.includes('generateContent')
+      );
+
+      if (candidate && candidate.name) {
+        const modelId = candidate.name.replace(/^models\//, '');
+        cachedGeminiModel = modelId;
+        return modelId;
+      }
+    }
+  } catch (err) {
+    console.warn('Dynamic Gemini model listing skipped:', err);
+  }
+
+  return 'gemini-2.5-flash';
+}
+
+/**
+ * Calls Google Gemini Flash API with structured JSON output
+ * Auto-discovers available models and fails over across active generations.
  */
 export async function parseCasWithGemini(extractedText, geminiApiKey) {
   if (!geminiApiKey) {
@@ -269,38 +316,74 @@ Rules:
     }
   };
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey.trim())}`;
-
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(promptBody)
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    let parsedErr;
-    try {
-      parsedErr = JSON.parse(errText);
-    } catch(e) {}
-    const msg = parsedErr?.error?.message || errText;
-    throw new Error(`Gemini API Error (${res.status}): ${msg}`);
-  }
-
-  const jsonRes = await res.json();
-  const rawOutputText = jsonRes?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawOutputText) {
-    throw new Error('Gemini API returned an empty response. Please verify the statement content.');
-  }
-
-  let parsedData;
+  // Build candidate models list: dynamic discovery first, then modern fallbacks
+  const candidateModels = [];
   try {
-    parsedData = JSON.parse(rawOutputText);
-  } catch (parseErr) {
-    throw new Error('Failed to parse Gemini structured JSON: ' + parseErr.message);
+    const discoveredModel = await getActiveGeminiModel(geminiApiKey);
+    if (discoveredModel) candidateModels.push(discoveredModel);
+  } catch (e) {}
+
+  const standardFallbacks = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-flash'];
+  for (const m of standardFallbacks) {
+    if (!candidateModels.includes(m)) {
+      candidateModels.push(m);
+    }
   }
 
-  return parsedData;
+  let lastError = null;
+
+  for (const model of candidateModels) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiApiKey.trim())}`;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(promptBody)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        let parsedErr;
+        try {
+          parsedErr = JSON.parse(errText);
+        } catch(e) {}
+        const msg = parsedErr?.error?.message || errText;
+
+        // If model not found (404), continue to next candidate model
+        if (res.status === 404 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported')) {
+          console.warn(`Gemini model '${model}' returned 404/not supported, trying next candidate...`);
+          lastError = new Error(`Gemini API Error (${res.status}): ${msg}`);
+          continue;
+        }
+        throw new Error(`Gemini API Error (${res.status}): ${msg}`);
+      }
+
+      const jsonRes = await res.json();
+      const rawOutputText = jsonRes?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawOutputText) {
+        throw new Error('Gemini API returned an empty response. Please verify the statement content.');
+      }
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(rawOutputText);
+      } catch (parseErr) {
+        throw new Error('Failed to parse Gemini structured JSON: ' + parseErr.message);
+      }
+
+      // Successfully parsed: lock in this working model
+      cachedGeminiModel = model;
+      return parsedData;
+    } catch (err) {
+      if (err.message?.includes('404') || err.message?.toLowerCase().includes('not found')) {
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError || new Error('No supported Gemini model found for your API key. Please check your Google AI Studio configuration.');
 }
 
 /**
