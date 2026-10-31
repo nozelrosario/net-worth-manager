@@ -262,13 +262,36 @@ function getCurrentUserInfo(sessionToken) {
 }
 
 /**
- * RUN THIS ONCE in Google Apps Script Editor to authorize email sending!
- * Select 'authorizeEmailPermission' from the top dropdown toolbar -> click Run -> click Review Permissions -> Allow.
+ * RUN THIS ONCE in Google Apps Script Editor to authorize all required permissions!
+ * Select 'authorizeScriptPermissions' from the top dropdown toolbar -> click Run -> click Review Permissions -> Allow.
+ * Authorizes: UrlFetchApp (script.external_request), MailApp, SpreadsheetApp, DriveApp.
+ */
+function authorizeScriptPermissions() {
+  Logger.log("1. Checking Spreadsheet access...");
+  var ss = getSpreadsheet();
+  if (ss) Logger.log("Spreadsheet connected: " + ss.getName());
+
+  Logger.log("2. Checking Drive access...");
+  var root = DriveApp.getRootFolder();
+  if (root) Logger.log("Drive Root Folder: " + root.getName());
+
+  Logger.log("3. Authorizing external HTTP requests (UrlFetchApp)...");
+  var testResp = UrlFetchApp.fetch("https://www.google.com", { muteHttpExceptions: true });
+  Logger.log("UrlFetchApp test status: " + testResp.getResponseCode());
+
+  Logger.log("4. Checking MailApp access...");
+  var user = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || DEFAULT_OWNER_EMAIL;
+  Logger.log("Script executing user: " + user);
+
+  Logger.log("All Apps Script permissions authorized successfully!");
+  return "All permissions authorized successfully!";
+}
+
+/**
+ * Backwards compatibility helper for authorizeScriptPermissions.
  */
 function authorizeEmailPermission() {
-  var user = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || DEFAULT_OWNER_EMAIL;
-  MailApp.sendEmail(user, "Villa Manager Mail Permission Test", "MailApp authorization completed successfully!");
-  Logger.log("MailApp permission authorized successfully!");
+  return authorizeScriptPermissions();
 }
 
 /**
