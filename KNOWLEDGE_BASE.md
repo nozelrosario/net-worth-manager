@@ -25,17 +25,25 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
-## Feature Update (v3.8) - Compact & Expandable-on-Demand Assets Tab Header (Issue #61)
-✅ **Compact Mobile Header & Space Optimization**:
-  - Reduced header vertical height on mobile by over 55% (~380px -> ~160px), eliminating multi-line pill wrapping that previously consumed 50% of the viewport.
-  - Consolidated scattered status badges and action buttons into a clean, single-line meta strip with live AMFI/Finance pulse and an inline `Sync Rates` trigger.
-  - Removed duplicate `Sync CAS` pill from the header subtitle row.
-✅ **Expandable Portfolio Hubs & AI Actions Drawer**:
-  - Introduced an on-demand expandable `Hubs & AI ▾` toggle button in the header meta strip.
-  - When expanded, reveals a polished 4-card quick-access grid for `AI Rebalance`, `Retirement Hub`, `Protection Hub`, and `Sync CAS` with distinct theme glows, subtitles, and active feedback matching Stitch design tokens.
-  - Seamlessly closes upon modal launch or manual collapse.
-✅ **Asset Count Badges on Category Filter Pills**:
-  - Category filter pills dynamically compute and display holding counts (e.g. `All Assets (12)`, `Mutual Funds (6)`).
+## Feature Update (v3.8) - Ultra-Compact 2-Row Assets Header & Three-Dots Actions Modal (Issue #61)
+✅ **Ultra-Compact 2-Row Mobile Layout**:
+  - Streamlined the entire Assets tab header down to strictly 2 rows on mobile (reducing header height by ~75% compared to original: ~380px -> ~88px).
+  - **Row 1**: Main title `Assets & Liabilities`, subtle live status indicator, primary `+ Add Asset` CTA, and a prominent Three-Dots (`⋮`) tools button right beside the title.
+  - **Row 2**: Smooth horizontal scrolling category filter pills with real-time holding counts (e.g. `All Assets (12)`, `Mutual Funds (6)`).
+  - Maximizes screen real estate so asset cards are visible immediately without scrolling.
+✅ **Professional Portfolio Tools & Actions Modal (Three-Dots Menu `⋮`)**:
+  - Tapping the `⋮` button beside the title opens a high-touch, dark glassmorphism modal / bottom sheet.
+  - Grouped into two clear sections:
+    - **Sync & Market Data**:
+      - `Sync Market Rates`: Triggers real-time AMFI NAV and Google Finance stock CMP synchronization with live spinner.
+      - `Sync CAS Statement`: Opens the zero-knowledge CAS parser for CAMS/KFintech statements.
+    - **Financial Intelligence & Hubs**:
+      - `AI Portfolio Rebalancer`: Asset drift analysis & target allocations.
+      - `Retirement & Pension Hub`: EPF, PPF, NPS & runway projections.
+      - `Insurance & Protection Hub`: Comprehensive LIC, term, health & general coverage.
+  - Features swipe/drag handle on mobile, full-row interactive cards with themed glowing iconography, and native back button integration via `useModalBack`.
+✅ **Dynamic Holding Counts & Contextual Empty States**:
+  - Category filter pills dynamically compute and display holding counts with active high-contrast styling.
   - Enhanced empty state with contextual `+ Add {Category}` CTA when a selected filter has 0 assets.
 
 ## Feature Update (v3.7) - Automated CAS Investment Ingestion via CAMS+KFintech PDF, Google Drive & Gemini AI (Issue #58)
