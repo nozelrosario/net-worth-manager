@@ -3,7 +3,7 @@ import { getSafeStorage } from "../utils/storage";
 import React, { useState, useEffect, useMemo } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp, MoreVertical, ChevronRight } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
 
@@ -35,8 +35,9 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingRates, setIsSyncingRates] = useState(false);
   const [showCasModal, setShowCasModal] = useState(false);
-  const [showHubsPanel, setShowHubsPanel] = useState(false);
+  const [showToolsModal, setShowToolsModal] = useState(false);
 
+  useModalBack(showToolsModal, () => setShowToolsModal(false));
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
       setDeleteConfirmAsset(null);
@@ -402,151 +403,39 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button 
-              type="button"
-              onClick={() => setShowCasModal(true)} 
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-typ-label font-semibold shadow-xs transition-all active:scale-95"
-              title="Scan CAS mutual funds statement from Google Drive or upload PDF"
-            >
-              <Cloud size={14} className="text-primary-accent" />
-              <span>Sync CAS</span>
-            </button>
-            <button 
-              type="button"
-              onClick={() => openAddModal()} 
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
-            >
-              <Plus size={14} />
-              <span>Add Asset</span>
-            </button>
-          </div>
+    <div className="space-y-3">
+      {/* Row 1: Title + Three-Dots Actions Menu + Add Asset CTA */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
+          <button 
+            type="button"
+            onClick={() => setShowToolsModal(true)} 
+            title="Portfolio Actions & Hubs"
+            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle shadow-xs transition-all active:scale-95 shrink-0"
+          >
+            <MoreVertical size={16} />
+          </button>
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-typ-footnote text-text-muted">
+            <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
+            AMFI Live
+          </span>
         </div>
-
-        {/* Compact Meta & Quick Actions Strip */}
-        <div className="flex items-center justify-between gap-2 py-0.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
-              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse shrink-0"></span>
-              <span className="truncate text-typ-caption sm:text-typ-footnote font-medium">AMFI & Finance Live</span>
-            </div>
-            <button 
-              type="button"
-              onClick={handleSyncRates} 
-              disabled={isSyncingRates}
-              title="Refresh and sync live valuations to spreadsheet"
-              className="inline-flex items-center gap-1 px-2 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-typ-caption font-medium transition-all active:scale-95 disabled:opacity-50 shrink-0"
-            >
-              <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
-              <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
-            </button>
-          </div>
-
-          {(onOpenRebalancer || onOpenRetirementPlanner || onOpenInsuranceHub) && (
-            <button 
-              type="button"
-              onClick={() => setShowHubsPanel(prev => !prev)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-typ-caption sm:text-typ-footnote font-semibold rounded-lg border transition-all active:scale-95 shrink-0 ${
-                showHubsPanel 
-                  ? 'bg-primary-accent/15 text-primary-accent border-primary-accent/30 shadow-xs' 
-                  : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border-border-subtle shadow-xs'
-              }`}
-              title="Toggle AI tools, retirement and insurance hubs"
-            >
-              <Sparkles size={12} className={showHubsPanel ? 'text-primary-accent' : 'text-primary-accent/80'} />
-              <span>Hubs & AI</span>
-              <ChevronDown size={12} className={`transition-transform duration-200 ${showHubsPanel ? 'rotate-180' : ''}`} />
-            </button>
-          )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button 
+            type="button"
+            onClick={() => openAddModal()} 
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
+          >
+            <Plus size={14} />
+            <span>Add Asset</span>
+          </button>
         </div>
-
-        {/* Expandable Portfolio Hubs & Advisors Panel */}
-        {showHubsPanel && (
-          <div className="bg-surface-layer1/90 border border-border-subtle rounded-xl p-3 shadow-md backdrop-blur-sm space-y-2.5 transition-all">
-            <div className="flex items-center justify-between pb-1.5 border-b border-border-subtle/60">
-              <div className="flex items-center gap-1.5 text-typ-label font-bold text-text-primary">
-                <Sparkles size={13} className="text-primary-accent" />
-                <span>Portfolio Hubs & Advisors</span>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setShowHubsPanel(false)}
-                className="text-text-muted hover:text-text-primary p-0.5 rounded transition-colors"
-                title="Close panel"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {onOpenRebalancer && (
-                <button
-                  type="button"
-                  onClick={() => { setShowHubsPanel(false); onOpenRebalancer(); }}
-                  className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-primary-accent/30 text-left transition-all active:scale-95 group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-primary-accent/15 border border-primary-accent/25 flex items-center justify-center text-primary-accent mb-1.5 group-hover:scale-105 transition-transform">
-                    <Sparkles size={14} />
-                  </div>
-                  <span className="text-typ-label font-bold text-text-primary group-hover:text-primary-accent transition-colors">AI Rebalance</span>
-                  <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">Asset drift & target advisor</span>
-                </button>
-              )}
-
-              {onOpenRetirementPlanner && (
-                <button
-                  type="button"
-                  onClick={() => { setShowHubsPanel(false); onOpenRetirementPlanner(); }}
-                  className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-sky-500/30 text-left transition-all active:scale-95 group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center text-sky-400 mb-1.5 group-hover:scale-105 transition-transform">
-                    <Shield size={14} />
-                  </div>
-                  <span className="text-typ-label font-bold text-text-primary group-hover:text-sky-400 transition-colors">Retirement Hub</span>
-                  <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">EPF, PPF & NPS corpus</span>
-                </button>
-              )}
-
-              {onOpenInsuranceHub && (
-                <button
-                  type="button"
-                  onClick={() => { setShowHubsPanel(false); onOpenInsuranceHub(); }}
-                  className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-emerald-500/30 text-left transition-all active:scale-95 group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 mb-1.5 group-hover:scale-105 transition-transform">
-                    <HeartPulse size={14} />
-                  </div>
-                  <span className="text-typ-label font-bold text-text-primary group-hover:text-emerald-400 transition-colors">Protection Hub</span>
-                  <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">LIC, Term & Health cover</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => { setShowHubsPanel(false); setShowCasModal(true); }}
-                className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-indigo-500/30 text-left transition-all active:scale-95 group"
-              >
-                <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400 mb-1.5 group-hover:scale-105 transition-transform">
-                  <Cloud size={14} />
-                </div>
-                <span className="text-typ-label font-bold text-text-primary group-hover:text-indigo-400 transition-colors">Sync CAS</span>
-                <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">CAMS & KFintech PDF sync</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Category Filter Pills */}
+      {/* Row 2: Category Filter Pills */}
       <div 
-        className="flex overflow-x-auto gap-2 pb-1.5 pt-0.5 scrollbar-hide no-swipe"
+        className="flex overflow-x-auto gap-2 pb-1 pt-0.5 scrollbar-hide no-swipe"
         onTouchStart={e => e.stopPropagation()}
         onTouchMove={e => e.stopPropagation()}
         onMouseDown={e => e.stopPropagation()}
@@ -905,6 +794,163 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Portfolio Tools & Actions Modal */}
+      {showToolsModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs no-swipe animate-fadeIn"
+          onClick={() => setShowToolsModal(false)}
+        >
+          <div 
+            className="bg-surface-root border border-border-subtle rounded-t-2xl sm:rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Grab handle on mobile */}
+            <div className="w-12 h-1 rounded-full bg-border-prominent mx-auto mb-1 sm:hidden"></div>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+              <div>
+                <h3 className="text-typ-headline font-bold text-text-primary">Portfolio Tools & Actions</h3>
+                <div className="flex items-center gap-1.5 text-typ-footnote text-text-muted mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
+                  <span>Google Finance & AMFI Live Synced</span>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowToolsModal(false)}
+                className="text-text-muted hover:text-text-primary p-1 rounded-lg hover:bg-surface-layer1 transition-colors"
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Section 1: Rates & Statement Sync */}
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted px-1">Sync & Market Data</span>
+              
+              {/* Sync Live Rates */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleSyncRates();
+                  setShowToolsModal(false);
+                }}
+                disabled={isSyncingRates}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-wealth-emerald/15 border border-wealth-emerald/25 flex items-center justify-center text-wealth-emerald shrink-0 group-hover:scale-105 transition-transform">
+                    <RefreshCw size={18} className={isSyncingRates ? 'animate-spin' : ''} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-typ-label font-bold text-text-primary group-hover:text-wealth-emerald transition-colors">Sync Market Rates</div>
+                    <div className="text-[11px] text-text-muted truncate">Update latest AMFI NAVs & stock CMPs</div>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
+
+              {/* Sync CAS Mutual Funds */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowToolsModal(false);
+                  setShowCasModal(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-primary-accent/40 text-left transition-all active:scale-[0.99] group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-primary-accent/15 border border-primary-accent/25 flex items-center justify-center text-primary-accent shrink-0 group-hover:scale-105 transition-transform">
+                    <Cloud size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-typ-label font-bold text-text-primary group-hover:text-primary-accent transition-colors">Sync CAS Statement</div>
+                    <div className="text-[11px] text-text-muted truncate">Import mutual funds from CAMS & KFintech PDF</div>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
+            </div>
+
+            {/* Section 2: AI & Advisory Hubs */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted px-1">Financial Intelligence & Hubs</span>
+              
+              {/* AI Rebalance */}
+              {onOpenRebalancer && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowToolsModal(false);
+                    onOpenRebalancer();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-purple-500/40 text-left transition-all active:scale-[0.99] group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
+                      <Sparkles size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-typ-label font-bold text-text-primary group-hover:text-purple-400 transition-colors">AI Portfolio Rebalancer</div>
+                      <div className="text-[11px] text-text-muted truncate">Asset drift analysis & target allocations</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              )}
+
+              {/* Retirement Hub */}
+              {onOpenRetirementPlanner && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowToolsModal(false);
+                    onOpenRetirementPlanner();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-sky-500/40 text-left transition-all active:scale-[0.99] group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center text-sky-400 shrink-0 group-hover:scale-105 transition-transform">
+                      <Shield size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-typ-label font-bold text-text-primary group-hover:text-sky-400 transition-colors">Retirement & Pension Hub</div>
+                      <div className="text-[11px] text-text-muted truncate">EPF, PPF, NPS & retirement runway projections</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              )}
+
+              {/* Insurance Hub */}
+              {onOpenInsuranceHub && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowToolsModal(false);
+                    onOpenInsuranceHub();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-emerald-500/40 text-left transition-all active:scale-[0.99] group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                      <HeartPulse size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-typ-label font-bold text-text-primary group-hover:text-emerald-400 transition-colors">Insurance & Protection Hub</div>
+                      <div className="text-[11px] text-text-muted truncate">LIC, term, health & coverage analytics</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              )}
             </div>
           </div>
         </div>
