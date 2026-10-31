@@ -934,7 +934,7 @@ export default function SmsInboxModal({
         </div>
 
         {/* 5. EXPANSIVE SCROLLABLE TRANSACTIONS LIST */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 bg-bg-root">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 bg-background-root">
           {filteredList.length === 0 ? (
             <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 text-text-muted space-y-3">
               <div className="w-12 h-12 rounded-full bg-surface-layer2 flex items-center justify-center text-emerald-500">
