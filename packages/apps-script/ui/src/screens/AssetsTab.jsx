@@ -1,9 +1,9 @@
 import useModalBack from "../hooks/useModalBack";
 import { getSafeStorage } from "../utils/storage";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
 
@@ -35,6 +35,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingRates, setIsSyncingRates] = useState(false);
   const [showCasModal, setShowCasModal] = useState(false);
+  const [showHubsPanel, setShowHubsPanel] = useState(false);
 
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
@@ -80,6 +81,23 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         }
         return a.Category === filter;
       });
+
+  const assetCounts = useMemo(() => {
+    const counts = { 'All Assets': assets.length };
+    filters.forEach(f => {
+      if (f === 'All Assets') return;
+      counts[f] = assets.filter(a => {
+        if (f === 'Retirement & Pension') {
+          return a.Category === 'Retirement & Pension' || a.Category === 'Provident Funds' || (a.Category || '').toLowerCase().includes('retire') || (a.Category || '').toLowerCase().includes('provident');
+        }
+        if (f === 'Life Insurance / LIC' || f === 'Insurance') {
+          return a.Category === 'Life Insurance / LIC' || a.Category === 'Insurance' || (a.Category || '').toLowerCase().includes('insurance') || (a.Category || '').toLowerCase().includes('lic');
+        }
+        return a.Category === f;
+      }).length;
+    });
+    return counts;
+  }, [assets, filters]);
 
   const handleSyncRates = () => {
     setIsSyncingRates(true);
@@ -385,117 +403,198 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-typ-title font-bold tracking-tight text-text-primary">Assets & Liabilities</h2>
-          <div className="flex items-center flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
-              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
-              Google Finance & AMFI Live
-            </span>
-            <span className="text-text-muted text-typ-caption">•</span>
+      {/* Header Bar */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button 
+              type="button"
+              onClick={() => setShowCasModal(true)} 
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-typ-label font-semibold shadow-xs transition-all active:scale-95"
+              title="Scan CAS mutual funds statement from Google Drive or upload PDF"
+            >
+              <Cloud size={14} className="text-primary-accent" />
+              <span>Sync CAS</span>
+            </button>
+            <button 
+              type="button"
+              onClick={() => openAddModal()} 
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
+            >
+              <Plus size={14} />
+              <span>Add Asset</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Compact Meta & Quick Actions Strip */}
+        <div className="flex items-center justify-between gap-2 py-0.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 text-typ-footnote text-text-muted">
+              <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse shrink-0"></span>
+              <span className="truncate text-typ-caption sm:text-typ-footnote font-medium">AMFI & Finance Live</span>
+            </div>
             <button 
               type="button"
               onClick={handleSyncRates} 
               disabled={isSyncingRates}
               title="Refresh and sync live valuations to spreadsheet"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-typ-footnote font-medium transition-all active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-2 py-0.5 bg-wealth-emerald/10 hover:bg-wealth-emerald/20 border border-wealth-emerald/25 text-wealth-emerald rounded-full text-typ-caption font-medium transition-all active:scale-95 disabled:opacity-50 shrink-0"
             >
               <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
               <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
             </button>
-            <span className="text-text-muted text-typ-caption">•</span>
+          </div>
+
+          {(onOpenRebalancer || onOpenRetirementPlanner || onOpenInsuranceHub) && (
             <button 
               type="button"
-              onClick={() => setShowCasModal(true)} 
-              title="Import & synchronize mutual funds from CAMS/KFintech CAS statement"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-typ-footnote font-medium transition-all active:scale-95"
+              onClick={() => setShowHubsPanel(prev => !prev)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-typ-caption sm:text-typ-footnote font-semibold rounded-lg border transition-all active:scale-95 shrink-0 ${
+                showHubsPanel 
+                  ? 'bg-primary-accent/15 text-primary-accent border-primary-accent/30 shadow-xs' 
+                  : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border-border-subtle shadow-xs'
+              }`}
+              title="Toggle AI tools, retirement and insurance hubs"
             >
-              <Cloud size={10} />
-              <span>Sync CAS</span>
+              <Sparkles size={12} className={showHubsPanel ? 'text-primary-accent' : 'text-primary-accent/80'} />
+              <span>Hubs & AI</span>
+              <ChevronDown size={12} className={`transition-transform duration-200 ${showHubsPanel ? 'rotate-180' : ''}`} />
             </button>
-            {onOpenRebalancer && (
-              <>
-                <span className="text-text-muted text-typ-caption">•</span>
-                <button 
+          )}
+        </div>
+
+        {/* Expandable Portfolio Hubs & Advisors Panel */}
+        {showHubsPanel && (
+          <div className="bg-surface-layer1/90 border border-border-subtle rounded-xl p-3 shadow-md backdrop-blur-sm space-y-2.5 transition-all">
+            <div className="flex items-center justify-between pb-1.5 border-b border-border-subtle/60">
+              <div className="flex items-center gap-1.5 text-typ-label font-bold text-text-primary">
+                <Sparkles size={13} className="text-primary-accent" />
+                <span>Portfolio Hubs & Advisors</span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowHubsPanel(false)}
+                className="text-text-muted hover:text-text-primary p-0.5 rounded transition-colors"
+                title="Close panel"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {onOpenRebalancer && (
+                <button
                   type="button"
-                  onClick={onOpenRebalancer} 
-                  title="Open AI Portfolio Rebalancer & Asset Allocation Advisor"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-typ-footnote font-medium transition-all active:scale-95"
+                  onClick={() => { setShowHubsPanel(false); onOpenRebalancer(); }}
+                  className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-primary-accent/30 text-left transition-all active:scale-95 group"
                 >
-                  <Sparkles size={10} />
-                  <span>AI Rebalance</span>
+                  <div className="w-7 h-7 rounded-lg bg-primary-accent/15 border border-primary-accent/25 flex items-center justify-center text-primary-accent mb-1.5 group-hover:scale-105 transition-transform">
+                    <Sparkles size={14} />
+                  </div>
+                  <span className="text-typ-label font-bold text-text-primary group-hover:text-primary-accent transition-colors">AI Rebalance</span>
+                  <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">Asset drift & target advisor</span>
                 </button>
-              </>
-            )}
-            {onOpenRetirementPlanner && (
-              <>
-                <span className="text-text-muted text-typ-caption">•</span>
-                <button 
+              )}
+
+              {onOpenRetirementPlanner && (
+                <button
                   type="button"
-                  onClick={onOpenRetirementPlanner} 
-                  title="Open Retirement & Pension Hub (EPF, PPF & NPS)"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-sky-400 rounded-full text-typ-footnote font-medium transition-all active:scale-95"
+                  onClick={() => { setShowHubsPanel(false); onOpenRetirementPlanner(); }}
+                  className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-sky-500/30 text-left transition-all active:scale-95 group"
                 >
-                  <Shield size={10} />
-                  <span>Retirement Hub</span>
+                  <div className="w-7 h-7 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center text-sky-400 mb-1.5 group-hover:scale-105 transition-transform">
+                    <Shield size={14} />
+                  </div>
+                  <span className="text-typ-label font-bold text-text-primary group-hover:text-sky-400 transition-colors">Retirement Hub</span>
+                  <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">EPF, PPF & NPS corpus</span>
                 </button>
-              </>
-            )}
-            {onOpenInsuranceHub && (
-              <>
-                <span className="text-text-muted text-typ-caption">•</span>
-                <button 
+              )}
+
+              {onOpenInsuranceHub && (
+                <button
                   type="button"
-                  onClick={onOpenInsuranceHub} 
-                  title="Open Insurance & Protection Hub (LIC, Term, Health)"
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 rounded-full text-typ-footnote font-medium transition-all active:scale-95"
+                  onClick={() => { setShowHubsPanel(false); onOpenInsuranceHub(); }}
+                  className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-emerald-500/30 text-left transition-all active:scale-95 group"
                 >
-                  <Shield size={10} />
-                  <span>Insurance Hub</span>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 mb-1.5 group-hover:scale-105 transition-transform">
+                    <HeartPulse size={14} />
+                  </div>
+                  <span className="text-typ-label font-bold text-text-primary group-hover:text-emerald-400 transition-colors">Protection Hub</span>
+                  <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">LIC, Term & Health cover</span>
                 </button>
-              </>
-            )}
+              )}
+
+              <button
+                type="button"
+                onClick={() => { setShowHubsPanel(false); setShowCasModal(true); }}
+                className="flex flex-col items-start p-2.5 rounded-lg bg-surface-layer2/60 hover:bg-surface-layer2 border border-border-subtle hover:border-indigo-500/30 text-left transition-all active:scale-95 group"
+              >
+                <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400 mb-1.5 group-hover:scale-105 transition-transform">
+                  <Cloud size={14} />
+                </div>
+                <span className="text-typ-label font-bold text-text-primary group-hover:text-indigo-400 transition-colors">Sync CAS</span>
+                <span className="text-[11px] text-text-muted line-clamp-1 mt-0.5">CAMS & KFintech PDF sync</span>
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button 
-            type="button"
-            onClick={() => setShowCasModal(true)} 
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-typ-label font-semibold shadow-xs transition-all active:scale-95"
-            title="Scan CAS mutual funds statement from Google Drive or upload PDF"
-          >
-            <Cloud size={14} className="text-primary-accent" />
-            <span>Sync CAS</span>
-          </button>
-          <button 
-            type="button"
-            onClick={() => openAddModal()} 
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
-          >
-            <Plus size={14} />
-            <span>Add Asset</span>
-          </button>
-        </div>
+        )}
       </div>
+
+      {/* Category Filter Pills */}
       <div 
-        className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide no-swipe"
+        className="flex overflow-x-auto gap-2 pb-1.5 pt-0.5 scrollbar-hide no-swipe"
         onTouchStart={e => e.stopPropagation()}
         onTouchMove={e => e.stopPropagation()}
         onMouseDown={e => e.stopPropagation()}
         onMouseMove={e => e.stopPropagation()}
       >
-        {filters.map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`whitespace-nowrap px-3 py-1.5 text-typ-label font-medium rounded-full transition-colors ${f === filter ? 'bg-primary-accent text-white shadow-sm font-semibold' : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'}`}>
-            {f}
-          </button>
-        ))}
+        {filters.map(f => {
+          const count = assetCounts[f] !== undefined ? assetCounts[f] : 0;
+          const isSelected = f === filter;
+          return (
+            <button 
+              key={f} 
+              type="button"
+              onClick={() => setFilter(f)} 
+              className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 text-typ-label rounded-full transition-all active:scale-95 ${
+                isSelected 
+                  ? 'bg-primary-accent text-white shadow-xs font-semibold' 
+                  : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs font-medium'
+              }`}
+            >
+              <span>{f}</span>
+              <span className={`text-[11px] px-1.5 py-0.2 rounded-full tabular-nums ${
+                isSelected 
+                  ? 'bg-white/20 text-white font-bold' 
+                  : 'bg-surface-layer2 text-text-muted font-medium'
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
       
       {/* Asset List */}
       <div className="space-y-3">
         {filteredAssets.length === 0 && (
-           <p className="text-text-secondary text-typ-body-sm text-center py-8">No assets found for this category.</p>
+          <div className="text-center py-10 bg-surface-layer1/40 border border-border-subtle/50 rounded-xl p-6">
+            <p className="text-text-secondary text-typ-body-sm">
+              No assets found in <span className="font-semibold text-text-primary">{filter}</span>.
+            </p>
+            <button
+              type="button"
+              onClick={() => openAddModal(filter !== 'All Assets' ? filter : undefined)}
+              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-typ-footnote font-semibold rounded-lg bg-primary-accent/15 hover:bg-primary-accent/25 text-primary-accent border border-primary-accent/25 transition-all active:scale-95"
+            >
+              <Plus size={13} />
+              <span>Add {filter !== 'All Assets' ? filter : 'Asset'}</span>
+            </button>
+          </div>
         )}
         {filteredAssets.map((asset, i) => {
           let docCount = 0;
