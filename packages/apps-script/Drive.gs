@@ -721,32 +721,19 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
 
     var requests = [
       {
+        label: 'Gemini 3.8 Flash (Interactions API)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-3.8-flash',
+          input: cleanPrompt,
+          generation_config: {
+            thinking_level: 'low'
+          }
+        }
+      },
+      {
         label: 'Gemini 3.8 Flash (generateContent v1beta)',
         url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          contents: [{ parts: [{ text: cleanPrompt }] }],
-          generationConfig: { response_mime_type: 'application/json' }
-        }
-      },
-      {
-        label: 'Gemini 3.7 Flash',
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          contents: [{ parts: [{ text: cleanPrompt }] }],
-          generationConfig: { response_mime_type: 'application/json' }
-        }
-      },
-      {
-        label: 'Gemini 3.6 Flash',
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          contents: [{ parts: [{ text: cleanPrompt }] }],
-          generationConfig: { response_mime_type: 'application/json' }
-        }
-      },
-      {
-        label: 'Gemini 3.5 Flash Lite',
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' + encodeURIComponent(keyToUse),
         payload: {
           contents: [{ parts: [{ text: cleanPrompt }] }],
           generationConfig: { response_mime_type: 'application/json' }
@@ -758,17 +745,6 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
         payload: {
           contents: [{ parts: [{ text: cleanPrompt }] }],
           generationConfig: { response_mime_type: 'application/json' }
-        }
-      },
-      {
-        label: 'Gemini 3.8 Flash (Interactions)',
-        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          model: 'gemini-3.8-flash',
-          input: cleanPrompt,
-          generation_config: {
-            thinking_level: 'low'
-          }
         }
       }
     ];
@@ -825,16 +801,9 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
         } else {
           Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' returned HTTP ' + code + ': ' + respText.substring(0, 300));
           lastErr = requests[i].label + ' returned ' + code + ': ' + respText;
-          // If high demand (503), rate limit (429), server error (500), not found (404), or payload error (400),
-          // pause briefly and fail over to the next candidate model in the chain
-          if (code === 503 || code === 429 || code === 500) {
-            Utilities.sleep(1000);
-            continue;
+          if (code === 429) {
+            Utilities.sleep(500);
           }
-          if (code === 404 || code === 400) {
-            continue;
-          }
-          // Non-standard unexpected error: try next model before giving up
           continue;
         }
       } catch (callErr) {

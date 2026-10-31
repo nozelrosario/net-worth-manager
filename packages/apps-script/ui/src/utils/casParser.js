@@ -177,8 +177,26 @@ export async function extractTextFromCasPdf(pdfInput, password = '', onProgress 
       onProgress?.(`Extracting text (page ${pageNum} of ${numPages})...`);
       const page = await pdfDoc.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items.map((item) => item.str).join(' ');
-      fullText += `\n--- PAGE ${pageNum} ---\n` + pageText;
+      
+      let pageText = '';
+      let lastY = null;
+      for (const item of textContent.items) {
+        if (!item || !item.str) continue;
+        const currentY = Array.isArray(item.transform) ? item.transform[5] : null;
+        if (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 3) {
+          pageText += '\n';
+        } else if (pageText.length > 0 && !pageText.endsWith('\n') && !pageText.endsWith(' ')) {
+          pageText += ' ';
+        }
+        pageText += item.str;
+        if (item.hasEOL) {
+          pageText += '\n';
+          lastY = null;
+        } else {
+          lastY = currentY;
+        }
+      }
+      fullText += `\n--- PAGE ${pageNum} ---\n` + pageText.trim() + '\n';
     }
 
     try { pdfDoc.destroy(); } catch(e) {}
@@ -197,50 +215,93 @@ export async function extractTextFromCasPdf(pdfInput, password = '', onProgress 
 }
 
 /**
- * Pre-prunes raw text before sending to Gemini
- * If user uploads a 50-page detailed statement, strips out repetitive transaction logs
+ * Detects if a text line is a historical transaction log row (e.g. SIP purchase, stamp duty)
+ * that does not contribute to the current holding balance / valuation snapshot.
+ */
+function isHistoricalTransactionRow(line) {
+  const lower = line.toLowerCase();
+
+  // Never prune essential metadata, headers, or closing balance lines
+  if (
+    lower.includes('closing') ||
+    lower.includes('balance') ||
+    lower.includes('valuation') ||
+    lower.includes('market value') ||
+    lower.includes('nav as on') ||
+    lower.includes('nav:') ||
+    lower.includes('cost:') ||
+    lower.includes('total cost') ||
+    lower.includes('folio') ||
+    lower.includes('isin') ||
+    lower.includes('scheme') ||
+    lower.includes('investor') ||
+    lower.includes('summary') ||
+    lower.includes('statement') ||
+    lower.includes('page') ||
+    lower.includes('email') ||
+    lower.includes('pan') ||
+    lower.includes('regist') ||
+    lower.includes('cams') ||
+    lower.includes('kfin')
+  ) {
+    return false;
+  }
+
+  // Detect date patterns commonly used in transaction rows (e.g. 02-Jan-2023, 15/04/2022, 2023-01-02)
+  const hasDate = /\b\d{1,2}[-/][A-Za-z]{3}[-/]\d{2,4}\b/i.test(line) ||
+                  /\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b/.test(line) ||
+                  /\b\d{4}[-/]\d{1,2}[-/]\d{1,2}\b/.test(line);
+
+  if (!hasDate) return false;
+
+  // Transaction keywords
+  const txKeywords = [
+    'purchase', 'sip', 'systematic', 'switch-in', 'switch in', 'switch-out', 'switch out',
+    'redemption', 'redeem', 'stamp duty', 'stt paid', 'stt', 'dividend reinvest', 'idcw reinvest',
+    'segregated', 'reversal', 'tax deduction', 'tds', 'transfer'
+  ];
+
+  return txKeywords.some((kw) => lower.includes(kw));
+}
+
+/**
+ * Pre-prunes raw text before sending to Gemini.
+ * Strips out verbose historical transaction rows while preserving statement headers,
+ * folio numbers, ISINs, AMC names, scheme names, closing balances, and valuations.
  */
 export function pruneCasTextForGemini(rawText) {
   if (!rawText) return '';
-  if (rawText.length < 25000) {
-    return rawText;
-  }
 
-  // If text is very long, remove verbose transaction logs while keeping scheme headers and closing balances
   const lines = rawText.split('\n');
   const pruned = [];
-  let inTransactionBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const lower = line.toLowerCase();
-
-    // Check if entering a detailed transaction log table
-    if (lower.includes('transaction details') || lower.includes('transactions for the period')) {
-      inTransactionBlock = true;
-    }
-
-    // Check if reaching the closing balance / valuation summary of a scheme
-    if (lower.includes('closing unit balance') || lower.includes('total valuation') || lower.includes('portfolio summary') || lower.includes('valuation as on')) {
-      inTransactionBlock = false;
-    }
-
-    // Keep header information, scheme headers, and closing balance summaries
-    if (!inTransactionBlock || lower.includes('folio no') || lower.includes('isin') || lower.includes('scheme') || lower.includes('page')) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (!isHistoricalTransactionRow(line)) {
       pruned.push(line);
     }
   }
 
   const result = pruned.join('\n');
-  return result.length > 5000 ? result : rawText;
+  return result.length > 500 ? result : rawText;
 }
 
 let cachedGeminiEndpoint = null;
 
 function cleanJsonText(rawText) {
   let cleaned = String(rawText || '').trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  // Match JSON within markdown code blocks ```json ... ``` or ``` ... ```
+  const codeBlockMatch = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(cleaned);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    cleaned = codeBlockMatch[1].trim();
+  } else {
+    // Or isolate the outermost JSON object between the first '{' and last '}'
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1).trim();
+    }
   }
   return cleaned;
 }
@@ -289,6 +350,15 @@ export async function parseCasWithGemini(extractedText, geminiApiKey, onProgress
   }
 
   const prunedText = pruneCasTextForGemini(extractedText);
+  if (onProgress) {
+    const origLen = extractedText.length;
+    const prunedLen = prunedText.length;
+    if (origLen > prunedLen) {
+      onProgress(`Optimized statement (${origLen.toLocaleString()} -> ${prunedLen.toLocaleString()} chars). Analyzing portfolio...`);
+    } else {
+      onProgress('Analyzing portfolio holdings with Gemini AI...');
+    }
+  }
 
   const systemInstruction = `You are an expert Indian financial portfolio auditor and registrar data extraction engine.
 Extract the statement investor name, statement closing date, and all active Mutual Fund holdings from the provided Consolidated Account Statement (CAS).
@@ -333,8 +403,8 @@ Rules:
     onProgress?.('Gemini AI analyzing portfolio via Google cloud backend...');
     try {
       const backendResult = await new Promise((resolve, reject) => {
-        // 90-second generous timeout for deep portfolio extraction
-        const timeout = setTimeout(() => reject(new Error('Backend processing timed out (exceeded 90 seconds).')), 90000);
+        // 180-second generous timeout for deep portfolio extraction
+        const timeout = setTimeout(() => reject(new Error('Backend processing timed out (exceeded 180 seconds).')), 180000);
         window.google.script.run
           .withSuccessHandler((res) => { clearTimeout(timeout); resolve(res); })
           .withFailureHandler((err) => { clearTimeout(timeout); reject(err); })
@@ -356,23 +426,7 @@ Rules:
   // PRIORITY 2: Standalone / preview mode fallback (Firebase preview / local dev without google.script.run)
   const candidateConfigs = [
     {
-      label: 'Gemini 3.8 Flash (generateContent)',
-      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
-      body: {
-        contents: [{ parts: [{ text: cleanPromptText }] }],
-        generationConfig: { response_mime_type: 'application/json' }
-      }
-    },
-    {
-      label: 'Gemini 3.8 Flash v1',
-      url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent',
-      body: {
-        contents: [{ parts: [{ text: cleanPromptText }] }],
-        generationConfig: { response_mime_type: 'application/json' }
-      }
-    },
-    {
-      label: 'Gemini 3.8 Flash (Interactions)',
+      label: 'Gemini 3.8 Flash (Interactions API)',
       url: 'https://generativelanguage.googleapis.com/v1beta/interactions',
       body: {
         model: 'gemini-3.8-flash',
@@ -381,8 +435,16 @@ Rules:
       }
     },
     {
-      label: 'Gemini 3.7 Flash',
-      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+      label: 'Gemini 3.8 Flash (generateContent v1beta)',
+      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
+      body: {
+        contents: [{ parts: [{ text: cleanPromptText }] }],
+        generationConfig: { response_mime_type: 'application/json' }
+      }
+    },
+    {
+      label: 'Gemini 3.8 Flash (generateContent v1)',
+      url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent',
       body: {
         contents: [{ parts: [{ text: cleanPromptText }] }],
         generationConfig: { response_mime_type: 'application/json' }
