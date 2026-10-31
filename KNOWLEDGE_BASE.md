@@ -29,16 +29,26 @@
 ✅ **Single Golden Path Ingestion Pipeline (`casParser.js` & `Drive.gs`)**:
   - **CAMS + KFintech Statement Support**: Ingests the standard unified Consolidated Account Statement (CAS) PDF covering 100% of Indian mutual funds across all AMCs.
   - **Google Drive Auto-Scanner**: `scanDriveForCas(folderName, idToken)` scans the configured Drive folder (`Net Worth Manager/CAS Imports`), locates the newest `.pdf`, and returns metadata + binary-safe Base64 payload.
-  - **Zero-Knowledge In-Memory Decryption**: Dynamically loads PDF.js from Cloudflare CDN upon modal mount (preventing bundle bloat in `vite-plugin-singlefile`) and decrypts the password-protected statement in-memory using the user's PAN or custom CAMS password.
-  - **Google Gemini Flash Extraction**: Pre-prunes historical transaction tables and invokes Gemini Flash (`gemini-2.5-flash` with dynamic `ListModels` fallback) with structured JSON output (`response_mime_type: "application/json"`), extracting investor name, statement date, schemes, folios, ISINs, units, and NAVs in ~2 seconds.
+  - **Zero-Knowledge In-Memory Decryption**: Dynamically loads PDF.js from Cloudflare CDN upon modal mount (preventing bundle bloat in `vite-plugin-singlefile`) and decrypts the password-protected statement in-memory using the user's PAN or custom CAMS password. Includes main-thread preloading of `pdf.worker.min.js` to eliminate cross-origin sandbox restrictions in Apps Script iframes, a 15-second decryption timeout guard, and case-preserved password handling with an inline uppercase PAN toggle.
+  - **2D Geometry Sorting & Continuous Baseline Line Reconstruction**: Sorts text items top-to-bottom (descending Y) and left-to-right (ascending X) using continuous baseline tolerance (`yDiff <= 3.5px`). Reconstructs table rows coherently without premature stream splits, enabling aggressive regex-based historical transaction pruning (`isHistoricalTransactionRow`). This prunes verbose SIP, switch, redemption, and stamp-duty rows while strictly preserving scheme names, folios, ISINs, closing balances, NAVs, and total valuations—reducing prompt size by 80–95% (from 100K+ chars to ~3K chars).
+  - **Multi-Tier Gemini AI Engine & Apps Script Backend Cascade (`executeGeminiPromptBackend`)**:
+    - *Tier 1 (Primary)*: `gemini-3.5-flash-lite:generateContent` with minimal thinking and 1,500 RPD free tier quota for instantaneous (1–2s) structured JSON portfolio extraction.
+    - *Tier 2 (Fallback)*: `gemini-3.8-flash:generateContent` with `thinkingConfig: { thinkingLevel: 'low' }` to eliminate reasoning latency and avoid timeouts.
+    - *Tier 3 (Alternative)*: `gemini-3.8-flash:generateContent` on `v1` endpoint.
+    - *Tier 4 (Agentic)*: `gemini-3.8-flash` on the Interactions API (`/v1beta/interactions`) with `thinking_level: 'low'`.
+    - *Bypass CORS*: Cloud execution via Google Apps Script `UrlFetchApp` eliminates browser CORS restrictions inside sandboxed iframes. Direct client-side fetch is retained as a preview environment fallback.
 ✅ **Units-First Snapshot Reconciliation Engine (`reconcileCasWithLedger`)**:
   - **Live Valuation Priority**: Updates `Units` and `Cost` from CAS while computing real-time net worth: $\text{Current Value} = \text{Units} \times (\text{Live AMFI Quote} \lor \text{Statement NAV})$, preventing stale statement dates from downgrading live portfolio values.
   - **Composite Key Matching**: Matches holdings by $\mathbf{Composite\ Key} = \text{Folio Number} + (\text{ISIN} \lor \text{Normalized Scheme Name})$, preventing multi-folio scheme collisions.
   - **Family Profile Auto-Assignment**: Fuzzy-matches `statement_holder_name` against the `FamilyProfiles` sheet (`Nozel`, `Maria`) to pre-select asset ownership automatically.
   - **Metadata Preservation**: User-assigned Owner, Nominees, notes, and linked Family Safe documents are strictly preserved.
 ✅ **Interactive Review Modal & In-App Guide (`CasSyncModal.jsx` & Screen 18 Prototype)**:
-  - High-fidelity OLED Dark (`#0B0F17`) and Clean Light mode interface matching Stitch design tokens.
+  - High-fidelity OLED Dark (`#0B0F17`) and Clean Light mode interface matching Stitch design tokens with borderless glow badges.
+  - Hero reconciliation summary card with wrapped valuation numbers (`break-words`) and integrated into the scrollable body flow (preventing header overlap).
   - Metric summary ribbon tracking total statement valuation, valuation delta vs existing ledger, net SIP inflow, and updated/new counts.
+  - Holding cards with `line-clamp-2` and `break-words` on scheme names to ensure long titles wrap neatly without overflowing.
+  - Fixed background bleed-through using CSS variable tokens (`bg-background-root`).
+  - Sticky bottom commit dock with `pb-32` clearance to prevent clipping of the final holding card.
   - Filter tabs (`All`, `Updated / SIP`, `New Detected`, `Redeemed / Zero`, `Unchanged`).
   - Embedded "How to Export CAS from CAMS" guide modal with direct link to CAMS Online and password rules.
   - In-place password retry recovery on `PasswordException` without resetting scanned file state.

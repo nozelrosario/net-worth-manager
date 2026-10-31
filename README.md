@@ -106,3 +106,17 @@ yarn start
 # Or start it in UAT mode (loads UAT environment URL)
 APP_ENV=uat yarn start
 ```
+
+## 5. Automated CAS Investment Ingestion (CAMS + KFintech)
+Net Worth Manager includes an automated ingestion and portfolio reconciliation pipeline for Indian Mutual Funds:
+- **Statement Support:** Parses standard CAMS & KFintech Consolidated Account Statements (CAS) across 100% of Indian AMCs.
+- **Ingestion Channels:**
+  1. *Google Drive Auto-Scan:* Place statement PDFs into Google Drive (`Net Worth Manager/CAS Imports`). The app detects and imports the latest statement automatically.
+  2. *Drag-and-Drop Upload:* Manually drag and drop statement PDFs directly into the CAS Sync modal.
+- **Zero-Knowledge Decryption:** Password-protected PDFs are decrypted in-memory on the client using the user's PAN or custom CAMS password. Statement text and passwords are never transmitted to external databases.
+- **AI Extraction Engine:** Uses a multi-tier Google Gemini Flash engine (`gemini-3.5-flash-lite` with fallback to `gemini-3.8-flash` with low thinking level) executed via Apps Script backend (`UrlFetchApp`) to extract holdings in 1–2 seconds with zero browser CORS friction.
+- **Gemini API Key Setup:**
+  - In the web app: Click the 🔑 key icon in the CAS Sync modal or configure via **Settings > Gemini API Key**.
+  - Or in Apps Script: Open **Project Settings > Script Properties** and add `GEMINI_API_KEY`.
+- **Live Net Asset Value (NAV):** Extracted holdings are linked with AMFI scheme codes for continuous daily live NAV tracking.
+
