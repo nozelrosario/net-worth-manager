@@ -402,10 +402,10 @@ Rules:
 
   const cleanPromptText = `${systemInstruction}\n\nHere is the raw text extracted from the CAS PDF statement:\n\n${prunedText}`;
 
-  // PRIORITY 1: When running inside Google Apps Script, ALWAYS execute via the backend UrlFetchApp.
-  // Apps Script client-side iframes block browser CORS to generativelanguage.googleapis.com.
+  // PRIORITY 1: When running inside Google Apps Script, attempt execution via backend UrlFetchApp.
   // UrlFetchApp runs directly from Google's servers with zero CORS and sub-second network latency.
   const token = getSafeStorage('nwm_session_token');
+  let backendFailedError = null;
   if (window.google?.script?.run?.executeGeminiPromptBackend && token) {
     onProgress?.('Gemini AI analyzing portfolio via Google cloud backend...');
     try {
@@ -425,8 +425,9 @@ Rules:
         throw new Error(backendResult.message);
       }
     } catch (backendErr) {
-      console.error('Apps Script backend Gemini execution failed:', backendErr);
-      throw backendErr;
+      console.warn('Apps Script backend Gemini execution failed, attempting direct browser API fallback...', backendErr);
+      backendFailedError = backendErr;
+      // Do not re-throw immediately; fall through to PRIORITY 2 direct client-side fetch.
     }
   }
 
@@ -521,6 +522,10 @@ Rules:
       }
       continue;
     }
+  }
+
+  if (backendFailedError) {
+    throw new Error(backendFailedError.message + (lastError ? ' (Client fallback also failed: ' + lastError.message + ')' : ''));
   }
 
   throw lastError || new Error('No supported Gemini endpoint responded. Please check your Google AI Studio configuration.');

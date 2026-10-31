@@ -830,6 +830,12 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
       } catch (callErr) {
         Logger.log('executeGeminiPromptBackend: Exception on ' + requests[i].label + ': ' + callErr.message);
         lastErr = callErr.message;
+        if (callErr.message && (callErr.message.indexOf('script.external_request') !== -1 || callErr.message.indexOf('UrlFetchApp') !== -1)) {
+          return {
+            status: 'error',
+            message: 'You do not have permission to call UrlFetchApp.fetch. Required permissions: https://www.googleapis.com/auth/script.external_request. Please open the Apps Script project editor, run "authorizeScriptPermissions", and click "Review permissions" -> "Allow".'
+          };
+        }
       }
     }
 
