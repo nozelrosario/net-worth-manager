@@ -25,6 +25,19 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.8) - Compact & Expandable-on-Demand Assets Tab Header (Issue #61)
+✅ **Compact Mobile Header & Space Optimization**:
+  - Reduced header vertical height on mobile by over 55% (~380px -> ~160px), eliminating multi-line pill wrapping that previously consumed 50% of the viewport.
+  - Consolidated scattered status badges and action buttons into a clean, single-line meta strip with live AMFI/Finance pulse and an inline `Sync Rates` trigger.
+  - Removed duplicate `Sync CAS` pill from the header subtitle row.
+✅ **Expandable Portfolio Hubs & AI Actions Drawer**:
+  - Introduced an on-demand expandable `Hubs & AI ▾` toggle button in the header meta strip.
+  - When expanded, reveals a polished 4-card quick-access grid for `AI Rebalance`, `Retirement Hub`, `Protection Hub`, and `Sync CAS` with distinct theme glows, subtitles, and active feedback matching Stitch design tokens.
+  - Seamlessly closes upon modal launch or manual collapse.
+✅ **Asset Count Badges on Category Filter Pills**:
+  - Category filter pills dynamically compute and display holding counts (e.g. `All Assets (12)`, `Mutual Funds (6)`).
+  - Enhanced empty state with contextual `+ Add {Category}` CTA when a selected filter has 0 assets.
+
 ## Feature Update (v3.7) - Automated CAS Investment Ingestion via CAMS+KFintech PDF, Google Drive & Gemini AI (Issue #58)
 ✅ **Single Golden Path Ingestion Pipeline (`casParser.js` & `Drive.gs`)**:
   - **CAMS + KFintech Statement Support**: Ingests the standard unified Consolidated Account Statement (CAS) PDF covering 100% of Indian mutual funds across all AMCs.
