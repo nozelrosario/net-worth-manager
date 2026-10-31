@@ -325,21 +325,36 @@ Rules:
 
   const cleanPromptText = `${systemInstruction}\n\nHere is the raw text extracted from the CAS PDF statement:\n\n${prunedText}`;
 
-  // Prioritized candidates:
-  // 1. Google Interactions API (gemini-3.8-flash)
-  // 2. generateContent endpoint (v1beta gemini-3.8-flash, without temperature)
-  // 3. generateContent endpoint (v1 gemini-3.8-flash)
-  // 4. generateContent endpoint (v1beta gemini-3.7-flash)
-  const candidateConfigs = [
-    {
-      label: 'Gemini 3.8 Flash (Interactions)',
-      url: 'https://generativelanguage.googleapis.com/v1beta/interactions',
-      body: {
-        model: 'gemini-3.8-flash',
-        input: cleanPromptText,
-        response_mime_type: 'application/json'
+  // PRIORITY 1: When running inside Google Apps Script, ALWAYS execute via the backend UrlFetchApp.
+  // Apps Script client-side iframes block browser CORS to generativelanguage.googleapis.com.
+  // UrlFetchApp runs directly from Google's servers with zero CORS and sub-second network latency.
+  const token = getSafeStorage('nwm_session_token');
+  if (window.google?.script?.run?.executeGeminiPromptBackend && token) {
+    onProgress?.('Gemini AI analyzing portfolio via Google cloud backend...');
+    try {
+      const backendResult = await new Promise((resolve, reject) => {
+        // 90-second generous timeout for deep portfolio extraction
+        const timeout = setTimeout(() => reject(new Error('Backend processing timed out (exceeded 90 seconds).')), 90000);
+        window.google.script.run
+          .withSuccessHandler((res) => { clearTimeout(timeout); resolve(res); })
+          .withFailureHandler((err) => { clearTimeout(timeout); reject(err); })
+          .executeGeminiPromptBackend(cleanPromptText, geminiApiKey.trim(), token);
+      });
+
+      if (backendResult && backendResult.status === 'success' && backendResult.rawText) {
+        const cleanJson = cleanJsonText(backendResult.rawText);
+        return JSON.parse(cleanJson);
+      } else if (backendResult && backendResult.message) {
+        throw new Error(backendResult.message);
       }
-    },
+    } catch (backendErr) {
+      console.error('Apps Script backend Gemini execution failed:', backendErr);
+      throw backendErr;
+    }
+  }
+
+  // PRIORITY 2: Standalone / preview mode fallback (Firebase preview / local dev without google.script.run)
+  const candidateConfigs = [
     {
       label: 'Gemini 3.8 Flash (generateContent)',
       url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
@@ -357,6 +372,15 @@ Rules:
       }
     },
     {
+      label: 'Gemini 3.8 Flash (Interactions)',
+      url: 'https://generativelanguage.googleapis.com/v1beta/interactions',
+      body: {
+        model: 'gemini-3.8-flash',
+        input: cleanPromptText,
+        generation_config: { thinking_level: 'low' }
+      }
+    },
+    {
       label: 'Gemini 3.7 Flash',
       url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
       body: {
@@ -368,13 +392,12 @@ Rules:
 
   let lastError = null;
 
-  // Tier 1: Client-side fetch with 18-second timeout per candidate
   for (const cfg of candidateConfigs) {
     onProgress?.(`Contacting ${cfg.label}...`);
     const fullUrl = `${cfg.url}?key=${encodeURIComponent(geminiApiKey.trim())}`;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 18000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       const res = await fetch(fullUrl, {
         method: 'POST',
@@ -414,39 +437,9 @@ Rules:
       console.warn(`Client request exception on ${cfg.label}:`, err);
       lastError = err;
       if (err.name === 'AbortError') {
-        lastError = new Error(`${cfg.label} timed out after 18 seconds.`);
+        lastError = new Error(`${cfg.label} timed out.`);
       }
       continue;
-    }
-  }
-
-  // Tier 2: Apps Script Backend Fallback via UrlFetchApp (zero CORS, server-to-server)
-  const token = getSafeStorage('nwm_session_token');
-  if (token) {
-    onProgress?.('Contacting Google cloud backend fallback...');
-    try {
-      const backendResult = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Backend processing timed out.')), 35000);
-        if (window.google?.script?.run?.executeGeminiPromptBackend) {
-          window.google.script.run
-            .withSuccessHandler((res) => { clearTimeout(timeout); resolve(res); })
-            .withFailureHandler((err) => { clearTimeout(timeout); reject(err); })
-            .executeGeminiPromptBackend(cleanPromptText, geminiApiKey.trim(), token);
-        } else {
-          clearTimeout(timeout);
-          reject(new Error('Apps Script execution environment not available.'));
-        }
-      });
-
-      if (backendResult && backendResult.status === 'success' && backendResult.rawText) {
-        const cleanJson = cleanJsonText(backendResult.rawText);
-        return JSON.parse(cleanJson);
-      } else if (backendResult && backendResult.message) {
-        throw new Error(backendResult.message);
-      }
-    } catch (backendErr) {
-      console.error('Backend fallback execution failed:', backendErr);
-      throw backendErr;
     }
   }
 

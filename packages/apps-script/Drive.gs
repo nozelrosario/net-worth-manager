@@ -717,18 +717,11 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
       cleanPrompt = String(promptInput || '');
     }
 
+    Logger.log('executeGeminiPromptBackend: cleanPrompt length = ' + cleanPrompt.length);
+
     var requests = [
       {
-        label: 'Gemini 3.8 Flash (Interactions)',
-        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          model: 'gemini-3.8-flash',
-          input: cleanPrompt,
-          response_mime_type: 'application/json'
-        }
-      },
-      {
-        label: 'Gemini 3.8 Flash (generateContent)',
+        label: 'Gemini 3.8 Flash (generateContent v1beta)',
         url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
         payload: {
           contents: [{ parts: [{ text: cleanPrompt }] }],
@@ -736,11 +729,22 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
         }
       },
       {
-        label: 'Gemini 3.8 Flash v1',
+        label: 'Gemini 3.8 Flash (generateContent v1)',
         url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
         payload: {
           contents: [{ parts: [{ text: cleanPrompt }] }],
           generationConfig: { response_mime_type: 'application/json' }
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash (Interactions)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-3.8-flash',
+          input: cleanPrompt,
+          generation_config: {
+            thinking_level: 'low'
+          }
         }
       },
       {
@@ -756,6 +760,7 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
     var lastErr = null;
     for (var i = 0; i < requests.length; i++) {
       try {
+        Logger.log('executeGeminiPromptBackend: Attempting ' + requests[i].label + '...');
         var response = UrlFetchApp.fetch(requests[i].url, {
           method: 'post',
           contentType: 'application/json',
@@ -794,19 +799,23 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
           }
 
           if (candidateText) {
+            Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' succeeded with ' + candidateText.length + ' chars');
             return {
               status: 'success',
               endpointUsed: requests[i].label,
               rawText: candidateText
             };
           }
-        } else if (code === 404 || code === 400) {
-          lastErr = requests[i].label + ' returned ' + code + ': ' + respText;
-          continue;
         } else {
+          Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' returned HTTP ' + code + ': ' + respText.substring(0, 300));
+          lastErr = requests[i].label + ' returned ' + code + ': ' + respText;
+          if (code === 404 || code === 400) {
+            continue;
+          }
           return { status: 'error', message: 'Gemini API Error (' + code + '): ' + respText };
         }
       } catch (callErr) {
+        Logger.log('executeGeminiPromptBackend: Exception on ' + requests[i].label + ': ' + callErr.message);
         lastErr = callErr.message;
       }
     }
