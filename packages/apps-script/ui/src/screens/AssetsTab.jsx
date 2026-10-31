@@ -3,8 +3,9 @@ import { getSafeStorage } from "../utils/storage";
 import React, { useState, useEffect } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
+import CasSyncModal from "../components/CasSyncModal";
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -33,6 +34,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [deleteConfirmAsset, setDeleteConfirmAsset] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingRates, setIsSyncingRates] = useState(false);
+  const [showCasModal, setShowCasModal] = useState(false);
 
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
@@ -402,6 +404,16 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <RefreshCw size={10} className={isSyncingRates ? 'animate-spin' : ''} />
               <span>{isSyncingRates ? 'Syncing...' : 'Sync Rates'}</span>
             </button>
+            <span className="text-text-muted text-typ-caption">•</span>
+            <button 
+              type="button"
+              onClick={() => setShowCasModal(true)} 
+              title="Import & synchronize mutual funds from CAMS/KFintech CAS statement"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-primary-accent/10 hover:bg-primary-accent/20 border border-primary-accent/25 text-primary-accent rounded-full text-typ-footnote font-medium transition-all active:scale-95"
+            >
+              <Cloud size={10} />
+              <span>Sync CAS</span>
+            </button>
             {onOpenRebalancer && (
               <>
                 <span className="text-text-muted text-typ-caption">•</span>
@@ -446,14 +458,25 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             )}
           </div>
         </div>
-        <button 
-          type="button"
-          onClick={() => openAddModal()} 
-          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95 flex-shrink-0"
-        >
-          <Plus size={14} />
-          <span>Add Asset</span>
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button 
+            type="button"
+            onClick={() => setShowCasModal(true)} 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-layer1 hover:bg-surface-layer2 text-text-primary border border-border-subtle rounded-lg text-typ-label font-semibold shadow-xs transition-all active:scale-95"
+            title="Scan CAS mutual funds statement from Google Drive or upload PDF"
+          >
+            <Cloud size={14} className="text-primary-accent" />
+            <span>Sync CAS</span>
+          </button>
+          <button 
+            type="button"
+            onClick={() => openAddModal()} 
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-accent hover:bg-primary-accent/90 text-white rounded-lg text-typ-label font-semibold shadow-md shadow-primary-accent/20 transition-all active:scale-95"
+          >
+            <Plus size={14} />
+            <span>Add Asset</span>
+          </button>
+        </div>
       </div>
       <div 
         className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide no-swipe"
@@ -787,6 +810,16 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           </div>
         </div>
       )}
+
+      {/* CAS Portfolio Sync Modal */}
+      <CasSyncModal
+        isOpen={showCasModal}
+        onClose={() => setShowCasModal(false)}
+        data={data}
+        formatCurrency={formatCurrency}
+        showMessage={showMessage}
+        onRefresh={onRefresh}
+      />
     </div>
   );
 }
