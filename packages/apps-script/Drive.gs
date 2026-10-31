@@ -725,10 +725,23 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
         url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
         payload: {
           model: 'gemini-3.8-flash',
-          input: cleanPrompt,
-          generation_config: {
-            thinking_level: 'low'
-          }
+          input: cleanPrompt
+        }
+      },
+      {
+        label: 'Gemini Flash Latest (Interactions API)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-flash-latest',
+          input: cleanPrompt
+        }
+      },
+      {
+        label: 'Gemini 2.5 Flash (Interactions API)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-2.5-flash',
+          input: cleanPrompt
         }
       },
       {

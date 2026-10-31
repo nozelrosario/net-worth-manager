@@ -178,10 +178,22 @@ export async function extractTextFromCasPdf(pdfInput, password = '', onProgress 
       const page = await pdfDoc.getPage(pageNum);
       const textContent = await page.getTextContent();
       
+      const items = (textContent.items || []).filter(item => item && item.str);
+      // Sort items top-to-bottom (descending Y), then left-to-right (ascending X)
+      // to ensure tabular rows (date, transaction type, units, amounts) reconstruct as coherent single lines
+      items.sort((a, b) => {
+        const aY = Array.isArray(a.transform) ? a.transform[5] : 0;
+        const bY = Array.isArray(b.transform) ? b.transform[5] : 0;
+        const yDiff = bY - aY;
+        if (Math.abs(yDiff) > 3) return yDiff;
+        const aX = Array.isArray(a.transform) ? a.transform[4] : 0;
+        const bX = Array.isArray(b.transform) ? b.transform[4] : 0;
+        return aX - bX;
+      });
+
       let pageText = '';
       let lastY = null;
-      for (const item of textContent.items) {
-        if (!item || !item.str) continue;
+      for (const item of items) {
         const currentY = Array.isArray(item.transform) ? item.transform[5] : null;
         if (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 3) {
           pageText += '\n';
@@ -221,28 +233,26 @@ export async function extractTextFromCasPdf(pdfInput, password = '', onProgress 
 function isHistoricalTransactionRow(line) {
   const lower = line.toLowerCase();
 
-  // Never prune essential metadata, headers, or closing balance lines
+  // Closing summary patterns - NEVER prune these!
   if (
-    lower.includes('closing') ||
-    lower.includes('balance') ||
-    lower.includes('valuation') ||
-    lower.includes('market value') ||
-    lower.includes('nav as on') ||
-    lower.includes('nav:') ||
-    lower.includes('cost:') ||
-    lower.includes('total cost') ||
-    lower.includes('folio') ||
+    lower.includes('closing unit') ||
+    lower.includes('closing balance') ||
+    lower.includes('total valuation') ||
+    lower.includes('portfolio valuation') ||
+    lower.includes('summary of investment') ||
+    lower.includes('portfolio summary') ||
+    lower.includes('folio no') ||
+    lower.includes('folio:') ||
     lower.includes('isin') ||
-    lower.includes('scheme') ||
+    lower.includes('nav as on') ||
+    lower.includes('nav on') ||
+    lower.includes('nav:') ||
+    lower.includes('market value') ||
+    lower.includes('total cost') ||
+    lower.includes('cost value') ||
     lower.includes('investor') ||
-    lower.includes('summary') ||
-    lower.includes('statement') ||
-    lower.includes('page') ||
-    lower.includes('email') ||
-    lower.includes('pan') ||
-    lower.includes('regist') ||
-    lower.includes('cams') ||
-    lower.includes('kfin')
+    lower.includes('pan:') ||
+    lower.includes('registrar')
   ) {
     return false;
   }
