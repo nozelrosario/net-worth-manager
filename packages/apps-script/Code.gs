@@ -2073,29 +2073,34 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
           "4. Cash Drag & Risk Action: Comment on runway and concentration if any.\n" +
           "Keep your answer crisp, professional, formatted in clean markdown bullet points, avoiding generic disclaimers.";
 
-        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + encodeURIComponent(apiKey);
-        var payload = {
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 1000
-          }
-        };
+        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+        for (var mi = 0; mi < candidateModels.length; mi++) {
+          var model = candidateModels[mi];
+          var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey);
+          var payload = {
+            contents: [{
+              parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 1000
+            }
+          };
 
-        var response = UrlFetchApp.fetch(url, {
-          method: "post",
-          contentType: "application/json",
-          payload: JSON.stringify(payload),
-          muteHttpExceptions: true
-        });
+          var response = UrlFetchApp.fetch(url, {
+            method: "post",
+            contentType: "application/json",
+            payload: JSON.stringify(payload),
+            muteHttpExceptions: true
+          });
 
-        if (response.getResponseCode() === 200) {
-          var respJson = JSON.parse(response.getContentText());
-          if (respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
-            aiNarrative = respJson.candidates[0].content.parts[0].text;
-            modelUsed = 'Google Gemini 1.5 Flash';
+          if (response.getResponseCode() === 200) {
+            var respJson = JSON.parse(response.getContentText());
+            if (respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
+              aiNarrative = respJson.candidates[0].content.parts[0].text;
+              modelUsed = 'Google Gemini (' + model + ')';
+              break;
+            }
           }
         }
       } catch (apiErr) {
@@ -2330,29 +2335,34 @@ function generateProductIntelligence(rebalanceData, userApiKey, sessionToken) {
           '  ]\n' +
           "}";
 
-        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + encodeURIComponent(apiKey);
-        var payload = {
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1200,
-            responseMimeType: "application/json"
-          }
-        };
+        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+        for (var mi = 0; mi < candidateModels.length; mi++) {
+          var model = candidateModels[mi];
+          var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey);
+          var payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 1200,
+              responseMimeType: "application/json"
+            }
+          };
 
-        var response = UrlFetchApp.fetch(url, {
-          method: "post",
-          contentType: "application/json",
-          payload: JSON.stringify(payload),
-          muteHttpExceptions: true
-        });
+          var response = UrlFetchApp.fetch(url, {
+            method: "post",
+            contentType: "application/json",
+            payload: JSON.stringify(payload),
+            muteHttpExceptions: true
+          });
 
-        if (response.getResponseCode() === 200) {
-          var respJson = JSON.parse(response.getContentText());
-          if (respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
-            var rawText = respJson.candidates[0].content.parts[0].text;
-            resultData = JSON.parse(rawText);
-            modelUsed = 'Google Gemini 1.5 Flash';
+          if (response.getResponseCode() === 200) {
+            var respJson = JSON.parse(response.getContentText());
+            if (respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
+              var rawText = respJson.candidates[0].content.parts[0].text;
+              resultData = JSON.parse(rawText);
+              modelUsed = 'Google Gemini (' + model + ')';
+              break;
+            }
           }
         }
       } catch (geminiErr) {
@@ -2471,4 +2481,32 @@ function generateOfflineProductIntelligence(rebalanceData) {
       }
     ]
   };
+}
+
+/**
+ * Dynamically resolves an active Gemini Flash model supporting generateContent
+ * using ListModels, preventing 404 errors when specific version aliases are sunset.
+ */
+function resolveGeminiFlashModel(apiKey) {
+  if (!apiKey) return "gemini-3.8-flash";
+  try {
+    var listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + encodeURIComponent(apiKey);
+    var res = UrlFetchApp.fetch(listUrl, { muteHttpExceptions: true });
+    if (res.getResponseCode() === 200) {
+      var data = JSON.parse(res.getContentText());
+      var models = data.models || [];
+      for (var i = 0; i < models.length; i++) {
+        var m = models[i];
+        var methods = m.supportedGenerationMethods || [];
+        var name = (m.name || "").toLowerCase();
+        // Target active Gemini 3.x Flash models, ignoring sunsetted 1.5 and 2.0 generations
+        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1 && name.indexOf("3.") !== -1) {
+          return m.name.replace(/^models\//, "");
+        }
+      }
+    }
+  } catch (e) {
+    Logger.log("Failed to list Gemini models: " + e.message);
+  }
+  return "gemini-3.8-flash";
 }

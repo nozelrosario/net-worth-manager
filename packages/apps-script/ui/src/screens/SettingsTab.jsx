@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
@@ -118,6 +118,72 @@ export default function SettingsTab({
         .upsertSetting('SmsLastProcessedDate', '0', token);
     } else {
       showMessage('SMS sync watermark reset (preview)');
+    }
+  };
+
+  const savedCasFolder = data?.settings?.find(s => s['Setting Key'] === 'CasDriveFolder')?.['Setting Value'] || 'Net Worth Manager/CAS Imports';
+  const savedCasPan = data?.settings?.find(s => s['Setting Key'] === 'CasPdfPan')?.['Setting Value'] || getSafeStorage('nwm_cas_pan', '');
+  const lastCasSyncDate = data?.settings?.find(s => s['Setting Key'] === 'CasLastProcessedDate')?.['Setting Value'] || '';
+  const [casFolderInput, setCasFolderInput] = useState(savedCasFolder);
+  const [casPanInput, setCasPanInput] = useState(savedCasPan);
+  const [showCasPassword, setShowCasPassword] = useState(false);
+  const [isSavingCasSettings, setIsSavingCasSettings] = useState(false);
+
+  useEffect(() => {
+    if (savedCasFolder) setCasFolderInput(savedCasFolder);
+    if (savedCasPan) setCasPanInput(savedCasPan);
+  }, [savedCasFolder, savedCasPan]);
+
+  const handleSaveCasSettings = (e) => {
+    e.preventDefault();
+    setIsSavingCasSettings(true);
+    const cleanFolder = (casFolderInput || '').trim();
+    const cleanPan = (casPanInput || '').trim();
+    setSafeStorage('nwm_cas_pan', cleanPan);
+    const token = getSafeStorage('nwm_session_token');
+
+    if (window.google?.script?.run?.upsertSetting) {
+      window.google.script.run
+        .withSuccessHandler(() => {
+          if (cleanPan) {
+            window.google.script.run
+              .withSuccessHandler(() => {
+                setIsSavingCasSettings(false);
+                showMessage('CAS Ingestion settings saved!');
+                if (onRefresh) onRefresh();
+              })
+              .upsertSetting('CasPdfPan', cleanPan, token);
+          } else {
+            setIsSavingCasSettings(false);
+            showMessage('CAS Ingestion settings saved!');
+            if (onRefresh) onRefresh();
+          }
+        })
+        .withFailureHandler((err) => {
+          setIsSavingCasSettings(false);
+          showMessage('Error saving CAS settings: ' + err.message, true);
+        })
+        .upsertSetting('CasDriveFolder', cleanFolder, token);
+    } else {
+      setTimeout(() => {
+        setIsSavingCasSettings(false);
+        showMessage('CAS Ingestion settings saved (preview)');
+      }, 500);
+    }
+  };
+
+  const handleResetCasSync = () => {
+    if (!window.confirm('Resetting the CAS sync watermark will allow re-scanning older statements. Continue?')) return;
+    const token = getSafeStorage('nwm_session_token');
+    if (window.google?.script?.run?.upsertSetting) {
+      window.google.script.run
+        .withSuccessHandler(() => {
+          showMessage('CAS sync watermark reset.');
+          if (onRefresh) onRefresh();
+        })
+        .upsertSetting('CasLastProcessedDate', '', token);
+    } else {
+      showMessage('CAS sync watermark reset (preview)');
     }
   };
 
@@ -541,6 +607,96 @@ export default function SettingsTab({
               className="text-text-muted hover:text-liability-rose hover:underline"
             >
               Reset Sync Date
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* CAS Investment Ingestion (Google Drive & AI) */}
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-text-primary">
+            <FileText size={18} className="text-wealth-emerald" />
+            <h3 className="font-semibold text-typ-body-sm">CAS Investment Sync (Google Drive &amp; AI)</h3>
+          </div>
+          <Badge variant="emerald" size="xs">CAMS + KFintech</Badge>
+        </div>
+        <p className="text-typ-label text-text-secondary leading-relaxed mb-4">
+          Scans your Google Drive folder for CAMS/KFintech Consolidated Account Statement (CAS) PDFs, unlocks them in-memory with your PAN, and uses Gemini 1.5 Flash to synchronize mutual funds, SIP units, and live valuations.
+        </p>
+
+        <form onSubmit={handleSaveCasSettings} className="space-y-3 bg-surface-layer2/50 p-3 rounded-xl border border-border-subtle">
+          <div>
+            <label className="block text-typ-label font-semibold text-text-primary mb-1">
+              Drive CAS Folder Path
+            </label>
+            <input
+              type="text"
+              value={casFolderInput}
+              onChange={e => setCasFolderInput(e.target.value)}
+              placeholder="Net Worth Manager/CAS Imports"
+              className="w-full bg-surface-layer1 border border-border-subtle focus:border-primary-accent/70 rounded-lg px-3 py-1.5 text-typ-label text-text-primary focus:outline-none mb-2"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-typ-label font-semibold text-text-primary">
+                Default Statement Password / PAN
+              </label>
+              {casPanInput && (
+                <button
+                  type="button"
+                  onClick={() => setCasPanInput(casPanInput.toUpperCase())}
+                  className="text-[10px] text-primary-accent hover:underline font-medium"
+                  title="Convert to uppercase if using PAN"
+                >
+                  Convert to Uppercase
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showCasPassword ? "text" : "password"}
+                  value={casPanInput}
+                  onChange={e => setCasPanInput(e.target.value)}
+                  placeholder="e.g. ABCDE1234F or custom password"
+                  className="w-full bg-surface-layer1 border border-border-subtle focus:border-primary-accent/70 rounded-lg px-3 py-1.5 pr-8 text-typ-label font-mono text-text-primary focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCasPassword(!showCasPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                  title={showCasPassword ? "Hide password" : "Show password"}
+                >
+                  {showCasPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+              <button
+                type="submit"
+                disabled={isSavingCasSettings}
+                className="px-3 py-1.5 rounded-lg bg-wealth-emerald text-white font-semibold text-typ-label hover:bg-wealth-emerald/90 disabled:opacity-50 flex items-center gap-1 shadow-sm shrink-0"
+              >
+                {isSavingCasSettings ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                <span>{isSavingCasSettings ? 'Saving...' : 'Save Settings'}</span>
+              </button>
+            </div>
+            <span className="text-[10px] text-text-muted mt-1 block">
+              Used to unlock password-protected CAS statements client-side in RAM. Supports custom CAMS export passwords (case-preserved) or PAN.
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between pt-1 text-typ-footnote border-t border-border-subtle/50">
+            <span className="text-text-muted">
+              Last Processed: {lastCasSyncDate || 'None (Full scan)'}
+            </span>
+            <button
+              type="button"
+              onClick={handleResetCasSync}
+              className="text-text-muted hover:text-liability-rose hover:underline"
+            >
+              Reset CAS Date
             </button>
           </div>
         </form>

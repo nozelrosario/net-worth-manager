@@ -413,3 +413,428 @@ function unignoreSmsTransaction(hash, idToken) {
   }
 }
 
+
+/**
+ * Scans Google Drive for CAS Consolidated Account Statement PDF files.
+ * Identifies the configured folder (defaults to 'Net Worth Manager/CAS Imports' or 'CAS Imports'),
+ * locates the most recent .pdf backup file, and returns file metadata + Base64 content.
+ */
+function scanDriveForCas(folderPathOrName, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var target = folderPathOrName || 'Net Worth Manager/CAS Imports';
+    var folder = null;
+
+    if (target.indexOf('/') !== -1) {
+      var parts = target.split('/').map(function(s) { return s.trim(); }).filter(Boolean);
+      folder = getFolderByPath(parts);
+    } else {
+      var folders = DriveApp.getFoldersByName(target);
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        // Fallback: check Net Worth Manager subfolders
+        var nwmFolders = DriveApp.getFoldersByName('Net Worth Manager');
+        if (nwmFolders.hasNext()) {
+          var nwm = nwmFolders.next();
+          var subFolders = nwm.getFoldersByName(target);
+          if (subFolders.hasNext()) {
+            folder = subFolders.next();
+          } else {
+            // Also check 'CAS Imports'
+            var casSub = nwm.getFoldersByName('CAS Imports');
+            if (casSub.hasNext()) {
+              folder = casSub.next();
+            }
+          }
+        }
+      }
+    }
+
+    if (!folder) {
+      return {
+        status: 'not_found',
+        message: 'Google Drive folder "' + target + '" was not found. Please create this folder or drop your CAS statement PDF into it.'
+      };
+    }
+
+    var files = folder.getFiles();
+    var latestFile = null;
+    var latestDate = 0;
+    var totalPdfFiles = 0;
+
+    while (files.hasNext()) {
+      var file = files.next();
+      var name = file.getName();
+      if (name.toLowerCase().indexOf('.pdf') !== -1) {
+        totalPdfFiles++;
+        var updated = file.getLastUpdated().getTime();
+        if (updated > latestDate) {
+          latestDate = updated;
+          latestFile = file;
+        }
+      }
+    }
+
+    if (!latestFile) {
+      return {
+        status: 'no_backups',
+        message: 'No .pdf CAS statement files found in Drive folder "' + folder.getName() + '".'
+      };
+    }
+
+    // Preserve binary stream integrity with Base64 encoding
+    var bytes = latestFile.getBlob().getBytes();
+    var base64Data = Utilities.base64Encode(bytes);
+
+    return {
+      status: 'success',
+      folderName: folder.getName(),
+      fileName: latestFile.getName(),
+      fileSize: latestFile.getSize(),
+      lastModified: latestFile.getLastUpdated().toISOString(),
+      lastModifiedEpoch: latestDate,
+      totalPdfFiles: totalPdfFiles,
+      base64Data: base64Data
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Batch synchronizes reconciled CAS mutual fund assets into the Assets sheet in a single flush.
+ * Updates units, cost base, live valuations, and registers quotes in MarketQuotes.
+ */
+function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Assets');
+    if (!sheet) {
+      setupDatabaseSheets();
+      sheet = ss.getSheetByName('Assets');
+      if (!sheet) return { status: 'error', message: 'Assets sheet not found' };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Asset ID');
+    var costCol = headers.indexOf('Cost');
+    var valCol = headers.indexOf('Current Value');
+    var detailsCol = headers.indexOf('Details JSON');
+    var nameCol = headers.indexOf('Name');
+    var catCol = headers.indexOf('Category');
+    var identCol = headers.indexOf('Identifiers');
+    var instCol = headers.indexOf('Institution/Location');
+
+    // Build map of existing Asset ID to 1-based row index in sheet
+    var rowMap = {};
+    for (var r = 1; r < data.length; r++) {
+      var aid = String(data[r][idCol] || '').trim();
+      if (aid) {
+        rowMap[aid] = r + 1;
+      }
+    }
+
+    var updatedCount = 0;
+    var insertedCount = 0;
+
+    // 1. Process updates in existing asset rows
+    if (assetsToUpdate && assetsToUpdate.length > 0) {
+      for (var u = 0; u < assetsToUpdate.length; u++) {
+        var item = assetsToUpdate[u];
+        var targetAssetId = String(item['Asset ID'] || '').trim();
+        var rowIdx = rowMap[targetAssetId];
+        if (rowIdx) {
+          var existingRow = data[rowIdx - 1];
+          var existingDetailsRaw = detailsCol !== -1 ? existingRow[detailsCol] : '{}';
+          var existingDetails = {};
+          try {
+            existingDetails = typeof existingDetailsRaw === 'string' ? JSON.parse(existingDetailsRaw || '{}') : (existingDetailsRaw || {});
+          } catch(e) {}
+
+          var newDetails = typeof item['Details JSON'] === 'string' ? JSON.parse(item['Details JSON'] || '{}') : (item['Details JSON'] || {});
+          for (var k in newDetails) {
+            existingDetails[k] = newDetails[k];
+          }
+          if (statementDate) {
+            existingDetails['Statement Date'] = statementDate;
+          }
+          existingDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
+
+          // Update Current Value
+          if (valCol !== -1 && item['Current Value'] !== undefined) {
+            sheet.getRange(rowIdx, valCol + 1).setValue(Number(item['Current Value']) || 0);
+          }
+          // Update Cost Base
+          if (costCol !== -1 && item['Cost'] !== undefined) {
+            sheet.getRange(rowIdx, costCol + 1).setValue(Number(item['Cost']) || 0);
+          }
+          // Update Details JSON
+          if (detailsCol !== -1) {
+            sheet.getRange(rowIdx, detailsCol + 1).setValue(JSON.stringify(existingDetails));
+          }
+          // Update Identifiers (Folio) if provided and empty
+          if (identCol !== -1 && item['Identifiers'] && !existingRow[identCol]) {
+            sheet.getRange(rowIdx, identCol + 1).setValue(item['Identifiers']);
+          }
+          // Update Institution if empty
+          if (instCol !== -1 && item['Institution/Location'] && !existingRow[instCol]) {
+            sheet.getRange(rowIdx, instCol + 1).setValue(item['Institution/Location']);
+          }
+
+          updatedCount++;
+        }
+      }
+    }
+
+    // 2. Process new asset insertions
+    if (assetsToInsert && assetsToInsert.length > 0) {
+      for (var i = 0; i < assetsToInsert.length; i++) {
+        var ins = assetsToInsert[i];
+        var newRow = [];
+        var newAssetId = ins['Asset ID'] || ('AST_' + Utilities.getUuid().replace(/-/g, '').slice(0, 12).toUpperCase());
+
+        var insDetails = typeof ins['Details JSON'] === 'string' ? JSON.parse(ins['Details JSON'] || '{}') : (ins['Details JSON'] || {});
+        if (statementDate) {
+          insDetails['Statement Date'] = statementDate;
+        }
+        insDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
+        if (insDetails['Live Tracking'] === undefined) {
+          insDetails['Live Tracking'] = true;
+        }
+
+        for (var h = 0; h < headers.length; h++) {
+          var header = headers[h];
+          var hClean = String(header || '').trim();
+
+          if (hClean === 'Asset ID') {
+            newRow.push(newAssetId);
+          } else if (hClean === 'Type') {
+            newRow.push(ins.Type || 'Investment');
+          } else if (hClean === 'Name') {
+            newRow.push(ins.Name || 'Mutual Fund Scheme');
+          } else if (hClean === 'Category') {
+            newRow.push(ins.Category || 'Mutual Funds');
+          } else if (hClean === 'Owner') {
+            newRow.push(ins.Owner || auth.userInfo.activeEmail || 'Single');
+          } else if (hClean === 'Status') {
+            newRow.push(ins.Status || 'Active');
+          } else if (hClean === 'Acquisition Date') {
+            newRow.push(ins['Acquisition Date'] || statementDate || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd'));
+          } else if (hClean === 'Cost') {
+            newRow.push(Number(ins.Cost) || 0);
+          } else if (hClean === 'Current Value') {
+            newRow.push(Number(ins['Current Value']) || 0);
+          } else if (hClean === 'Institution/Location') {
+            newRow.push(ins['Institution/Location'] || '');
+          } else if (hClean === 'Identifiers') {
+            newRow.push(ins.Identifiers || '');
+          } else if (hClean === 'Nominee') {
+            newRow.push(ins.Nominee || '');
+          } else if (hClean === 'Nominee %') {
+            newRow.push(ins['Nominee %'] || '');
+          } else if (hClean === 'Details JSON') {
+            newRow.push(JSON.stringify(insDetails));
+          } else {
+            newRow.push(ins[hClean] !== undefined ? ins[hClean] : '');
+          }
+        }
+        sheet.appendRow(newRow);
+        insertedCount++;
+
+        // Auto-register in MarketQuotes
+        try {
+          var schemeCode = insDetails['Scheme Code'];
+          var isin = insDetails['ISIN'];
+          var symbolToTrack = schemeCode || isin;
+          if (symbolToTrack) {
+            registerMarketQuote(ss, symbolToTrack, 'Mutual Funds', ins.Name);
+          }
+        } catch(eQuote) {}
+      }
+    }
+
+    SpreadsheetApp.flush();
+
+    // 3. Update watermark in Settings
+    if (statementDate) {
+      upsertSetting('CasLastProcessedDate', String(statementDate), idToken);
+    }
+
+    logAudit(ss, auth.userInfo.activeEmail, 'BATCH_SYNC_CAS', 'Assets', 'Synchronized ' + (updatedCount + insertedCount) + ' mutual fund holdings (' + updatedCount + ' updated, ' + insertedCount + ' inserted)');
+
+    return {
+      status: 'success',
+      updatedCount: updatedCount,
+      insertedCount: insertedCount,
+      message: 'Successfully synchronized ' + (updatedCount + insertedCount) + ' holdings (' + updatedCount + ' updated, ' + insertedCount + ' new added).'
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
+ * Backend fallback for executing Gemini generative requests via Apps Script UrlFetchApp.
+ * Avoids browser CORS and client environment limitations.
+ * Supports both Google Interactions API (/v1beta/interactions with gemini-3.8-flash)
+ * and generateContent without deprecated parameters.
+ */
+function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    var keyToUse = (apiKey || '').trim();
+    if (!keyToUse) {
+      keyToUse = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || '';
+    }
+    if (!keyToUse) {
+      return { status: 'error', message: 'Gemini API Key missing.' };
+    }
+
+    var cleanPrompt = '';
+    if (typeof promptInput === 'string') {
+      try {
+        var parsed = JSON.parse(promptInput);
+        if (parsed && parsed.contents && parsed.contents[0] && parsed.contents[0].parts) {
+          cleanPrompt = parsed.contents[0].parts.map(function(p) { return p.text || ''; }).join('\n\n');
+        } else {
+          cleanPrompt = promptInput;
+        }
+      } catch (e) {
+        cleanPrompt = promptInput;
+      }
+    } else if (promptInput && promptInput.contents) {
+      cleanPrompt = promptInput.contents[0].parts.map(function(p) { return p.text || ''; }).join('\n\n');
+    } else {
+      cleanPrompt = String(promptInput || '');
+    }
+
+    Logger.log('executeGeminiPromptBackend: cleanPrompt length = ' + cleanPrompt.length);
+
+    var requests = [
+      {
+        label: 'Gemini 3.5 Flash Lite (generateContent v1beta)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash (generateContent v1beta)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            thinkingConfig: {
+              thinkingLevel: 'low'
+            }
+          }
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash (generateContent v1)',
+        url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash (Interactions API)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-3.8-flash',
+          input: cleanPrompt,
+          generation_config: {
+            thinking_level: 'low'
+          }
+        }
+      }
+    ];
+
+    var lastErr = null;
+    for (var i = 0; i < requests.length; i++) {
+      try {
+        Logger.log('executeGeminiPromptBackend: Attempting ' + requests[i].label + '...');
+        var response = UrlFetchApp.fetch(requests[i].url, {
+          method: 'post',
+          contentType: 'application/json',
+          headers: { 'x-goog-api-key': keyToUse },
+          payload: JSON.stringify(requests[i].payload),
+          muteHttpExceptions: true
+        });
+
+        var code = response.getResponseCode();
+        var respText = response.getContentText();
+
+        if (code === 200) {
+          var respJson = JSON.parse(respText);
+          var candidateText = null;
+
+          // Check standard generateContent candidates structure
+          if (respJson && respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
+            candidateText = respJson.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
+          }
+          // Check interactions API steps array
+          if (!candidateText && respJson && respJson.steps && respJson.steps.length) {
+            for (var si = 0; si < respJson.steps.length; si++) {
+              var step = respJson.steps[si];
+              if (step.type === 'model_output' && step.content && step.content.length) {
+                for (var ci = 0; ci < step.content.length; ci++) {
+                  if (step.content[ci].type === 'text' && step.content[ci].text) {
+                    candidateText = step.content[ci].text;
+                    break;
+                  }
+                }
+              }
+              if (candidateText) break;
+            }
+          }
+          if (!candidateText && respJson && respJson.output_text) {
+            candidateText = respJson.output_text;
+          }
+
+          if (candidateText) {
+            Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' succeeded with ' + candidateText.length + ' chars');
+            return {
+              status: 'success',
+              endpointUsed: requests[i].label,
+              rawText: candidateText
+            };
+          } else {
+            Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' returned HTTP 200 but candidateText was empty: ' + respText.substring(0, 300));
+            lastErr = requests[i].label + ' returned HTTP 200 but candidateText was empty';
+          }
+        } else {
+          Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' returned HTTP ' + code + ': ' + respText.substring(0, 300));
+          lastErr = requests[i].label + ' returned ' + code + ': ' + respText;
+          if (code === 429) {
+            Utilities.sleep(500);
+          }
+          continue;
+        }
+      } catch (callErr) {
+        Logger.log('executeGeminiPromptBackend: Exception on ' + requests[i].label + ': ' + callErr.message);
+        lastErr = callErr.message;
+      }
+    }
+
+    return { status: 'error', message: 'All Gemini model endpoints failed. ' + lastErr };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
