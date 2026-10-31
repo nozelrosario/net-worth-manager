@@ -418,7 +418,7 @@ Rules:
 
         console.warn(`Endpoint ${cfg.label} returned ${res.status}: ${msg}`);
         lastError = new Error(`Gemini API (${res.status}): ${msg}`);
-        if (res.status === 404 || res.status === 400 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported') || msg.toLowerCase().includes('is no longer available')) {
+        if (res.status === 404 || res.status === 400 || res.status === 503 || res.status === 429 || res.status === 500 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported') || msg.toLowerCase().includes('is no longer available') || msg.toLowerCase().includes('high demand') || msg.toLowerCase().includes('unavailable')) {
           continue;
         }
         throw new Error(`Gemini API Error (${res.status}): ${msg}`);
