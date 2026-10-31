@@ -721,27 +721,13 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
 
     var requests = [
       {
-        label: 'Gemini 3.8 Flash (Interactions API)',
-        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        label: 'Gemini 3.5 Flash Lite (generateContent v1beta)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=' + encodeURIComponent(keyToUse),
         payload: {
-          model: 'gemini-3.8-flash',
-          input: cleanPrompt
-        }
-      },
-      {
-        label: 'Gemini Flash Latest (Interactions API)',
-        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          model: 'gemini-flash-latest',
-          input: cleanPrompt
-        }
-      },
-      {
-        label: 'Gemini 2.5 Flash (Interactions API)',
-        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
-        payload: {
-          model: 'gemini-2.5-flash',
-          input: cleanPrompt
+          contents: [{ parts: [{ text: cleanPrompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
         }
       },
       {
@@ -749,7 +735,12 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
         url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
         payload: {
           contents: [{ parts: [{ text: cleanPrompt }] }],
-          generationConfig: { response_mime_type: 'application/json' }
+          generationConfig: {
+            responseMimeType: 'application/json',
+            thinkingConfig: {
+              thinkingLevel: 'low'
+            }
+          }
         }
       },
       {
@@ -757,7 +748,20 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
         url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(keyToUse),
         payload: {
           contents: [{ parts: [{ text: cleanPrompt }] }],
-          generationConfig: { response_mime_type: 'application/json' }
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
+        }
+      },
+      {
+        label: 'Gemini 3.8 Flash (Interactions API)',
+        url: 'https://generativelanguage.googleapis.com/v1beta/interactions?key=' + encodeURIComponent(keyToUse),
+        payload: {
+          model: 'gemini-3.8-flash',
+          input: cleanPrompt,
+          generation_config: {
+            thinking_level: 'low'
+          }
         }
       }
     ];
@@ -781,8 +785,12 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
           var respJson = JSON.parse(respText);
           var candidateText = null;
 
+          // Check standard generateContent candidates structure
+          if (respJson && respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
+            candidateText = respJson.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('');
+          }
           // Check interactions API steps array
-          if (respJson && respJson.steps && respJson.steps.length) {
+          if (!candidateText && respJson && respJson.steps && respJson.steps.length) {
             for (var si = 0; si < respJson.steps.length; si++) {
               var step = respJson.steps[si];
               if (step.type === 'model_output' && step.content && step.content.length) {
@@ -799,9 +807,6 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
           if (!candidateText && respJson && respJson.output_text) {
             candidateText = respJson.output_text;
           }
-          if (!candidateText && respJson && respJson.candidates && respJson.candidates[0] && respJson.candidates[0].content && respJson.candidates[0].content.parts) {
-            candidateText = respJson.candidates[0].content.parts[0].text;
-          }
 
           if (candidateText) {
             Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' succeeded with ' + candidateText.length + ' chars');
@@ -810,6 +815,9 @@ function executeGeminiPromptBackend(promptInput, apiKey, idToken) {
               endpointUsed: requests[i].label,
               rawText: candidateText
             };
+          } else {
+            Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' returned HTTP 200 but candidateText was empty: ' + respText.substring(0, 300));
+            lastErr = requests[i].label + ' returned HTTP 200 but candidateText was empty';
           }
         } else {
           Logger.log('executeGeminiPromptBackend: ' + requests[i].label + ' returned HTTP ' + code + ': ' + respText.substring(0, 300));

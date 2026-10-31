@@ -185,7 +185,7 @@ export async function extractTextFromCasPdf(pdfInput, password = '', onProgress 
         const aY = Array.isArray(a.transform) ? a.transform[5] : 0;
         const bY = Array.isArray(b.transform) ? b.transform[5] : 0;
         const yDiff = bY - aY;
-        if (Math.abs(yDiff) > 3) return yDiff;
+        if (Math.abs(yDiff) > 3.5) return yDiff;
         const aX = Array.isArray(a.transform) ? a.transform[4] : 0;
         const bX = Array.isArray(b.transform) ? b.transform[4] : 0;
         return aX - bX;
@@ -195,18 +195,13 @@ export async function extractTextFromCasPdf(pdfInput, password = '', onProgress 
       let lastY = null;
       for (const item of items) {
         const currentY = Array.isArray(item.transform) ? item.transform[5] : null;
-        if (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 3) {
+        if (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 3.5) {
           pageText += '\n';
         } else if (pageText.length > 0 && !pageText.endsWith('\n') && !pageText.endsWith(' ')) {
           pageText += ' ';
         }
         pageText += item.str;
-        if (item.hasEOL) {
-          pageText += '\n';
-          lastY = null;
-        } else {
-          lastY = currentY;
-        }
+        lastY = currentY;
       }
       fullText += `\n--- PAGE ${pageNum} ---\n` + pageText.trim() + '\n';
     }
@@ -267,8 +262,9 @@ function isHistoricalTransactionRow(line) {
   // Transaction keywords
   const txKeywords = [
     'purchase', 'sip', 'systematic', 'switch-in', 'switch in', 'switch-out', 'switch out',
-    'redemption', 'redeem', 'stamp duty', 'stt paid', 'stt', 'dividend reinvest', 'idcw reinvest',
-    'segregated', 'reversal', 'tax deduction', 'tds', 'transfer'
+    'redemption', 'redeem', 'stamp duty', 'stt paid', 'stt', 'dividend', 'idcw',
+    'segregated', 'reversal', 'tax deduction', 'tds', 'transfer', 'reinvestment',
+    'payout', 'creation', 'allotment', 'depository'
   ];
 
   return txKeywords.some((kw) => lower.includes(kw));
@@ -321,7 +317,12 @@ function cleanJsonText(rawText) {
  */
 function extractTextFromGeminiResponse(jsonRes) {
   if (!jsonRes) return null;
-  // Format 1: Interactions API steps structure
+  // Format 1: generateContent candidates structure
+  if (jsonRes.candidates?.[0]?.content?.parts) {
+    const textParts = jsonRes.candidates[0].content.parts.map(p => p.text || '').join('');
+    if (textParts) return textParts;
+  }
+  // Format 2: Interactions API steps structure
   if (Array.isArray(jsonRes.steps)) {
     for (const step of jsonRes.steps) {
       if (step.type === 'model_output' && Array.isArray(step.content)) {
@@ -333,13 +334,9 @@ function extractTextFromGeminiResponse(jsonRes) {
       }
     }
   }
-  // Format 2: Direct output_text property
+  // Format 3: Direct output_text property
   if (jsonRes.output_text) {
     return jsonRes.output_text;
-  }
-  // Format 3: generateContent candidates structure
-  if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
-    return jsonRes.candidates[0].content.parts[0].text;
   }
   // Format 4: Single array wrapped response
   if (Array.isArray(jsonRes) && jsonRes[0]) {
@@ -436,12 +433,11 @@ Rules:
   // PRIORITY 2: Standalone / preview mode fallback (Firebase preview / local dev without google.script.run)
   const candidateConfigs = [
     {
-      label: 'Gemini 3.8 Flash (Interactions API)',
-      url: 'https://generativelanguage.googleapis.com/v1beta/interactions',
+      label: 'Gemini 3.5 Flash Lite (generateContent v1beta)',
+      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
       body: {
-        model: 'gemini-3.8-flash',
-        input: cleanPromptText,
-        generation_config: { thinking_level: 'low' }
+        contents: [{ parts: [{ text: cleanPromptText }] }],
+        generationConfig: { response_mime_type: 'application/json' }
       }
     },
     {
@@ -449,7 +445,10 @@ Rules:
       url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
       body: {
         contents: [{ parts: [{ text: cleanPromptText }] }],
-        generationConfig: { response_mime_type: 'application/json' }
+        generationConfig: {
+          response_mime_type: 'application/json',
+          thinking_config: { thinking_level: 'low' }
+        }
       }
     },
     {
@@ -458,6 +457,15 @@ Rules:
       body: {
         contents: [{ parts: [{ text: cleanPromptText }] }],
         generationConfig: { response_mime_type: 'application/json' }
+      }
+    },
+    {
+      label: 'Gemini 3.8 Flash (Interactions API)',
+      url: 'https://generativelanguage.googleapis.com/v1beta/interactions',
+      body: {
+        model: 'gemini-3.8-flash',
+        input: cleanPromptText,
+        generation_config: { thinking_level: 'low' }
       }
     }
   ];
