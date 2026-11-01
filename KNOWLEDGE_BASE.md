@@ -188,6 +188,8 @@
   - Compliance: SEBI RIA regulatory disclaimer stating algorithmic research and educational portfolio analytics.
 
 ## Feature Update (v2.8) - AI Portfolio Rebalancer & Asset Allocation Advisor (Issue #18)
+> 📖 *For complete technical documentation, mathematical models, worked numerical examples, and architecture diagrams, see [AI Portfolio Advisor & Rebalance Engine Guide](docs/AI_PORTFOLIO_REBALANCER.md).*
+
 ✅ **Deterministic Financial Math Engine (`portfolioMath.js`)**:
   - Implements multi-asset drift calculation, absolute portfolio drift sum, and 0-100 Alignment Score formula.
   - Smart Fresh Capital Inflow Simulator ("No-Sale Rebalancing"): Given new money $\Delta C$, mathematically allocates strictly to underweight categories proportionally to their shortfalls, minimizing drift without selling any asset (avoiding Section 112A LTCG / Section 111A STCG tax).
