@@ -802,11 +802,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       {/* Portfolio Tools & Actions Modal */}
       {showToolsModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs no-swipe animate-fadeIn"
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm no-swipe animate-fadeIn"
           onClick={() => setShowToolsModal(false)}
         >
           <div 
-            className="bg-surface-root border border-border-subtle rounded-t-2xl sm:rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 space-y-4"
+            className="bg-surface-layer1 border border-border-subtle rounded-t-2xl sm:rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 space-y-4"
+            style={{ backgroundColor: 'var(--surface-layer1)' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Grab handle on mobile */}
@@ -824,7 +825,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <button 
                 type="button"
                 onClick={() => setShowToolsModal(false)}
-                className="text-text-muted hover:text-text-primary p-1 rounded-lg hover:bg-surface-layer1 transition-colors"
+                className="text-text-muted hover:text-text-primary p-1 rounded-lg hover:bg-surface-layer2 transition-colors"
                 title="Close"
               >
                 <X size={18} />
@@ -843,7 +844,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   setShowToolsModal(false);
                 }}
                 disabled={isSyncingRates}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-wealth-emerald/15 border border-wealth-emerald/25 flex items-center justify-center text-wealth-emerald shrink-0 group-hover:scale-105 transition-transform">
@@ -864,7 +865,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   setShowToolsModal(false);
                   setShowCasModal(true);
                 }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-primary-accent/40 text-left transition-all active:scale-[0.99] group"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-primary-accent/40 text-left transition-all active:scale-[0.99] group"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-lg bg-primary-accent/15 border border-primary-accent/25 flex items-center justify-center text-primary-accent shrink-0 group-hover:scale-105 transition-transform">
@@ -891,7 +892,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     setShowToolsModal(false);
                     onOpenRebalancer();
                   }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-purple-500/40 text-left transition-all active:scale-[0.99] group"
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-purple-500/40 text-left transition-all active:scale-[0.99] group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-lg bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
@@ -914,7 +915,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     setShowToolsModal(false);
                     onOpenRetirementPlanner();
                   }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-sky-500/40 text-left transition-all active:scale-[0.99] group"
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-sky-500/40 text-left transition-all active:scale-[0.99] group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center text-sky-400 shrink-0 group-hover:scale-105 transition-transform">
@@ -937,7 +938,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     setShowToolsModal(false);
                     onOpenInsuranceHub();
                   }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle hover:border-emerald-500/40 text-left transition-all active:scale-[0.99] group"
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-emerald-500/40 text-left transition-all active:scale-[0.99] group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
