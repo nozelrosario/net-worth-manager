@@ -3,9 +3,10 @@ import { getSafeStorage } from "../utils/storage";
 import React, { useState, useEffect, useMemo } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp, MoreVertical, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp, MoreVertical, ChevronRight, Key } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
+import GeminiApiKeyModal from "../components/GeminiApiKeyModal";
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -36,6 +37,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [isSyncingRates, setIsSyncingRates] = useState(false);
   const [showCasModal, setShowCasModal] = useState(false);
   const [showToolsModal, setShowToolsModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   useEffect(() => {
     if (!showToolsModal) return;
@@ -435,6 +437,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
+          <button 
+            type="button"
+            onClick={() => setShowApiKeyModal(true)} 
+            title="Gemini AI API Key Settings"
+            className="p-1.5 rounded-lg text-text-secondary hover:text-wealth-emerald bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle shadow-xs transition-all active:scale-95 shrink-0"
+          >
+            <Key size={16} />
+          </button>
           <button 
             type="button"
             onClick={() => setShowToolsModal(true)} 
@@ -988,6 +998,30 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </button>
               )}
             </div>
+
+            {/* Section 3: AI Configuration */}
+            <div className="space-y-2 pt-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted px-1">Settings</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowToolsModal(false);
+                  setShowApiKeyModal(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-wealth-emerald/15 border border-wealth-emerald/25 flex items-center justify-center text-wealth-emerald shrink-0 group-hover:scale-105 transition-transform">
+                    <Key size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-typ-label font-bold text-text-primary group-hover:text-wealth-emerald transition-colors">Google Gemini API Key</div>
+                    <div className="text-[11px] text-text-muted truncate">Single source key for advisory & statement sync</div>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1000,6 +1034,15 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         formatCurrency={formatCurrency}
         showMessage={showMessage}
         onRefresh={onRefresh}
+      />
+
+      {/* Unified Gemini API Key Modal */}
+      <GeminiApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        settings={data?.settings}
+        onRefresh={onRefresh}
+        showMessage={showMessage}
       />
     </div>
   );
