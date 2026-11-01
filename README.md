@@ -120,3 +120,7 @@ Net Worth Manager includes an automated ingestion and portfolio reconciliation p
   - Or in Apps Script: Open **Project Settings > Script Properties** and add `GEMINI_API_KEY`.
 - **Live Net Asset Value (NAV):** Extracted holdings are linked with AMFI scheme codes for continuous daily live NAV tracking.
 
+## 6. Architecture & Financial Engineering Documentation
+- 📘 **[AI Portfolio Advisor & Rebalance Engine Guide](docs/AI_PORTFOLIO_REBALANCER.md)**: In-depth technical documentation covering mathematical drift formulas, no-sale fresh capital inflow algorithms, cash drag modeling, tax-arbitrage calculators, mutual fund look-through overlap radars, worked examples, and system architecture diagrams.
+- 📗 **[Knowledge Base & Changelog](KNOWLEDGE_BASE.md)**: Detailed historical changelog and feature releases.
+
