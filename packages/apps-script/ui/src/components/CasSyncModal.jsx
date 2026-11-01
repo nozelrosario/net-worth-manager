@@ -8,6 +8,7 @@ import {
   FolderOpen, Lock, ExternalLink
 } from 'lucide-react';
 import { Badge } from './Badge';
+import GeminiApiKeyModal from './GeminiApiKeyModal';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { 
   extractTextFromCasPdf, 
@@ -53,8 +54,7 @@ export default function CasSyncModal({
   const [panPassword, setPanPassword] = useState(savedPanFromSettings);
   const [tempPanInput, setTempPanInput] = useState(savedPanFromSettings);
   const [showPassword, setShowPassword] = useState(false);
-  const [geminiApiKey, setGeminiApiKey] = useState(savedGeminiKey);
-  const [tempGeminiKey, setTempGeminiKey] = useState(savedGeminiKey);
+  const geminiApiKey = savedGeminiKey;
 
   const [isScanningDrive, setIsScanningDrive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -86,6 +86,7 @@ export default function CasSyncModal({
 
   // Modals state
   const [showPanModal, setShowPanModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
@@ -102,13 +103,6 @@ export default function CasSyncModal({
       setTempPanInput(savedPanFromSettings);
     }
   }, [savedPanFromSettings]);
-
-  useEffect(() => {
-    if (savedGeminiKey) {
-      setGeminiApiKey(savedGeminiKey);
-      setTempGeminiKey(savedGeminiKey);
-    }
-  }, [savedGeminiKey]);
 
   // Core processor: PDF Extraction -> Gemini Structured Output -> Reconciliation
   const processPdfContent = async (pdfData, sourceFileName = '', passwordToUse = null) => {
@@ -141,11 +135,11 @@ export default function CasSyncModal({
       }
 
       // Step 2: Google Gemini Flash structured JSON parsing
-      const keyToUse = geminiApiKey || savedGeminiKey;
+      const keyToUse = savedGeminiKey;
       if (!keyToUse) {
         setIsProcessing(false);
-        setShowPanModal(true);
-        showMessage?.('Google Gemini API Key is required to parse statement. Please enter it in Settings or the key dialog.', true);
+        setShowApiKeyModal(true);
+        showMessage?.('Google Gemini API Key is required to parse statement. Please configure your key in the settings.', true);
         return;
       }
 
@@ -281,17 +275,12 @@ export default function CasSyncModal({
     e.stopPropagation();
   };
 
-  // Save PAN / Gemini settings
+  // Save CAS PDF password setting
   const handleSaveSecuritySettings = () => {
     const cleanPan = (tempPanInput || '').trim();
-    const cleanKey = (tempGeminiKey || '').trim();
 
     setPanPassword(cleanPan);
-    setGeminiApiKey(cleanKey);
     setSafeStorage('nwm_cas_pan', cleanPan);
-    if (cleanKey) {
-      setSafeStorage('nwm_gemini_api_key', cleanKey);
-    }
 
     // Persist to Google Sheets Settings
     const token = getSafeStorage('nwm_session_token');
@@ -299,14 +288,11 @@ export default function CasSyncModal({
       if (cleanPan) {
         window.google.script.run.upsertSetting('CasPdfPan', cleanPan, token);
       }
-      if (cleanKey) {
-        window.google.script.run.upsertSetting('GeminiApiKey', cleanKey, token);
-      }
     }
 
     setShowPanModal(false);
     setPasswordError('');
-    showMessage?.('Security credentials saved.');
+    showMessage?.('Statement decryption password saved.');
 
     // If we have cached PDF data that failed previously, re-try processing with new password
     if (cachedPdfData) {
@@ -509,11 +495,19 @@ export default function CasSyncModal({
               type="button"
               onClick={() => {
                 setTempPanInput(panPassword || '');
-                setTempGeminiKey(geminiApiKey || savedGeminiKey || '');
                 setShowPanModal(true);
               }} 
+              className="p-1.5 rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-secondary hover:text-text-primary transition-colors"
+              title="CAS Statement Password (PAN)"
+            >
+              <Lock size={16} />
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => setShowApiKeyModal(true)} 
               className="p-1.5 rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-secondary hover:text-wealth-emerald transition-colors"
-              title="Statement Password & Gemini Settings"
+              title="Google Gemini API Key Settings"
             >
               <Key size={16} />
             </button>
@@ -993,8 +987,8 @@ export default function CasSyncModal({
             <div className="w-full max-w-sm rounded-2xl bg-surface-layer1 border border-border-subtle p-5 shadow-2xl">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Key size={16} className="text-wealth-emerald" />
-                  <h3 className="text-sm font-bold text-text-primary">PDF Decryption & API Key</h3>
+                  <Lock size={16} className="text-wealth-emerald" />
+                  <h3 className="text-sm font-bold text-text-primary">Statement Decryption Password</h3>
                 </div>
                 <button 
                   type="button"
@@ -1052,20 +1046,28 @@ export default function CasSyncModal({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-text-secondary mb-1">
-                    Google Gemini API Key
-                  </label>
-                  <input
-                    type="password"
-                    value={tempGeminiKey}
-                    onChange={(e) => setTempGeminiKey(e.target.value)}
-                    placeholder="AIzaSy..."
-                    className="w-full bg-surface-layer2 border border-border-subtle rounded-xl text-xs font-mono text-text-primary px-3 py-2 focus:ring-1 focus:ring-primary-accent"
-                  />
-                  <span className="text-[10px] text-text-muted block mt-0.5">
-                    Gemini Flash API free tier (1500 req/day).
-                  </span>
+                <div className="pt-2.5 border-t border-border-subtle/70">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block text-[11px] font-semibold text-text-secondary">
+                        Google Gemini API Key
+                      </span>
+                      <span className="text-[10px] text-text-muted">
+                        {savedGeminiKey ? 'Active & Configured' : 'Not configured (offline)'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPanModal(false);
+                        setShowApiKeyModal(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-primary-accent text-xs font-semibold flex items-center gap-1 transition-colors"
+                    >
+                      <Key size={12} />
+                      <span>{savedGeminiKey ? 'Edit Key' : 'Configure Key'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1082,12 +1084,21 @@ export default function CasSyncModal({
                   onClick={handleSaveSecuritySettings}
                   className="px-4 py-1.5 rounded-xl bg-wealth-emerald text-white text-xs font-bold"
                 >
-                  Save Credentials
+                  Save Password
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {/* Unified Gemini API Key Modal */}
+        <GeminiApiKeyModal
+          isOpen={showApiKeyModal}
+          onClose={() => setShowApiKeyModal(false)}
+          settings={settings}
+          onRefresh={onRefresh}
+          showMessage={showMessage}
+        />
 
       </div>
     </div>

@@ -4,8 +4,9 @@ import {
   ArrowLeft, Sparkles, Sliders, AlertTriangle, TrendingUp, TrendingDown, 
   CheckCircle2, Info, Copy, Check, RefreshCw, X, Shield, ChevronRight, 
   HelpCircle, ExternalLink, Flame, DollarSign, Wallet, Radar, Compass,
-  Layers, Zap, BarChart3, PieChart, ArrowUpRight
+  Layers, Zap, BarChart3, PieChart, ArrowUpRight, Key
 } from 'lucide-react';
+import GeminiApiKeyModal from './GeminiApiKeyModal';
 import { 
   RISK_PROFILES, 
   CATEGORY_COLORS, 
@@ -65,11 +66,11 @@ export default function PortfolioRebalancerModal({
   const [customInflowInput, setCustomInflowInput] = useState('50000');
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   
   // Customizer state
   const [tempProfile, setTempProfile] = useState(savedProfileName);
   const [tempTargets, setTempTargets] = useState({ ...savedTargetMap });
-  const [tempApiKey, setTempApiKey] = useState(savedGeminiKey);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [customizerFeedback, setCustomizerFeedback] = useState(null);
 
@@ -94,8 +95,7 @@ export default function PortfolioRebalancerModal({
     setTargetAllocation(savedTargetMap);
     setTempProfile(savedProfileName);
     setTempTargets({ ...savedTargetMap });
-    setTempApiKey(savedGeminiKey);
-  }, [savedProfileName, savedTargetMap, savedGeminiKey]);
+  }, [savedProfileName, savedTargetMap]);
 
   // Perform continuous deterministic calculations
   const simulation = useMemo(() => {
@@ -166,7 +166,7 @@ export default function PortfolioRebalancerModal({
     };
 
     const token = getSafeStorage('nwm_session_token');
-    const keyToUse = tempApiKey || savedGeminiKey;
+    const keyToUse = savedGeminiKey;
 
     if (window.google?.script?.run) {
       window.google.script.run
@@ -232,7 +232,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
     };
 
     const token = getSafeStorage('nwm_session_token');
-    const keyToUse = tempApiKey || savedGeminiKey;
+    const keyToUse = savedGeminiKey;
 
     function fallbackLocalProducts() {
       setProductIntelligence({
@@ -316,7 +316,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
     }
   }, [isOpen]);
 
-  // Save Target Profile and Gemini Key
+  // Save Target Profile Benchmark
   const handleSaveCustomizer = () => {
     setCustomizerFeedback(null);
     const total = Object.values(tempTargets).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -329,11 +329,6 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
 
     setIsSavingSettings(true);
     const token = getSafeStorage('nwm_session_token');
-    const cleanApiKey = tempApiKey ? tempApiKey.trim() : '';
-
-    // Always immediately persist key in local storage so it is active right away
-    setSafeStorage('nwm_gemini_api_key', cleanApiKey);
-
     const payload = JSON.stringify(tempTargets);
 
     function finishSave(successMsg) {
@@ -346,7 +341,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
       setTimeout(() => {
         setShowCustomizer(false);
         setCustomizerFeedback(null);
-        // Refresh AI advisory insights with the updated key/targets
+        // Refresh AI advisory insights with the updated targets
         handleGenerateAIInsights(true);
       }, 700);
     }
@@ -359,7 +354,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             setCustomizerFeedback({ text: res.message || 'Error saving settings', isError: true });
             showMessage(res.message, true);
           } else {
-            finishSave(res?.message || 'Portfolio settings & AI Key saved!');
+            finishSave(res?.message || 'Portfolio benchmark settings saved!');
           }
         })
         .withFailureHandler((err) => {
@@ -367,20 +362,11 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
           setCustomizerFeedback({ text: 'Error: ' + err.message, isError: true });
           showMessage('Error saving settings: ' + err.message, true);
         })
-        .savePortfolioSettings(payload, tempProfile, cleanApiKey, token);
+        .savePortfolioSettings(payload, tempProfile, undefined, token);
     } else if (window.google?.script?.run?.upsertSetting) {
       // Fallback
       window.google.script.run
-        .withSuccessHandler(() => {
-          if (cleanApiKey) {
-            window.google.script.run
-              .withSuccessHandler(() => finishSave('Settings saved!'))
-              .withFailureHandler(() => finishSave('Settings saved!'))
-              .upsertSetting('GeminiApiKey', cleanApiKey, token);
-          } else {
-            finishSave('Settings saved!');
-          }
-        })
+        .withSuccessHandler(() => finishSave('Settings saved!'))
         .withFailureHandler((err) => {
           setIsSavingSettings(false);
           setCustomizerFeedback({ text: 'Error: ' + err.message, isError: true });
@@ -437,13 +423,24 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             </div>
           </div>
 
-          <button 
-            onClick={() => setShowCustomizer(true)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-text-primary active:scale-95 transition-all text-typ-label font-medium"
-          >
-            <span className="text-typ-footnote font-semibold text-text-primary">{selectedProfile}</span>
-            <Sliders size={12} className="text-text-muted" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button 
+              type="button"
+              onClick={() => setShowApiKeyModal(true)}
+              title="Gemini AI API Key Settings"
+              className="p-1.5 rounded-lg bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-wealth-emerald active:scale-95 transition-all"
+            >
+              <Key size={15} />
+            </button>
+            <button 
+              onClick={() => setShowCustomizer(true)}
+              title="Customize Target Benchmark"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-text-primary active:scale-95 transition-all text-typ-label font-medium"
+            >
+              <span className="text-typ-footnote font-semibold text-text-primary">{selectedProfile}</span>
+              <Sliders size={12} className="text-text-muted" />
+            </button>
+          </div>
         </header>
 
         {/* Segmented Mode Navigation Bar */}
@@ -860,6 +857,14 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 {aiTimestamp && (
                   <span className="text-typ-micro text-text-muted">{aiTimestamp}</span>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setShowApiKeyModal(true)}
+                  className="p-1.5 rounded-lg bg-surface-layer2/60 border border-white/[0.06] text-text-secondary hover:text-wealth-emerald transition-all"
+                  title="Configure Gemini API Key"
+                >
+                  <Key size={12} />
+                </button>
                 <button 
                   onClick={() => handleGenerateAIInsights(true)}
                   disabled={isLoadingAI}
@@ -1323,37 +1328,6 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 ))}
               </div>
 
-              {/* Optional Gemini API Key Field */}
-              <div className="space-y-1.5 pt-2.5 border-t border-white/[0.07]">
-                <div className="flex items-center justify-between">
-                  <label className="text-typ-footnote font-semibold text-text-secondary flex items-center gap-1">
-                    <Sparkles size={12} className="text-wealth-emerald" />
-                    Google Gemini API Key (Optional)
-                  </label>
-                  <a 
-                    href="https://aistudio.google.com/app/apikey" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-typ-caption text-primary-accent hover:underline flex items-center gap-0.5"
-                  >
-                    Get Free Key <ExternalLink size={9} />
-                  </a>
-                </div>
-                <input 
-                  type="password"
-                  value={tempApiKey}
-                  onChange={(e) => {
-                    setTempApiKey(e.target.value);
-                    setCustomizerFeedback(null);
-                  }}
-                  placeholder="AIzaSy..."
-                  className="w-full bg-surface-layer2/70 border border-white/[0.08] focus:border-primary-accent/70 rounded-xl px-3 py-2 text-typ-label text-text-primary focus:outline-none font-mono"
-                />
-                <p className="text-typ-micro text-text-muted">
-                  Gemini Flash is 100% free forever (1,500 requests/day). Stored securely in your sheet.
-                </p>
-              </div>
-
               {/* Inline Feedback Message */}
               {customizerFeedback && (
                 <div className={`p-2 rounded-lg text-typ-label font-medium flex items-center gap-1.5 ${
@@ -1435,6 +1409,15 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
             </div>
           </div>
         )}
+
+        {/* Unified Gemini API Key Modal */}
+        <GeminiApiKeyModal
+          isOpen={showApiKeyModal}
+          onClose={() => setShowApiKeyModal(false)}
+          settings={settings}
+          onRefresh={onRefresh}
+          showMessage={showMessage}
+        />
 
       </main>
     </div>

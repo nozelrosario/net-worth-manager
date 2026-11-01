@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
+import GeminiApiKeyModal from '../components/GeminiApiKeyModal';
 
 export default function SettingsTab({ 
   data, 
@@ -33,45 +34,7 @@ export default function SettingsTab({
   const familyProfiles = data?.familyProfiles || [];
 
   const savedKey = data?.settings?.find(s => s['Setting Key'] === 'GeminiApiKey')?.['Setting Value'] || getSafeStorage('nwm_gemini_api_key', '');
-  const [apiKeyInput, setApiKeyInput] = useState(savedKey);
-  const [isSavingKey, setIsSavingKey] = useState(false);
-  const [keySavedFeedback, setKeySavedFeedback] = useState(false);
-
-  useEffect(() => {
-    if (savedKey) setApiKeyInput(savedKey);
-  }, [savedKey]);
-
-  const handleSaveGeminiKey = (e) => {
-    e.preventDefault();
-    setIsSavingKey(true);
-    setKeySavedFeedback(false);
-    const cleanKey = (apiKeyInput || '').trim();
-    setSafeStorage('nwm_gemini_api_key', cleanKey);
-    const token = getSafeStorage('nwm_session_token');
-
-    if (window.google?.script?.run?.upsertSetting) {
-      window.google.script.run
-        .withSuccessHandler((res) => {
-          setIsSavingKey(false);
-          setKeySavedFeedback(true);
-          showMessage(res?.message || 'Gemini API Key saved successfully!');
-          if (onRefresh) onRefresh();
-          setTimeout(() => setKeySavedFeedback(false), 3500);
-        })
-        .withFailureHandler((err) => {
-          setIsSavingKey(false);
-          showMessage('Error saving key: ' + err.message, true);
-        })
-        .upsertSetting('GeminiApiKey', cleanKey, token);
-    } else {
-      setTimeout(() => {
-        setIsSavingKey(false);
-        setKeySavedFeedback(true);
-        showMessage('Gemini API Key saved (preview)');
-        setTimeout(() => setKeySavedFeedback(false), 3500);
-      }, 500);
-    }
-  };
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const savedFolder = data?.settings?.find(s => s['Setting Key'] === 'SmsDriveFolder')?.['Setting Value'] || 'SMSBackupRestore';
   const lastSyncEpochStr = data?.settings?.find(s => s['Setting Key'] === 'SmsLastProcessedDate')?.['Setting Value'] || '0';
@@ -480,13 +443,13 @@ export default function SettingsTab({
             Configure target asset allocation benchmarks (Moderate, Aggressive, Conservative, All-Weather, Custom) and optional Google Gemini API key for deep narrative synthesis.
          </p>
 
-         {/* Direct Gemini API Key Config */}
-         <form onSubmit={handleSaveGeminiKey} className="space-y-2 mb-4 bg-surface-layer2/50 p-3 rounded-xl border border-border-subtle">
+         {/* Unified Google Gemini API Key Card */}
+         <div className="space-y-3 mb-4 bg-surface-layer2/50 p-3.5 rounded-xl border border-border-subtle">
             <div className="flex items-center justify-between">
-               <label className="text-typ-label font-semibold text-text-primary flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-wealth-emerald" />
-                  Google Gemini API Key
-               </label>
+               <div className="flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-wealth-emerald" />
+                  <span className="text-typ-label font-semibold text-text-primary">Google Gemini API Key</span>
+               </div>
                <a 
                   href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
@@ -497,35 +460,29 @@ export default function SettingsTab({
                </a>
             </div>
 
-            <div className="flex gap-2">
-               <input 
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={e => setApiKeyInput(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="flex-1 bg-surface-layer1 border border-white/[0.08] focus:border-primary-accent/70 rounded-lg px-3 py-1.5 text-typ-label text-text-primary focus:outline-none font-mono"
-               />
+            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-surface-layer1 border border-white/[0.06]">
+               <div className="min-w-0">
+                  <div className="text-xs font-mono font-medium text-text-primary truncate">
+                     {savedKey ? `${savedKey.substring(0, 8)}••••••••` : 'No API key configured'}
+                  </div>
+                  <div className="text-[11px] text-text-muted">
+                     {savedKey ? 'Active across Rebalancer, AI Synthesis & CAS Sync' : 'Using offline deterministic heuristics'}
+                  </div>
+               </div>
                <button
-                  type="submit"
-                  disabled={isSavingKey}
-                  className="px-3 py-1.5 rounded-lg bg-primary-accent text-white font-semibold text-typ-label hover:bg-primary-accent/90 disabled:opacity-50 flex items-center gap-1 shadow-sm"
+                  type="button"
+                  onClick={() => setShowApiKeyModal(true)}
+                  className="px-3 py-1.5 rounded-lg bg-primary-accent text-white font-semibold text-xs hover:bg-primary-accent/90 flex items-center gap-1.5 shadow-sm shrink-0 transition-all active:scale-95"
                >
-                  {isSavingKey ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
-                  <span>{isSavingKey ? 'Saving...' : 'Save Key'}</span>
+                  <Key size={13} />
+                  <span>{savedKey ? 'Edit Key' : 'Configure Key'}</span>
                </button>
             </div>
 
-            {keySavedFeedback && (
-               <p className="text-typ-caption text-wealth-emerald font-medium flex items-center gap-1">
-                  <CheckCircle2 size={12} />
-                  API Key saved and active for AI Advisory!
-               </p>
-            )}
-
             <p className="text-typ-caption text-text-muted">
-               100% free forever (1,500 requests/day). If left blank, offline heuristics advisor is used.
+               100% free forever (1,500 requests/day). Single source key shared across all screens.
             </p>
-         </form>
+         </div>
 
          {onOpenRebalancer && (
            <button
@@ -828,6 +785,15 @@ export default function SettingsTab({
             </div>
          </div>
       </section>
+
+      {/* Unified Gemini API Key Modal */}
+      <GeminiApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        settings={data?.settings}
+        onRefresh={onRefresh}
+        showMessage={showMessage}
+      />
     </div>
   );
 }
