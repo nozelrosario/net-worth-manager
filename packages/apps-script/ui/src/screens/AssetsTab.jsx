@@ -37,7 +37,17 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [showCasModal, setShowCasModal] = useState(false);
   const [showToolsModal, setShowToolsModal] = useState(false);
 
-  useModalBack(showToolsModal, () => setShowToolsModal(false));
+  useEffect(() => {
+    if (!showToolsModal) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowToolsModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showToolsModal]);
+
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
       setDeleteConfirmAsset(null);
@@ -840,8 +850,9 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               <button
                 type="button"
                 onClick={() => {
-                  handleSyncRates();
                   setShowToolsModal(false);
+                  showMessage('Syncing live market rates...');
+                  handleSyncRates();
                 }}
                 disabled={isSyncingRates}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
@@ -863,7 +874,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 type="button"
                 onClick={() => {
                   setShowToolsModal(false);
-                  setShowCasModal(true);
+                  setTimeout(() => setShowCasModal(true), 50);
                 }}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-primary-accent/40 text-left transition-all active:scale-[0.99] group"
               >
@@ -890,7 +901,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   type="button"
                   onClick={() => {
                     setShowToolsModal(false);
-                    onOpenRebalancer();
+                    setTimeout(() => onOpenRebalancer(), 50);
                   }}
                   className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-purple-500/40 text-left transition-all active:scale-[0.99] group"
                 >
@@ -913,7 +924,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   type="button"
                   onClick={() => {
                     setShowToolsModal(false);
-                    onOpenRetirementPlanner();
+                    setTimeout(() => onOpenRetirementPlanner(), 50);
                   }}
                   className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-sky-500/40 text-left transition-all active:scale-[0.99] group"
                 >
@@ -936,7 +947,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                   type="button"
                   onClick={() => {
                     setShowToolsModal(false);
-                    onOpenInsuranceHub();
+                    setTimeout(() => onOpenInsuranceHub(), 50);
                   }}
                   className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-emerald-500/40 text-left transition-all active:scale-[0.99] group"
                 >
