@@ -2270,9 +2270,13 @@ function savePortfolioSettings(targetAllocationJson, riskProfile, geminiApiKey, 
 
     var settingsToSave = {
       'TargetAllocation': targetAllocationJson || '',
-      'RiskProfile': riskProfile || 'Moderate',
-      'GeminiApiKey': geminiApiKey !== undefined ? String(geminiApiKey).trim() : ''
+      'RiskProfile': riskProfile || 'Moderate'
     };
+
+    // Only update GeminiApiKey if explicitly provided and non-empty. Never erase an existing key here.
+    if (geminiApiKey !== undefined && geminiApiKey !== null && String(geminiApiKey).trim() !== '') {
+      settingsToSave['GeminiApiKey'] = String(geminiApiKey).trim();
+    }
 
     var existingKeys = {};
     for (var i = 1; i < data.length; i++) {
