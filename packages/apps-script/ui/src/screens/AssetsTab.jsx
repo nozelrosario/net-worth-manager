@@ -279,16 +279,17 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     }
   };
 
-  const handleSaveAsset = async (e) => {
+  const handleSaveAsset = async (e, submittedAsset) => {
     e.preventDefault();
     setIsSubmitting(true);
     setUploadProgress('Preparing...');
 
     try {
+      const targetAsset = submittedAsset || newAsset;
       const token = getSafeStorage('nwm_session_token');
       let details = {};
       try {
-        details = typeof newAsset['Details JSON'] === 'string' ? JSON.parse(newAsset['Details JSON']) : (newAsset['Details JSON'] || {});
+        details = typeof targetAsset['Details JSON'] === 'string' ? JSON.parse(targetAsset['Details JSON']) : (targetAsset['Details JSON'] || {});
       } catch (e) {
         details = {};
       }
@@ -297,7 +298,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         // 1. Upload newly attached files to Drive
         const filesToUpload = attachedFiles.filter(f => f.isNewUpload);
         const existingFiles = attachedFiles.filter(f => !f.isNewUpload);
-        const safeCategory = getSafeCategoryForAsset(newAsset.Category);
+        const safeCategory = getSafeCategoryForAsset(targetAsset.Category);
 
         let newlyUploaded = [];
         if (filesToUpload.length > 0) {
@@ -331,10 +332,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         if (finalFiles.length > 0) {
           setUploadProgress('Saving to Family Safe...');
           const safePayload = {
-            Name: `${newAsset.Name} - Supporting Documents`,
+            Name: `${targetAsset.Name} - Supporting Documents`,
             Category: safeCategory,
-            Owner: newAsset.Owner || 'Self',
-            Description: `Supporting documents for asset: ${newAsset.Name} (${newAsset.Category})`,
+            Owner: targetAsset.Owner || 'Self',
+            Description: `Supporting documents for asset: ${targetAsset.Name} (${targetAsset.Category})`,
             'Files JSON': JSON.stringify(finalFiles),
             'Date Added': new Date().toISOString().split('T')[0]
           };
@@ -367,8 +368,24 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           'Safe Document ID': safeDocId || ''
         };
 
+        // Auto-derive Cost from Quantity and Average Buy Price / NAV
+        const eqQty = Number(finalDetails['Quantity'] || finalDetails['Units'] || 0);
+        const eqAvgBuyPrice = Number(finalDetails['Average Buy Price'] || 0);
+        const mfUnits = Number(finalDetails['Units'] || finalDetails['Quantity'] || 0);
+        const mfAvgNav = Number(finalDetails['Average NAV'] || 0);
+
+        let derivedCost = 0;
+        if (targetAsset.Category === 'Equity' && eqQty > 0 && eqAvgBuyPrice > 0) {
+          derivedCost = Math.round(eqQty * eqAvgBuyPrice * 100) / 100;
+        } else if (targetAsset.Category === 'Mutual Funds' && mfUnits > 0 && mfAvgNav > 0) {
+          derivedCost = Math.round(mfUnits * mfAvgNav * 100) / 100;
+        } else {
+          derivedCost = Number(targetAsset.Cost || 0);
+        }
+
         const assetPayload = {
-          ...newAsset,
+          ...targetAsset,
+          Cost: derivedCost > 0 ? derivedCost : (targetAsset.Cost || ''),
           'Details JSON': finalDetails
         };
 
@@ -387,7 +404,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               .addRecord('Assets', {
                 ...assetPayload,
                 'Asset ID': '',
-                'Acquisition Date': assetPayload['Acquisition Date'] || new Date().toISOString().split('T')[0]
+                'Acquisition Date': assetPayload['Acquisition Date'] || ''
               }, token);
           });
         }
@@ -539,13 +556,20 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);
-          const pnl = asset['P&L'];
-          const pnlPct = asset['P&L %'];
+          let effectiveCost = Number(asset.Cost || 0);
+          if (cat === 'Equity' && det['Quantity'] && det['Average Buy Price']) {
+            effectiveCost = Math.round(Number(det['Quantity']) * Number(det['Average Buy Price']) * 100) / 100;
+          } else if (cat === 'Mutual Funds' && det['Units'] && det['Average NAV']) {
+            effectiveCost = Math.round(Number(det['Units']) * Number(det['Average NAV']) * 100) / 100;
+          }
+          const currentVal = Number(asset['Current Value'] || 0);
+          const pnl = asset['P&L'] !== undefined ? asset['P&L'] : (effectiveCost > 0 && currentVal > 0 ? Math.round((currentVal - effectiveCost) * 100) / 100 : undefined);
+          const pnlPct = asset['P&L %'] !== undefined ? asset['P&L %'] : (pnl !== undefined && effectiveCost > 0 ? Math.round(((pnl / effectiveCost) * 100) * 100) / 100 : undefined);
           const polMetrics = isInsuranceAsset(asset) ? calculatePolicyMetrics(asset) : null;
 
           const perf = (asset['CAGR'] !== undefined && asset['CAGR'] !== null)
             ? { holdingStr: asset['Holding Period'], cagr: asset['CAGR'], taxTag: asset['Tax Tag'], taxLabel: asset['Tax Label'] }
-            : calculatePerformance(asset.Cost, asset['Current Value'], asset['Acquisition Date'], asset.Category);
+            : calculatePerformance(effectiveCost, currentVal, asset['Acquisition Date'], asset.Category);
 
           return (
             <div 
@@ -572,13 +596,13 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                         <span className="text-typ-label text-text-secondary">{holdingSummary}</span>
                       </>
                     )}
-                    {perf?.holdingStr && (
+                    {perf?.holdingStr && perf.holdingStr !== 'Unknown' && (
                       <>
                         <span className="text-text-muted text-typ-caption">•</span>
                         <span className="text-typ-footnote text-text-muted">Held: {perf.holdingStr}</span>
                       </>
                     )}
-                    {perf?.taxTag && (
+                    {perf?.taxTag && perf.taxTag !== 'Unknown' && (
                       <span 
                         className={`text-typ-micro font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
                         title={perf.taxLabel}
@@ -617,7 +641,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </div>
                 
                 <div className="text-right">
-                  {pnl !== undefined && Number(asset.Cost) > 0 ? (
+                  {pnl !== undefined && effectiveCost > 0 ? (
                     <div>
                       <p className="text-typ-caption text-text-muted">Total Return</p>
                       <p className={`text-typ-label font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
