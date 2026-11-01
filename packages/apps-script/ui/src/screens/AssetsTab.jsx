@@ -367,8 +367,18 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           'Safe Document ID': safeDocId || ''
         };
 
+        // Auto-derive Cost from Quantity and Average Buy Price / NAV if Cost was not entered
+        const derivedCost = Number(newAsset.Cost || 0) || (
+          (newAsset.Category === 'Equity' && finalDetails['Quantity'] && finalDetails['Average Buy Price'])
+            ? Math.round(Number(finalDetails['Quantity']) * Number(finalDetails['Average Buy Price']) * 100) / 100
+            : ((newAsset.Category === 'Mutual Funds' && finalDetails['Units'] && finalDetails['Average NAV'])
+              ? Math.round(Number(finalDetails['Units']) * Number(finalDetails['Average NAV']) * 100) / 100
+              : 0)
+        );
+
         const assetPayload = {
           ...newAsset,
+          Cost: derivedCost || newAsset.Cost || '',
           'Details JSON': finalDetails
         };
 
@@ -387,7 +397,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               .addRecord('Assets', {
                 ...assetPayload,
                 'Asset ID': '',
-                'Acquisition Date': assetPayload['Acquisition Date'] || new Date().toISOString().split('T')[0]
+                'Acquisition Date': assetPayload['Acquisition Date'] || ''
               }, token);
           });
         }
@@ -539,13 +549,21 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);
-          const pnl = asset['P&L'];
-          const pnlPct = asset['P&L %'];
+          const effectiveCost = Number(asset.Cost || 0) || (
+            (cat === 'Equity' && det['Quantity'] && det['Average Buy Price'])
+              ? Math.round(Number(det['Quantity']) * Number(det['Average Buy Price']) * 100) / 100
+              : ((cat === 'Mutual Funds' && det['Units'] && det['Average NAV'])
+                ? Math.round(Number(det['Units']) * Number(det['Average NAV']) * 100) / 100
+                : 0)
+          );
+          const currentVal = Number(asset['Current Value'] || 0);
+          const pnl = asset['P&L'] !== undefined ? asset['P&L'] : (effectiveCost > 0 && currentVal > 0 ? Math.round((currentVal - effectiveCost) * 100) / 100 : undefined);
+          const pnlPct = asset['P&L %'] !== undefined ? asset['P&L %'] : (pnl !== undefined && effectiveCost > 0 ? Math.round(((pnl / effectiveCost) * 100) * 100) / 100 : undefined);
           const polMetrics = isInsuranceAsset(asset) ? calculatePolicyMetrics(asset) : null;
 
           const perf = (asset['CAGR'] !== undefined && asset['CAGR'] !== null)
             ? { holdingStr: asset['Holding Period'], cagr: asset['CAGR'], taxTag: asset['Tax Tag'], taxLabel: asset['Tax Label'] }
-            : calculatePerformance(asset.Cost, asset['Current Value'], asset['Acquisition Date'], asset.Category);
+            : calculatePerformance(effectiveCost, currentVal, asset['Acquisition Date'], asset.Category);
 
           return (
             <div 
@@ -572,13 +590,13 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                         <span className="text-typ-label text-text-secondary">{holdingSummary}</span>
                       </>
                     )}
-                    {perf?.holdingStr && (
+                    {perf?.holdingStr && perf.holdingStr !== 'Unknown' && (
                       <>
                         <span className="text-text-muted text-typ-caption">•</span>
                         <span className="text-typ-footnote text-text-muted">Held: {perf.holdingStr}</span>
                       </>
                     )}
-                    {perf?.taxTag && (
+                    {perf?.taxTag && perf.taxTag !== 'Unknown' && (
                       <span 
                         className={`text-typ-micro font-bold px-1.5 py-0.2 rounded border ${perf.taxTag === 'LTCG' ? 'bg-wealth-emerald/15 text-wealth-emerald border-wealth-emerald/30' : 'bg-bullion-amber/15 text-bullion-amber border-bullion-amber/30'}`}
                         title={perf.taxLabel}
@@ -617,7 +635,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </div>
                 
                 <div className="text-right">
-                  {pnl !== undefined && Number(asset.Cost) > 0 ? (
+                  {pnl !== undefined && effectiveCost > 0 ? (
                     <div>
                       <p className="text-typ-caption text-text-muted">Total Return</p>
                       <p className={`text-typ-label font-semibold tabular-nums ${pnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>

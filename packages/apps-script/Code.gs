@@ -806,41 +806,50 @@ function calculateAssetPerformance(cost, currentValue, acqDateStr, category) {
   try {
     cost = Number(cost || 0);
     currentValue = Number(currentValue || 0);
-    if (cost <= 0 || currentValue <= 0 || !acqDateStr) return null;
-    
-    var acqDate = new Date(acqDateStr);
-    var now = new Date();
-    var diffMs = now.getTime() - acqDate.getTime();
-    if (isNaN(diffMs) || diffMs <= 0) return null;
-    
-    var days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    var years = days / 365.25;
-    var months = Math.round(days / 30.4375);
-    
-    var holdingStr = '';
-    if (days < 30) holdingStr = days + 'd';
-    else if (months < 12) holdingStr = months + 'm';
-    else holdingStr = years.toFixed(1) + 'y';
+    if (cost <= 0 || currentValue <= 0) return null;
     
     var pnl = Math.round((currentValue - cost) * 100) / 100;
     var pnlPct = Math.round(((pnl / cost) * 100) * 100) / 100;
     
+    var days = null;
+    var months = null;
+    var years = null;
+    var holdingStr = 'Unknown';
     var cagr = null;
-    if (years >= 0.5) {
-      var rawCagr = (Math.pow(currentValue / cost, 1 / years) - 1) * 100;
-      cagr = Math.round(rawCagr * 100) / 100;
+    var isLtcg = false;
+    var taxTag = 'Unknown';
+    var taxLabel = 'Purchase date not set';
+
+    if (acqDateStr) {
+      var acqDate = new Date(acqDateStr);
+      var now = new Date();
+      var diffMs = now.getTime() - acqDate.getTime();
+      if (!isNaN(diffMs) && diffMs > 0) {
+        days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        years = days / 365.25;
+        months = Math.round(days / 30.4375);
+        
+        if (days < 30) holdingStr = days + 'd';
+        else if (months < 12) holdingStr = months + 'm';
+        else holdingStr = years.toFixed(1) + 'y';
+        
+        if (years >= 0.5) {
+          var rawCagr = (Math.pow(currentValue / cost, 1 / years) - 1) * 100;
+          cagr = Math.round(rawCagr * 100) / 100;
+        }
+        
+        var catLower = String(category || '').toLowerCase();
+        var isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
+        isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
+        taxTag = isLtcg ? 'LTCG' : 'STCG';
+        taxLabel = isLtcg ? (isEquityOrMf ? 'LTCG (> 12m)' : 'LTCG (> 24m)') : (isEquityOrMf ? 'STCG (≤ 12m)' : 'STCG (≤ 24m)');
+      }
     }
-    
-    var catLower = String(category || '').toLowerCase();
-    var isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
-    var isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
-    var taxTag = isLtcg ? 'LTCG' : 'STCG';
-    var taxLabel = isLtcg ? (isEquityOrMf ? 'LTCG (> 12m)' : 'LTCG (> 24m)') : (isEquityOrMf ? 'STCG (≤ 12m)' : 'STCG (≤ 24m)');
     
     return {
       days: days,
       months: months,
-      years: Math.round(years * 100) / 100,
+      years: years !== null ? Math.round(years * 100) / 100 : null,
       holdingStr: holdingStr,
       pnl: pnl,
       pnlPct: pnlPct,
@@ -1374,10 +1383,17 @@ function addRecord(sheetName, recordData, idToken) {
         var lastAddedRow = sheet.getLastRow();
         if (cat === 'Equity') {
           var tkr = det['Ticker Symbol'] || recordData['Identifiers'];
+          var qty = Number(det['Quantity'] || det['Units'] || 0);
+          var avgBuyPrice = Number(det['Average Buy Price'] || 0);
+          if (qty > 0 && avgBuyPrice > 0 && (!recordData['Cost'] || Number(recordData['Cost']) === 0)) {
+            var derivedCost = Math.round(qty * avgBuyPrice * 100) / 100;
+            recordData['Cost'] = derivedCost;
+            var costColIdx = headers.indexOf('Cost');
+            if (costColIdx !== -1) sheet.getRange(lastAddedRow, costColIdx + 1).setValue(derivedCost);
+          }
           if (tkr) {
             var normTkr = normalizeStockSymbol(tkr);
             det['Ticker Symbol'] = normTkr;
-            var qty = Number(det['Quantity'] || det['Units'] || 0);
             if (det['Live Tracking'] !== false && qty > 0) {
               var liveQ = fetchLiveStockQuote(normTkr);
               if (liveQ && liveQ.price > 0) {
@@ -1483,10 +1499,18 @@ function updateRecord(sheetName, idField, idValue, updateData, idToken) {
             var assetName = updateData['Name'] || data[i][headers.indexOf('Name')];
             if (cat === 'Equity') {
               var tkr = det['Ticker Symbol'] || updateData['Identifiers'] || data[i][headers.indexOf('Identifiers')];
+              var qty = Number(det['Quantity'] || det['Units'] || 0);
+              var avgBuyPrice = Number(det['Average Buy Price'] || 0);
+              var currentCost = updateData['Cost'] !== undefined ? updateData['Cost'] : data[i][headers.indexOf('Cost')];
+              if (qty > 0 && avgBuyPrice > 0 && (!currentCost || Number(currentCost) === 0)) {
+                var derivedCost = Math.round(qty * avgBuyPrice * 100) / 100;
+                updateData['Cost'] = derivedCost;
+                var costColIdx = headers.indexOf('Cost');
+                if (costColIdx !== -1) sheet.getRange(i + 1, costColIdx + 1).setValue(derivedCost);
+              }
               if (tkr) {
                 var normTkr = normalizeStockSymbol(tkr);
                 det['Ticker Symbol'] = normTkr;
-                var qty = Number(det['Quantity'] || det['Units'] || 0);
                 if (det['Live Tracking'] !== false && qty > 0) {
                   var liveQ = fetchLiveStockQuote(normTkr);
                   if (liveQ && liveQ.price > 0) {
@@ -1830,6 +1854,14 @@ function getDashboardData(idToken) {
 
       // Compute P&L, Holding Period, CAGR, and Tax Status
       var cost = Number(asset['Cost'] || 0);
+      if (cost <= 0) {
+        var qtyOrUnits = Number(details['Quantity'] || details['Units'] || 0);
+        var avgP = Number(details['Average Buy Price'] || details['Average NAV'] || 0);
+        if (qtyOrUnits > 0 && avgP > 0) {
+          cost = Math.round(qtyOrUnits * avgP * 100) / 100;
+          asset['Cost'] = cost;
+        }
+      }
       var currentVal = Number(asset['Current Value'] || 0);
       var acqDate = asset['Acquisition Date'];
       if (cost > 0 && currentVal > 0) {
@@ -1837,16 +1869,14 @@ function getDashboardData(idToken) {
         asset['P&L'] = pnl;
         asset['P&L %'] = Math.round(((pnl / cost) * 100) * 100) / 100;
         
-        if (acqDate) {
-          var perf = calculateAssetPerformance(cost, currentVal, acqDate, category);
-          if (perf) {
-            asset['Holding Period'] = perf.holdingStr;
-            asset['Holding Days'] = perf.days;
-            asset['Holding Years'] = perf.years;
-            asset['CAGR'] = perf.cagr;
-            asset['Tax Tag'] = perf.taxTag;
-            asset['Tax Label'] = perf.taxLabel;
-          }
+        var perf = calculateAssetPerformance(cost, currentVal, acqDate, category);
+        if (perf) {
+          asset['Holding Period'] = perf.holdingStr;
+          asset['Holding Days'] = perf.days;
+          asset['Holding Years'] = perf.years;
+          asset['CAGR'] = perf.cagr;
+          asset['Tax Tag'] = perf.taxTag;
+          asset['Tax Label'] = perf.taxLabel;
         }
       }
     }
