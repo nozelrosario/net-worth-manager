@@ -279,16 +279,17 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     }
   };
 
-  const handleSaveAsset = async (e) => {
+  const handleSaveAsset = async (e, submittedAsset) => {
     e.preventDefault();
     setIsSubmitting(true);
     setUploadProgress('Preparing...');
 
     try {
+      const targetAsset = submittedAsset || newAsset;
       const token = getSafeStorage('nwm_session_token');
       let details = {};
       try {
-        details = typeof newAsset['Details JSON'] === 'string' ? JSON.parse(newAsset['Details JSON']) : (newAsset['Details JSON'] || {});
+        details = typeof targetAsset['Details JSON'] === 'string' ? JSON.parse(targetAsset['Details JSON']) : (targetAsset['Details JSON'] || {});
       } catch (e) {
         details = {};
       }
@@ -297,7 +298,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         // 1. Upload newly attached files to Drive
         const filesToUpload = attachedFiles.filter(f => f.isNewUpload);
         const existingFiles = attachedFiles.filter(f => !f.isNewUpload);
-        const safeCategory = getSafeCategoryForAsset(newAsset.Category);
+        const safeCategory = getSafeCategoryForAsset(targetAsset.Category);
 
         let newlyUploaded = [];
         if (filesToUpload.length > 0) {
@@ -331,10 +332,10 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         if (finalFiles.length > 0) {
           setUploadProgress('Saving to Family Safe...');
           const safePayload = {
-            Name: `${newAsset.Name} - Supporting Documents`,
+            Name: `${targetAsset.Name} - Supporting Documents`,
             Category: safeCategory,
-            Owner: newAsset.Owner || 'Self',
-            Description: `Supporting documents for asset: ${newAsset.Name} (${newAsset.Category})`,
+            Owner: targetAsset.Owner || 'Self',
+            Description: `Supporting documents for asset: ${targetAsset.Name} (${targetAsset.Category})`,
             'Files JSON': JSON.stringify(finalFiles),
             'Date Added': new Date().toISOString().split('T')[0]
           };
@@ -367,18 +368,24 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           'Safe Document ID': safeDocId || ''
         };
 
-        // Auto-derive Cost from Quantity and Average Buy Price / NAV if Cost was not entered
-        const derivedCost = Number(newAsset.Cost || 0) || (
-          (newAsset.Category === 'Equity' && finalDetails['Quantity'] && finalDetails['Average Buy Price'])
-            ? Math.round(Number(finalDetails['Quantity']) * Number(finalDetails['Average Buy Price']) * 100) / 100
-            : ((newAsset.Category === 'Mutual Funds' && finalDetails['Units'] && finalDetails['Average NAV'])
-              ? Math.round(Number(finalDetails['Units']) * Number(finalDetails['Average NAV']) * 100) / 100
-              : 0)
-        );
+        // Auto-derive Cost from Quantity and Average Buy Price / NAV
+        const eqQty = Number(finalDetails['Quantity'] || finalDetails['Units'] || 0);
+        const eqAvgBuyPrice = Number(finalDetails['Average Buy Price'] || 0);
+        const mfUnits = Number(finalDetails['Units'] || finalDetails['Quantity'] || 0);
+        const mfAvgNav = Number(finalDetails['Average NAV'] || 0);
+
+        let derivedCost = 0;
+        if (targetAsset.Category === 'Equity' && eqQty > 0 && eqAvgBuyPrice > 0) {
+          derivedCost = Math.round(eqQty * eqAvgBuyPrice * 100) / 100;
+        } else if (targetAsset.Category === 'Mutual Funds' && mfUnits > 0 && mfAvgNav > 0) {
+          derivedCost = Math.round(mfUnits * mfAvgNav * 100) / 100;
+        } else {
+          derivedCost = Number(targetAsset.Cost || 0);
+        }
 
         const assetPayload = {
-          ...newAsset,
-          Cost: derivedCost || newAsset.Cost || '',
+          ...targetAsset,
+          Cost: derivedCost > 0 ? derivedCost : (targetAsset.Cost || ''),
           'Details JSON': finalDetails
         };
 
@@ -549,13 +556,12 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);
-          const effectiveCost = Number(asset.Cost || 0) || (
-            (cat === 'Equity' && det['Quantity'] && det['Average Buy Price'])
-              ? Math.round(Number(det['Quantity']) * Number(det['Average Buy Price']) * 100) / 100
-              : ((cat === 'Mutual Funds' && det['Units'] && det['Average NAV'])
-                ? Math.round(Number(det['Units']) * Number(det['Average NAV']) * 100) / 100
-                : 0)
-          );
+          let effectiveCost = Number(asset.Cost || 0);
+          if (cat === 'Equity' && det['Quantity'] && det['Average Buy Price']) {
+            effectiveCost = Math.round(Number(det['Quantity']) * Number(det['Average Buy Price']) * 100) / 100;
+          } else if (cat === 'Mutual Funds' && det['Units'] && det['Average NAV']) {
+            effectiveCost = Math.round(Number(det['Units']) * Number(det['Average NAV']) * 100) / 100;
+          }
           const currentVal = Number(asset['Current Value'] || 0);
           const pnl = asset['P&L'] !== undefined ? asset['P&L'] : (effectiveCost > 0 && currentVal > 0 ? Math.round((currentVal - effectiveCost) * 100) / 100 : undefined);
           const pnlPct = asset['P&L %'] !== undefined ? asset['P&L %'] : (pnl !== undefined && effectiveCost > 0 ? Math.round(((pnl / effectiveCost) * 100) * 100) / 100 : undefined);

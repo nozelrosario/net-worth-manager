@@ -1385,7 +1385,7 @@ function addRecord(sheetName, recordData, idToken) {
           var tkr = det['Ticker Symbol'] || recordData['Identifiers'];
           var qty = Number(det['Quantity'] || det['Units'] || 0);
           var avgBuyPrice = Number(det['Average Buy Price'] || 0);
-          if (qty > 0 && avgBuyPrice > 0 && (!recordData['Cost'] || Number(recordData['Cost']) === 0)) {
+          if (qty > 0 && avgBuyPrice > 0) {
             var derivedCost = Math.round(qty * avgBuyPrice * 100) / 100;
             recordData['Cost'] = derivedCost;
             var costColIdx = headers.indexOf('Cost');
@@ -1502,7 +1502,7 @@ function updateRecord(sheetName, idField, idValue, updateData, idToken) {
               var qty = Number(det['Quantity'] || det['Units'] || 0);
               var avgBuyPrice = Number(det['Average Buy Price'] || 0);
               var currentCost = updateData['Cost'] !== undefined ? updateData['Cost'] : data[i][headers.indexOf('Cost')];
-              if (qty > 0 && avgBuyPrice > 0 && (!currentCost || Number(currentCost) === 0)) {
+              if (qty > 0 && avgBuyPrice > 0) {
                 var derivedCost = Math.round(qty * avgBuyPrice * 100) / 100;
                 updateData['Cost'] = derivedCost;
                 var costColIdx = headers.indexOf('Cost');
@@ -1854,13 +1854,14 @@ function getDashboardData(idToken) {
 
       // Compute P&L, Holding Period, CAGR, and Tax Status
       var cost = Number(asset['Cost'] || 0);
-      if (cost <= 0) {
-        var qtyOrUnits = Number(details['Quantity'] || details['Units'] || 0);
-        var avgP = Number(details['Average Buy Price'] || details['Average NAV'] || 0);
-        if (qtyOrUnits > 0 && avgP > 0) {
-          cost = Math.round(qtyOrUnits * avgP * 100) / 100;
-          asset['Cost'] = cost;
-        }
+      var qtyOrUnits = Number(details['Quantity'] || details['Units'] || 0);
+      var avgP = Number(details['Average Buy Price'] || details['Average NAV'] || 0);
+      if ((category === 'Equity' || category === 'Mutual Funds') && qtyOrUnits > 0 && avgP > 0) {
+        cost = Math.round(qtyOrUnits * avgP * 100) / 100;
+        asset['Cost'] = cost;
+      } else if (cost <= 0 && qtyOrUnits > 0 && avgP > 0) {
+        cost = Math.round(qtyOrUnits * avgP * 100) / 100;
+        asset['Cost'] = cost;
       }
       var currentVal = Number(asset['Current Value'] || 0);
       var acqDate = asset['Acquisition Date'];

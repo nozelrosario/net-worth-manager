@@ -349,18 +349,13 @@ export default function DynamicForm({
         }
         if (qty > 0 && avgPrice > 0) {
           updated.Cost = Math.round(qty * avgPrice * 100) / 100;
-        } else if (qty > 0 && cost > 0 && (!avgPrice || avgPrice === 0)) {
-          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', Math.round((cost / qty) * 100) / 100);
-        } else if (qty > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
-          updated.Cost = Math.round(qty * historicalQuote.price * 100) / 100;
-          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', historicalQuote.price);
         }
       } else if (name === 'Details JSON.Average Buy Price') {
         if (qty > 0 && avgPrice > 0) {
           updated.Cost = Math.round(qty * avgPrice * 100) / 100;
         }
       } else if (name === 'Cost') {
-        if (cost > 0 && qty > 0) {
+        if (cost > 0 && qty > 0 && (!avgPrice || avgPrice === 0)) {
           updated = setNestedValue(updated, 'Details JSON.Average Buy Price', Math.round((cost / qty) * 100) / 100);
         }
       }
@@ -421,18 +416,13 @@ export default function DynamicForm({
       if (name === 'Details JSON.Units' || name === 'Details JSON.Quantity') {
         if (units > 0 && avgNav > 0) {
           updated.Cost = Math.round(units * avgNav * 100) / 100;
-        } else if (units > 0 && cost > 0 && (!avgNav || avgNav === 0)) {
-          updated = setNestedValue(updated, 'Details JSON.Average NAV', Math.round((cost / units) * 10000) / 10000);
-        } else if (units > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
-          updated.Cost = Math.round(units * historicalQuote.price * 100) / 100;
-          updated = setNestedValue(updated, 'Details JSON.Average NAV', historicalQuote.price);
         }
       } else if (name === 'Details JSON.Average NAV') {
         if (units > 0 && avgNav > 0) {
           updated.Cost = Math.round(units * avgNav * 100) / 100;
         }
       } else if (name === 'Cost') {
-        if (cost > 0 && units > 0) {
+        if (cost > 0 && units > 0 && (!avgNav || avgNav === 0)) {
           updated = setNestedValue(updated, 'Details JSON.Average NAV', Math.round((cost / units) * 10000) / 10000);
         }
       }
@@ -782,7 +772,9 @@ export default function DynamicForm({
   const currentEquityQuote = (cleanEquityTicker && (marketQuotes[cleanEquityTicker] || marketQuotes[cleanEquityTicker.toUpperCase()])) || (isQuoteMatch(liveStockQuote, cleanEquityTicker) ? liveStockQuote : null);
   const equityQty = Number(formData['Details JSON']?.['Quantity'] || formData['Details JSON']?.['Units'] || 0);
   const equityAvgPrice = Number(formData['Details JSON']?.['Average Buy Price'] || 0);
-  const equityCost = Number(formData.Cost || 0) || (equityQty > 0 && equityAvgPrice > 0 ? Math.round(equityQty * equityAvgPrice * 100) / 100 : 0);
+  const equityCost = (equityQty > 0 && equityAvgPrice > 0)
+    ? Math.round(equityQty * equityAvgPrice * 100) / 100 
+    : Number(formData.Cost || 0);
   const calculatedEquityVal = equityQty > 0 && currentEquityQuote?.price 
     ? Math.round(equityQty * currentEquityQuote.price * 100) / 100 
     : (Number(formData['Current Value'] || 0) || null);
@@ -820,7 +812,7 @@ export default function DynamicForm({
   const mfAvgNav = Number(formData['Details JSON']?.['Average NAV'] || 0);
   const mfDerivedCost = (mfUnits > 0 && mfAvgNav > 0) ? Math.round(mfUnits * mfAvgNav * 100) / 100 : 0;
 
-  const perfCost = Number(formData.Cost || 0) || equityCost || mfDerivedCost;
+  const perfCost = equityCost || mfDerivedCost || Number(formData.Cost || 0);
   const perfCurrentVal = Number(formData['Current Value'] || 0) || (calculatedEquityVal || 0);
   const rawAcqDate = formData['Acquisition Date'];
   const perfAcqDate = rawAcqDate ? String(rawAcqDate).split('T')[0] : '';
@@ -844,19 +836,19 @@ export default function DynamicForm({
       }
       const q = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
       const avgP = Number(updated['Details JSON']?.['Average Buy Price'] || 0);
-      if (q > 0 && avgP > 0 && (!updated.Cost || Number(updated.Cost) === 0)) {
+      if (q > 0 && avgP > 0) {
         updated.Cost = Math.round(q * avgP * 100) / 100;
       }
       setFormData(updated);
     } else if (schemaKey === 'Mutual Funds') {
       const u = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
       const avgNav = Number(updated['Details JSON']?.['Average NAV'] || 0);
-      if (u > 0 && avgNav > 0 && (!updated.Cost || Number(updated.Cost) === 0)) {
+      if (u > 0 && avgNav > 0) {
         updated.Cost = Math.round(u * avgNav * 100) / 100;
       }
       setFormData(updated);
     }
-    onSubmit(e);
+    onSubmit(e, updated);
   };
 
   return (
