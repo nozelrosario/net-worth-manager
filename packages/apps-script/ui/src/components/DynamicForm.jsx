@@ -8,46 +8,55 @@ export function calculatePerformance(cost, currentValue, acqDateStr, category) {
   try {
     const c = Number(cost || 0);
     const v = Number(currentValue || 0);
-    if (c <= 0 || v <= 0 || !acqDateStr) return null;
-
-    const acqDate = new Date(acqDateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - acqDate.getTime();
-    if (isNaN(diffMs) || diffMs <= 0) return null;
-
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const years = days / 365.25;
-    const months = Math.round(days / 30.4375);
-
-    let holdingStr = '';
-    if (days < 30) holdingStr = `${days}d`;
-    else if (months < 12) holdingStr = `${months}m`;
-    else holdingStr = `${years.toFixed(1)}y`;
+    if (c <= 0 || v <= 0) return null;
 
     const pnl = Math.round((v - c) * 100) / 100;
     const pnlPct = Math.round(((pnl / c) * 100) * 100) / 100;
 
+    let days = null;
+    let months = null;
+    let years = null;
+    let holdingStr = 'Unknown';
     let cagr = null;
-    if (years >= 0.5) {
-      const rawCagr = (Math.pow(v / c, 1 / years) - 1) * 100;
-      cagr = Math.round(rawCagr * 100) / 100;
-    }
+    let isLtcg = false;
+    let taxTag = 'Unknown';
+    let taxLabel = 'Purchase date not set';
 
-    const catLower = String(category || '').toLowerCase();
-    const isInsurance = catLower.includes('insurance') || catLower.includes('lic');
-    const isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
-    const isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
-    const taxTag = isInsurance ? 'Sec 10(10D)' : (isLtcg ? 'LTCG' : 'STCG');
-    const taxLabel = isInsurance
-      ? 'Sec 10(10D) Tax-Free Maturity (if Premium ≤ ₹5L/yr)'
-      : (isLtcg 
-        ? (isEquityOrMf ? 'LTCG (> 12m @ 12.5% above ₹1.25L)' : 'LTCG (> 24m @ 12.5%)') 
-        : (isEquityOrMf ? 'STCG (≤ 12m @ 20%)' : 'STCG (≤ 24m @ slab rate)'));
+    if (acqDateStr) {
+      const acqDate = new Date(acqDateStr);
+      const now = new Date();
+      const diffMs = now.getTime() - acqDate.getTime();
+      if (!isNaN(diffMs) && diffMs > 0) {
+        days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        years = days / 365.25;
+        months = Math.round(days / 30.4375);
+
+        if (days < 30) holdingStr = `${days}d`;
+        else if (months < 12) holdingStr = `${months}m`;
+        else holdingStr = `${years.toFixed(1)}y`;
+
+        if (years >= 0.5) {
+          const rawCagr = (Math.pow(v / c, 1 / years) - 1) * 100;
+          cagr = Math.round(rawCagr * 100) / 100;
+        }
+
+        const catLower = String(category || '').toLowerCase();
+        const isInsurance = catLower.includes('insurance') || catLower.includes('lic');
+        const isEquityOrMf = catLower.includes('equity') || catLower.includes('stock') || catLower.includes('mutual');
+        isLtcg = isEquityOrMf ? (days > 365) : (days > 730);
+        taxTag = isInsurance ? 'Sec 10(10D)' : (isLtcg ? 'LTCG' : 'STCG');
+        taxLabel = isInsurance
+          ? 'Sec 10(10D) Tax-Free Maturity (if Premium ≤ ₹5L/yr)'
+          : (isLtcg 
+            ? (isEquityOrMf ? 'LTCG (> 12m @ 12.5% above ₹1.25L)' : 'LTCG (> 24m @ 12.5%)') 
+            : (isEquityOrMf ? 'STCG (≤ 12m @ 20%)' : 'STCG (≤ 24m @ slab rate)'));
+      }
+    }
 
     return {
       days,
       months,
-      years: Math.round(years * 100) / 100,
+      years: years !== null ? Math.round(years * 100) / 100 : null,
       holdingStr,
       pnl,
       pnlPct,
@@ -338,16 +347,11 @@ export default function DynamicForm({
         if (name === 'Details JSON.Units') {
           updated = setNestedValue(updated, 'Details JSON.Quantity', value);
         }
-        if (qty > 0 && avgPrice > 0 && (!cost || cost === 0 || cost === Math.round(qty * avgPrice * 100) / 100)) {
+        if (qty > 0 && avgPrice > 0) {
           updated.Cost = Math.round(qty * avgPrice * 100) / 100;
-        } else if (qty > 0 && cost > 0 && (!avgPrice || avgPrice === 0)) {
-          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', Math.round((cost / qty) * 100) / 100);
-        } else if (qty > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
-          updated.Cost = Math.round(qty * historicalQuote.price * 100) / 100;
-          updated = setNestedValue(updated, 'Details JSON.Average Buy Price', historicalQuote.price);
         }
       } else if (name === 'Details JSON.Average Buy Price') {
-        if (qty > 0 && avgPrice > 0 && (!cost || cost === 0)) {
+        if (qty > 0 && avgPrice > 0) {
           updated.Cost = Math.round(qty * avgPrice * 100) / 100;
         }
       } else if (name === 'Cost') {
@@ -410,16 +414,11 @@ export default function DynamicForm({
       const cost = Number(updated.Cost || 0);
       
       if (name === 'Details JSON.Units' || name === 'Details JSON.Quantity') {
-        if (units > 0 && avgNav > 0 && (!cost || cost === 0 || cost === Math.round(units * avgNav * 100) / 100)) {
+        if (units > 0 && avgNav > 0) {
           updated.Cost = Math.round(units * avgNav * 100) / 100;
-        } else if (units > 0 && cost > 0 && (!avgNav || avgNav === 0)) {
-          updated = setNestedValue(updated, 'Details JSON.Average NAV', Math.round((cost / units) * 10000) / 10000);
-        } else if (units > 0 && historicalQuote?.price > 0 && (!cost || cost === 0)) {
-          updated.Cost = Math.round(units * historicalQuote.price * 100) / 100;
-          updated = setNestedValue(updated, 'Details JSON.Average NAV', historicalQuote.price);
         }
       } else if (name === 'Details JSON.Average NAV') {
-        if (units > 0 && avgNav > 0 && (!cost || cost === 0)) {
+        if (units > 0 && avgNav > 0) {
           updated.Cost = Math.round(units * avgNav * 100) / 100;
         }
       } else if (name === 'Cost') {
@@ -512,7 +511,8 @@ export default function DynamicForm({
     if (!quote || !quote.price) return;
     setFormData(prev => {
       const currentCost = Number(prev.Cost || 0);
-      if (currentCost > 0) return prev; // Do not overwrite user-entered cost automatically
+      const currentAvgPrice = Number(prev['Details JSON']?.['Average Buy Price'] || prev['Details JSON']?.['Average NAV'] || 0);
+      if (currentCost > 0 || currentAvgPrice > 0) return prev; // Do not overwrite user-entered cost or average price automatically
 
       let updated = { ...prev };
       const p = quote.price;
@@ -771,8 +771,13 @@ export default function DynamicForm({
   const cleanEquityTicker = normalizeStockSymbol(rawEquityTicker);
   const currentEquityQuote = (cleanEquityTicker && (marketQuotes[cleanEquityTicker] || marketQuotes[cleanEquityTicker.toUpperCase()])) || (isQuoteMatch(liveStockQuote, cleanEquityTicker) ? liveStockQuote : null);
   const equityQty = Number(formData['Details JSON']?.['Quantity'] || formData['Details JSON']?.['Units'] || 0);
-  const equityCost = Number(formData.Cost || 0);
-  const calculatedEquityVal = equityQty > 0 && currentEquityQuote?.price ? Math.round(equityQty * currentEquityQuote.price * 100) / 100 : null;
+  const equityAvgPrice = Number(formData['Details JSON']?.['Average Buy Price'] || 0);
+  const equityCost = (equityQty > 0 && equityAvgPrice > 0)
+    ? Math.round(equityQty * equityAvgPrice * 100) / 100 
+    : Number(formData.Cost || 0);
+  const calculatedEquityVal = equityQty > 0 && currentEquityQuote?.price 
+    ? Math.round(equityQty * currentEquityQuote.price * 100) / 100 
+    : (Number(formData['Current Value'] || 0) || null);
   const equityPnl = (calculatedEquityVal && equityCost > 0) ? Math.round((calculatedEquityVal - equityCost) * 100) / 100 : null;
   const equityPnlPct = (equityPnl !== null && equityCost > 0) ? Math.round(((equityPnl / equityCost) * 100) * 100) / 100 : null;
 
@@ -803,11 +808,15 @@ export default function DynamicForm({
   }
 
   // Investment return & tax intelligence
-  const perfCost = Number(formData.Cost || 0);
-  const perfCurrentVal = Number(formData['Current Value'] || 0);
+  const mfUnits = Number(formData['Details JSON']?.['Units'] || formData['Details JSON']?.['Quantity'] || 0);
+  const mfAvgNav = Number(formData['Details JSON']?.['Average NAV'] || 0);
+  const mfDerivedCost = (mfUnits > 0 && mfAvgNav > 0) ? Math.round(mfUnits * mfAvgNav * 100) / 100 : 0;
+
+  const perfCost = equityCost || mfDerivedCost || Number(formData.Cost || 0);
+  const perfCurrentVal = Number(formData['Current Value'] || 0) || (calculatedEquityVal || 0);
   const rawAcqDate = formData['Acquisition Date'];
   const perfAcqDate = rawAcqDate ? String(rawAcqDate).split('T')[0] : '';
-  const perfMetrics = (perfCost > 0 && perfCurrentVal > 0 && perfAcqDate)
+  const perfMetrics = (perfCost > 0 && perfCurrentVal > 0)
     ? calculatePerformance(perfCost, perfCurrentVal, perfAcqDate, category)
     : null;
 
@@ -825,9 +834,21 @@ export default function DynamicForm({
           updated['Current Value'] = Math.round(qty * quote.price * 100) / 100;
         }
       }
+      const q = Number(updated['Details JSON']?.['Quantity'] || updated['Details JSON']?.['Units'] || 0);
+      const avgP = Number(updated['Details JSON']?.['Average Buy Price'] || 0);
+      if (q > 0 && avgP > 0) {
+        updated.Cost = Math.round(q * avgP * 100) / 100;
+      }
+      setFormData(updated);
+    } else if (schemaKey === 'Mutual Funds') {
+      const u = Number(updated['Details JSON']?.['Units'] || updated['Details JSON']?.['Quantity'] || 0);
+      const avgNav = Number(updated['Details JSON']?.['Average NAV'] || 0);
+      if (u > 0 && avgNav > 0) {
+        updated.Cost = Math.round(u * avgNav * 100) / 100;
+      }
       setFormData(updated);
     }
-    onSubmit(e);
+    onSubmit(e, updated);
   };
 
   return (

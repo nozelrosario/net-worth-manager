@@ -24,8 +24,8 @@ export const assetSchemas = {
       { name: 'Institution/Location', label: 'Broker / Demat Account', type: 'text', placeholder: 'e.g. Zerodha, Groww' },
       { name: 'Details JSON.Quantity', label: 'Quantity (Shares)', type: 'number', step: '1' },
       { name: 'Details JSON.Average Buy Price', label: 'Average Buy Price (₹)', type: 'number', step: '0.01' },
-      { name: 'Acquisition Date', label: 'Purchase Date', type: 'date' },
-      { name: 'Cost', label: 'Total Invested Amount (₹)', type: 'number' },
+      { name: 'Acquisition Date', label: 'Purchase Date (optional)', type: 'date', hint: 'Leave blank if unknown; return will be calculated from Average Buy Price' },
+      { name: 'Cost', label: 'Total Invested Amount (₹)', type: 'number', hint: 'Auto-calculated from Quantity × Average Buy Price' },
       { name: 'Current Value', label: 'Current Market Value (₹)', type: 'number', required: true },
       { name: 'Owner', label: 'Owner', type: 'text' }
     ]
