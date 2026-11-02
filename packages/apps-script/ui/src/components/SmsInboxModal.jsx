@@ -8,7 +8,7 @@ import {
   Edit2, SlidersHorizontal, RotateCcw, EyeOff, Search
 } from 'lucide-react';
 import { Badge } from './Badge';
-import { parseSmsXml, extractFinancialCandidate, deduplicateAndClassify, matchesSmsTextSearch } from '../utils/smsParser';
+import { parseSmsXml, extractFinancialCandidate, deduplicateAndClassify, matchesSmsTextSearch, extractAccountBalancesFromSms } from '../utils/smsParser';
 
 export default function SmsInboxModal({
   isOpen,
@@ -105,6 +105,9 @@ export default function SmsInboxModal({
   const [showRawSmsId, setShowRawSmsId] = useState(null);
   const [isManualFile, setIsManualFile] = useState(false);
   const [cachedXml, setCachedXml] = useState(null);
+  const [detectedBalances, setDetectedBalances] = useState([]);
+  const [isSyncingBalances, setIsSyncingBalances] = useState(false);
+  const [showBalancesSection, setShowBalancesSection] = useState(true);
 
   const fileInputRef = useRef(null);
 
@@ -128,6 +131,10 @@ export default function SmsInboxModal({
         showMessage?.('No SMS messages found in the provided file.', true);
         return;
       }
+
+      // Extract latest account closing balances for liquid cash tracking
+      const balances = extractAccountBalancesFromSms(rawSmsList, existingAssets);
+      setDetectedBalances(balances);
 
       // Extract candidate transactions
       const rawCandidates = [];
@@ -167,10 +174,12 @@ export default function SmsInboxModal({
       const newItemsCount = result.stats.newCount || 0;
       const importedItemsCount = result.stats.importedCount || 0;
       const ignoredItemsCount = result.stats.ignoredCount || 0;
+      const readyBalancesCount = balances.filter(b => b.status === 'ready' && b.matchedAssetId).length;
 
-      if (newItemsCount > 0) {
+      if (newItemsCount > 0 || balances.length > 0) {
+        const balMsg = readyBalancesCount > 0 ? ` • ${readyBalancesCount} bank balances detected` : (balances.length > 0 ? ` • ${balances.length} accounts found` : '');
         showMessage?.(
-          `Loaded ${newItemsCount} new actionable transactions (${importedItemsCount} already in ledger, ${ignoredItemsCount} ignored)`
+          `Loaded ${newItemsCount} new transactions${balMsg} (${importedItemsCount} already in ledger, ${ignoredItemsCount} ignored)`
         );
       } else if (importedItemsCount > 0) {
         showMessage?.(
@@ -534,6 +543,80 @@ export default function SmsInboxModal({
     }
   };
 
+  // Handlers for Detected Account Balances
+  const handleUpdateBalanceMatch = (balanceId, newAssetId) => {
+    setDetectedBalances(prev => prev.map(b => {
+      if (b.id !== balanceId) return b;
+      const targetAsset = existingAssets.find(a => a['Asset ID'] === newAssetId);
+      const prevVal = targetAsset ? Number(targetAsset['Current Value'] || 0) : null;
+      const diff = (targetAsset && prevVal !== null) ? Math.round((b.closingBalance - prevVal) * 100) / 100 : null;
+      return {
+        ...b,
+        matchedAssetId: newAssetId,
+        matchedAssetName: targetAsset ? targetAsset.Name : '',
+        previousValue: prevVal,
+        difference: diff,
+        selected: Boolean(targetAsset)
+      };
+    }));
+  };
+
+  const handleToggleBalanceSelect = (balanceId) => {
+    setDetectedBalances(prev => prev.map(b => b.id === balanceId ? { ...b, selected: !b.selected } : b));
+  };
+
+  const handleDismissBalance = (balanceId) => {
+    setDetectedBalances(prev => prev.map(b => b.id === balanceId ? { ...b, status: 'dismissed', selected: false } : b));
+  };
+
+  const handleBatchSyncBalances = () => {
+    const toSync = detectedBalances.filter(b => b.selected && b.status === 'ready' && b.matchedAssetId);
+    if (!toSync.length) {
+      showMessage?.('No valid matched account balances selected to sync.', true);
+      return;
+    }
+
+    setIsSyncingBalances(true);
+    const payload = toSync.map(b => ({
+      assetId: b.matchedAssetId,
+      assetName: b.matchedAssetName,
+      currentValue: b.closingBalance,
+      asOfDate: b.dateStr,
+      source: `SMS Ingestion (${b.accountLabel})`,
+      accountDigits: b.accountDigits
+    }));
+
+    const token = sessionStorage.getItem('nwm_session_token') || localStorage.getItem('nwm_session_token');
+
+    if (window.google?.script?.run) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsSyncingBalances(false);
+          if (res && res.status === 'success') {
+            const syncedIds = new Set(toSync.map(b => b.id));
+            setDetectedBalances(prev => prev.map(b => syncedIds.has(b.id) ? { ...b, status: 'synced', selected: false } : b));
+            showMessage?.(res.message || `Successfully synced ${res.updatedCount} account balance(s)!`);
+            onRefresh?.();
+          } else {
+            showMessage?.(res?.message || 'Error updating balances', true);
+          }
+        })
+        .withFailureHandler((err) => {
+          setIsSyncingBalances(false);
+          showMessage?.('Balance Sync Error: ' + err.message, true);
+        })
+        .batchUpdateAssetBalances(payload, token);
+    } else {
+      setTimeout(() => {
+        setIsSyncingBalances(false);
+        const syncedIds = new Set(toSync.map(b => b.id));
+        setDetectedBalances(prev => prev.map(b => syncedIds.has(b.id) ? { ...b, status: 'synced', selected: false } : b));
+        showMessage?.(`Synced ${toSync.length} balance(s) to assets (preview mode)`);
+        onRefresh?.();
+      }, 700);
+    }
+  };
+
   // Filter computation
   const filteredList = useMemo(() => {
     return candidates.filter(item => {
@@ -851,6 +934,155 @@ export default function SmsInboxModal({
               <span className="text-typ-caption text-text-muted shrink-0 font-medium font-mono">
                 {filteredList.length} {filteredList.length === 1 ? 'match' : 'matches'}
               </span>
+            )}
+          </div>
+        )}
+
+        {/* 3B. DETECTED ACCOUNT BALANCES ACCORDION */}
+        {detectedBalances.some(b => b.status !== 'dismissed') && (
+          <div className="mx-2 sm:mx-3 my-1.5 rounded-xl border border-wealth-emerald/30 bg-surface-layer2/80 overflow-hidden shadow-xs shrink-0">
+            <div 
+              onClick={() => setShowBalancesSection(!showBalancesSection)}
+              className="p-2 sm:px-3 bg-gradient-to-r from-wealth-emerald/10 via-surface-layer2 to-surface-layer2 flex items-center justify-between cursor-pointer hover:bg-surface-layer3/60 transition-colors select-none"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-lg bg-wealth-emerald/20 border border-wealth-emerald/40 flex items-center justify-center text-wealth-emerald shrink-0">
+                  <Landmark size={13} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-typ-label font-bold text-text-primary">
+                      Account Balances Detected
+                    </span>
+                    <Badge variant="emerald" size="xs">
+                      {detectedBalances.filter(b => b.status === 'ready').length} new
+                    </Badge>
+                  </div>
+                  <p className="text-typ-micro text-text-muted truncate">
+                    Closing liquid savings balances from bank SMS
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleBatchSyncBalances(); }}
+                  disabled={isSyncingBalances || !detectedBalances.some(b => b.selected && b.status === 'ready' && b.matchedAssetId)}
+                  className="py-1 px-2.5 rounded-lg bg-wealth-emerald text-white text-typ-footnote font-semibold flex items-center gap-1 shadow-xs hover:opacity-95 active:scale-95 transition-all disabled:opacity-40"
+                >
+                  {isSyncingBalances ? <RefreshCw size={11} className="animate-spin" /> : <Check size={11} />}
+                  <span>Sync to Assets ({detectedBalances.filter(b => b.selected && b.status === 'ready' && b.matchedAssetId).length})</span>
+                </button>
+                <div className="text-text-muted hover:text-text-primary p-0.5">
+                  {showBalancesSection ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                </div>
+              </div>
+            </div>
+
+            {showBalancesSection && (
+              <div className="p-2 sm:p-2.5 space-y-1.5 border-t border-border-subtle bg-surface-layer1/70 max-h-[220px] overflow-y-auto no-scrollbar">
+                {detectedBalances.filter(b => b.status !== 'dismissed').map((b) => {
+                  const isReady = b.status === 'ready';
+                  const isSynced = b.status === 'synced';
+                  const hasMatch = Boolean(b.matchedAssetId);
+
+                  return (
+                    <div 
+                      key={b.id}
+                      className={`p-2 rounded-lg border transition-all text-typ-footnote flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                        isSynced 
+                          ? 'bg-wealth-emerald/5 border-wealth-emerald/30' 
+                          : (hasMatch ? 'bg-surface-layer1 border-border-subtle' : 'bg-bullion-amber/5 border-bullion-amber/30')
+                      }`}
+                    >
+                      <div className="flex items-start sm:items-center gap-2 min-w-0 flex-1">
+                        {isReady ? (
+                          <input
+                            type="checkbox"
+                            checked={b.selected}
+                            disabled={!hasMatch}
+                            onChange={() => handleToggleBalanceSelect(b.id)}
+                            className="w-3.5 h-3.5 rounded text-wealth-emerald border-border-prominent focus:ring-0 bg-surface-layer1 disabled:opacity-30 mt-0.5 sm:mt-0 shrink-0 cursor-pointer"
+                          />
+                        ) : (
+                          <CheckCircle2 size={15} className="text-wealth-emerald shrink-0 mt-0.5 sm:mt-0" />
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-text-primary">{b.accountLabel}</span>
+                            <span className="text-typ-micro text-text-muted font-mono">{b.readableDate}</span>
+                            {isSynced && (
+                              <Badge variant="emerald" size="xs">Updated in Ledger</Badge>
+                            )}
+                            {!hasMatch && isReady && (
+                              <Badge variant="amber" size="xs">Select Asset to Link</Badge>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-typ-caption text-text-muted">Target Asset:</span>
+                            {isReady ? (
+                              <select
+                                value={b.matchedAssetId || ''}
+                                onChange={(e) => handleUpdateBalanceMatch(b.id, e.target.value)}
+                                className="text-typ-caption py-0.5 px-1.5 rounded bg-surface-layer2 border border-border-subtle text-text-primary focus:border-wealth-emerald focus:outline-none max-w-[200px] truncate"
+                              >
+                                <option value="">-- Choose Asset --</option>
+                                <optgroup label="Bank & Cash Accounts">
+                                  {existingAssets
+                                    .filter(a => (a.Category || '').toLowerCase().includes('cash') || (a.Category || '').toLowerCase().includes('fd'))
+                                    .map(a => (
+                                      <option key={a['Asset ID']} value={a['Asset ID']}>
+                                        {a.Name} ({formatCurrency(a['Current Value'])})
+                                      </option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Other Assets">
+                                  {existingAssets
+                                    .filter(a => !((a.Category || '').toLowerCase().includes('cash') || (a.Category || '').toLowerCase().includes('fd')))
+                                    .map(a => (
+                                      <option key={a['Asset ID']} value={a['Asset ID']}>
+                                        {a.Name}
+                                      </option>
+                                    ))}
+                                </optgroup>
+                              </select>
+                            ) : (
+                              <span className="text-typ-caption font-medium text-text-primary">{b.matchedAssetName}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border-subtle/50">
+                        <div className="text-right">
+                          <div className="font-bold text-text-primary tabular-nums">
+                            {formatCurrency(b.closingBalance)}
+                          </div>
+                          {b.previousValue !== null && b.difference !== null && b.difference !== 0 && (
+                            <div className={`text-typ-micro font-medium tabular-nums ${b.difference > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                              {b.difference > 0 ? '+' : ''}{formatCurrency(b.difference)} vs ledger
+                            </div>
+                          )}
+                        </div>
+
+                        {isReady && (
+                          <button
+                            type="button"
+                            onClick={() => handleDismissBalance(b.id)}
+                            className="p-1 rounded text-text-muted hover:text-liability-rose hover:bg-surface-layer2 transition-colors"
+                            title="Dismiss this balance"
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}

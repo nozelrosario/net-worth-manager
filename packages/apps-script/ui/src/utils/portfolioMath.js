@@ -383,6 +383,28 @@ export function calculateCashDrag(assets = [], transactions = []) {
   const cashAssets = assets.filter(a => a.Category === 'Cash/FD');
   const totalLiquidCash = cashAssets.reduce((sum, a) => sum + Number(a['Current Value'] || 0), 0);
 
+  let operationalSavingsCash = 0;
+  let termDepositCash = 0;
+
+  cashAssets.forEach(a => {
+    let det = {};
+    try {
+      det = typeof a['Details JSON'] === 'string' ? JSON.parse(a['Details JSON']) : (a['Details JSON'] || {});
+    } catch (e) {}
+
+    const isTermDeposit =
+      det['Sub-Type'] === 'Fixed Deposit (FD)' ||
+      det['Sub-Type'] === 'Recurring Deposit (RD)' ||
+      Boolean(det['Maturity Date']);
+
+    const val = Number(a['Current Value'] || 0);
+    if (isTermDeposit) {
+      termDepositCash += val;
+    } else {
+      operationalSavingsCash += val;
+    }
+  });
+
   // Compute average monthly expenses
   const expenseTxns = transactions.filter(t => t.Type === 'Expense');
   const totalExpense = expenseTxns.reduce((sum, t) => sum + Number(t.Amount || 0), 0);
@@ -392,19 +414,29 @@ export function calculateCashDrag(assets = [], transactions = []) {
   if (avgMonthlyExpense < 25000) avgMonthlyExpense = 50000;
 
   const runwayMonths = avgMonthlyExpense > 0 ? (totalLiquidCash / avgMonthlyExpense) : 0;
+  const operationalRunwayMonths = avgMonthlyExpense > 0 ? (operationalSavingsCash / avgMonthlyExpense) : 0;
   const emergencyReserveTarget = avgMonthlyExpense * 6; // Recommended 6-month buffer
   const excessCashDrag = Math.max(0, totalLiquidCash - emergencyReserveTarget);
+
+  // Idle cash surplus in low-yield savings accounts (> 1.5x monthly expenses)
+  const operationalBufferTarget = Math.round(avgMonthlyExpense * 1.5);
+  const idleSavingsSurplus = Math.max(0, operationalSavingsCash - operationalBufferTarget);
 
   // Approximate opportunity cost drag (assuming ~6.5% p.a. difference between cash and diversified portfolio)
   const annualOpportunityCost = Math.round(excessCashDrag * 0.065);
 
   return {
     totalLiquidCash,
+    operationalSavingsCash,
+    termDepositCash,
     avgMonthlyExpense,
     runwayMonths: Number(runwayMonths.toFixed(1)),
+    operationalRunwayMonths: Number(operationalRunwayMonths.toFixed(1)),
     emergencyReserveTarget,
+    operationalBufferTarget,
     excessCashDrag,
-    hasCashDrag: excessCashDrag > 100000,
+    idleSavingsSurplus,
+    hasCashDrag: excessCashDrag > 100000 || idleSavingsSurplus > 50000,
     annualOpportunityCost
   };
 }

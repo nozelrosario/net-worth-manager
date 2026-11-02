@@ -681,6 +681,108 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
 }
 
 /**
+ * Batch updates asset current values and balance sync metadata for bank accounts.
+ * @param {Array<Object>} balanceUpdates - Array of { assetId, currentValue, asOfDate, source, accountDigits, assetName }
+ * @param {string} idToken - Auth session token
+ */
+function batchUpdateAssetBalances(balanceUpdates, idToken) {
+  try {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed) return { status: 'error', message: auth.message };
+
+    if (!balanceUpdates || !balanceUpdates.length) {
+      return { status: 'error', message: 'No balance updates provided.' };
+    }
+
+    var ss = getSpreadsheet();
+    var sheet = ss.getSheetByName('Assets');
+    if (!sheet) {
+      setupDatabaseSheets();
+      sheet = ss.getSheetByName('Assets');
+      if (!sheet) return { status: 'error', message: 'Assets sheet not found' };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var idCol = headers.indexOf('Asset ID');
+    var valCol = headers.indexOf('Current Value');
+    var detailsCol = headers.indexOf('Details JSON');
+    var nameCol = headers.indexOf('Name');
+
+    if (idCol === -1 || valCol === -1) {
+      return { status: 'error', message: 'Required columns not found in Assets sheet.' };
+    }
+
+    // Map Asset ID and Name to 1-based row index
+    var rowMap = {};
+    var nameMap = {};
+    for (var r = 1; r < data.length; r++) {
+      var aid = String(data[r][idCol] || '').trim();
+      if (aid) rowMap[aid] = r + 1;
+      var aname = String(data[r][nameCol] || '').trim().toLowerCase();
+      if (aname) nameMap[aname] = r + 1;
+    }
+
+    var updatedCount = 0;
+    var updatedNames = [];
+
+    for (var u = 0; u < balanceUpdates.length; u++) {
+      var item = balanceUpdates[u];
+      var targetRow = -1;
+
+      if (item.assetId && rowMap[String(item.assetId).trim()]) {
+        targetRow = rowMap[String(item.assetId).trim()];
+      } else if (item.assetName && nameMap[String(item.assetName).trim().toLowerCase()]) {
+        targetRow = nameMap[String(item.assetName).trim().toLowerCase()];
+      }
+
+      if (targetRow > 1) {
+        var newBalance = Number(item.currentValue !== undefined ? item.currentValue : (item.closingBalance || 0));
+        sheet.getRange(targetRow, valCol + 1).setValue(newBalance);
+
+        if (detailsCol !== -1) {
+          var rawDet = data[targetRow - 1][detailsCol];
+          var detObj = {};
+          try {
+            detObj = typeof rawDet === 'string' ? JSON.parse(rawDet || '{}') : (rawDet || {});
+          } catch (e) {
+            detObj = {};
+          }
+
+          var asOfDate = item.asOfDate || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd');
+          detObj['Last Balance Sync Date'] = asOfDate;
+          detObj['Balance Sync Source'] = item.source || 'SMS Ingestion';
+          if (item.accountDigits && !detObj['Account Digits']) {
+            detObj['Account Digits'] = item.accountDigits;
+          }
+
+          sheet.getRange(targetRow, detailsCol + 1).setValue(JSON.stringify(detObj));
+        }
+
+        updatedCount++;
+        var aName = nameCol !== -1 ? String(data[targetRow - 1][nameCol]) : ('Asset #' + item.assetId);
+        updatedNames.push(aName);
+      }
+    }
+
+    SpreadsheetApp.flush();
+
+    if (updatedCount > 0) {
+      logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_ASSET_BALANCES', 'Assets', 'Updated ' + updatedCount + ' account balance(s): ' + updatedNames.join(', '));
+    }
+
+    return {
+      status: 'success',
+      updatedCount: updatedCount,
+      updatedNames: updatedNames,
+      message: 'Successfully updated ' + updatedCount + ' account balance(s).'
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+/**
  * Backend fallback for executing Gemini generative requests via Apps Script UrlFetchApp.
  * Avoids browser CORS and client environment limitations.
  * Supports both Google Interactions API (/v1beta/interactions with gemini-3.8-flash)
