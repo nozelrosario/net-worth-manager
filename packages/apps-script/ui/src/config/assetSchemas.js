@@ -1,16 +1,82 @@
 export const assetSchemas = {
   'Cash/FD': {
-    title: 'Bank & Fixed Deposits',
+    title: 'Bank, Savings & Fixed Deposits',
     fields: [
-      { name: 'Institution/Location', label: 'Institution / Bank Name', type: 'text', placeholder: 'e.g. State Bank of India' },
-      { name: 'Identifiers', label: 'Account / FD Number', type: 'text', placeholder: 'e.g. FD A/c #9402810482' },
-      { name: 'Cost', label: 'Deposit Principal', type: 'number' },
-      { name: 'Current Value', label: 'Current Value', type: 'number', required: true },
-      { name: 'Acquisition Date', label: 'Deposit Date', type: 'date' },
-      { name: 'Details JSON.Maturity Date', label: 'Maturity Date', type: 'date' },
-      { name: 'Details JSON.Interest Rate', label: 'Interest Rate (% p.a.)', type: 'number', step: '0.01' },
-      { name: 'Details JSON.Payout Frequency', label: 'Payout Frequency Mode', type: 'select', options: ['Cumulative', 'Monthly', 'Quarterly', 'Annual'] },
-      { name: 'Details JSON.Auto Renewal', label: 'Auto-Renewal', type: 'checkbox' },
+      {
+        name: 'Details JSON.Sub-Type',
+        label: 'Account / Deposit Sub-Type',
+        type: 'select',
+        options: ['Savings Account', 'Fixed Deposit (FD)', 'Recurring Deposit (RD)', 'Liquid / Arbitrage Fund', 'Cash in Hand'],
+        required: true,
+        hint: 'Savings Accounts are tracked as liquid cash and can auto-sync balances from bank SMS.'
+      },
+      { name: 'Name', label: 'Account / Deposit Name', type: 'text', placeholder: 'e.g. HDFC Salary Account, SBI Savings, 3Y FD', required: true },
+      { name: 'Institution/Location', label: 'Institution / Bank Name', type: 'text', placeholder: 'e.g. State Bank of India, HDFC Bank', required: true },
+      { name: 'Identifiers', label: 'Account / FD Number (or Last 4 Digits)', type: 'text', placeholder: 'e.g. 7735 or XX7735 (used to match bank SMS)' },
+      { 
+        name: 'Cost', 
+        label: 'Deposit Principal (₹)', 
+        type: 'number',
+        condition: (fd) => {
+          const st = fd['Details JSON']?.['Sub-Type'];
+          return st === 'Fixed Deposit (FD)' || st === 'Recurring Deposit (RD)' || (!st && (fd['Details JSON']?.['Maturity Date'] || fd.Cost));
+        }
+      },
+      { 
+        name: 'Current Value', 
+        label: 'Current Balance / Valuation (₹)', 
+        type: 'number', 
+        required: true,
+        hint: 'Can be updated manually anytime or auto-synced from bank SMS'
+      },
+      { name: 'Acquisition Date', label: 'Opening / Deposit Date', type: 'date' },
+      { 
+        name: 'Details JSON.Maturity Date', 
+        label: 'Maturity Date', 
+        type: 'date',
+        condition: (fd) => {
+          const st = fd['Details JSON']?.['Sub-Type'];
+          return st === 'Fixed Deposit (FD)' || st === 'Recurring Deposit (RD)' || (!st && (fd['Details JSON']?.['Maturity Date'] || fd['Details JSON']?.['Interest Rate']));
+        }
+      },
+      { 
+        name: 'Details JSON.Interest Rate', 
+        label: 'Interest Rate (% p.a.)', 
+        type: 'number', 
+        step: '0.01',
+        condition: (fd) => {
+          const st = fd['Details JSON']?.['Sub-Type'];
+          return st === 'Fixed Deposit (FD)' || st === 'Recurring Deposit (RD)' || (!st && (fd['Details JSON']?.['Interest Rate'] || fd['Details JSON']?.['Maturity Date']));
+        }
+      },
+      { 
+        name: 'Details JSON.Payout Frequency', 
+        label: 'Payout Frequency Mode', 
+        type: 'select', 
+        options: ['Cumulative', 'Monthly', 'Quarterly', 'Annual'],
+        condition: (fd) => {
+          const st = fd['Details JSON']?.['Sub-Type'];
+          return st === 'Fixed Deposit (FD)' || st === 'Recurring Deposit (RD)';
+        }
+      },
+      { 
+        name: 'Details JSON.Auto Renewal', 
+        label: 'Auto-Renewal Enabled', 
+        type: 'checkbox',
+        condition: (fd) => {
+          const st = fd['Details JSON']?.['Sub-Type'];
+          return st === 'Fixed Deposit (FD)';
+        }
+      },
+      {
+        name: 'Details JSON.Auto-Sweep Linked',
+        label: 'Auto-Sweep / MOD Linked (Sweeps surplus to FD)',
+        type: 'checkbox',
+        condition: (fd) => {
+          const st = fd['Details JSON']?.['Sub-Type'];
+          return st === 'Savings Account' || (!st && !fd['Details JSON']?.['Maturity Date'] && !fd.Cost);
+        }
+      },
       { name: 'Owner', label: 'Holding Pattern / Owner', type: 'text', placeholder: 'e.g. Joint, Single' },
       { name: 'Nominee', label: 'Nominee Name', type: 'text' }
     ]

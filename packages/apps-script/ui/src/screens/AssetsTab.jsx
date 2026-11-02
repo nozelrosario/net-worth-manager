@@ -3,10 +3,10 @@ import { getSafeStorage } from "../utils/storage";
 import React, { useState, useEffect, useMemo } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp, MoreVertical, ChevronRight, Key } from 'lucide-react';
+import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp, MoreVertical, ChevronRight } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
-import GeminiApiKeyModal from "../components/GeminiApiKeyModal";
+import SmsInboxModal from "../components/SmsInboxModal";
 
 const getSafeCategoryForAsset = (assetCategory) => {
   const cat = (assetCategory || '').toLowerCase();
@@ -37,7 +37,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [isSyncingRates, setIsSyncingRates] = useState(false);
   const [showCasModal, setShowCasModal] = useState(false);
   const [showToolsModal, setShowToolsModal] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showSmsModal, setShowSmsModal] = useState(false);
 
   useEffect(() => {
     if (!showToolsModal) return;
@@ -439,14 +439,6 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
           <button 
             type="button"
-            onClick={() => setShowApiKeyModal(true)} 
-            title="Gemini AI API Key Settings"
-            className="p-1.5 rounded-lg text-text-secondary hover:text-wealth-emerald bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle shadow-xs transition-all active:scale-95 shrink-0"
-          >
-            <Key size={16} />
-          </button>
-          <button 
-            type="button"
             onClick={() => setShowToolsModal(true)} 
             title="Portfolio Actions & Hubs"
             className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle shadow-xs transition-all active:scale-95 shrink-0"
@@ -563,6 +555,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               : (polMetrics.healthCover > 0 ? `Cover: ₹${(polMetrics.healthCover / 100000).toFixed(0)}L` : '');
             const dueStr = polMetrics.nextDueDate ? `Due: ${polMetrics.nextDueDate}` : '';
             holdingSummary = [polMetrics.policyType, coverStr, dueStr].filter(Boolean).join(' • ');
+          } else if (cat === 'Cash/FD' || (cat || '').toLowerCase().includes('cash') || (cat || '').toLowerCase().includes('savings') || (cat || '').toLowerCase().includes('deposit')) {
+            const subType = det['Sub-Type'] || (det['Interest Rate'] || det['Maturity Date'] ? 'Fixed Deposit' : 'Savings A/c');
+            const parts = [subType];
+            if (det['Interest Rate']) parts.push(`${det['Interest Rate']}% p.a.`);
+            if (det['Maturity Date']) parts.push(`Matures: ${det['Maturity Date']}`);
+            if (det['Auto-Sweep Linked']) parts.push('Auto-Sweep Active');
+            if (det['Last Balance Sync Date']) parts.push(`Synced: ${det['Last Balance Sync Date']}`);
+            holdingSummary = parts.filter(Boolean).join(' • ');
           }
 
           const isLive = asset['Is Live'] || (asset['Live Price'] && Number(asset['Live Price']) > 0);
@@ -631,6 +631,9 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                     {polMetrics?.isDueSoon && (
                       <Badge variant="amber" size="xs">Due in {polMetrics.daysUntilDue}d</Badge>
+                    )}
+                    {cat === 'Cash/FD' && det['Last Balance Sync Date'] && (
+                      <Badge variant="cyan" size="xs">SMS Synced</Badge>
                     )}
                   </div>
                 </div>
@@ -923,6 +926,27 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </div>
                 <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
               </button>
+
+              {/* Sync Bank Balances from SMS */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowToolsModal(false);
+                  setTimeout(() => setShowSmsModal(true), 50);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-wealth-emerald/15 border border-wealth-emerald/25 flex items-center justify-center text-wealth-emerald shrink-0 group-hover:scale-105 transition-transform">
+                    <Landmark size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-typ-label font-bold text-text-primary group-hover:text-wealth-emerald transition-colors">Sync Bank Balances (SMS)</div>
+                    <div className="text-[11px] text-text-muted truncate">Extract latest savings account balances from SMS</div>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
             </div>
 
             {/* Section 2: AI & Advisory Hubs */}
@@ -998,30 +1022,6 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </button>
               )}
             </div>
-
-            {/* Section 3: AI Configuration */}
-            <div className="space-y-2 pt-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted px-1">Settings</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowToolsModal(false);
-                  setShowApiKeyModal(true);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-layer2/70 hover:bg-surface-layer2 border border-border-subtle/80 hover:border-wealth-emerald/40 text-left transition-all active:scale-[0.99] group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-wealth-emerald/15 border border-wealth-emerald/25 flex items-center justify-center text-wealth-emerald shrink-0 group-hover:scale-105 transition-transform">
-                    <Key size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-typ-label font-bold text-text-primary group-hover:text-wealth-emerald transition-colors">Google Gemini API Key</div>
-                    <div className="text-[11px] text-text-muted truncate">Single source key for advisory & statement sync</div>
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -1036,13 +1036,14 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         onRefresh={onRefresh}
       />
 
-      {/* Unified Gemini API Key Modal */}
-      <GeminiApiKeyModal
-        isOpen={showApiKeyModal}
-        onClose={() => setShowApiKeyModal(false)}
-        settings={data?.settings}
-        onRefresh={onRefresh}
+      {/* SMS Bank Balance Sync Modal */}
+      <SmsInboxModal
+        isOpen={showSmsModal}
+        onClose={() => setShowSmsModal(false)}
+        data={data}
+        formatCurrency={formatCurrency}
         showMessage={showMessage}
+        onRefresh={onRefresh}
       />
     </div>
   );

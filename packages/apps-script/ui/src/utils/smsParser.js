@@ -229,6 +229,85 @@ export function detectAccountDigits(body = '') {
 }
 
 /**
+ * Extracts available / closing account balance from Indian bank SMS text.
+ * Returns numeric float amount or null if no balance is present or if false positive.
+ */
+export function extractClosingBalance(body = '') {
+  if (!body || typeof body !== 'string') return null;
+
+  // Guard against non-cash balances & debt/liability/broker/telecom statements
+  if (
+    /balance\s+due/i.test(body) ||
+    /balance\s+sum\s+insured/i.test(body) ||
+    /current\s+balance\s+si/i.test(body) ||
+    /securities\s*bal/i.test(body) ||
+    /stock\s*broker/i.test(body) ||
+    /reported\s+your\s+fund\s+bal/i.test(body) ||
+    /fund\s+bal(?:ance)?\s+(?:is\s+)?(?:rs|inr)/i.test(body) ||
+    /total\s+os\s+bal/i.test(body) ||
+    /total\s+outstanding/i.test(body) ||
+    /minimum\s+balance/i.test(body) ||
+    /interest\s+balance/i.test(body) ||
+    /balance\s+transfer/i.test(body) ||
+    /tata\s*(?:sky|play)/i.test(body) ||
+    /callcost/i.test(body) ||
+    /pack\s+valid/i.test(body) ||
+    /talktime/i.test(body) ||
+    /data\s+bal/i.test(body)
+  ) {
+    return null;
+  }
+
+  const cleanAndValidate = (raw, fullBody) => {
+    if (!raw) return null;
+    const clean = raw.replace(/,/g, '').trim();
+    const num = parseFloat(clean);
+    if (isNaN(num) || num < 0) return null;
+
+    // Safety guard against false positive date day match:
+    // If num is an integer between 1 and 31, verify it does not match a date pattern in the body
+    if (Number.isInteger(num) && num >= 1 && num <= 31) {
+      const dayStr = String(num);
+      const dayPadded = num < 10 ? '0' + num : dayStr;
+      const dateCheck = new RegExp('(?:on|dated?|at|yesterday:?)\\s*(?:' + dayStr + '|' + dayPadded + ')(?:[-/]|th|st|nd|rd|\\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))', 'i');
+      if (dateCheck.test(fullBody)) {
+        return null;
+      }
+    }
+
+    return num;
+  };
+
+  const patterns = [
+    // 1. "Available Bal in HDFC Bank A/c XX5489 as on yesterday:15-OCT-26 is INR 24,49,310.15"
+    //    or "Avl Cafeteria Card A/c bal is Rs.64.66" or "Account balance is Rs.117935.65"
+    /(?:Avl|Available|Avail|Clear|Account|Savings\s+A\/c|Total\s+Avail\.?)\s*(?:[A-Za-z\s{}/]*)?\s*bal(?:ance)?[^.]*?\bis\s+(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i,
+
+    // 2. "Avl bal:INR 44,86,330.97", "Clear Bal: Rs 1,12,450.00", "Available Balance Rs.37939", "Avl Bal Rs 8,336.01"
+    /(?:Avl|Available|Avail|Clear|Total\s+Avail\.?)\s*(?:A\/c\s*)?(?:[A-Za-z\s{}/.]*?)?\s*bal(?:ance)?(?:\s*is)?\s*[:=]?\s*(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i,
+
+    // 3. "A/c Balance = Rs.117964.16" or "Bal is INR 12,450.50" or "Bal INR 85,000.00"
+    /\bBal(?:ance)?(?:\s*is)?\s*[:=]?\s*(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i,
+
+    // 4. "Updated Paytm Bal: Paytm Wallet- Rs 520", "Updated Balance: Paytm Wallet- Rs 7.5"
+    /Updated\s+(?:Paytm\s+)?Bal(?:ance)?\s*:\s*[A-Za-z\s-]*\s*(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+
+    // 5. Without currency symbol: "Bal: 292527.56" or "Avl bal: 5720864.05"
+    /(?:Avl\s+bal|Bal)\s*:\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i
+  ];
+
+  for (const pat of patterns) {
+    const m = body.match(pat);
+    if (m && m[1]) {
+      const val = cleanAndValidate(m[1], body);
+      if (val !== null) return val;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Detects whether an SMS is non-transactional noise (OTPs, promos, service alerts).
  */
 export function isNoiseSms(body = '') {
@@ -518,6 +597,7 @@ export function extractFinancialCandidate(sms, options = {}) {
     account: accountLabel,
     accountDigits,
     amount,
+    closingBalance: extractClosingBalance(body),
     payee,
     refNo,
     type,
@@ -708,19 +788,28 @@ export function deduplicateAndClassify(
     }
 
     // Suppress candidate compound duplicate within 1-minute bucket (same bank, minute, amount)
-    const minuteBucket = Math.floor(c.rawDate / 60000);
-    const compoundKey = `${c.bank}_${minuteBucket}_${Math.round(c.amount * 100)}`;
-    if (seenCompoundKeys.has(compoundKey)) {
-      duplicatesFiltered++;
-      continue;
+    if (c.type === 'Balance') {
+      const balKey = `BAL_${c.bank}_${c.accountDigits || 'GEN'}`;
+      if (seenCompoundKeys.has(balKey)) {
+        duplicatesFiltered++;
+        continue;
+      }
+      seenCompoundKeys.add(balKey);
+    } else {
+      const minuteBucket = Math.floor(c.rawDate / 60000);
+      const compoundKey = `${c.bank}_${minuteBucket}_${Math.round(c.amount * 100)}`;
+      if (seenCompoundKeys.has(compoundKey)) {
+        duplicatesFiltered++;
+        continue;
+      }
+      seenCompoundKeys.add(compoundKey);
     }
-    seenCompoundKeys.add(compoundKey);
 
     // Cross-check 1: Deterministic Fingerprint against ledger
-    let isImported = importedFingerprints.has(c.fingerprint);
+    let isImported = c.isImported || importedFingerprints.has(c.fingerprint);
 
-    // Cross-check 2: Fallback date + amount + account match in ledger
-    if (!isImported) {
+    // Cross-check 2: Fallback date + amount + account match in ledger (for spends/transfers)
+    if (!isImported && c.type !== 'Balance') {
       const specificKey = `${c.dateStr}_${Math.round(c.amount * 100)}_${c.accountDigits}`;
       const generalKey = `${c.dateStr}_${Math.round(c.amount * 100)}`;
       if (c.accountDigits) {
@@ -752,17 +841,20 @@ export function deduplicateAndClassify(
     validCandidates.push(c);
   }
 
-  // Reverse so newest appears on top in review inbox
-  validCandidates.reverse();
+  // Sort candidates so newest appears on top in review inbox
+  validCandidates.sort((a, b) => (b.rawDate || 0) - (a.rawDate || 0));
 
   // Compute stats
   let newCount = 0;
   let importedCount = 0;
   let ignoredCount = 0;
   let totalNewAmount = 0;
+  let totalSpendAmount = 0;
+  let totalBalanceAmount = 0;
   let transfersCount = 0;
   let investmentsCount = 0;
   let spendsCount = 0;
+  let balancesCount = 0;
 
   validCandidates.forEach(c => {
     if (c.status === 'imported') {
@@ -771,13 +863,19 @@ export function deduplicateAndClassify(
       ignoredCount++;
     } else {
       newCount++;
-      totalNewAmount += c.amount;
       if (c.type === 'Transfer') {
         transfersCount++;
+        totalNewAmount += c.amount;
       } else if (c.type === 'Investment') {
         investmentsCount++;
+        totalNewAmount += c.amount;
+      } else if (c.type === 'Balance') {
+        balancesCount++;
+        totalBalanceAmount += c.amount;
       } else {
         spendsCount++;
+        totalSpendAmount += c.amount;
+        totalNewAmount += c.amount;
       }
     }
   });
@@ -792,12 +890,45 @@ export function deduplicateAndClassify(
       ignoredCount,
       totalPendingAmount: totalNewAmount,
       totalNewAmount,
+      totalSpendAmount,
+      totalBalanceAmount,
       transfersCount,
       investmentsCount,
       spendsCount,
+      balancesCount,
       duplicatesFiltered
     }
   };
+}
+
+/**
+ * Helper to determine if an asset is a cash, savings, or bank account.
+ * Used to strictly filter target assets for liquid cash and balance tracking.
+ */
+export function isCashAsset(a) {
+  if (!a) return false;
+  const cat = String(a.Category || '').trim().toLowerCase();
+  const type = String(a.Type || '').trim().toLowerCase();
+  let subType = '';
+  try {
+    const det = typeof a['Details JSON'] === 'string' ? JSON.parse(a['Details JSON'] || '{}') : (a['Details JSON'] || {});
+    subType = String(det['Sub-Type'] || a['Sub-Type'] || '').toLowerCase();
+  } catch (e) {
+    subType = String(a['Sub-Type'] || '').toLowerCase();
+  }
+  return (
+    cat === 'cash/fd' ||
+    cat === 'cash' ||
+    cat.includes('cash') ||
+    cat.includes('savings') ||
+    cat.includes('deposit') ||
+    cat.includes('bank') ||
+    type.includes('cash') ||
+    type.includes('bank') ||
+    type.includes('savings') ||
+    subType.includes('savings') ||
+    subType.includes('deposit')
+  );
 }
 
 /**
@@ -820,8 +951,184 @@ export function matchesSmsTextSearch(item, query = '') {
   if (terms.length === 0) return true;
 
   const itemAmountStr = item.amount !== undefined ? `${item.amount} ${Math.round(item.amount)}` : '';
-  const targetStr = `${item.payee || ''} ${item.body || ''} ${item.previewSnippet || ''} ${item.category || ''} ${item.bank || ''} ${item.account || ''} ${item.accountDigits || ''} ${item.refNo || ''} ${item.beneficiary || ''} ${item.address || ''} ${item.type || ''} ${itemAmountStr} ${item.dateStr || ''}`.toLowerCase();
+  const targetStr = `${item.payee || ''} ${item.body || ''} ${item.previewSnippet || ''} ${item.category || ''} ${item.bank || ''} ${item.account || ''} ${item.accountDigits || ''} ${item.refNo || ''} ${item.beneficiary || ''} ${item.address || ''} ${item.type || ''} ${item.targetAssetName || ''} ${item.newAssetName || ''} ${itemAmountStr} ${item.dateStr || ''}`.toLowerCase();
 
   return terms.every(term => targetStr.includes(term));
 }
+
+/**
+ * Scans SMS messages to identify latest closing balances per bank/account,
+ * matching them against existing assets in the ledger.
+ *
+ * @param {Array<Object>} rawSmsList - Parsed SMS messages
+ * @param {Array<Object>} existingAssets - Current assets from the ledger
+ * @returns {Array<Object>} Array of detected account balance candidates
+ */
+export function extractAccountBalancesFromSms(rawSmsList = [], existingAssets = []) {
+  if (!Array.isArray(rawSmsList) || rawSmsList.length === 0) return [];
+
+  // Group latest closing balance per unique account
+  const accountMap = new Map();
+
+  for (const sms of rawSmsList) {
+    const body = sms.body || '';
+    if (!body) continue;
+
+    const closingBalance = extractClosingBalance(body);
+    if (closingBalance === null) continue;
+
+    const address = sms.address || '';
+    const bank = detectBank(address, body);
+    const accountDigits = detectAccountDigits(body);
+    const dateInfo = parseDateRobust(sms.date, sms.readableDate, body);
+
+    // Grouping key: prefer bank + digits; fallback to bank alone if digits missing
+    let groupKey = `${bank}__${accountDigits || 'GEN'}`;
+
+    // Handle 4 vs 5-digit overlap (e.g. 4089 vs 94089 for SBI)
+    if (accountDigits && accountDigits.length >= 4) {
+      for (const existingKey of accountMap.keys()) {
+        const [eBank, eDigits] = existingKey.split('__');
+        if (eBank === bank && eDigits && eDigits !== 'GEN') {
+          if (eDigits.endsWith(accountDigits) || accountDigits.endsWith(eDigits)) {
+            groupKey = existingKey; // Merge into the existing group
+            break;
+          }
+        }
+      }
+    }
+
+    const currentEntry = accountMap.get(groupKey);
+    if (!currentEntry || dateInfo.epoch > currentEntry.epoch) {
+      accountMap.set(groupKey, {
+        bank,
+        accountDigits: accountDigits || (currentEntry?.accountDigits || ''),
+        closingBalance,
+        epoch: dateInfo.epoch,
+        dateStr: dateInfo.dateStr,
+        readableDate: dateInfo.readableDate,
+        bodySnippet: extractPreviewSnippet(body) || body.slice(0, 90)
+      });
+    }
+  }
+
+  // Match each unique account strictly against cash/deposit assets
+  const cashAssets = (existingAssets || []).filter(isCashAsset);
+
+  const balanceCandidates = [];
+
+  for (const [key, item] of accountMap.entries()) {
+    const { bank, accountDigits, closingBalance, epoch, dateStr, readableDate, bodySnippet } = item;
+
+    let bestAsset = null;
+    let bestScore = 0;
+
+    for (const a of cashAssets) {
+      let score = 0;
+      const aIdent = String(a.Identifiers || '').replace(/[^0-9]/g, '');
+      const aName = String(a.Name || '').toLowerCase();
+      const aInst = String(a['Institution/Location'] || '').toLowerCase();
+      const bLower = bank.toLowerCase();
+
+      // Guard against bank conflicts across major Indian banking institutions
+      const isBankConflict =
+        (bLower.includes('sbi') && (aName.includes('hdfc') || aInst.includes('hdfc') || aName.includes('icici') || aInst.includes('icici') || aName.includes('axis') || aInst.includes('axis') || aName.includes('bassein') || aInst.includes('bassein'))) ||
+        (bLower.includes('hdfc') && (aName.includes('sbi') || aInst.includes('sbi') || aName.includes('icici') || aInst.includes('icici') || aName.includes('axis') || aInst.includes('axis') || aName.includes('bassein') || aInst.includes('bassein'))) ||
+        (bLower.includes('icici') && (aName.includes('sbi') || aInst.includes('sbi') || aName.includes('hdfc') || aInst.includes('hdfc') || aName.includes('axis') || aInst.includes('axis') || aName.includes('bassein') || aInst.includes('bassein'))) ||
+        (bLower.includes('axis') && (aName.includes('sbi') || aInst.includes('sbi') || aName.includes('hdfc') || aInst.includes('hdfc') || aName.includes('icici') || aInst.includes('icici') || aName.includes('bassein') || aInst.includes('bassein'))) ||
+        (bLower.includes('bccb') && (aName.includes('sbi') || aInst.includes('sbi') || aName.includes('hdfc') || aInst.includes('hdfc') || aName.includes('icici') || aInst.includes('icici') || aName.includes('axis') || aInst.includes('axis')));
+
+      if (isBankConflict) continue;
+
+      let aDet = {};
+      try {
+        aDet = typeof a['Details JSON'] === 'string' ? JSON.parse(a['Details JSON']) : (a['Details JSON'] || {});
+      } catch (e) {}
+
+      const detDigits = String(aDet['Account Digits'] || aDet['Account Number'] || '').replace(/[^0-9]/g, '');
+      const effectiveAssetDigits = aIdent || detDigits;
+
+      const bankMatches =
+        aInst.includes(bLower) ||
+        aName.includes(bLower) ||
+        (bLower.includes('sbi') && (aInst.includes('state bank') || aName.includes('sbi') || aInst.includes('sbi'))) ||
+        (bLower.includes('hdfc') && (aInst.includes('hdfc') || aName.includes('hdfc'))) ||
+        (bLower.includes('icici') && (aInst.includes('icici') || aName.includes('icici'))) ||
+        (bLower.includes('axis') && (aInst.includes('axis') || aName.includes('axis'))) ||
+        (bLower.includes('bccb') && (aInst.includes('bassein') || aName.includes('bccb') || aInst.includes('bccb')));
+
+      // Strict account digit verification: if both have digits and they do NOT match, they are different accounts
+      if (accountDigits && effectiveAssetDigits) {
+        if (effectiveAssetDigits.endsWith(accountDigits) || accountDigits.endsWith(effectiveAssetDigits)) {
+          score += bankMatches ? 100 : 70;
+        } else {
+          // Explicit digit mismatch within same or different bank: do NOT match
+          continue;
+        }
+      } else if (accountDigits && aName.includes(accountDigits)) {
+        score += bankMatches ? 90 : 60;
+      } else if (bankMatches && !effectiveAssetDigits) {
+        // Bank matches and asset has no explicit digits registered yet
+        score += 40;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestAsset = a;
+      }
+    }
+
+    const matchedAsset = bestScore >= 35 ? bestAsset : null;
+    const previousValue = matchedAsset ? Number(matchedAsset['Current Value'] || 0) : null;
+    const difference = (matchedAsset && previousValue !== null) ? Math.round((closingBalance - previousValue) * 100) / 100 : null;
+
+    const accountLabel = accountDigits ? `${bank} (••${accountDigits})` : bank;
+    const cleanBankCode = bank.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const cleanDigits = accountDigits ? accountDigits.replace(/[^0-9]/g, '') : 'ACC';
+    const fingerprint = `SMS_BAL_${cleanBankCode}_${cleanDigits}_${epoch}`;
+
+    // If matched asset already has identical current value in ledger, it is marked as imported
+    const isAlreadyImported = Boolean(matchedAsset && previousValue !== null && Math.abs(closingBalance - previousValue) < 0.01);
+
+    balanceCandidates.push({
+      id: fingerprint,
+      fingerprint,
+      rawDate: epoch,
+      dateStr,
+      Date: dateStr,
+      readableDate,
+      previewSnippet: bodySnippet,
+      bank,
+      account: accountLabel,
+      accountDigits,
+      amount: closingBalance,
+      closingBalance,
+      payee: `${accountLabel} Balance Update`,
+      refNo: '',
+      type: 'Balance',
+      isTransfer: false,
+      category: 'Bank Balance',
+      beneficiary: 'Whole Family',
+      body: bodySnippet,
+      address: '',
+      isPairedVendor: false,
+      status: isAlreadyImported ? 'imported' : 'new',
+      isImported: isAlreadyImported,
+      isIgnored: false,
+      selected: false,
+      targetAssetId: matchedAsset ? (matchedAsset['Asset ID'] || '') : '',
+      targetAssetName: matchedAsset ? (matchedAsset.Name || '') : '',
+      newAssetName: matchedAsset ? matchedAsset.Name : `${bank} Savings (••${accountDigits || 'A/c'})`,
+      previousValue,
+      difference,
+      confidence: bestScore
+    });
+  }
+
+  // Sort newest first
+  balanceCandidates.sort((a, b) => b.rawDate - a.rawDate);
+
+  return balanceCandidates;
+}
+
 

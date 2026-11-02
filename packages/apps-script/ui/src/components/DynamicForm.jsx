@@ -225,7 +225,7 @@ export default function DynamicForm({
   
   if (catLower.includes('insur') || catLower.includes('lic') || catLower.includes('policy')) {
     schemaKey = 'Life Insurance / LIC';
-  } else if (catLower.includes('fd') || catLower.includes('fixed') || catLower.includes('cash')) {
+  } else if (catLower.includes('fd') || catLower.includes('fixed') || catLower.includes('cash') || catLower.includes('savings') || catLower.includes('bank')) {
     schemaKey = 'Cash/FD';
   } else if (catLower.includes('equity') || catLower.includes('stock')) {
     schemaKey = 'Equity';
@@ -1146,6 +1146,11 @@ export default function DynamicForm({
                 {field.name === 'Current Value' && (schemaKey === 'Equity' || schemaKey === 'Gold' || schemaKey === 'Mutual Funds') && (
                   <span className="text-typ-caption text-primary-accent font-medium flex items-center gap-1">
                     <Sparkles size={11} /> Auto-updates with live rates
+                  </span>
+                )}
+                {field.name === 'Current Value' && schemaKey === 'Cash/FD' && (
+                  <span className="text-typ-caption text-wealth-emerald font-medium flex items-center gap-1">
+                    <Sparkles size={11} /> Auto-updates with bank SMS sync
                   </span>
                 )}
                 {field.name === 'Current Value' && (schemaKey === 'Life Insurance / LIC' || schemaKey === 'Insurance') && (
