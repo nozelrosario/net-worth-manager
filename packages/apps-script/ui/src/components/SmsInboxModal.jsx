@@ -8,7 +8,7 @@ import {
   Edit2, SlidersHorizontal, RotateCcw, EyeOff, Search
 } from 'lucide-react';
 import { Badge } from './Badge';
-import { parseSmsXml, extractFinancialCandidate, deduplicateAndClassify, matchesSmsTextSearch } from '../utils/smsParser';
+import { parseSmsXml, extractFinancialCandidate, deduplicateAndClassify, matchesSmsTextSearch, extractAccountBalancesFromSms, isCashAsset } from '../utils/smsParser';
 
 export default function SmsInboxModal({
   isOpen,
@@ -26,6 +26,11 @@ export default function SmsInboxModal({
   const existingTransactions = data?.transactions || [];
   const existingAssets = data?.assets || [];
   const familyProfiles = data?.familyProfiles || [];
+
+  // Strictly filter cash & deposit assets so only cash accounts can be updated with balances
+  const cashAssets = useMemo(() => {
+    return (existingAssets || []).filter(isCashAsset);
+  }, [existingAssets]);
 
   const defaultFolderName = useMemo(() => {
     const s = settings.find(item => item['Setting Key'] === 'SmsDriveFolder');
@@ -80,18 +85,19 @@ export default function SmsInboxModal({
     pendingCount: 0,
     totalPendingAmount: 0,
     totalNewAmount: 0,
+    totalSpendAmount: 0,
+    totalBalanceAmount: 0,
     transfersCount: 0,
-    totalTransferAmount: 0,
     investmentsCount: 0,
-    totalInvestmentAmount: 0,
     spendsCount: 0,
+    balancesCount: 0,
     duplicatesFiltered: 0
   });
 
   // Primary Status Filter: 'new' (DEFAULT) | 'imported' | 'ignored' | 'all'
   const [statusTab, setStatusTab] = useState('new');
-  // Secondary Sub-filter for types
-  const [typeFilter, setTypeFilter] = useState('all'); // all | spends | transfers | investments | high_value
+  // Secondary Sub-filter for types: all | spends | transfers | investments | balances | high_value
+  const [typeFilter, setTypeFilter] = useState('all');
   // Free-text Search Query Filter
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -129,6 +135,9 @@ export default function SmsInboxModal({
         return;
       }
 
+      // Extract latest account closing balances for liquid cash tracking strictly matched to cash assets
+      const balances = extractAccountBalancesFromSms(rawSmsList, cashAssets);
+
       // Extract candidate transactions
       const rawCandidates = [];
       for (const sms of rawSmsList) {
@@ -141,6 +150,9 @@ export default function SmsInboxModal({
           rawCandidates.push(item);
         }
       }
+
+      // Combine balance entries directly with transactions so they reuse the same review inbox
+      rawCandidates.push(...balances);
 
       // Deduplicate and classify with existing ledger transactions and ignored registry.
       // Database cross-checking and deterministic hashes prevent duplicate entries.
@@ -167,17 +179,19 @@ export default function SmsInboxModal({
       const newItemsCount = result.stats.newCount || 0;
       const importedItemsCount = result.stats.importedCount || 0;
       const ignoredItemsCount = result.stats.ignoredCount || 0;
+      const balancesCount = result.stats.balancesCount || 0;
 
       if (newItemsCount > 0) {
+        const balNote = balancesCount > 0 ? ` (${balancesCount} bank balances)` : '';
         showMessage?.(
-          `Loaded ${newItemsCount} new actionable transactions (${importedItemsCount} already in ledger, ${ignoredItemsCount} ignored)`
+          `Loaded ${newItemsCount} new SMS entries${balNote} (${importedItemsCount} already in ledger, ${ignoredItemsCount} ignored)`
         );
       } else if (importedItemsCount > 0) {
         showMessage?.(
-          `All ${importedItemsCount} transactions in this backup are already saved in your ledger.`
+          `All ${importedItemsCount} SMS entries in this backup are already saved in your ledger.`
         );
       } else {
-        showMessage?.('No financial debit or credit transactions found in file.', true);
+        showMessage?.('No financial debit, credit, or balance notifications found in file.', true);
       }
     } catch (err) {
       console.error('Error processing SMS XML:', err);
@@ -327,7 +341,10 @@ export default function SmsInboxModal({
       newCount: Math.max(0, (prev.newCount || 0) - 1),
       pendingCount: Math.max(0, (prev.pendingCount || 0) - 1),
       ignoredCount: (prev.ignoredCount || 0) + 1,
-      totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - candidate.amount)
+      totalPendingAmount: candidate.type === 'Balance' ? prev.totalPendingAmount : Math.max(0, (prev.totalPendingAmount || 0) - candidate.amount),
+      totalSpendAmount: candidate.type === 'Spend' ? Math.max(0, (prev.totalSpendAmount || 0) - candidate.amount) : prev.totalSpendAmount,
+      balancesCount: candidate.type === 'Balance' ? Math.max(0, (prev.balancesCount || 0) - 1) : prev.balancesCount,
+      totalBalanceAmount: candidate.type === 'Balance' ? Math.max(0, (prev.totalBalanceAmount || 0) - candidate.amount) : prev.totalBalanceAmount
     }));
 
     const token = sessionStorage.getItem('nwm_session_token') || localStorage.getItem('nwm_session_token');
@@ -335,11 +352,11 @@ export default function SmsInboxModal({
       window.google.script.run
         .withSuccessHandler((res) => {
           if (res?.status === 'success') {
-            showMessage?.('Transaction marked as ignored.');
+            showMessage?.('Item marked as ignored.');
           }
         })
         .withFailureHandler((err) => {
-          console.error('Failed to ignore transaction:', err);
+          console.error('Failed to ignore item:', err);
         })
         .ignoreSmsTransactions([fp], token);
     } else {
@@ -359,7 +376,10 @@ export default function SmsInboxModal({
       newCount: (prev.newCount || 0) + 1,
       pendingCount: (prev.pendingCount || 0) + 1,
       ignoredCount: Math.max(0, (prev.ignoredCount || 0) - 1),
-      totalPendingAmount: (prev.totalPendingAmount || 0) + candidate.amount
+      totalPendingAmount: candidate.type === 'Balance' ? prev.totalPendingAmount : ((prev.totalPendingAmount || 0) + candidate.amount),
+      totalSpendAmount: candidate.type === 'Spend' ? ((prev.totalSpendAmount || 0) + candidate.amount) : prev.totalSpendAmount,
+      balancesCount: candidate.type === 'Balance' ? ((prev.balancesCount || 0) + 1) : prev.balancesCount,
+      totalBalanceAmount: candidate.type === 'Balance' ? ((prev.totalBalanceAmount || 0) + candidate.amount) : prev.totalBalanceAmount
     }));
 
     const token = sessionStorage.getItem('nwm_session_token') || localStorage.getItem('nwm_session_token');
@@ -367,11 +387,11 @@ export default function SmsInboxModal({
       window.google.script.run
         .withSuccessHandler((res) => {
           if (res?.status === 'success') {
-            showMessage?.('Transaction restored to Inbox.');
+            showMessage?.('Item restored to Inbox.');
           }
         })
         .withFailureHandler((err) => {
-          console.error('Failed to restore transaction:', err);
+          console.error('Failed to restore item:', err);
         })
         .unignoreSmsTransaction(fp, token);
     } else {
@@ -383,7 +403,7 @@ export default function SmsInboxModal({
   const handleBatchIgnore = () => {
     const targetItems = candidates.filter(c => selectedIds.has(c.id) && c.status === 'new');
     if (!targetItems || targetItems.length === 0) {
-      showMessage?.('Please select at least one pending transaction to ignore.', true);
+      showMessage?.('Please select at least one pending item to ignore.', true);
       return;
     }
 
@@ -394,46 +414,58 @@ export default function SmsInboxModal({
     setSelectedIds(new Set());
     setIgnoredHashes(prev => [...prev, ...hashesToIgnore]);
 
-    let deductedAmount = 0;
-    targetItems.forEach(t => { deductedAmount += t.amount; });
+    let deductedTxnAmount = 0;
+    let deductedBalAmount = 0;
+    let deductedBalCount = 0;
+    targetItems.forEach(t => {
+      if (t.type === 'Balance') {
+        deductedBalAmount += t.amount;
+        deductedBalCount++;
+      } else {
+        deductedTxnAmount += t.amount;
+      }
+    });
 
     setStats(prev => ({
       ...prev,
       newCount: Math.max(0, (prev.newCount || 0) - targetItems.length),
       pendingCount: Math.max(0, (prev.pendingCount || 0) - targetItems.length),
       ignoredCount: (prev.ignoredCount || 0) + targetItems.length,
-      totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - deductedAmount)
+      totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - deductedTxnAmount),
+      totalSpendAmount: Math.max(0, (prev.totalSpendAmount || 0) - deductedTxnAmount),
+      balancesCount: Math.max(0, (prev.balancesCount || 0) - deductedBalCount),
+      totalBalanceAmount: Math.max(0, (prev.totalBalanceAmount || 0) - deductedBalAmount)
     }));
 
     const token = sessionStorage.getItem('nwm_session_token') || localStorage.getItem('nwm_session_token');
     if (window.google?.script?.run) {
       window.google.script.run
         .withSuccessHandler((res) => {
-          showMessage?.(`Ignored ${targetItems.length} transactions.`);
+          showMessage?.(`Ignored ${targetItems.length} items.`);
         })
         .ignoreSmsTransactions(hashesToIgnore, token);
     } else {
-      showMessage?.(`Ignored ${targetItems.length} transactions.`);
+      showMessage?.(`Ignored ${targetItems.length} items.`);
     }
   };
 
-  // Import single transaction
+  // Import single transaction or balance update
   const handleImportSingle = (candidate) => {
     handleBatchImport([candidate]);
   };
 
-  // Batch import selected transactions
-  const handleBatchImport = (itemsToImport) => {
+  // Batch import selected transactions and/or balance updates
+  const handleBatchImport = async (itemsToImport) => {
     const isSingle = Boolean(itemsToImport && itemsToImport.length === 1);
     const targetItems = itemsToImport || candidates.filter(c => selectedIds.has(c.id) && c.status === 'new');
     if (!targetItems || targetItems.length === 0) {
-      showMessage?.('Please select at least one transaction to import.', true);
+      showMessage?.('Please select at least one item to import.', true);
       return;
     }
 
-    // Safety check: Prompt confirmation when batch importing multiple transactions
+    // Safety check: Prompt confirmation when batch importing multiple items
     if (!isSingle && targetItems.length > 1) {
-      if (!window.confirm(`Are you sure you want to import ${targetItems.length} selected transactions into your ledger?`)) {
+      if (!window.confirm(`Are you sure you want to import ${targetItems.length} selected items into your ledger?`)) {
         return;
       }
     }
@@ -441,72 +473,108 @@ export default function SmsInboxModal({
     setIsImporting(true);
     const token = sessionStorage.getItem('nwm_session_token') || localStorage.getItem('nwm_session_token');
 
-    let maxEpoch = 0;
-    // Only advance the Drive sync watermark for automated Drive scans (not manual file uploads)
-    if (!isManualFile) {
-      maxEpoch = lastProcessedEpoch;
-      targetItems.forEach(t => {
-        if (t.rawDate && t.rawDate > maxEpoch) {
-          maxEpoch = t.rawDate;
-        }
-      });
-    }
+    // Partition items into transactions and balances
+    const transactionItems = targetItems.filter(item => item.type !== 'Balance');
+    const balanceItems = targetItems.filter(item => item.type === 'Balance');
 
-    const formatted = targetItems.map(item => ({
-      'Txn ID': `TXN_SMS_${item.fingerprint}`,
-      Date: item.dateStr || item.Date || new Date().toISOString().split('T')[0],
-      Type: item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : (item.type === 'Income / Refund' ? 'Income' : 'Expense')),
-      Amount: Number(item.amount),
-      Category: item.category,
-      'Account/Card': item.account,
-      'Merchant/Description': item.payee || 'Expense',
-      Tags: `SMS Ingestion, ${item.bank}, SMS_REF:${item.fingerprint}`,
-      'Is Transfer': item.isTransfer || false,
-      Beneficiary: (item.beneficiary && item.beneficiary.trim()) ? item.beneficiary.trim() : 'Whole Family',
-      'Split JSON': '',
-      Notes: `Imported from SMS (Ref: ${item.refNo || item.fingerprint})`
-    }));
+    try {
+      if (window.google?.script?.run) {
+        // 1. Process balance updates and new asset creations
+        if (balanceItems.length > 0) {
+          const updates = balanceItems.filter(b => b.targetAssetId).map(b => ({
+            assetId: b.targetAssetId,
+            assetName: b.targetAssetName,
+            currentValue: Number(b.amount),
+            asOfDate: b.dateStr,
+            source: `SMS Ingestion (${b.bank} ${b.accountDigits ? '••' + b.accountDigits : ''})`,
+            accountDigits: b.accountDigits
+          }));
 
-    if (window.google?.script?.run) {
-      window.google.script.run
-        .withSuccessHandler((res) => {
-          setIsImporting(false);
-          if (res?.status === 'success') {
-            const importedIds = new Set(targetItems.map(t => t.id));
-            setCandidates(prev => prev.map(c => importedIds.has(c.id) ? { ...c, status: 'imported', isImported: true, selected: false } : c));
-            setSelectedIds(prev => {
-              const next = new Set(prev);
-              importedIds.forEach(id => next.delete(id));
-              return next;
+          if (updates.length > 0) {
+            await new Promise((resolve, reject) => {
+              window.google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject)
+                .batchUpdateAssetBalances(updates, token);
             });
-
-            let importedAmt = 0;
-            targetItems.forEach(t => { importedAmt += t.amount; });
-
-            setStats(prev => ({
-              ...prev,
-              newCount: Math.max(0, (prev.newCount || 0) - targetItems.length),
-              pendingCount: Math.max(0, (prev.pendingCount || 0) - targetItems.length),
-              importedCount: (prev.importedCount || 0) + targetItems.length,
-              totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - importedAmt),
-              totalNewAmount: Math.max(0, (prev.totalNewAmount || 0) - importedAmt)
-            }));
-
-            showMessage?.(`Imported ${res.importedCount} transactions!`);
-            onImportSuccess?.(formatted);
-            onRefresh?.();
-          } else {
-            showMessage?.(res?.message || 'Error importing transactions', true);
           }
-        })
-        .withFailureHandler((err) => {
-          setIsImporting(false);
-          showMessage?.('Import error: ' + err.message, true);
-        })
-        .batchImportSmsTransactions(formatted, maxEpoch, token);
-    } else {
-      setTimeout(() => {
+
+          const creations = balanceItems.filter(b => !b.targetAssetId);
+          for (const b of creations) {
+            const assetName = b.newAssetName || `${b.bank} Savings (••${b.accountDigits || 'A/c'})`;
+            const newAssetRecord = {
+              'Asset ID': '',
+              Type: 'Cash / Bank',
+              Name: assetName,
+              Category: 'Cash/FD',
+              'Sub-Type': 'Savings Account',
+              Owner: data?.userInfo?.activeEmail || 'Primary Member',
+              Status: 'Active',
+              'Acquisition Date': b.dateStr || new Date().toISOString().split('T')[0],
+              Cost: Number(b.amount),
+              'Current Value': Number(b.amount),
+              'Institution/Location': b.bank || '',
+              Identifiers: b.accountDigits ? `A/c ending ${b.accountDigits}` : '',
+              Nominee: '',
+              'Nominee %': '',
+              'Details JSON': JSON.stringify({
+                'Account Digits': b.accountDigits || '',
+                'Balance Last Synced Date': b.dateStr || new Date().toISOString().split('T')[0],
+                'Balance Source': `SMS Ingestion (${b.bank})`,
+                'Auto-updates via SMS': true,
+                'Sub-Type': 'Savings Account'
+              })
+            };
+
+            await new Promise((resolve, reject) => {
+              window.google.script.run
+                .withSuccessHandler(resolve)
+                .withFailureHandler(reject)
+                .addRecord('Assets', newAssetRecord, token);
+            });
+          }
+        }
+
+        // 2. Process transactions
+        if (transactionItems.length > 0) {
+          let maxEpoch = 0;
+          if (!isManualFile) {
+            maxEpoch = lastProcessedEpoch;
+            transactionItems.forEach(t => {
+              if (t.rawDate && t.rawDate > maxEpoch) {
+                maxEpoch = t.rawDate;
+              }
+            });
+          }
+
+          const formattedTxns = transactionItems.map(item => ({
+            'Txn ID': `TXN_SMS_${item.fingerprint}`,
+            Date: item.dateStr || item.Date || new Date().toISOString().split('T')[0],
+            Type: item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : (item.type === 'Income / Refund' ? 'Income' : 'Expense')),
+            Amount: Number(item.amount),
+            Category: item.category,
+            'Account/Card': item.account,
+            'Merchant/Description': item.payee || 'Expense',
+            Tags: `SMS Ingestion, ${item.bank}, SMS_REF:${item.fingerprint}`,
+            'Is Transfer': item.isTransfer || false,
+            Beneficiary: (item.beneficiary && item.beneficiary.trim()) ? item.beneficiary.trim() : 'Whole Family',
+            'Split JSON': '',
+            Notes: `Imported from SMS (Ref: ${item.refNo || item.fingerprint})`
+          }));
+
+          await new Promise((resolve, reject) => {
+            window.google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .batchImportSmsTransactions(formattedTxns, maxEpoch, token);
+          });
+
+          onImportSuccess?.(formattedTxns);
+        }
+
         setIsImporting(false);
+
+        // Update candidate states
         const importedIds = new Set(targetItems.map(t => t.id));
         setCandidates(prev => prev.map(c => importedIds.has(c.id) ? { ...c, status: 'imported', isImported: true, selected: false } : c));
         setSelectedIds(prev => {
@@ -515,22 +583,70 @@ export default function SmsInboxModal({
           return next;
         });
 
-        let importedAmt = 0;
-        targetItems.forEach(t => { importedAmt += t.amount; });
+        let importedTxnAmt = 0;
+        let importedBalAmt = 0;
+        targetItems.forEach(t => {
+          if (t.type === 'Balance') importedBalAmt += t.amount;
+          else importedTxnAmt += t.amount;
+        });
 
         setStats(prev => ({
           ...prev,
           newCount: Math.max(0, (prev.newCount || 0) - targetItems.length),
           pendingCount: Math.max(0, (prev.pendingCount || 0) - targetItems.length),
           importedCount: (prev.importedCount || 0) + targetItems.length,
-          totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - importedAmt),
-          totalNewAmount: Math.max(0, (prev.totalNewAmount || 0) - importedAmt)
+          totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - importedTxnAmt),
+          totalNewAmount: Math.max(0, (prev.totalNewAmount || 0) - importedTxnAmt),
+          totalSpendAmount: Math.max(0, (prev.totalSpendAmount || 0) - importedTxnAmt),
+          balancesCount: Math.max(0, (prev.balancesCount || 0) - balanceItems.length),
+          totalBalanceAmount: Math.max(0, (prev.totalBalanceAmount || 0) - importedBalAmt)
         }));
 
-        showMessage?.(`Imported ${targetItems.length} transactions! (Preview mode)`);
-        onImportSuccess?.(formatted);
+        const summaryParts = [];
+        if (transactionItems.length > 0) summaryParts.push(`${transactionItems.length} transaction(s)`);
+        if (balanceItems.length > 0) summaryParts.push(`${balanceItems.length} balance update(s)`);
+        showMessage?.(`Successfully imported ${summaryParts.join(' and ')}!`);
         onRefresh?.();
-      }, 400);
+      } else {
+        setTimeout(() => {
+          setIsImporting(false);
+          const importedIds = new Set(targetItems.map(t => t.id));
+          setCandidates(prev => prev.map(c => importedIds.has(c.id) ? { ...c, status: 'imported', isImported: true, selected: false } : c));
+          setSelectedIds(prev => {
+            const next = new Set(prev);
+            importedIds.forEach(id => next.delete(id));
+            return next;
+          });
+
+          let importedTxnAmt = 0;
+          let importedBalAmt = 0;
+          targetItems.forEach(t => {
+            if (t.type === 'Balance') importedBalAmt += t.amount;
+            else importedTxnAmt += t.amount;
+          });
+
+          setStats(prev => ({
+            ...prev,
+            newCount: Math.max(0, (prev.newCount || 0) - targetItems.length),
+            pendingCount: Math.max(0, (prev.pendingCount || 0) - targetItems.length),
+            importedCount: (prev.importedCount || 0) + targetItems.length,
+            totalPendingAmount: Math.max(0, (prev.totalPendingAmount || 0) - importedTxnAmt),
+            totalNewAmount: Math.max(0, (prev.totalNewAmount || 0) - importedTxnAmt),
+            totalSpendAmount: Math.max(0, (prev.totalSpendAmount || 0) - importedTxnAmt),
+            balancesCount: Math.max(0, (prev.balancesCount || 0) - balanceItems.length),
+            totalBalanceAmount: Math.max(0, (prev.totalBalanceAmount || 0) - importedBalAmt)
+          }));
+
+          const summaryParts = [];
+          if (transactionItems.length > 0) summaryParts.push(`${transactionItems.length} transaction(s)`);
+          if (balanceItems.length > 0) summaryParts.push(`${balanceItems.length} balance update(s)`);
+          showMessage?.(`Imported ${summaryParts.join(' and ')}! (Preview mode)`);
+          onRefresh?.();
+        }, 400);
+      }
+    } catch (err) {
+      setIsImporting(false);
+      showMessage?.('Import error: ' + err.message, true);
     }
   };
 
@@ -546,6 +662,7 @@ export default function SmsInboxModal({
       if (typeFilter === 'spends' && item.type !== 'Spend') return false;
       if (typeFilter === 'transfers' && item.type !== 'Transfer') return false;
       if (typeFilter === 'investments' && item.type !== 'Investment') return false;
+      if (typeFilter === 'balances' && item.type !== 'Balance') return false;
       if (typeFilter === 'high_value' && item.amount < 5000) return false;
 
       // 3. Free-text Search Filter
@@ -780,7 +897,7 @@ export default function SmsInboxModal({
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
-              Spends ({stats.spendsCount || stats.pendingCount} • {formatCompactVal(stats.totalPendingAmount)})
+              Spends ({stats.spendsCount || 0} • {formatCompactVal(stats.totalSpendAmount || 0)})
             </button>
             <button
               type="button"
@@ -792,7 +909,7 @@ export default function SmsInboxModal({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-bullion-amber"></span>
-              Transfers ({stats.transfersCount})
+              Transfers ({stats.transfersCount || 0})
             </button>
             <button
               type="button"
@@ -804,7 +921,19 @@ export default function SmsInboxModal({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald"></span>
-              Investments ({stats.investmentsCount})
+              Investments ({stats.investmentsCount || 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTypeFilter('balances')}
+              className={`px-2 py-0.5 rounded-full font-medium transition-all whitespace-nowrap flex items-center gap-1 ${
+                typeFilter === 'balances'
+                  ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              <Landmark size={11} className={typeFilter === 'balances' ? 'text-emerald-400' : 'text-text-muted'} />
+              Balances ({stats.balancesCount || 0})
             </button>
             <button
               type="button"
@@ -1026,6 +1155,8 @@ export default function SmsInboxModal({
                       ? 'border-l-[3px] border-l-amber-500'
                       : item.type === 'Investment'
                       ? 'border-l-[3px] border-l-emerald-500'
+                      : item.type === 'Balance'
+                      ? 'border-l-[3px] border-l-emerald-500 bg-emerald-500/[0.03]'
                       : item.type === 'Income / Refund'
                       ? 'border-l-[3px] border-l-teal-500'
                       : 'border-l-[3px] border-l-rose-500'
@@ -1077,11 +1208,19 @@ export default function SmsInboxModal({
                       >
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-typ-label font-bold text-text-primary group-hover:text-primary-accent transition-colors truncate max-w-[150px] sm:max-w-[240px]">
-                            {item.payee}
+                            {item.type === 'Balance'
+                              ? (item.targetAssetName || item.newAssetName || item.payee)
+                              : item.payee}
                           </span>
                           <span className="text-typ-caption text-text-muted bg-surface-layer2 px-1.5 py-0.2 rounded font-mono shrink-0">
                             {item.bank} {item.accountDigits ? `••${item.accountDigits}` : ''}
                           </span>
+                          {item.type === 'Balance' && (
+                            <span className="text-typ-caption text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded font-semibold shrink-0 flex items-center gap-1">
+                              <Landmark size={10} />
+                              Balance
+                            </span>
+                          )}
                           {isImportedItem && (
                             <span className="text-typ-caption text-emerald-500 bg-emerald-500/10 px-1.5 py-0.2 rounded font-semibold shrink-0">
                               ✓ Saved
@@ -1094,7 +1233,7 @@ export default function SmsInboxModal({
                           )}
                         </div>
 
-                        {/* Transaction Preview Text Snippet */}
+                        {/* Transaction / Balance Preview Text Snippet */}
                         {(item.previewSnippet || item.body) && (
                           <p className="text-typ-footnote text-text-muted/80 line-clamp-1 italic tracking-tight mt-0.5 max-w-[210px] sm:max-w-md">
                             "{item.previewSnippet || item.body}"
@@ -1105,7 +1244,13 @@ export default function SmsInboxModal({
                         <div className="flex items-center gap-1.5 text-typ-caption text-text-secondary mt-0.5">
                           <span className="text-text-muted font-mono">{item.dateStr}</span>
                           <span className="text-text-muted/60">•</span>
-                          {item.type === 'Transfer' ? (
+                          {item.type === 'Balance' ? (
+                            item.targetAssetName ? (
+                              <span className="text-emerald-400 font-medium">→ Updates: {item.targetAssetName}</span>
+                            ) : (
+                              <span className="text-bullion-amber font-medium">+ Creates: {item.newAssetName || 'New Cash Asset'}</span>
+                            )
+                          ) : item.type === 'Transfer' ? (
                             <span className="text-bullion-amber font-semibold">Transfer</span>
                           ) : item.type === 'Investment' ? (
                             <span className="text-wealth-emerald font-semibold">Investment</span>
@@ -1124,17 +1269,27 @@ export default function SmsInboxModal({
 
                     {/* Amount + Status-Specific Actions */}
                     <div className="flex items-center gap-2 shrink-0">
-                      <div
-                        className={`text-typ-body-sm sm:text-typ-body font-bold num-tabular text-right ${
-                          item.type === 'Transfer'
-                            ? 'text-bullion-amber'
-                            : item.type === 'Investment' || item.type === 'Income / Refund'
-                            ? 'text-wealth-emerald'
-                            : 'text-liability-rose'
-                        }`}
-                      >
-                        {item.type === 'Income / Refund' ? '+' : item.type === 'Transfer' ? '' : '-'}
-                        {formatCurrency ? formatCurrency(item.amount) : `₹${item.amount.toLocaleString('en-IN')}`}
+                      <div className="text-right">
+                        <div
+                          className={`text-typ-body-sm sm:text-typ-body font-bold num-tabular ${
+                            item.type === 'Balance'
+                              ? 'text-emerald-400'
+                              : item.type === 'Transfer'
+                              ? 'text-bullion-amber'
+                              : item.type === 'Investment' || item.type === 'Income / Refund'
+                              ? 'text-wealth-emerald'
+                              : 'text-liability-rose'
+                          }`}
+                        >
+                          {item.type === 'Income / Refund' ? '+' : item.type === 'Balance' || item.type === 'Transfer' ? '' : '-'}
+                          {formatCurrency ? formatCurrency(item.amount) : `₹${item.amount.toLocaleString('en-IN')}`}
+                        </div>
+
+                        {item.type === 'Balance' && item.difference !== null && item.difference !== 0 && (
+                          <div className={`text-typ-micro font-medium tabular-nums ${item.difference > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                            {item.difference > 0 ? '+' : ''}{formatCurrency(item.difference)} vs ledger
+                          </div>
+                        )}
                       </div>
 
                       {item.status === 'new' ? (
@@ -1143,7 +1298,7 @@ export default function SmsInboxModal({
                             type="button"
                             onClick={() => handleImportSingle(item)}
                             className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 flex items-center justify-center transition-all active:scale-90"
-                            title="Confirm & Import"
+                            title={item.type === 'Balance' ? (item.targetAssetId ? 'Update Balance' : 'Create Asset') : 'Confirm & Import'}
                           >
                             <Check size={14} />
                           </button>
@@ -1216,7 +1371,7 @@ export default function SmsInboxModal({
                               updateCandidate(item.id, {
                                 type: 'Spend',
                                 isTransfer: false,
-                                category: item.category === 'Internal Transfer' ? (expenseCategories[0] || 'Other') : item.category
+                                category: item.category === 'Internal Transfer' || item.category === 'Bank Balance' ? (expenseCategories[0] || 'Other') : item.category
                               })
                             }
                             className={`flex-1 py-1 rounded-md transition-all ${
@@ -1261,173 +1416,424 @@ export default function SmsInboxModal({
                           >
                             Investment
                           </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateCandidate(item.id, {
+                                type: 'Balance',
+                                isTransfer: false,
+                                category: 'Bank Balance',
+                                newAssetName: item.newAssetName || `${item.bank || 'Bank'} Savings (••${item.accountDigits || 'A/c'})`
+                              })
+                            }
+                            className={`flex-1 py-1 rounded-md transition-all ${
+                              item.type === 'Balance'
+                                ? 'bg-surface-layer1 shadow-xs text-emerald-400 font-bold'
+                                : 'text-text-muted hover:text-text-primary'
+                            }`}
+                          >
+                            ⚡ Balance
+                          </button>
                         </div>
                       )}
 
-                      {/* Payee, Date, Category, Account & Beneficiary Inputs */}
-                      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-typ-footnote">
-                        <div>
-                          <label className="text-typ-caption text-text-muted block mb-0.5">Payee / Merchant:</label>
-                          <input
-                            type="text"
-                            value={item.payee}
-                            disabled={item.status !== 'new'}
-                            onChange={(e) => updateCandidate(item.id, { payee: e.target.value })}
-                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
-                          />
-                        </div>
+                      {/* If Balance type, show Cash-only target asset selector and inline creator */}
+                      {item.type === 'Balance' ? (
+                        <div className="space-y-3">
+                          {/* Target Cash Asset Selector */}
+                          <div className="p-2.5 rounded-xl bg-surface-layer2/70 border border-emerald-500/20 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-typ-caption font-bold text-text-primary flex items-center gap-1.5">
+                                <Landmark size={13} className="text-emerald-400" />
+                                Target Cash / Bank Asset:
+                              </label>
+                              <span className="text-typ-micro text-text-muted">
+                                Strictly Cash & Savings accounts only
+                              </span>
+                            </div>
 
-                        <div>
-                          <label className="text-typ-caption text-text-muted block mb-0.5">Date:</label>
-                          <input
-                            type="date"
-                            value={item.dateStr || ''}
-                            disabled={item.status !== 'new'}
-                            onChange={(e) => updateCandidate(item.id, { dateStr: e.target.value, Date: e.target.value })}
-                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-mono focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
-                          />
-                        </div>
+                            <select
+                              value={item.targetAssetId || ''}
+                              disabled={item.status !== 'new'}
+                              onChange={(e) => {
+                                const selId = e.target.value;
+                                const matched = cashAssets.find(a => a['Asset ID'] === selId);
+                                if (matched) {
+                                  const prevVal = Number(matched['Current Value'] || 0);
+                                  const diff = Math.round((Number(item.amount) - prevVal) * 100) / 100;
+                                  updateCandidate(item.id, {
+                                    targetAssetId: matched['Asset ID'],
+                                    targetAssetName: matched.Name,
+                                    previousValue: prevVal,
+                                    difference: diff
+                                  });
+                                } else {
+                                  updateCandidate(item.id, {
+                                    targetAssetId: '',
+                                    targetAssetName: '',
+                                    previousValue: null,
+                                    difference: null
+                                  });
+                                }
+                              }}
+                              className="w-full bg-surface-layer1 border border-border-subtle focus:border-emerald-500 rounded-lg py-1.5 px-2.5 text-text-primary font-medium text-typ-footnote focus:outline-none"
+                            >
+                              <option value="">➕ Create New Cash / Bank Asset...</option>
+                              {cashAssets.length > 0 && (
+                                <optgroup label="Existing Cash & Savings Accounts">
+                                  {cashAssets.map(asset => (
+                                    <option key={asset['Asset ID']} value={asset['Asset ID']}>
+                                      {asset.Name} ({formatCurrency(asset['Current Value'])})
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
 
-                        <div>
-                          <label className="text-typ-caption text-text-muted block mb-0.5">Category:</label>
-                          <select
-                            value={item.category}
-                            disabled={item.status !== 'new'}
-                            onChange={(e) => updateCandidate(item.id, { category: e.target.value })}
-                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
-                          >
-                            {/* If current candidate category is not yet in expenseCategories (e.g. from SMS parser), preserve it as an option */}
-                            {item.category && !expenseCategories.includes(item.category) && (
-                              <option key={item.category} value={item.category}>
-                                {item.category}
-                              </option>
+                            {/* Info banner depending on whether an asset is selected or creating new */}
+                            {item.targetAssetId ? (
+                              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-typ-footnote flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="text-typ-label font-bold text-text-primary truncate">
+                                    {item.targetAssetName}
+                                  </div>
+                                  <div className="text-typ-caption text-text-muted">
+                                    Current ledger: <span className="font-semibold text-text-primary tabular-nums">{formatCurrency(item.previousValue)}</span>
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <div className="text-typ-label font-bold text-emerald-400 tabular-nums">
+                                    New: {formatCurrency(item.amount)}
+                                  </div>
+                                  {item.difference !== null && item.difference !== 0 && (
+                                    <div className={`text-typ-micro font-semibold tabular-nums ${item.difference > 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
+                                      {item.difference > 0 ? '+' : ''}{formatCurrency(item.difference)} delta
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-typ-caption text-text-secondary flex items-start gap-1.5">
+                                <span className="text-amber-500 mt-0.5">ℹ️</span>
+                                <span>
+                                  No existing cash asset linked. Enter details below to create a new <strong>Savings Account</strong> entry in your Assets ledger.
+                                </span>
+                              </div>
                             )}
-                            {expenseCategories.map((cat) => (
-                              <option key={cat} value={cat}>
-                                {cat}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-typ-caption text-text-muted block mb-0.5">Asset Account:</label>
-                          <select
-                            value={item.account}
-                            disabled={item.status !== 'new'}
-                            onChange={(e) => updateCandidate(item.id, { account: e.target.value })}
-                            className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
-                          >
-                            <option value={item.account}>{item.account}</option>
-                            {existingAssets.map((asset) => (
-                              <option key={asset['Asset ID']} value={asset.Name}>
-                                {asset.Name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-0.5">
-                            <label className="text-typ-caption text-text-muted block">For Whom:</label>
-                            <span className="text-typ-micro text-text-muted">
-                              {(() => {
-                                const raw = String(item.beneficiary || '').trim();
-                                if (!raw || raw === 'Whole Family') return 'Whole Family';
-                                const count = raw.split(',').filter(Boolean).length;
-                                return count === 1 ? '1 member' : `Split ${count} ways`;
-                              })()}
-                            </span>
                           </div>
-                          <div className="flex flex-wrap gap-1 p-1 bg-surface-layer2 border border-border-subtle rounded-lg">
-                            {(() => {
-                              const raw = String(item.beneficiary || '').trim();
-                              const selectedBens = (!raw || raw === 'Whole Family') ? [] : raw.split(',').map(s => s.trim()).filter(Boolean);
-                              return (
-                                <>
-                                  <button
-                                    type="button"
-                                    disabled={item.status !== 'new'}
-                                    onClick={() => updateCandidate(item.id, { beneficiary: 'Whole Family' })}
-                                    className={`px-2 py-0.5 rounded text-typ-micro font-medium transition-all ${
-                                      selectedBens.length === 0
-                                        ? 'bg-primary-accent text-white font-semibold'
-                                        : 'bg-surface-layer1 text-text-secondary hover:text-text-primary'
-                                    }`}
-                                  >
-                                    All
-                                  </button>
-                                  {familyProfiles.map((profile) => {
-                                    const isSel = selectedBens.includes(profile.Name);
-                                    return (
+
+                          {/* Form fields: If targetAssetId is not selected, show fields for new asset; otherwise show as-of date and balance confirmation */}
+                          {!item.targetAssetId ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-typ-footnote bg-surface-layer2/40 p-2.5 rounded-xl border border-border-subtle">
+                              <div className="sm:col-span-2">
+                                <label className="text-typ-caption text-text-muted block mb-0.5 font-medium">
+                                  New Asset Name:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={item.newAssetName || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => updateCandidate(item.id, { newAssetName: e.target.value })}
+                                  placeholder="e.g. HDFC Salary Account, SBI Savings"
+                                  className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2.5 py-1 text-text-primary font-medium focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-typ-caption text-text-muted block mb-0.5 font-medium">
+                                  Bank / Institution:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={item.bank || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => updateCandidate(item.id, { bank: e.target.value })}
+                                  placeholder="e.g. HDFC Bank, SBI"
+                                  className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2.5 py-1 text-text-primary font-medium focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-typ-caption text-text-muted block mb-0.5 font-medium">
+                                  Account Last Digits:
+                                </label>
+                                <input
+                                  type="text"
+                                  value={item.accountDigits || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => updateCandidate(item.id, { accountDigits: e.target.value })}
+                                  placeholder="e.g. 7735"
+                                  className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2.5 py-1 text-text-primary font-mono focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-typ-caption text-text-muted block mb-0.5 font-medium">
+                                  Balance Date:
+                                </label>
+                                <input
+                                  type="date"
+                                  value={item.dateStr || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => updateCandidate(item.id, { dateStr: e.target.value, Date: e.target.value })}
+                                  className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2.5 py-1 text-text-primary font-mono focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-typ-caption text-text-muted block mb-0.5 font-medium">
+                                  Opening Balance (₹):
+                                </label>
+                                <input
+                                  type="number"
+                                  value={item.amount || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => updateCandidate(item.id, { amount: Number(e.target.value), closingBalance: Number(e.target.value) })}
+                                  className="w-full bg-surface-layer1 border border-border-subtle rounded-lg px-2.5 py-1 text-text-primary font-bold tabular-nums focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-typ-footnote">
+                              <div>
+                                <label className="text-typ-caption text-text-muted block mb-0.5">As-Of Date:</label>
+                                <input
+                                  type="date"
+                                  value={item.dateStr || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => updateCandidate(item.id, { dateStr: e.target.value, Date: e.target.value })}
+                                  className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-mono focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-typ-caption text-text-muted block mb-0.5">New Balance (₹):</label>
+                                <input
+                                  type="number"
+                                  value={item.amount || ''}
+                                  disabled={item.status !== 'new'}
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    const prev = item.previousValue !== null ? item.previousValue : 0;
+                                    updateCandidate(item.id, {
+                                      amount: val,
+                                      closingBalance: val,
+                                      difference: Math.round((val - prev) * 100) / 100
+                                    });
+                                  }}
+                                  className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-bold tabular-nums focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Fingerprint & Raw SMS Snippet Toggle */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-typ-caption text-text-muted">
+                              <span className="font-mono truncate max-w-[280px]">ID: {item.fingerprint}</span>
+                              <button
+                                type="button"
+                                onClick={() => setShowRawSmsId(isRawOpen ? null : item.id)}
+                                className="text-text-muted hover:text-emerald-400 flex items-center gap-1"
+                              >
+                                <ChevronRight size={11} className={`transition-transform ${isRawOpen ? 'rotate-90' : ''}`} />
+                                <span>{isRawOpen ? 'Hide raw message' : 'View raw SMS text'}</span>
+                              </button>
+                            </div>
+                            {isRawOpen && (
+                              <div className="mt-1 p-2 rounded-lg bg-surface-layer2 font-mono text-typ-micro text-text-secondary leading-relaxed border border-border-subtle/60 select-text">
+                                {item.body}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Save / Ingest Button for Balance */}
+                          {item.status === 'new' && (
+                            <div className="flex items-center justify-between pt-2 border-t border-border-subtle/50">
+                              <span className="text-typ-micro text-text-muted">
+                                {item.targetAssetId
+                                  ? `Will update ${item.targetAssetName} balance to ${formatCurrency(item.amount)}`
+                                  : `Will create new Cash asset "${item.newAssetName || item.bank + ' Savings'}"`}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={isImporting}
+                                onClick={() => handleImportSingle(item)}
+                                className="py-1 px-3.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-typ-footnote flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
+                              >
+                                <Check size={12} />
+                                <span>{item.targetAssetId ? 'Update Asset Balance' : 'Create Asset & Ingest Balance'}</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          {/* Payee, Date, Category, Account & Beneficiary Inputs */}
+                          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-typ-footnote">
+                            <div>
+                              <label className="text-typ-caption text-text-muted block mb-0.5">Payee / Merchant:</label>
+                              <input
+                                type="text"
+                                value={item.payee}
+                                disabled={item.status !== 'new'}
+                                onChange={(e) => updateCandidate(item.id, { payee: e.target.value })}
+                                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-typ-caption text-text-muted block mb-0.5">Date:</label>
+                              <input
+                                type="date"
+                                value={item.dateStr || ''}
+                                disabled={item.status !== 'new'}
+                                onChange={(e) => updateCandidate(item.id, { dateStr: e.target.value, Date: e.target.value })}
+                                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg px-2 py-1 text-text-primary font-mono focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-typ-caption text-text-muted block mb-0.5">Category:</label>
+                              <select
+                                value={item.category}
+                                disabled={item.status !== 'new'}
+                                onChange={(e) => updateCandidate(item.id, { category: e.target.value })}
+                                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
+                              >
+                                {/* If current candidate category is not yet in expenseCategories (e.g. from SMS parser), preserve it as an option */}
+                                {item.category && !expenseCategories.includes(item.category) && (
+                                  <option key={item.category} value={item.category}>
+                                    {item.category}
+                                  </option>
+                                )}
+                                {expenseCategories.map((cat) => (
+                                  <option key={cat} value={cat}>
+                                    {cat}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="text-typ-caption text-text-muted block mb-0.5">Asset Account:</label>
+                              <select
+                                value={item.account}
+                                disabled={item.status !== 'new'}
+                                onChange={(e) => updateCandidate(item.id, { account: e.target.value })}
+                                className="w-full bg-surface-layer2 border border-border-subtle rounded-lg py-1 px-2 text-text-primary font-medium focus:ring-1 focus:ring-primary-accent disabled:opacity-60"
+                              >
+                                <option value={item.account}>{item.account}</option>
+                                {existingAssets.map((asset) => (
+                                  <option key={asset['Asset ID']} value={asset.Name}>
+                                    {asset.Name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-0.5">
+                                <label className="text-typ-caption text-text-muted block">For Whom:</label>
+                                <span className="text-typ-micro text-text-muted">
+                                  {(() => {
+                                    const raw = String(item.beneficiary || '').trim();
+                                    if (!raw || raw === 'Whole Family') return 'Whole Family';
+                                    const count = raw.split(',').filter(Boolean).length;
+                                    return count === 1 ? '1 member' : `Split ${count} ways`;
+                                  })()}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1 p-1 bg-surface-layer2 border border-border-subtle rounded-lg">
+                                {(() => {
+                                  const raw = String(item.beneficiary || '').trim();
+                                  const selectedBens = (!raw || raw === 'Whole Family') ? [] : raw.split(',').map(s => s.trim()).filter(Boolean);
+                                  return (
+                                    <>
                                       <button
-                                        key={profile.Name || profile['Profile ID']}
                                         type="button"
                                         disabled={item.status !== 'new'}
-                                        onClick={() => {
-                                          let next;
-                                          if (isSel) {
-                                            next = selectedBens.filter(n => n !== profile.Name);
-                                          } else {
-                                            next = [...selectedBens, profile.Name];
-                                          }
-                                          updateCandidate(item.id, {
-                                            beneficiary: next.length > 0 ? next.join(', ') : 'Whole Family'
-                                          });
-                                        }}
+                                        onClick={() => updateCandidate(item.id, { beneficiary: 'Whole Family' })}
                                         className={`px-2 py-0.5 rounded text-typ-micro font-medium transition-all ${
-                                          isSel
+                                          selectedBens.length === 0
                                             ? 'bg-primary-accent text-white font-semibold'
                                             : 'bg-surface-layer1 text-text-secondary hover:text-text-primary'
                                         }`}
                                       >
-                                        {profile.Name}
+                                        All
                                       </button>
-                                    );
-                                  })}
-                                </>
-                              );
-                            })()}
+                                      {familyProfiles.map((profile) => {
+                                        const isSel = selectedBens.includes(profile.Name);
+                                        return (
+                                          <button
+                                            key={profile.Name || profile['Profile ID']}
+                                            type="button"
+                                            disabled={item.status !== 'new'}
+                                            onClick={() => {
+                                              let next;
+                                              if (isSel) {
+                                                next = selectedBens.filter(n => n !== profile.Name);
+                                              } else {
+                                                next = [...selectedBens, profile.Name];
+                                              }
+                                              updateCandidate(item.id, {
+                                                beneficiary: next.length > 0 ? next.join(', ') : 'Whole Family'
+                                              });
+                                            }}
+                                            className={`px-2 py-0.5 rounded text-typ-micro font-medium transition-all ${
+                                              isSel
+                                                ? 'bg-primary-accent text-white font-semibold'
+                                                : 'bg-surface-layer1 text-text-secondary hover:text-text-primary'
+                                            }`}
+                                          >
+                                            {profile.Name}
+                                          </button>
+                                        );
+                                      })}
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
 
-                      {/* Fingerprint & Raw SMS Snippet Toggle */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-typ-caption text-text-muted">
-                          <span className="font-mono truncate max-w-[280px]">ID: {item.fingerprint}</span>
-                          <button
-                            type="button"
-                            onClick={() => setShowRawSmsId(isRawOpen ? null : item.id)}
-                            className="text-text-muted hover:text-primary-accent flex items-center gap-1"
-                          >
-                            <ChevronRight size={11} className={`transition-transform ${isRawOpen ? 'rotate-90' : ''}`} />
-                            <span>{isRawOpen ? 'Hide raw message' : 'View raw SMS text'}</span>
-                          </button>
-                        </div>
-                        {isRawOpen && (
-                          <div className="mt-1 p-2 rounded-lg bg-surface-layer2 font-mono text-typ-micro text-text-secondary leading-relaxed border border-border-subtle/60 select-text">
-                            {item.body}
+                          {/* Fingerprint & Raw SMS Snippet Toggle */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-typ-caption text-text-muted">
+                              <span className="font-mono truncate max-w-[280px]">ID: {item.fingerprint}</span>
+                              <button
+                                type="button"
+                                onClick={() => setShowRawSmsId(isRawOpen ? null : item.id)}
+                                className="text-text-muted hover:text-primary-accent flex items-center gap-1"
+                              >
+                                <ChevronRight size={11} className={`transition-transform ${isRawOpen ? 'rotate-90' : ''}`} />
+                                <span>{isRawOpen ? 'Hide raw message' : 'View raw SMS text'}</span>
+                              </button>
+                            </div>
+                            {isRawOpen && (
+                              <div className="mt-1 p-2 rounded-lg bg-surface-layer2 font-mono text-typ-micro text-text-secondary leading-relaxed border border-border-subtle/60 select-text">
+                                {item.body}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      {/* Save & Import Button in Expanded View */}
-                      {item.status === 'new' && (
-                        <div className="flex items-center justify-between pt-2 border-t border-border-subtle/50">
-                          <span className="text-typ-micro text-text-muted">
-                            Will record as <span className="font-semibold text-text-primary">{item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : 'Expense')}</span>
-                          </span>
-                          <button
-                            type="button"
-                            disabled={isImporting}
-                            onClick={() => handleImportSingle(item)}
-                            className="py-1 px-3 rounded-lg bg-primary-accent hover:opacity-95 text-white font-semibold text-typ-footnote flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
-                          >
-                            <Check size={12} />
-                            <span>Save & Import Transaction</span>
-                          </button>
-                        </div>
+                          {/* Save & Import Button in Expanded View */}
+                          {item.status === 'new' && (
+                            <div className="flex items-center justify-between pt-2 border-t border-border-subtle/50">
+                              <span className="text-typ-micro text-text-muted">
+                                Will record as <span className="font-semibold text-text-primary">{item.type === 'Transfer' ? 'Transfer' : (item.type === 'Investment' ? 'Investment' : 'Expense')}</span>
+                              </span>
+                              <button
+                                type="button"
+                                disabled={isImporting}
+                                onClick={() => handleImportSingle(item)}
+                                className="py-1 px-3 rounded-lg bg-primary-accent hover:opacity-95 text-white font-semibold text-typ-footnote flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
+                              >
+                                <Check size={12} />
+                                <span>Save & Import Transaction</span>
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
