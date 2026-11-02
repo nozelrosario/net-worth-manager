@@ -441,14 +441,6 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
           <button 
             type="button"
-            onClick={() => setShowApiKeyModal(true)} 
-            title="Gemini AI API Key Settings"
-            className="p-1.5 rounded-lg text-text-secondary hover:text-wealth-emerald bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle shadow-xs transition-all active:scale-95 shrink-0"
-          >
-            <Key size={16} />
-          </button>
-          <button 
-            type="button"
             onClick={() => setShowToolsModal(true)} 
             title="Portfolio Actions & Hubs"
             className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-layer1 hover:bg-surface-layer2 border border-border-subtle shadow-xs transition-all active:scale-95 shrink-0"
