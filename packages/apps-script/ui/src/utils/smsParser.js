@@ -235,40 +235,72 @@ export function detectAccountDigits(body = '') {
 export function extractClosingBalance(body = '') {
   if (!body || typeof body !== 'string') return null;
 
-  // Guard against non-cash balances & debt/liability statements
+  // Guard against non-cash balances & debt/liability/broker/telecom statements
   if (
     /balance\s+due/i.test(body) ||
     /balance\s+sum\s+insured/i.test(body) ||
-    /securities\s+balance/i.test(body) ||
+    /current\s+balance\s+si/i.test(body) ||
+    /securities\s*bal/i.test(body) ||
+    /stock\s*broker/i.test(body) ||
+    /reported\s+your\s+fund\s+bal/i.test(body) ||
+    /fund\s+bal(?:ance)?\s+(?:is\s+)?(?:rs|inr)/i.test(body) ||
     /total\s+os\s+bal/i.test(body) ||
     /total\s+outstanding/i.test(body) ||
     /minimum\s+balance/i.test(body) ||
-    /interest\s+balance/i.test(body)
+    /interest\s+balance/i.test(body) ||
+    /balance\s+transfer/i.test(body) ||
+    /tata\s*(?:sky|play)/i.test(body) ||
+    /callcost/i.test(body) ||
+    /pack\s+valid/i.test(body) ||
+    /talktime/i.test(body) ||
+    /data\s+bal/i.test(body)
   ) {
     return null;
   }
 
+  const cleanAndValidate = (raw, fullBody) => {
+    if (!raw) return null;
+    const clean = raw.replace(/,/g, '').trim();
+    const num = parseFloat(clean);
+    if (isNaN(num) || num < 0) return null;
+
+    // Safety guard against false positive date day match:
+    // If num is an integer between 1 and 31, verify it does not match a date pattern in the body
+    if (Number.isInteger(num) && num >= 1 && num <= 31) {
+      const dayStr = String(num);
+      const dayPadded = num < 10 ? '0' + num : dayStr;
+      const dateCheck = new RegExp('(?:on|dated?|at|yesterday:?)\\s*(?:' + dayStr + '|' + dayPadded + ')(?:[-/]|th|st|nd|rd|\\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))', 'i');
+      if (dateCheck.test(fullBody)) {
+        return null;
+      }
+    }
+
+    return num;
+  };
+
   const patterns = [
-    // 1. "Avail Bal in A/c ... is INR 45,230.50"
-    /(?:Avl|Available|Avail|Clear)\s*bal(?:ance)?\s+(?:in|for|of)\s+[A-Za-z0-9\s/.*#-]+?\s*(?:is|:)\s*(?:INR|Rs\.?|₹)?\s*([0-9,]+\.?[0-9]*)/i,
-    // 2. "Avl bal:INR 44,86,330.97", "Avl bal: INR 44,86,330.97", "Avl Cafeteria Card A/c bal is Rs.64.66"
-    /(?:Avl|Available|Avail|Clear)\s*(?:A\/c\s*)?(?:[A-Za-z\s{}/.]*?)?\s*bal(?:ance)?(?:\s*is)?\s*:?\s*(?:INR|Rs\.?|₹)?\s*([0-9,]+\.?[0-9]*)/i,
-    // 3. "Available Balance Rs.37939"
-    /(?:Available|Avail)\s+Balance\s*:?\s*(?:INR|Rs\.?|₹)?\s*([0-9,]+\.?[0-9]*)/i,
-    // 4. "Bal: 292527.56" or "Bal INR 85,000.00"
-    /\bBal(?:\s*is)?\s*(?::\s*|\s+(?:INR|Rs\.?|₹)\s*)([0-9,]+\.?[0-9]*)/i,
-    // 5. "Updated Paytm Bal: Paytm Wallet- Rs 520"
-    /Updated\s+[A-Za-z\s]*Bal\s*:\s*[A-Za-z\s-]*\s*(?:INR|Rs\.?|₹)?\s*([0-9,]+\.?[0-9]*)/i,
-    // 6. "Total Avail.bal INR 45,000.00"
-    /Total\s+Avail\.?\s*bal\s*:?\s*(?:INR|Rs\.?|₹)?\s*([0-9,]+\.?[0-9]*)/i
+    // 1. "Available Bal in HDFC Bank A/c XX5489 as on yesterday:15-OCT-26 is INR 24,49,310.15"
+    //    or "Avl Cafeteria Card A/c bal is Rs.64.66" or "Account balance is Rs.117935.65"
+    /(?:Avl|Available|Avail|Clear|Account|Savings\s+A\/c|Total\s+Avail\.?)\s*(?:[A-Za-z\s{}/]*)?\s*bal(?:ance)?[^.]*?\bis\s+(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i,
+
+    // 2. "Avl bal:INR 44,86,330.97", "Clear Bal: Rs 1,12,450.00", "Available Balance Rs.37939", "Avl Bal Rs 8,336.01"
+    /(?:Avl|Available|Avail|Clear|Total\s+Avail\.?)\s*(?:A\/c\s*)?(?:[A-Za-z\s{}/.]*?)?\s*bal(?:ance)?(?:\s*is)?\s*[:=]?\s*(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i,
+
+    // 3. "A/c Balance = Rs.117964.16" or "Bal is INR 12,450.50" or "Bal INR 85,000.00"
+    /\bBal(?:ance)?(?:\s*is)?\s*[:=]?\s*(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i,
+
+    // 4. "Updated Paytm Bal: Paytm Wallet- Rs 520", "Updated Balance: Paytm Wallet- Rs 7.5"
+    /Updated\s+(?:Paytm\s+)?Bal(?:ance)?\s*:\s*[A-Za-z\s-]*\s*(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+
+    // 5. Without currency symbol: "Bal: 292527.56" or "Avl bal: 5720864.05"
+    /(?:Avl\s+bal|Bal)\s*:\s*([\d,]+(?:\.\d{1,2})?)(?![-/]\s*(?:\d|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i
   ];
 
   for (const pat of patterns) {
     const m = body.match(pat);
     if (m && m[1]) {
-      const clean = m[1].replace(/,/g, '').trim();
-      const num = parseFloat(clean);
-      if (!isNaN(num) && num >= 0) return num;
+      const val = cleanAndValidate(m[1], body);
+      if (val !== null) return val;
     }
   }
 
