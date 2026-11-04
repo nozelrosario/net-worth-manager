@@ -508,12 +508,35 @@ ${cashAdvice}`;
                   {formatCurrency(simulation.netWorth)}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {/* Maximum Overweight Segment Pill */}
                   {simulation.maxOverweight && (
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-liability-rose/10 border border-liability-rose/25 text-liability-rose text-typ-caption font-medium">
                       <AlertTriangle size={11} />
                       <span>+{simulation.maxOverweight.drift.toFixed(1)}% {simulation.maxOverweight.name} Overweight</span>
                     </div>
                   )}
+
+                  {/* Cash Drift Pill */}
+                  {simulation.cashItem && simulation.cashItem.status === 'overweight' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
+                      <TrendingUp size={11} />
+                      <span>+{simulation.cashItem.driftPct}% Cash Drift</span>
+                    </div>
+                  )}
+                  {simulation.cashItem && simulation.cashItem.status === 'underweight' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-400 text-typ-caption font-medium">
+                      <TrendingDown size={11} />
+                      <span>{simulation.cashItem.driftPct}% Cash Shortfall</span>
+                    </div>
+                  )}
+                  {simulation.cashItem && simulation.cashItem.status === 'aligned' && simulation.cashItem.currentValue > 0 && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wealth-emerald/10 border border-wealth-emerald/25 text-wealth-emerald text-typ-caption font-medium">
+                      <CheckCircle2 size={11} />
+                      <span>Cash Aligned ({simulation.cashItem.targetPct}%)</span>
+                    </div>
+                  )}
+
+                  {/* Cash Drag Pill */}
                   {cashDrag.excessCashDrag > 0 && (
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
                       <Flame size={11} />
@@ -530,7 +553,13 @@ ${cashAdvice}`;
               </div>
 
               {/* Alignment Score Gauge Dial (Refined non-overflowing circle with clean status badge) */}
-              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div 
+                className="flex flex-col items-center gap-1 flex-shrink-0"
+                title={`Portfolio Alignment Health Score: ${simulation.alignmentScore}/100 against ${selectedProfile} risk profile target`}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                  Health Score
+                </span>
                 <div className={`relative flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full bg-surface-layer2/90 border-2 transition-all ${
                   simulation.alignmentScore >= 80 
                     ? 'border-wealth-emerald/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
@@ -761,12 +790,12 @@ ${cashAdvice}`;
                       {/* Status Tag */}
                       {isUnder && (
                         <Badge variant="sky" size="xs">
-                          {item.currentPct - item.targetPct}% Underweight
+                          {Math.abs(item.currentPct - item.targetPct).toFixed(1)}% Underweight
                         </Badge>
                       )}
                       {isOver && (
                         <Badge variant="rose" size="xs">
-                          +{item.currentPct - item.targetPct}% Overweight
+                          +{Math.abs(item.currentPct - item.targetPct).toFixed(1)}% Overweight
                         </Badge>
                       )}
                       {!isUnder && !isOver && (

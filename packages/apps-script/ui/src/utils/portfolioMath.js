@@ -137,52 +137,184 @@ export function parseNumeric(val, fallback = 0) {
 /**
  * Normalizes user-entered category strings to canonical portfolio asset categories.
  */
-export function normalizeCategoryName(category = '') {
-  const cat = String(category || '').trim();
-  const lower = cat.toLowerCase();
-  
+/**
+ * Normalizes user-entered category strings to canonical portfolio asset categories.
+ * Resilient to variations like 'Bank Account', 'Savings Account', 'Cash / Bank', 'FD', 'RD', etc.
+ */
+export function normalizeCategoryName(category = '', asset = null) {
+  let cat = String(category || '').trim();
+  let lower = cat.toLowerCase();
+
+  // If category is blank or generic, inspect asset metadata if provided
+  if (!cat || lower === 'asset' || lower === 'other' || lower === 'undefined') {
+    if (asset) {
+      const typeStr = String(asset.Type || '').toLowerCase();
+      let subTypeStr = '';
+      try {
+        const det = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON'] || '{}') : (asset['Details JSON'] || {});
+        subTypeStr = String(det['Sub-Type'] || asset['Sub-Type'] || '').toLowerCase();
+      } catch (e) {
+        subTypeStr = String(asset['Sub-Type'] || '').toLowerCase();
+      }
+
+      if (
+        typeStr.includes('cash') || 
+        typeStr.includes('bank') || 
+        subTypeStr.includes('savings') || 
+        subTypeStr.includes('deposit') ||
+        subTypeStr.includes('fd') ||
+        subTypeStr.includes('rd')
+      ) {
+        return 'Cash/FD';
+      }
+      if (typeStr.includes('equity') || typeStr.includes('stock')) return 'Equity';
+      if (typeStr.includes('mutual fund') || typeStr.includes('fund')) return 'Mutual Funds';
+      if (typeStr.includes('gold') || typeStr.includes('bullion')) return 'Gold';
+      if (typeStr.includes('real estate') || typeStr.includes('property')) return 'Real Estate';
+      if (typeStr.includes('retire') || typeStr.includes('pension')) return 'Retirement & Pension';
+      if (typeStr.includes('liabilit') || typeStr.includes('loan')) return 'Liabilities';
+    }
+  }
+
+  // Liabilities / Loans check first to avoid debt being categorized as cash
+  if (
+    lower.includes('liabilit') ||
+    lower.includes('loan') ||
+    lower.includes('debt') ||
+    lower.includes('credit card') ||
+    lower.includes('mortgage') ||
+    lower.includes('borrow')
+  ) {
+    return 'Liabilities';
+  }
+
+  // Cash / Bank / Fixed Deposits / Liquid Funds
   if (
     lower === 'cash/fd' ||
     lower === 'cash / fd' ||
     lower === 'cash' ||
+    lower === 'cash & bank' ||
+    lower === 'cash / bank' ||
     lower === 'bank' ||
+    lower === 'bank account' ||
+    lower === 'bank accounts' ||
     lower === 'savings' ||
-    lower.includes('fixed deposit') ||
-    lower.includes('cash & bank') ||
-    lower.includes('cash in hand') ||
-    lower.includes('deposit')
+    lower === 'savings account' ||
+    lower === 'savings accounts' ||
+    lower === 'fd' ||
+    lower === 'fds' ||
+    lower === 'rd' ||
+    lower === 'rds' ||
+    lower === 'fixed deposit' ||
+    lower === 'fixed deposits' ||
+    lower === 'recurring deposit' ||
+    lower === 'term deposit' ||
+    lower === 'liquid fund' ||
+    lower === 'liquid funds' ||
+    lower === 'emergency fund' ||
+    lower.includes('cash') ||
+    lower.includes('bank') ||
+    lower.includes('savings') ||
+    lower.includes('deposit') ||
+    lower.includes('liquid')
   ) {
     return 'Cash/FD';
   }
-  if (lower === 'equity' || lower === 'stocks' || lower === 'shares' || lower === 'direct equity') {
-    return 'Equity';
-  }
-  if (lower === 'mutual funds' || lower === 'mutual fund' || lower === 'mf' || lower === 'mfs') {
-    return 'Mutual Funds';
-  }
-  if (lower === 'gold' || lower === 'sgb' || lower === 'bullion' || lower.includes('gold')) {
-    return 'Gold';
-  }
-  if (lower === 'real estate' || lower === 'property' || lower === 'land' || lower.includes('real estate')) {
-    return 'Real Estate';
-  }
-  if (lower.includes('retire') || lower.includes('provident') || lower.includes('epf') || lower.includes('ppf') || lower.includes('nps')) {
+
+  // Retirement & Pension (EPF, PPF, NPS, etc.)
+  if (
+    lower.includes('retire') ||
+    lower.includes('provident') ||
+    lower.includes('epf') ||
+    lower.includes('ppf') ||
+    lower.includes('nps') ||
+    lower.includes('vpf') ||
+    lower.includes('pension') ||
+    lower.includes('gratuity')
+  ) {
     return 'Retirement & Pension';
   }
-  if (lower.includes('insurance') || lower.includes('lic')) {
+
+  // Mutual Funds / ETFs / Index Funds
+  if (
+    lower.includes('mutual fund') ||
+    lower.includes('index fund') ||
+    lower.includes('etf') ||
+    lower === 'mf' ||
+    lower === 'mfs'
+  ) {
+    return 'Mutual Funds';
+  }
+
+  // Equity / Stocks / Shares
+  if (
+    lower.includes('equity') ||
+    lower.includes('stock') ||
+    lower.includes('share') ||
+    lower === 'direct equity'
+  ) {
+    return 'Equity';
+  }
+
+  // Gold & Bullion / SGB
+  if (
+    lower.includes('gold') ||
+    lower.includes('sgb') ||
+    lower.includes('bullion') ||
+    lower.includes('silver')
+  ) {
+    return 'Gold';
+  }
+
+  // Real Estate / Land / Property
+  if (
+    lower.includes('real estate') ||
+    lower.includes('property') ||
+    lower.includes('land') ||
+    lower.includes('plot') ||
+    lower.includes('flat') ||
+    lower.includes('reit')
+  ) {
+    return 'Real Estate';
+  }
+
+  // Life Insurance / LIC
+  if (lower.includes('insurance') || lower.includes('lic') || lower.includes('policy')) {
     return 'Life Insurance / LIC';
   }
-  if (lower === 'liabilities' || lower === 'liability' || lower === 'loan' || lower.includes('debt') || lower.includes('loan')) {
-    return 'Liabilities';
-  }
+
   return cat;
 }
 
 /**
  * Checks whether an asset or category belongs to Cash / Bank / Fixed Deposits.
  */
-export function isCashCategory(category = '') {
-  return normalizeCategoryName(category) === 'Cash/FD';
+export function isCashCategory(category = '', asset = null) {
+  if (normalizeCategoryName(category, asset) === 'Cash/FD') return true;
+  if (asset) {
+    const typeStr = String(asset.Type || '').toLowerCase();
+    const nameStr = String(asset.Name || '').toLowerCase();
+    let subTypeStr = '';
+    try {
+      const det = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON'] || '{}') : (asset['Details JSON'] || {});
+      subTypeStr = String(det['Sub-Type'] || asset['Sub-Type'] || '').toLowerCase();
+    } catch (e) {}
+
+    if (
+      typeStr.includes('cash') ||
+      typeStr.includes('bank') ||
+      subTypeStr.includes('savings') ||
+      subTypeStr.includes('deposit') ||
+      subTypeStr.includes('fd') ||
+      subTypeStr.includes('rd') ||
+      nameStr.includes('savings') ||
+      nameStr.includes('bank account') ||
+      nameStr.includes('fixed deposit')
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -249,7 +381,7 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
 
   assets.forEach(a => {
     const rawCat = a.Category;
-    const cat = normalizeCategoryName(rawCat);
+    const cat = normalizeCategoryName(rawCat, a);
     const val = parseNumeric(a['Current Value']);
     if (cat === 'Liabilities') {
       totalLiabilities += val;
@@ -262,9 +394,13 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
     }
   });
 
-  const totalGrossAssets = Object.values(currentValues).reduce((a, b) => a + b, 0) + totalOther;
+  const coreInvestableAssets = Object.values(currentValues).reduce((a, b) => a + b, 0);
+  const totalGrossAssets = coreInvestableAssets + totalOther;
   const netWorth = totalGrossAssets - totalLiabilities;
-  const divisor = totalGrossAssets > 0 ? totalGrossAssets : 1;
+  
+  // For evaluating asset allocation drift, divisor is core investable assets
+  // so the category breakdown sum matches the 100% target allocation profile
+  const allocationDivisor = coreInvestableAssets > 0 ? coreInvestableAssets : (totalGrossAssets > 0 ? totalGrossAssets : 1);
 
   let totalAbsDrift = 0;
   let maxOverweight = { name: '', drift: -Infinity };
@@ -272,10 +408,10 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
 
   const breakdown = categories.map(cat => {
     const val = currentValues[cat] || 0;
-    const currentPct = (val / divisor) * 100;
+    const currentPct = (val / allocationDivisor) * 100;
     const targetPct = Number(targetAllocation[cat] || 0);
     const driftPct = currentPct - targetPct; // positive = overweight, negative = underweight
-    const targetRupees = (targetPct / 100) * totalGrossAssets;
+    const targetRupees = (targetPct / 100) * allocationDivisor;
     const shortfallRupees = Math.max(0, targetRupees - val);
 
     totalAbsDrift += Math.abs(driftPct);
@@ -302,26 +438,35 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
     };
   });
 
-  // Alignment Score formula: 100 minus (sum of absolute percentage drifts * 2.5)
-  // Max drift is 200%. At 10% total drift, score is 75. At 4% total drift, score is 90.
-  const rawScore = Math.round(100 - (totalAbsDrift * 2.5));
-  const alignmentScore = Math.max(0, Math.min(100, totalGrossAssets > 0 ? rawScore : 100));
+  // Alignment Score formula:
+  // Standard Portfolio Theory Overlap Metric: 100 - (Total Absolute Drift / 2)
+  // Max possible totalAbsDrift is 200%.
+  // Clamped strictly between 0 and 100.
+  const rawScore = Math.round(100 - (totalAbsDrift / 2));
+  const alignmentScore = Math.max(0, Math.min(100, allocationDivisor > 0 ? rawScore : 100));
 
-  let healthLabel = 'Excellent';
+  let healthLabel = 'Optimal Alignment';
   let healthColor = 'text-wealth-emerald';
-  if (alignmentScore < 60) {
+  if (alignmentScore < 50) {
     healthLabel = 'Severe Drift';
     healthColor = 'text-liability-rose';
-  } else if (alignmentScore < 75) {
-    healthLabel = 'Moderate Drift';
+  } else if (alignmentScore < 70) {
+    healthLabel = 'Suboptimal Drift';
     healthColor = 'text-bullion-amber';
   } else if (alignmentScore < 85) {
-    healthLabel = 'Good Health';
+    healthLabel = 'Moderate Drift';
+    healthColor = 'text-bullion-amber';
+  } else {
+    healthLabel = 'Optimal Alignment';
     healthColor = 'text-wealth-emerald';
   }
 
+  // Pre-calculate Cash segment drift for immediate access in UI Hero Cards
+  const cashItem = breakdown.find(b => b.category === 'Cash/FD') || null;
+
   return {
     totalGrossAssets,
+    coreInvestableAssets,
     totalLiabilities,
     netWorth,
     alignmentScore,
@@ -330,6 +475,9 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
     totalAbsDrift: Number(totalAbsDrift.toFixed(1)),
     maxOverweight: maxOverweight.drift > 1.5 ? maxOverweight : null,
     maxUnderweight: maxUnderweight.drift < -1.5 ? maxUnderweight : null,
+    cashItem,
+    cashDrift: cashItem ? cashItem.driftPct : 0,
+    cashStatus: cashItem ? cashItem.status : 'aligned',
     breakdown,
     totalOther
   };
@@ -342,10 +490,10 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
  */
 export function simulateInflowRebalancing(assets = [], targetAllocation = RISK_PROFILES.Moderate.target, inflowAmount = 0) {
   const currentAlignment = calculatePortfolioAlignment(assets, targetAllocation);
-  const totalGross = currentAlignment.totalGrossAssets;
+  const coreGross = currentAlignment.coreInvestableAssets || currentAlignment.totalGrossAssets;
   const inflow = Math.max(0, Number(inflowAmount) || 0);
-  const newTotalGross = totalGross + inflow;
-  const divisor = newTotalGross > 0 ? newTotalGross : 1;
+  const newCoreGross = coreGross + inflow;
+  const divisor = newCoreGross > 0 ? newCoreGross : 1;
 
   const categories = Object.keys(targetAllocation);
   
@@ -358,7 +506,7 @@ export function simulateInflowRebalancing(assets = [], targetAllocation = RISK_P
     const item = currentAlignment.breakdown.find(b => b.category === cat);
     const currVal = item ? item.currentValue : 0;
     const tgtPct = Number(targetAllocation[cat] || 0);
-    const desiredRupees = (tgtPct / 100) * newTotalGross;
+    const desiredRupees = (tgtPct / 100) * newCoreGross;
     const diff = desiredRupees - currVal;
     
     postTargets[cat] = desiredRupees;
@@ -469,13 +617,14 @@ export function simulateInflowRebalancing(assets = [], targetAllocation = RISK_P
     };
   });
 
-  const rawProjectedScore = Math.round(100 - (projectedTotalAbsDrift * 2.5));
-  const projectedAlignmentScore = Math.max(0, Math.min(100, newTotalGross > 0 ? rawProjectedScore : 100));
+  const rawProjectedScore = Math.round(100 - (projectedTotalAbsDrift / 2));
+  const projectedAlignmentScore = Math.max(0, Math.min(100, newCoreGross > 0 ? rawProjectedScore : 100));
 
   return {
     ...currentAlignment,
     inflowAmount: inflow,
-    newTotalGross,
+    newTotalGross: currentAlignment.totalGrossAssets + inflow,
+    newCoreGross,
     projectedAlignmentScore,
     scoreImprovement: Math.max(0, projectedAlignmentScore - currentAlignment.alignmentScore),
     projectedBreakdown
@@ -486,7 +635,7 @@ export function simulateInflowRebalancing(assets = [], targetAllocation = RISK_P
  * Calculates cash drag against family living expenses and liquid buffer health
  */
 export function calculateCashDrag(assets = [], transactions = []) {
-  const cashAssets = assets.filter(a => isCashCategory(a.Category));
+  const cashAssets = assets.filter(a => isCashCategory(a.Category, a));
   const totalLiquidCash = cashAssets.reduce((sum, a) => sum + parseNumeric(a['Current Value']), 0);
 
   let operationalSavingsCash = 0;

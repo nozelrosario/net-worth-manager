@@ -31,7 +31,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
   const mf = assets.filter(a => a.Category === 'Mutual Funds').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const property = assets.filter(a => a.Category === 'Real Estate').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const gold = assets.filter(a => a.Category === 'Gold').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
-  const cash = assets.filter(a => isCashCategory(a.Category)).reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
+  const cash = assets.filter(a => isCashCategory(a.Category, a)).reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const retirement = assets.filter(a => 
     a.Category === 'Retirement & Pension' || 
     a.Category === 'Provident Funds' ||
