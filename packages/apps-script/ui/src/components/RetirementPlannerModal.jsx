@@ -3,7 +3,8 @@ import useModalBack from '../hooks/useModalBack';
 import { 
   ArrowLeft, Shield, TrendingUp, Sparkles, CheckCircle2, AlertCircle, 
   Copy, Check, Plus, Sliders, ChevronRight, FolderLock, ExternalLink, 
-  HelpCircle, Calendar, RefreshCw, Award, PieChart, Coins, Landmark, DollarSign
+  HelpCircle, Calendar, RefreshCw, Award, PieChart, Coins, Landmark, DollarSign,
+  Eye
 } from 'lucide-react';
 import { 
   calculateRetirementPortfolio, 
@@ -19,7 +20,8 @@ export default function RetirementPlannerModal({
   data,
   formatCurrency,
   showMessage,
-  onOpenAddAsset
+  onOpenAddAsset,
+  onNavigateToAsset
 }) {
   useModalBack(isOpen, onClose);
 
@@ -368,6 +370,43 @@ export default function RetirementPlannerModal({
                       </div>
                     </div>
                   )}
+
+                  {/* Cross-Link Actions */}
+                  <div className="mt-3 pt-2.5 border-t border-border-subtle/70 flex items-center justify-between text-typ-caption">
+                    <span className="text-typ-micro text-text-muted truncate">
+                      {acc.owner ? `Owner: ${acc.owner}` : 'Retirement Vault'}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onNavigateToAsset) {
+                            onClose();
+                            onNavigateToAsset(acc.assetId || acc.id || acc.name, 'view');
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-typ-micro font-medium rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                        title="View entry in Assets tab"
+                      >
+                        <Eye size={12} className="text-primary-accent" />
+                        <span>View</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onNavigateToAsset) {
+                            onClose();
+                            onNavigateToAsset(acc.assetId || acc.id || acc.name, 'edit');
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-typ-micro font-medium rounded-lg bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                        title="Edit asset details"
+                      >
+                        <Sliders size={12} />
+                        <span>Edit</span>
+                      </button>
+                    </div>
+                  </div>
 
                 </div>
               ))
