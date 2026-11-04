@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Assets &amp; Liabilities - Family Owner Stats &amp; Member Filter</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-fixed": "#6ffbbe",
+            "profit-emerald": "#10B981",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-tertiary-fixed": "#301400",
+            "surface-layer-1": "#151C28",
+            "outline": "#908fa0",
+            "secondary-fixed-dim": "#4edea3",
+            "liability-rose": "#F43F5E",
+            "surface-layer-2": "#1E293B",
+            "border-prominent": "#334155",
+            "text-primary": "#F8FAFC",
+            "text-muted": "#64748B",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-secondary-container": "#00311f",
+            "on-error": "#690005",
+            "border-subtle": "#222F3E",
+            "secondary-container": "#00a572",
+            "error-container": "#93000a",
+            "surface-container-low": "#1b1b23",
+            "on-primary": "#1000a9",
+            "secondary": "#4edea3",
+            "surface-bright": "#393841",
+            "on-surface-variant": "#c7c4d7",
+            "surface-container": "#1f1f27",
+            "primary-fixed": "#e1e0ff",
+            "on-tertiary": "#4f2500",
+            "inverse-on-surface": "#303038",
+            "tertiary-container": "#d97721",
+            "on-secondary-fixed-variant": "#005236",
+            "primary": "#c0c1ff",
+            "surface-container-lowest": "#0d0d15",
+            "outline-variant": "#464554",
+            "tertiary-fixed-dim": "#ffb783",
+            "on-tertiary-fixed-variant": "#703700",
+            "tertiary": "#ffb783",
+            "tertiary-fixed": "#ffdcc5",
+            "inverse-primary": "#494bd6",
+            "on-tertiary-container": "#452000",
+            "background-root": "#0B0F17",
+            "text-secondary": "#94A3B8",
+            "surface-variant": "#34343d",
+            "surface-dim": "#13131b",
+            "on-error-container": "#ffdad6",
+            "on-background": "#e4e1ed",
+            "surface-container-highest": "#34343d",
+            "surface-tint": "#c0c1ff",
+            "error": "#ffb4ab",
+            "on-secondary-fixed": "#002113",
+            "inverse-surface": "#e4e1ed",
+            "surface-container-high": "#292932",
+            "warning-amber": "#F59E0B",
+            "on-primary-container": "#0d0096",
+            "primary-container": "#8083ff",
+            "surface": "#13131b",
+            "background": "#13131b",
+            "on-primary-fixed": "#07006c",
+            "on-surface": "#e4e1ed",
+            "on-secondary": "#003824"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "32px",
+            "margin": "16px",
+            "space-sm": "8px",
+            "space-lg": "24px",
+            "space-xs": "4px",
+            "gutter": "12px",
+            "space-md": "16px"
+          },
+          "fontFamily": {
+            "body-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-md": ["Inter"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+            "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+            "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen flex justify-center selection:bg-primary-container selection:text-text-primary">
+<!-- Mobile Viewport Shell (393px width reference) -->
+<main class="w-full max-w-[412px] bg-background-root min-h-screen pb-28 relative flex flex-col shadow-2xl">
+<!-- Top App Bar / Wealth Desk Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-space-md py-space-sm bg-background-root/95 backdrop-blur-md border-b border-border-subtle">
+<div class="flex items-center gap-space-sm">
+<div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-surface-layer-2 border border-border-subtle overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A refined studio portrait of a woman in minimalist executive lighting against a deep charcoal background, exuding security, sophistication and luxury family wealth aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEpn8hpXpNYFhDcnM686uiKn-HKO1xnKqoW4DzKmSCE9yerV71m7JO9wsyCzb1V3SQl5IK-tccWYohGb0ZYZZVm7acRCoAjpte4vLXbo3wnNj3l75i4oZQuq-h8qUbO_7qAzkk8gg65h44O1DlKOKQvfotkVFqa9C-NHzVEbx66KONwmHYtaw6QoiXCtODnJkOdEVIqZCtSiZxD-40cx9VgYv1c9dDFTCX4oC3fCohDY4qnn8fUX2iTG7oEoX5RetAY6NfrrQWJmE"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-profit-emerald border-2 border-background-root"></span>
+</div>
+<div>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight text-text-primary block">Wealth Desk</span>
+<span class="font-label-sm text-label-sm text-text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-pulse"></span>
+            Synced Realtime
+          </span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Privacy mode" class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-surface-layer-1 active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</button>
+<button aria-label="More options" class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-surface-layer-1 active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Screen Title Bar with Add Action & AMFI Live status -->
+<section class="px-space-md pt-3 pb-2 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h1 class="font-headline-md text-headline-md text-text-primary tracking-tight">Assets &amp; Liabilities</h1>
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-profit-emerald/10 border border-profit-emerald/30">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-ping"></span>
+<span class="font-label-sm text-label-sm text-profit-emerald tracking-wide">AMFI LIVE</span>
+</div>
+</div>
+<button class="inline-flex items-center gap-1 bg-primary-container hover:bg-primary text-text-primary px-3 py-1.5 rounded-lg font-label-md text-label-md transition-all active:scale-95 shadow-sm shadow-primary-container/20" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Add Asset</span>
+</button>
+</section>
+<!-- Family Owner Switcher Carousel -->
+<section class="py-2 pl-space-md border-b border-border-subtle/50">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar pr-space-md py-1">
+<!-- All Family -->
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">groups</span>
+<span class="font-label-md text-label-md whitespace-nowrap">All Family</span>
+<span class="text-text-muted font-label-sm text-label-sm tabular-nums">(₹2.48 Cr)</span>
+</button>
+<!-- Active Filter: Maria (Spouse) -->
+<button class="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-layer-2 border-2 border-primary-container text-text-primary shadow-lg shadow-primary-container/15 active:scale-95 transition-all ring-1 ring-primary/40" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md font-semibold whitespace-nowrap">Maria (Spouse)</span>
+<span class="text-text-muted font-body-sm text-body-sm">•</span>
+<span class="text-profit-emerald font-label-md text-label-md font-semibold tabular-nums">₹84.2 L</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container ml-0.5"></span>
+</button>
+<!-- Nozel (Self) -->
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">person</span>
+<span class="font-label-md text-label-md whitespace-nowrap">Nozel (Self)</span>
+<span class="text-text-muted font-body-sm text-body-sm">•</span>
+<span class="text-text-secondary font-label-md text-label-md tabular-nums">₹1.64 Cr</span>
+</button>
+<!-- Joint Holdings -->
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">handshake</span>
+<span class="font-label-md text-label-md whitespace-nowrap">Joint Holdings</span>
+<span class="text-text-muted font-body-sm text-body-sm">•</span>
+<span class="text-text-secondary font-label-md text-label-md tabular-nums">₹45.0 L</span>
+</button>
+</div>
+</section>
+<!-- Main Content Canvas -->
+<div class="px-space-md pt-3 flex flex-col gap-3">
+<!-- Hero Portfolio Cockpit (Scoped to Maria) -->
+<section class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md relative overflow-hidden">
+<!-- Subdued ambient corner glow -->
+<div class="absolute -right-12 -top-12 w-36 h-36 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<!-- Scope Indicator Pill -->
+<div class="flex items-center justify-between mb-3">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-layer-2 border border-border-prominent">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+<span class="font-label-sm text-label-sm text-text-secondary">Viewing:</span>
+<span class="font-label-sm text-label-sm font-semibold text-text-primary">Maria Rosario (Spouse)</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Net Allocation</span>
+</div>
+<!-- Portfolio Value & Return -->
+<div class="flex items-baseline justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="font-display-lg text-display-lg text-text-primary tabular-nums tracking-tight">₹84,20,000</span>
+<button aria-label="Toggle amount mask" class="text-text-muted hover:text-text-secondary active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-1 mb-4">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-profit-emerald/15 text-profit-emerald font-label-md text-label-md font-semibold tabular-nums border border-profit-emerald/25">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+            +₹9,40,000 (+12.6%)
+          </span>
+<span class="font-body-sm text-body-sm text-text-muted">Total Unrealized Gain</span>
+</div>
+<!-- 3-Metric Subgrid -->
+<div class="grid grid-cols-3 gap-2 pt-3 border-t border-border-subtle">
+<div class="bg-surface-layer-2/60 border border-border-subtle/80 rounded-lg p-2.5 flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Cost Basis</span>
+<span class="font-headline-sm text-headline-sm text-text-primary tabular-nums mt-1 font-semibold">₹74.8 L</span>
+<span class="font-label-sm text-label-sm text-text-secondary tabular-nums mt-0.5">₹74,80,000</span>
+</div>
+<div class="bg-surface-layer-2/60 border border-border-subtle/80 rounded-lg p-2.5 flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">P&amp;L Gains</span>
+<span class="font-headline-sm text-headline-sm text-profit-emerald tabular-nums mt-1 font-semibold">+₹9.40 L</span>
+<span class="font-label-sm text-label-sm text-profit-emerald/80 tabular-nums mt-0.5">LTCG: ₹7.2 L</span>
+</div>
+<div class="bg-surface-layer-2/60 border border-border-subtle/80 rounded-lg p-2.5 flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Coverage</span>
+<span class="font-headline-sm text-headline-sm text-text-primary tabular-nums mt-1 font-semibold">7 Assets</span>
+<span class="font-label-sm text-label-sm text-primary tabular-nums mt-0.5">5 AMFI Live</span>
+</div>
+</div>
+<!-- Asset Distribution Drawer -->
+<div class="mt-4 pt-3.5 border-t border-border-subtle">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm font-semibold uppercase text-text-secondary tracking-wider">Asset Distribution</span>
+<!-- Segments -->
+<div class="inline-flex rounded-lg bg-background-root p-0.5 border border-border-subtle text-[11px]">
+<button class="px-2 py-0.5 rounded-md bg-primary-container text-text-primary font-medium" type="button">By Category</button>
+<button class="px-2 py-0.5 text-text-secondary hover:text-text-primary" type="button">By Liquidity</button>
+</div>
+</div>
+<!-- Multi-colored horizontal distribution bar -->
+<div class="w-full h-2.5 rounded-full overflow-hidden flex bg-surface-layer-2 gap-0.5 my-2">
+<div class="h-full bg-primary-container rounded-l-full" style="width: 52%;" title="Mutual Funds 52%"></div>
+<div class="h-full bg-secondary-container" style="width: 30%;" title="Fixed Deposits 30%"></div>
+<div class="h-full bg-warning-amber rounded-r-full" style="width: 18%;" title="Gold &amp; SGB 18%"></div>
+</div>
+<!-- Breakdown Legend -->
+<div class="grid grid-cols-3 gap-1 pt-1.5 text-left">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm text-text-secondary truncate">Mutual Funds</span>
+</div>
+<span class="font-label-md text-label-md font-semibold text-text-primary tabular-nums mt-0.5">52% • ₹43.8 L</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm text-text-secondary truncate">FD &amp; Cash</span>
+</div>
+<span class="font-label-md text-label-md font-semibold text-text-primary tabular-nums mt-0.5">30% • ₹25.0 L</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-warning-amber shrink-0"></span>
+<span class="font-label-sm text-label-sm text-text-secondary truncate">Gold / SGB</span>
+</div>
+<span class="font-label-md text-label-md font-semibold text-text-primary tabular-nums mt-0.5">18% • ₹15.4 L</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Search & Filters Module -->
+<section class="flex flex-col gap-2.5">
+<!-- Search bar -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-text-muted text-[18px]">search</span>
+<input class="w-full bg-surface-layer-1 border border-border-subtle rounded-xl pl-9 pr-10 py-2.5 font-body-md text-body-md text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary transition-all" placeholder="Search Maria's assets..." type="text"/>
+<button aria-label="Filter parameters" class="absolute right-2.5 p-1 rounded-md text-text-muted hover:text-text-primary active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+<!-- Active Filter Indicator Bar -->
+<div class="flex items-center justify-between bg-surface-layer-1/50 border border-border-subtle rounded-lg px-2.5 py-1.5">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-text-muted">Filtered:</span>
+<div class="inline-flex items-center gap-1 bg-surface-layer-2 text-primary font-label-sm text-label-sm px-2 py-0.5 rounded border border-primary/30">
+<span>Owner: Maria (Spouse)</span>
+<button aria-label="Clear owner filter" class="hover:text-text-primary" type="button">
+<span class="material-symbols-outlined text-[12px]">close</span>
+</button>
+</div>
+</div>
+<button class="font-label-sm text-label-sm text-primary hover:underline" type="button">
+            Reset to All
+          </button>
+</div>
+<!-- Horizontal Category Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+<button class="shrink-0 px-3 py-1 rounded-full bg-primary-container text-text-primary font-label-md text-label-md font-semibold" type="button">
+            All Assets (7)
+          </button>
+<button class="shrink-0 px-3 py-1 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-label-md text-label-md" type="button">
+            Mutual Funds (4)
+          </button>
+<button class="shrink-0 px-3 py-1 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-label-md text-label-md" type="button">
+            Cash / FD (2)
+          </button>
+<button class="shrink-0 px-3 py-1 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-label-md text-label-md" type="button">
+            Gold (1)
+          </button>
+</div>
+<!-- Sorting & List Header Controls -->
+<div class="flex items-center justify-between text-text-muted pt-1">
+<span class="font-label-sm text-label-sm">Showing 7 of 7 assets</span>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="font-label-sm text-label-sm">Sort: Valuation (High-Low)</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+</div>
+</section>
+<!-- Holdings List (Maria's Scoped Portfolio) -->
+<section class="flex flex-col gap-2.5">
+<!-- Card 1: Mirae Asset Large Cap -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-2 mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30">
+<span class="w-1 h-1 rounded-full bg-profit-emerald"></span>
+                AMFI Live
+              </span>
+<span class="font-label-sm text-label-sm text-text-muted tabular-nums">Folio #8401928/01</span>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Updated: Today</span>
+</div>
+<div class="flex justify-between items-start gap-2">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-text-primary font-semibold leading-snug">Mirae Asset Large Cap Fund</h2>
+<span class="font-body-sm text-body-sm text-text-secondary">Direct Plan • Growth Option</span>
+</div>
+<div class="text-right shrink-0">
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary tabular-nums">₹18,40,000</div>
+<div class="font-label-md text-label-md font-semibold text-profit-emerald tabular-nums flex items-center justify-end gap-0.5">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>
+                +₹3,10,000 (+20.3%)
+              </div>
+</div>
+</div>
+<div class="mt-2.5 pt-2 border-t border-border-subtle flex items-center justify-between text-text-secondary font-body-sm text-body-sm">
+<span class="tabular-nums">1,820.01 units @ NAV ₹1,010.98</span>
+<span class="text-text-muted tabular-nums">Cost: ₹15.30 L</span>
+</div>
+<div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-secondary">Equity Large Cap</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 border border-primary/40 font-label-sm text-label-sm font-medium text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">person</span>
+              Owner: Maria (Spouse)
+            </span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-muted flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">description</span>
+              1 doc
+            </span>
+</div>
+</article>
+<!-- Card 2: Parag Parikh Flexi Cap -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-2 mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30">
+<span class="w-1 h-1 rounded-full bg-profit-emerald"></span>
+                AMFI Live
+              </span>
+<span class="font-label-sm text-label-sm text-text-muted tabular-nums">Folio #5920194/12</span>
+</div>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary">
+<span class="material-symbols-outlined text-[12px]">sync</span>
+              Auto-synced
+            </span>
+</div>
+<div class="flex justify-between items-start gap-2">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-text-primary font-semibold leading-snug">Parag Parikh Flexi Cap Fund</h2>
+<span class="font-body-sm text-body-sm text-text-secondary">Direct Plan • Growth</span>
+</div>
+<div class="text-right shrink-0">
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary tabular-nums">₹15,40,000</div>
+<div class="font-label-md text-label-md font-semibold text-profit-emerald tabular-nums flex items-center justify-end gap-0.5">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>
+                +₹2,80,000 (+22.2%)
+              </div>
+</div>
+</div>
+<div class="mt-2.5 pt-2 border-t border-border-subtle flex items-center justify-between text-text-secondary font-body-sm text-body-sm">
+<span class="tabular-nums">18,242.12 units @ NAV ₹84.42</span>
+<span class="text-text-muted tabular-nums">Cost: ₹12.60 L</span>
+</div>
+<div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-secondary">Equity Flexi-cap</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 border border-primary/40 font-label-sm text-label-sm font-medium text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">person</span>
+              Owner: Maria (Spouse)
+            </span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-muted">SIP Active (₹25k)</span>
+</div>
+</article>
+<!-- Card 3: HDFC Fixed Deposit -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-2 mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-secondary font-label-sm text-label-sm border border-border-subtle">
+<span class="material-symbols-outlined text-[11px]">verified</span>
+                FD #9402810482
+              </span>
+<span class="font-label-sm text-label-sm text-text-muted">HDFC Bank</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-warning-amber/15 text-warning-amber border border-warning-amber/30 font-label-sm text-label-sm font-medium">
+              Maturity in 14 Days
+            </span>
+</div>
+<div class="flex justify-between items-start gap-2">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-text-primary font-semibold leading-snug">HDFC Bank Tax Saver FD</h2>
+<span class="font-body-sm text-body-sm text-text-secondary">7.40% p.a. • Matures: Nov 19, 2026</span>
+</div>
+<div class="text-right shrink-0">
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary tabular-nums">₹5,00,000</div>
+<div class="font-label-md text-label-md text-text-secondary tabular-nums">
+                Accrued: <span class="text-profit-emerald font-semibold">+₹37,000</span>
+</div>
+</div>
+</div>
+<div class="mt-2.5 pt-2 border-t border-border-subtle flex items-center justify-between text-text-secondary font-body-sm text-body-sm">
+<span>Interest Payout: Cumulative</span>
+<span class="text-text-muted">Auto-Renewal Active</span>
+</div>
+<div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-secondary">Fixed Deposit</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 border border-primary/40 font-label-sm text-label-sm font-medium text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">person</span>
+              Owner: Maria (Spouse)
+            </span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-muted">Section 80C</span>
+</div>
+</article>
+<!-- Card 4: Sovereign Gold Bond Card -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-2 mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-warning-amber/15 text-warning-amber font-label-sm text-label-sm font-semibold border border-warning-amber/30">
+<span class="material-symbols-outlined text-[11px]">drive_file_rename_outline</span>
+                RBI SGB
+              </span>
+<span class="font-label-sm text-label-sm text-text-muted">Demat Indexed</span>
+</div>
+<span class="font-label-sm text-label-sm text-profit-emerald">2.50% Semi-Annual Int.</span>
+</div>
+<div class="flex justify-between items-start gap-2">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-text-primary font-semibold leading-snug">SGB 2028 Series IV</h2>
+<span class="font-body-sm text-body-sm text-text-secondary">125 grams @ ₹8,000/g spot</span>
+</div>
+<div class="text-right shrink-0">
+<div class="font-headline-sm text-headline-sm font-bold text-text-primary tabular-nums">₹10,00,000</div>
+<div class="font-label-md text-label-md font-semibold text-profit-emerald tabular-nums flex items-center justify-end gap-0.5">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>
+                +₹1,85,000 (+22.7%)
+              </div>
+</div>
+</div>
+<div class="mt-2.5 pt-2 border-t border-border-subtle flex items-center justify-between text-text-secondary font-body-sm text-body-sm">
+<span class="tabular-nums">Issued @ ₹6,520/g</span>
+<span class="text-profit-emerald font-label-sm text-label-sm">Tax-Free at Maturity</span>
+</div>
+<div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 border border-border-subtle font-label-sm text-label-sm text-text-secondary">Gold / Commodities</span>
+<span class="px-2 py-0.5 rounded bg-primary-container/20 border border-primary/40 font-label-sm text-label-sm font-medium text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">person</span>
+              Owner: Maria (Spouse)
+            </span>
+</div>
+</article>
+</section>
+</div>
+<!-- Bottom Navigation Bar (Docked full width, Portfolio/Assets active) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 border-t border-border-subtle shadow-2xl">
+<!-- Destination 1: Dashboard -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 active:scale-95 transition-transform hover:text-text-primary" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<!-- Destination 2: Portfolio / Assets (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary font-medium py-1 active:scale-95 transition-transform" href="#" style="font-variation-settings: 'FILL' 1;">
+<div class="relative">
+<span class="material-symbols-outlined text-[22px]">account_balance</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold">Portfolio</span>
+</a>
+<!-- Destination 3: Cashflow -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 active:scale-95 transition-transform hover:text-text-primary" href="#">
+<span class="material-symbols-outlined text-[22px]">receipt_long</span>
+<span class="font-label-sm text-label-sm">Cashflow</span>
+</a>
+<!-- Destination 4: Family Safe -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 active:scale-95 transition-transform hover:text-text-primary" href="#">
+<span class="material-symbols-outlined text-[22px]">shield</span>
+<span class="font-label-sm text-label-sm">Family Safe</span>
+</a>
+</nav>
+</main>
+</body></html>

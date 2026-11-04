@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wealth Desk - Assets Tab Cockpit</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-layer-2": "#1E293B",
+            "warning-amber": "#F59E0B",
+            "liability-rose": "#F43F5E",
+            "inverse-surface": "#e4e1ed",
+            "on-tertiary-container": "#452000",
+            "surface-container-high": "#292932",
+            "on-surface": "#e4e1ed",
+            "tertiary": "#ffb783",
+            "surface-tint": "#c0c1ff",
+            "on-tertiary-fixed": "#301400",
+            "tertiary-fixed": "#ffdcc5",
+            "background": "#13131b",
+            "primary-fixed-dim": "#c0c1ff",
+            "profit-emerald": "#10B981",
+            "on-primary-fixed": "#07006c",
+            "border-prominent": "#334155",
+            "border-subtle": "#222F3E",
+            "surface-variant": "#34343d",
+            "text-muted": "#64748B",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#ffb783",
+            "on-primary": "#1000a9",
+            "error": "#ffb4ab",
+            "on-secondary-fixed": "#002113",
+            "surface-container-highest": "#34343d",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface": "#13131b",
+            "surface-bright": "#393841",
+            "on-secondary": "#003824",
+            "surface-container-low": "#1b1b23",
+            "surface-container-lowest": "#0d0d15",
+            "inverse-on-surface": "#303038",
+            "secondary": "#4edea3",
+            "primary": "#c0c1ff",
+            "surface-dim": "#13131b",
+            "on-tertiary-fixed-variant": "#703700",
+            "tertiary-container": "#d97721",
+            "outline": "#908fa0",
+            "background-root": "#0B0F17",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-container": "#1f1f27",
+            "primary-fixed": "#e1e0ff",
+            "on-secondary-fixed-variant": "#005236",
+            "secondary-fixed": "#6ffbbe",
+            "on-surface-variant": "#c7c4d7",
+            "on-secondary-container": "#00311f",
+            "surface-layer-1": "#151C28",
+            "on-tertiary": "#4f2500",
+            "on-primary-container": "#0d0096",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#494bd6",
+            "text-secondary": "#94A3B8",
+            "outline-variant": "#464554",
+            "on-background": "#e4e1ed",
+            "secondary-container": "#00a572",
+            "primary-container": "#8083ff",
+            "text-primary": "#F8FAFC",
+            "on-error": "#690005"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "gutter": "12px",
+            "space-xl": "32px",
+            "space-sm": "8px",
+            "space-md": "16px",
+            "space-lg": "24px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "headline-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "display-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* OLED deep black & typography base */
+    body {
+      background-color: #0B0F17;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen pb-20 flex justify-center selection:bg-primary-container selection:text-text-primary">
+<!-- Mobile Viewport Container: Fixed 393px frame simulation for mobile native testing -->
+<div class="w-full max-w-[393px] min-h-screen bg-background-root flex flex-col relative overflow-x-hidden">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-space-md py-space-sm bg-background-root/95 backdrop-blur-md border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<div class="relative w-8 h-8 rounded-full bg-surface-layer-2 border border-border-subtle flex items-center justify-center text-primary font-headline-sm text-headline-sm overflow-hidden" title="Profile photo of head of family with family member picker">
+<span class="material-symbols-outlined text-base">person</span>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-profit-emerald border-2 border-background-root"></span>
+</div>
+<span class="text-headline-sm font-headline-sm font-bold text-text-primary tracking-tight">Wealth Desk</span>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Toggle Privacy Mask" class="p-1.5 rounded-lg text-text-secondary hover:bg-surface-layer-1 hover:text-text-primary active:scale-95 transition-transform duration-150 flex items-center" id="privacy-toggle-btn">
+<span class="material-symbols-outlined text-lg">visibility_off</span>
+</button>
+<button class="p-1.5 rounded-lg text-text-secondary hover:bg-surface-layer-1 hover:text-text-primary active:scale-95 transition-transform duration-150 flex items-center">
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+</div>
+</header>
+<!-- MAIN CONTENT CANVAS -->
+<main class="flex-1 px-space-md pt-2.5 pb-6 flex flex-col gap-3">
+<!-- SCREEN HEADER BAR: Title, Live AMFI Badge & Actions -->
+<section class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 min-w-0">
+<h1 class="text-headline-md font-headline-md text-text-primary truncate tracking-tight">Assets &amp; Liabilities</h1>
+<!-- Live AMFI Pulse Tag -->
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-profit-emerald/10 border border-profit-emerald/30 text-profit-emerald text-[9px] font-semibold tracking-wider whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-ping"></span>
+<span>AMFI LIVE</span>
+</div>
+</div>
+<!-- Header Actions: More options & Add Asset CTA -->
+<div class="flex items-center gap-1.5 shrink-0">
+<button aria-label="More options" class="w-8 h-8 rounded-lg bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center justify-center active:scale-95 transition-all">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+<button class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm leading-none">add</span>
+<span>Add Asset</span>
+</button>
+</div>
+</section>
+<!-- FAMILY OWNER SWITCHER CAROUSEL (Horizontal Scroll Strip) -->
+<section class="w-full -mx-space-md px-space-md overflow-x-auto no-scrollbar py-0.5">
+<div class="flex items-center gap-1.5 whitespace-nowrap">
+<!-- Active Owner: All Family -->
+<button class="px-2.5 py-1 rounded-full bg-primary-container/20 border border-primary/50 text-text-primary flex items-center gap-1.5 text-xs font-medium active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined text-xs text-primary">group</span>
+<span>All Family</span>
+<span class="text-text-secondary text-[11px] tabular-nums font-normal">(₹2.48 Cr)</span>
+</button>
+<!-- Owner: Maria (Spouse) -->
+<button class="px-2.5 py-1 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5 text-xs font-normal active:scale-95 transition-all">
+<span class="material-symbols-outlined text-xs">person</span>
+<span>Maria (Spouse)</span>
+<span class="text-text-muted text-[11px] tabular-nums">• ₹84.2 L</span>
+</button>
+<!-- Owner: Nozel (Self) -->
+<button class="px-2.5 py-1 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5 text-xs font-normal active:scale-95 transition-all">
+<span class="material-symbols-outlined text-xs">person</span>
+<span>Nozel (Self)</span>
+<span class="text-text-muted text-[11px] tabular-nums">• ₹1.64 Cr</span>
+</button>
+<!-- Owner: Joint Holdings -->
+<button class="px-2.5 py-1 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5 text-xs font-normal active:scale-95 transition-all">
+<span class="material-symbols-outlined text-xs">handshake</span>
+<span>Joint Holdings</span>
+<span class="text-text-muted text-[11px] tabular-nums">• ₹45.0 L</span>
+</button>
+</div>
+</section>
+<!-- STREAMLINED TOP VALUATION RIBBON (Clean Cockpit, No Bulky 3 Sub-Cards) -->
+<section class="w-full bg-surface-layer-1 border border-profit-emerald/25 rounded-2xl p-3.5 flex flex-col gap-2.5 shadow-sm shadow-black/40 relative overflow-hidden">
+<!-- Subtle Glow Accent Top Edge -->
+<div class="absolute -top-12 -right-12 w-28 h-28 bg-profit-emerald/10 blur-2xl pointer-events-none rounded-full"></div>
+<!-- Valuation Main Line & Integrated Return Pill -->
+<div class="flex items-center justify-between gap-2">
+<div class="flex flex-col">
+<span class="text-[11px] font-label-sm text-text-muted uppercase tracking-wider">Total Portfolio Valuation</span>
+<div class="flex items-baseline gap-1.5">
+<span class="text-headline-lg font-headline-lg font-bold text-text-primary tabular-nums tracking-tight" id="valuation-amount">₹2,48,50,000</span>
+<button class="text-text-muted hover:text-text-secondary transition-colors" id="inline-privacy-toggle" title="Mask valuation numbers">
+<span class="material-symbols-outlined text-sm align-middle">visibility</span>
+</button>
+</div>
+</div>
+<!-- All-time Return Badge directly inline -->
+<div class="flex flex-col items-end">
+<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-profit-emerald/15 border border-profit-emerald/30 text-profit-emerald text-xs font-semibold tabular-nums">
+<span class="material-symbols-outlined text-xs leading-none">trending_up</span>
+<span>+18.4%</span>
+</div>
+<span class="text-[10px] text-profit-emerald font-medium tabular-nums mt-0.5">+₹34.20 L All-time</span>
+</div>
+</div>
+<!-- Multi-Color Asset Allocation Mini-Bar (6px high) -->
+<div class="w-full flex flex-col gap-1.5">
+<div class="w-full h-1.5 rounded-full overflow-hidden flex bg-surface-layer-2">
+<!-- Mutual Funds 48% (Indigo) -->
+<div class="h-full bg-indigo-500" style="width: 48%;" title="Mutual Funds 48%"></div>
+<!-- Equities 26% (Cyan) -->
+<div class="h-full bg-cyan-400" style="width: 26%;" title="Equities 26%"></div>
+<!-- Real Estate 18% (Emerald) -->
+<div class="h-full bg-profit-emerald" style="width: 18%;" title="Real Estate 18%"></div>
+<!-- Gold 8% (Amber) -->
+<div class="h-full bg-warning-amber" style="width: 8%;" title="Gold 8%"></div>
+</div>
+<!-- Allocation Interactive Segment Selector & Micro Legend -->
+<div class="flex items-center justify-between text-[10px] pt-0.5">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-primary font-medium border border-border-subtle">By Asset</span>
+<span class="px-1.5 py-0.5 rounded text-text-muted hover:text-text-secondary cursor-pointer">By Owner</span>
+<span class="px-1.5 py-0.5 rounded text-text-muted hover:text-text-secondary cursor-pointer">By Liquidity</span>
+</div>
+<div class="text-text-secondary font-medium tracking-tight tabular-nums flex items-center gap-1.5">
+<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 mr-0.5"></span>MF 48%</span>
+<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 mr-0.5"></span>EQ 26%</span>
+<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-profit-emerald mr-0.5"></span>RE 18%</span>
+<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-warning-amber mr-0.5"></span>Au 8%</span>
+</div>
+</div>
+</div>
+<!-- Integrated Action Alert Ribbon (Compact 1-Liner Inside Ribbon) -->
+<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-warning-amber/10 border border-warning-amber/25 text-warning-amber text-[11px] font-medium mt-0.5">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-xs shrink-0">warning</span>
+<span class="truncate"><strong class="font-semibold">2 Actions:</strong> HDFC FD Matures in 14d • LIC Grace active</span>
+</div>
+<span class="material-symbols-outlined text-xs shrink-0 ml-1">chevron_right</span>
+</div>
+</section>
+<!-- SEARCH & CATEGORY FILTER SUITE -->
+<section class="flex flex-col gap-2">
+<!-- Universal Search Bar -->
+<div class="relative w-full flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-text-muted text-base pointer-events-none">search</span>
+<input class="w-full bg-surface-layer-1 border border-border-subtle focus:border-primary-container focus:ring-1 focus:ring-primary-container rounded-xl pl-9 pr-10 py-2 text-xs font-body-sm text-text-primary placeholder:text-text-muted transition-colors outline-none" placeholder="Search asset name, folio, ticker, bank, owner..." type="text"/>
+<button aria-label="Filters" class="absolute right-2.5 p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-layer-2 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-base">filter_list</span>
+</button>
+</div>
+<!-- Category Horizontal Filter Pills -->
+<div class="w-full -mx-space-md px-space-md overflow-x-auto no-scrollbar">
+<div class="flex items-center gap-1.5 whitespace-nowrap text-xs">
+<button class="px-2.5 py-1 rounded-lg bg-primary-container/20 border border-primary/50 text-text-primary font-medium active:scale-95 transition-all">
+              All Assets <span class="text-[10px] text-primary tabular-nums font-normal ml-0.5">(18)</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-normal active:scale-95 transition-all">
+              Mutual Funds <span class="text-[10px] text-text-muted tabular-nums ml-0.5">(7)</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-normal active:scale-95 transition-all">
+              Equity <span class="text-[10px] text-text-muted tabular-nums ml-0.5">(5)</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-normal active:scale-95 transition-all">
+              Cash/FD <span class="text-[10px] text-text-muted tabular-nums ml-0.5">(3)</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-normal active:scale-95 transition-all">
+              Gold <span class="text-[10px] text-text-muted tabular-nums ml-0.5">(2)</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary font-normal active:scale-95 transition-all">
+              Real Estate <span class="text-[10px] text-text-muted tabular-nums ml-0.5">(1)</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ASSET HOLDINGS LEDGER (Visible High in Primary Viewport!) -->
+<section class="flex flex-col gap-2.5 mt-0.5">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-xs font-semibold text-text-secondary uppercase tracking-wider font-label-md">Holdings (3 of 18 shown)</span>
+<div class="flex items-center gap-1 text-[11px] text-text-muted font-medium cursor-pointer hover:text-text-secondary">
+<span>Sort by Value</span>
+<span class="material-symbols-outlined text-xs">arrow_drop_down</span>
+</div>
+</div>
+<!-- ASSET CARD 1: Parag Parikh Flexi Cap Fund -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2 hover:border-border-prominent transition-colors active:bg-surface-layer-1/90">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 text-indigo-400 font-bold text-xs">
+                PP
+              </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h2 class="text-xs font-semibold text-text-primary truncate">Parag Parikh Flexi Cap Fund</h2>
+<span class="px-1 py-0.2 rounded bg-profit-emerald/10 border border-profit-emerald/25 text-profit-emerald text-[9px] font-semibold tracking-wide">AMFI LIVE</span>
+</div>
+<span class="text-[10px] text-text-muted truncate mt-0.5">Direct Growth • Folio #10482910/22</span>
+</div>
+</div>
+<!-- Value & Return Column -->
+<div class="flex flex-col items-end shrink-0">
+<span class="text-sm font-bold text-text-primary tabular-nums">₹3,54,482</span>
+<span class="text-[11px] text-profit-emerald font-semibold tabular-nums">+₹68,240 (+23.8%)</span>
+</div>
+</div>
+<!-- Divider -->
+<div class="w-full border-t border-border-subtle/60"></div>
+<!-- Bottom Meta Bar: Units & NAV + Owner / Attachments -->
+<div class="flex items-center justify-between text-[11px] text-text-secondary pt-0.5">
+<div class="flex items-center gap-1.5 tabular-nums text-text-muted">
+<span>4,210 units @ NAV ₹84.20</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-primary text-[10px] font-medium border border-border-subtle">Self</span>
+<span class="flex items-center gap-0.5 text-text-muted text-[10px]" title="2 verified documents attached">
+<span class="material-symbols-outlined text-xs">attachment</span>
+<span>2 docs</span>
+</span>
+</div>
+</div>
+</article>
+<!-- ASSET CARD 2: Tata Motors Ltd (Equity) -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2 hover:border-border-prominent transition-colors active:bg-surface-layer-1/90">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0 text-cyan-400 font-bold text-xs">
+                TM
+              </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h2 class="text-xs font-semibold text-text-primary truncate">Tata Motors Ltd (TATAMOTORS)</h2>
+<span class="px-1 py-0.2 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[9px] font-semibold tracking-wide">NSE LIVE</span>
+</div>
+<span class="text-[10px] text-text-muted truncate mt-0.5">Demat Zerodha • LTCG (Sec 112A)</span>
+</div>
+</div>
+<!-- Value & Return Column -->
+<div class="flex flex-col items-end shrink-0">
+<span class="text-sm font-bold text-text-primary tabular-nums">₹2,36,250</span>
+<span class="text-[11px] text-profit-emerald font-semibold tabular-nums">+₹66,250 (+38.9%)</span>
+</div>
+</div>
+<!-- Divider -->
+<div class="w-full border-t border-border-subtle/60"></div>
+<!-- Bottom Meta Bar -->
+<div class="flex items-center justify-between text-[11px] text-text-secondary pt-0.5">
+<div class="flex items-center gap-1.5 tabular-nums text-text-muted">
+<span>250 shares @ ₹945 CMP</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-primary text-[10px] font-medium border border-border-subtle">Self</span>
+<span class="flex items-center gap-0.5 text-profit-emerald text-[10px]" title="Auto-synced via CDSL/Zerodha">
+<span class="material-symbols-outlined text-xs">sync</span>
+<span>Auto-synced</span>
+</span>
+</div>
+</div>
+</article>
+<!-- ASSET CARD 3: HDFC Bank Tax Saver FD (Fixed Deposit / Cash) -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3 flex flex-col gap-2 hover:border-border-prominent transition-colors active:bg-surface-layer-1/90">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-400 font-bold text-xs">
+                HD
+              </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h2 class="text-xs font-semibold text-text-primary truncate">HDFC Bank Tax Saver FD</h2>
+<span class="px-1 py-0.2 rounded bg-surface-layer-2 border border-border-prominent text-text-secondary text-[9px] font-medium">Verified</span>
+</div>
+<span class="text-[10px] text-text-muted truncate mt-0.5">FD #9402810482 • 7.4% p.a.</span>
+</div>
+</div>
+<!-- Value & Accrued Return Column -->
+<div class="flex flex-col items-end shrink-0">
+<span class="text-sm font-bold text-text-primary tabular-nums">₹5,00,000</span>
+<span class="text-[11px] text-profit-emerald font-semibold tabular-nums">+₹37,000 Accrued</span>
+</div>
+</div>
+<!-- Divider -->
+<div class="w-full border-t border-border-subtle/60"></div>
+<!-- Bottom Meta Bar with Maturity Alert Pill -->
+<div class="flex items-center justify-between text-[11px] text-text-secondary pt-0.5">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-warning-amber/15 border border-warning-amber/30 text-warning-amber text-[10px] font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[11px]">schedule</span>
+<span>Maturity in 14 Days</span>
+</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-primary text-[10px] font-medium border border-border-subtle">Spouse (Maria)</span>
+</div>
+</div>
+</article>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor) -->
+<!-- Destination count: 4 | Portfolio/Assets is the ACTIVE TAB -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 border-t border-border-subtle shadow-lg shadow-black/80 max-w-[393px] left-1/2 -translate-x-1/2">
+<!-- Destination 1: Dashboard -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 active:scale-95 transition-transform duration-150 hover:text-text-primary group" href="#dashboard">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</a>
+<!-- Destination 2: Portfolio / Assets (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary font-medium py-1 active:scale-95 transition-transform duration-150 group" href="#portfolio">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="text-label-sm font-label-sm mt-0.5 text-primary">Portfolio</span>
+</a>
+<!-- Destination 3: Cashflow -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 active:scale-95 transition-transform duration-150 hover:text-text-primary group" href="#cashflow">
+<span class="material-symbols-outlined text-xl">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Cashflow</span>
+</a>
+<!-- Destination 4: Family Safe -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 active:scale-95 transition-transform duration-150 hover:text-text-primary group" href="#family-safe">
+<span class="material-symbols-outlined text-xl">shield</span>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</a>
+</nav>
+</div>
+<!-- Micro-Interactions: Toggle Privacy Masking -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let isMasked = false;
+      const valuationEl = document.getElementById('valuation-amount');
+      const topPrivacyBtn = document.getElementById('privacy-toggle-btn');
+      const inlinePrivacyBtn = document.getElementById('inline-privacy-toggle');
+
+      const originalValuation = '₹2,48,50,000';
+      const maskedValuation = '₹ ••••••••';
+
+      function toggleMask() {
+        isMasked = !isMasked;
+        if (valuationEl) {
+          valuationEl.textContent = isMasked ? maskedValuation : originalValuation;
+        }
+
+        const iconName = isMasked ? 'visibility' : 'visibility_off';
+        if (topPrivacyBtn) {
+          const iconSpan = topPrivacyBtn.querySelector('.material-symbols-outlined');
+          if (iconSpan) iconSpan.textContent = iconName;
+        }
+        if (inlinePrivacyBtn) {
+          const inlineIcon = inlinePrivacyBtn.querySelector('.material-symbols-outlined');
+          if (inlineIcon) inlineIcon.textContent = isMasked ? 'visibility_off' : 'visibility';
+        }
+      }
+
+      if (topPrivacyBtn) topPrivacyBtn.addEventListener('click', toggleMask);
+      if (inlinePrivacyBtn) inlinePrivacyBtn.addEventListener('click', toggleMask);
+    });
+  </script>
+</body></html>
