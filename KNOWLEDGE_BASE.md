@@ -25,26 +25,25 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
-## Proposed Feature Update (v3.9) - Revamped Assets & Wealth Portfolio Tab with Cockpit Stats, Owner Breakdown & Advanced Filters (Issue #81, Screens 19, 20 & 21)
-📋 **Design & Prototype Specification**:
-  - **Stitch Screens**:
-    - **Screen 19 (Consolidated Portfolio Cockpit)**: `projects/7450125667546450685/screens/abfae76a80004d8096a09d329e8289d5`
-    - **Screen 20 (Family Owner Stats & Member Filter View)**: `projects/7450125667546450685/screens/e1d2593d503b4515957bcbdeb10c8fbd`
-    - **Screen 21 (Streamlined Space-Optimized Clean Cockpit)**: `projects/7450125667546450685/screens/f68559ff9d4b4cc78458a3130b60b449`
-  - **Prototype HTML**:
-    - `net-worth-manager-ui-prototype/screens/screen_19_revamped_assets_tab.html`
-    - `net-worth-manager-ui-prototype/screens/screen_20_assets_owner_filter_stats.html`
-    - `net-worth-manager-ui-prototype/screens/screen_21_streamlined_assets_tab.html`
-  - **Exported Visuals**:
-    - `net-worth-manager-ui-prototype/exports/screen_19_revamped_assets_tab.png`
-    - `net-worth-manager-ui-prototype/exports/screen_20_assets_owner_filter_stats.png`
-    - `net-worth-manager-ui-prototype/exports/screen_21_streamlined_assets_tab.png`
-  - **GitHub Issue**: Issue #81
-  - **Core Enhancements**:
-    - **Streamlined Single Valuation Ribbon (Screen 21)**: Removed the bulky 3 sub-cards (Invested Cost, Unrealized P&L, Live Coverage) to reclaim ~180px of vertical viewport real estate. Total valuation is paired directly inline with the all-time return pill (`+₹34.20 L / +18.4%`), with an integrated 6px asset allocation mini-bar and compact 1-line action alert banner.
-    - **Family Owner Switcher Carousel**: Horizontal pill bar displaying all family profiles (`All Family`, `Self`, `Spouse`, `Joint`) with live net worth sub-totals for 1-tap switching.
-    - **Interactive Segmented Breakdown**: Tabs `[By Category]` `[By Owner]` `[By Liquidity]` with 1-line legend and 1-tap filtering.
-    - **Search & Advanced Filters**: Multi-attribute search (asset name, folio, ticker, bank, owner), category pills with live counts, Owner dropdown filter, and Valuation/P&L sorting with active filter dismiss chips.
+## Feature Update (v3.9) - Revamped Assets & Wealth Portfolio Tab with Cockpit Stats, Owner Breakdown & Advanced Filters (Issue #81)
+✅ **Streamlined Single Valuation Ribbon (Screen 21)**:
+  - Eliminated the bulky 3 sub-cards (Invested Cost, Unrealized P&L, Live Coverage) to reclaim ~180px of vertical space.
+  - Paired total valuation directly inline with the all-time return pill (`+₹... (+...%)`) with TrendingUp/TrendingDown indicator.
+  - Integrated a 6px multi-color allocation mini-bar directly beneath the valuation with 1-line legend and interactive tabs (`[By Category]` `[By Owner]` `[By Liquidity]`).
+  - Added a compact 1-line Action Alert ribbon for upcoming FD maturities (≤30 days) and active policy grace periods.
+✅ **Family Member & Owner Intelligence (Screen 20)**:
+  - Horizontal owner pill carousel displaying `All Family` alongside individual member profiles (`Maria`, `Nozel`, `Joint`) with live net worth sub-totals.
+  - Dynamically recalculates the entire cockpit and asset allocation breakdown when an individual member is selected.
+  - 1-tap filtering from any asset card by clicking its owner badge.
+✅ **Universal Free-Text Search & Multi-Dimensional Sorting**:
+  - Multi-attribute search indexing Asset Name, Category, Owner, Folio, Ticker/ISIN, Demat, DP ID, Bank, and Notes.
+  - Category filter pills with dynamic count badges automatically scoped to the active owner.
+  - Dropdown sorting by Valuation (High to Low / Low to High), Highest Gainers %, Top Losers %, Name (A-Z), and Recently Added.
+  - Active filter chips with 1-tap removal and Reset All action.
+✅ **Holdings Ledger Overflow Prevention & Polished Styling**:
+  - Strict dark and light mode variable token alignment (`bg-surface-layer1`, `text-text-primary`, `tabular-nums`).
+  - Strict overflow handling (`break-words`, `line-clamp-2`, `truncate`) ensuring zero clipping across long fund titles and currency figures.
+  - 1-tap copy action for folios, account numbers, and policy numbers with visual feedback.
 
 ## Feature Update (v3.8) - Ultra-Compact 2-Row Assets Header & Three-Dots Actions Modal (Issue #61)
 ✅ **Ultra-Compact 2-Row Mobile Layout**:
