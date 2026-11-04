@@ -340,4 +340,64 @@ Maintains security and daily practical convenience in both private and shared en
     - Toggle: `[x] Automated End-of-Day Sync via MFAPI / Yahoo Finance` (Enabled).
     - Calculated Summary: Total Units: "1,840.12" | Latest NAV: "₹84.21" | Current Total: "₹1,54,956".
   * Field Group 4: Depository Nominee Records:
-    - Nominee Name: "Spouse",
+    - Nominee Name: "Spouse", Share: "100%".
+    - Depository DP ID / Client ID: "IN300126 / 10293841".
+
+---
+
+### SCREEN 19: Revamped Assets & Wealth Portfolio Tab (Issue #81)
+- Screen Goal: Data-dense, institutional-grade assets cockpit with live portfolio stats, multi-attribute free-text search, and multi-segment allocation breakdowns.
+- Visual Prototype: `screens/screen_19_revamped_assets_tab.html` & `exports/screen_19_revamped_assets_tab.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/abfae76a80004d8096a09d329e8289d5`
+- Layout:
+  * Top Bar: Title "Assets & Liabilities", AMFI live pulsing dot badge, Overflow tools menu (⋮), and "+ Add Asset" primary indigo button.
+  * Hero Portfolio Cockpit:
+    - Filter-scoped Total Valuation (e.g. ₹2,48,50,000) with privacy visibility toggle and all-time profit pill (+₹34.20 L • +18.4% with TrendingUp icon).
+    - 3-Metric Subgrid: Invested Cost (₹2,14,30,000), Unrealized Returns (+₹34.20 L with 82% LTCG tag), and Live Coverage (18 Holdings • 12 AMFI Live).
+    - Segmented Allocation Breakdown Drawer: Interactive tabs `[By Category]` `[By Owner]` `[By Liquidity]` with stacked distribution progress bar and percentage breakdowns.
+    - Action Alert Box (like Pending Verifications in Spends): Amber alert container for upcoming critical events (FD maturities, policy grace periods).
+  * Search & Filter Suite:
+    - Search input field: "Search asset name, folio, ticker, bank, owner..." with instant clear.
+    - Category filter pills with dynamic count badges: All Assets (18), Mutual Funds (7), Equity (5), Cash/FD (3), Gold (2), Real Estate (1).
+    - Secondary quick filter chips: Owner selector (All, Self, Spouse) and Sort selector (Valuation High to Low, P&L % Highest).
+  * Holdings Ledger: Rich asset cards with live price tags, tax status badges, holding summary metrics, and attachment counters.
+  * Docked Bottom Navigation: Persistent 4-tab bar with Assets active.
+
+---
+
+### SCREEN 20: Assets Tab - Family Owner Stats & Member Filter View (Issue #81)
+- Screen Goal: Scoped family office member perspective, dynamically recalculating portfolio valuation, returns, invested basis, and asset class allocation for an individual owner (or Joint holding).
+- Visual Prototype: `screens/screen_20_assets_owner_filter_stats.html` & `exports/screen_20_assets_owner_filter_stats.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/e1d2593d503b4515957bcbdeb10c8fbd`
+- Layout:
+  * Family Owner Switcher Carousel (Horizontal scrollable strip):
+    - Pills: `[ 👥 All Family (₹2.48 Cr) ]`, `[ 👤 Maria (Spouse) • ₹84.2 L ]` (Selected state with indigo glow), `[ 👤 Nozel (Self) • ₹1.64 Cr ]`, `[ 🤝 Joint Holdings • ₹45.0 L ]`.
+  * Scoped Portfolio Cockpit (Scoped to Selected Owner):
+    - Member header tag: "Viewing: Maria Rosario (Spouse)" with avatar and verification badge.
+    - Scoped Valuation: ₹84,20,000 with net return pill `+₹9.40 L (+12.6%)`.
+    - 3-Metric Subgrid: Maria's Invested Basis (₹74,80,000), Maria's Net P&L (+₹9.40 L • LTCG ₹7.2 L), Maria's Holdings (7 Assets • 5 AMFI Live).
+    - Scoped Segmented Breakdown: Maria's asset allocation (Mutual Funds 52% • ₹43.8 L, FDs 30% • ₹25.0 L, Gold 18% • ₹15.4 L).
+  * Member Search & Active Filter Suite:
+    - Search: "Search Maria's assets...".
+    - Active Filter Chip: `[Owner: Maria (Spouse) ✕]` with "Reset to All Family" shortcut.
+    - Scoped Category Pills: All (7), Mutual Funds (4), Cash/FD (2), Gold (1).
+  * Scoped Holdings List: Displaying only the selected owner's instruments with explicit `Owner: Maria (Spouse)` badges.
+
+---
+
+### SCREEN 21: Streamlined Assets Tab - Space-Optimized Clean Cockpit (Issue #81)
+- Screen Goal: Maximum vertical real estate efficiency by removing the bulky 3 sub-cards (Invested Basis, Unrealized P&L, Live Coverage). Replaces them with an ultra-compact single valuation ribbon, slim 6px allocation mini-bar, and compact 1-line action alert, pulling holding cards immediately high into the primary viewport.
+- Visual Prototype: `screens/screen_21_streamlined_assets_tab.html` & `exports/screen_21_streamlined_assets_tab.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/f68559ff9d4b4cc78458a3130b60b449`
+- Layout:
+  * Top Bar: Title "Assets & Liabilities", AMFI live pulsing dot badge, Overflow tools menu (⋮), and "+ Add Asset" primary indigo button.
+  * Family Owner Switcher Carousel: Horizontal pill strip (`All Family`, `Maria`, `Nozel`, `Joint`).
+  * Ultra-Compact Valuation Ribbon (Single high-density card, NO 3 sub-cards):
+    - Inline pair: Total Portfolio Valuation `₹2,48,50,000` (with privacy toggle) directly beside all-time return pill `+₹34.20 L (+18.4%)`.
+    - Integrated 6px Multi-Color Allocation Mini-Bar directly under valuation (MF 48%, EQ 26%, RE 18%, Gold 8%).
+    - Compact 1-line legend & segment filter tabs (`[By Category]` `[By Owner]` `[By Liquidity]`).
+    - Compact 1-line Action Alert ribbon: `⚠️ 2 Actions: HDFC FD Matures in 14d • LIC Grace active >`.
+  * Universal Search Bar & Category Pills with dynamic counts.
+  * Holdings Ledger immediately visible in upper fold.
+
+
