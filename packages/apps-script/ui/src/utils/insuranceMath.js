@@ -17,6 +17,22 @@ export const INSURANCE_CONSTANTS = {
 };
 
 /**
+ * Safely parses Details JSON whether it's an object or a JSON string
+ */
+function safeDetails(asset) {
+  if (!asset) return {};
+  const det = asset['Details JSON'];
+  if (typeof det === 'string') {
+    try {
+      return JSON.parse(det);
+    } catch (e) {
+      return {};
+    }
+  }
+  return det || {};
+}
+
+/**
  * Checks if an asset belongs to Insurance / LIC
  */
 export function isInsuranceAsset(asset) {
@@ -24,7 +40,7 @@ export function isInsuranceAsset(asset) {
   const cat = (asset.Category || '').toLowerCase();
   const name = (asset.Name || '').toLowerCase();
   const inst = (asset['Institution/Location'] || '').toLowerCase();
-  const d = asset['Details JSON'] || {};
+  const d = safeDetails(asset);
   const subType = (d['Policy Type'] || d['Insurance Type'] || '').toLowerCase();
 
   return (
@@ -61,7 +77,7 @@ export function isInsuranceAsset(asset) {
  * Detects the granular policy subtype
  */
 export function detectPolicyType(asset) {
-  const d = asset?.['Details JSON'] || {};
+  const d = safeDetails(asset);
   const explicit = (d['Policy Type'] || d['Insurance Type'] || '').toLowerCase();
   const name = (asset?.Name || '').toLowerCase();
   const cat = (asset?.Category || '').toLowerCase();
@@ -127,7 +143,7 @@ export function calculateAnnualizedPremium(amount, frequency) {
  * Parses and computes detailed metrics for a single insurance policy
  */
 export function calculatePolicyMetrics(asset) {
-  const d = asset?.['Details JSON'] || {};
+  const d = safeDetails(asset);
   const policyType = detectPolicyType(asset);
   const isInvestment = isInvestmentBackedPolicy(policyType);
 
