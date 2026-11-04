@@ -25,6 +25,26 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v3.9) - Revamped Assets & Wealth Portfolio Tab with Cockpit Stats, Owner Breakdown & Advanced Filters (Issue #81)
+✅ **Streamlined Single Valuation Ribbon (Screen 21)**:
+  - Eliminated the bulky 3 sub-cards (Invested Cost, Unrealized P&L, Live Coverage) to reclaim ~180px of vertical space.
+  - Paired total valuation directly inline with the all-time return pill (`+₹... (+...%)`) with TrendingUp/TrendingDown indicator.
+  - Integrated a 6px multi-color allocation mini-bar directly beneath the valuation with 1-line legend and interactive tabs (`[By Category]` `[By Owner]` `[By Liquidity]`).
+  - Added a compact 1-line Action Alert ribbon for upcoming FD maturities (≤30 days) and active policy grace periods.
+✅ **Family Member & Owner Intelligence (Screen 20)**:
+  - Horizontal owner pill carousel displaying `All Family` alongside individual member profiles (`Maria`, `Nozel`, `Joint`) with live net worth sub-totals.
+  - Dynamically recalculates the entire cockpit and asset allocation breakdown when an individual member is selected.
+  - 1-tap filtering from any asset card by clicking its owner badge.
+✅ **Universal Free-Text Search & Multi-Dimensional Sorting**:
+  - Multi-attribute search indexing Asset Name, Category, Owner, Folio, Ticker/ISIN, Demat, DP ID, Bank, and Notes.
+  - Category filter pills with dynamic count badges automatically scoped to the active owner.
+  - Dropdown sorting by Valuation (High to Low / Low to High), Highest Gainers %, Top Losers %, Name (A-Z), and Recently Added.
+  - Active filter chips with 1-tap removal and Reset All action.
+✅ **Holdings Ledger Overflow Prevention & Polished Styling**:
+  - Strict dark and light mode variable token alignment (`bg-surface-layer1`, `text-text-primary`, `tabular-nums`).
+  - Strict overflow handling (`break-words`, `line-clamp-2`, `truncate`) ensuring zero clipping across long fund titles and currency figures.
+  - 1-tap copy action for folios, account numbers, and policy numbers with visual feedback.
+
 ## Feature Update (v3.8) - Ultra-Compact 2-Row Assets Header & Three-Dots Actions Modal (Issue #61)
 ✅ **Ultra-Compact 2-Row Mobile Layout**:
   - Streamlined the entire Assets tab header down to strictly 2 rows on mobile (reducing header height by ~75% compared to original: ~380px -> ~88px).

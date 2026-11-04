@@ -3,7 +3,30 @@ import { getSafeStorage } from "../utils/storage";
 import React, { useState, useEffect, useMemo } from 'react';
 import DynamicForm, { calculatePerformance } from "../components/DynamicForm";
 import { Badge } from "../components/Badge";
-import { AlertTriangle, Trash2, Lock, Paperclip, RefreshCw, Sparkles, TrendingUp, TrendingDown, X, Plus, Shield, Landmark, HeartPulse, Cloud, ChevronDown, ChevronUp, MoreVertical, ChevronRight } from 'lucide-react';
+import { 
+  AlertTriangle, 
+  Trash2, 
+  Lock, 
+  Paperclip, 
+  RefreshCw, 
+  Sparkles, 
+  TrendingUp, 
+  TrendingDown, 
+  X, 
+  Plus, 
+  Shield, 
+  Landmark, 
+  HeartPulse, 
+  Cloud, 
+  ChevronDown, 
+  ChevronUp, 
+  MoreVertical, 
+  ChevronRight,
+  Search,
+  Users,
+  Copy,
+  Check
+} from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
 import SmsInboxModal from "../components/SmsInboxModal";
@@ -27,6 +50,12 @@ const getSafeCategoryForAsset = (assetCategory) => {
 
 export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
   const [filter, setFilter] = useState('All Assets');
+  const [selectedOwner, setSelectedOwner] = useState('All Family');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('value_desc');
+  const [selectedSegment, setSelectedSegment] = useState('category'); // 'category' | 'owner' | 'liquidity'
+  const [copiedId, setCopiedId] = useState(null);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
   const [newAsset, setNewAsset] = useState({ Name: '', Category: 'Equity', 'Current Value': '', Owner: '' });
@@ -82,24 +111,55 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const profiles = data?.familyProfiles || [];
   
   const filters = ['All Assets', ...categoriesList];
-  
-  const filteredAssets = filter === 'All Assets' 
-    ? assets 
-    : assets.filter(a => {
-        if (filter === 'Retirement & Pension') {
-          return a.Category === 'Retirement & Pension' || a.Category === 'Provident Funds' || (a.Category || '').toLowerCase().includes('retire') || (a.Category || '').toLowerCase().includes('provident');
-        }
-        if (filter === 'Life Insurance / LIC' || filter === 'Insurance') {
-          return a.Category === 'Life Insurance / LIC' || a.Category === 'Insurance' || (a.Category || '').toLowerCase().includes('insurance') || (a.Category || '').toLowerCase().includes('lic');
-        }
-        return a.Category === filter;
-      });
 
+  // Available unique owners across profiles and actual asset holdings
+  const availableOwners = useMemo(() => {
+    const set = new Set();
+    profiles.forEach(p => {
+      if (p.Name) set.add(p.Name.trim());
+    });
+    assets.forEach(a => {
+      const o = String(a.Owner || '').trim();
+      if (o) set.add(o);
+    });
+    const list = Array.from(set).sort();
+    return ['All Family', ...list];
+  }, [profiles, assets]);
+
+  // Aggregate valuations per owner (and for the whole family)
+  const ownerValuations = useMemo(() => {
+    const map = { 'All Family': 0 };
+    assets.forEach(a => {
+      const val = Number(a['Current Value'] || 0);
+      const isLiab = a.Category === 'Liabilities';
+      const effectiveVal = isLiab ? -val : val;
+      map['All Family'] += effectiveVal;
+
+      const owner = String(a.Owner || 'Self').trim();
+      map[owner] = (map[owner] || 0) + effectiveVal;
+    });
+    return map;
+  }, [assets]);
+
+  // 1. Assets filtered by Owner
+  const ownerFilteredAssets = useMemo(() => {
+    if (!selectedOwner || selectedOwner === 'All Family') return assets;
+    const target = selectedOwner.trim().toLowerCase();
+    return assets.filter(a => {
+      const o = String(a.Owner || 'Self').trim().toLowerCase();
+      if (target === 'self') {
+        return o === 'self' || o === '';
+      }
+      return o === target;
+    });
+  }, [assets, selectedOwner]);
+
+  // Dynamic holding counts for category pills (scoped to selected owner)
   const assetCounts = useMemo(() => {
-    const counts = { 'All Assets': assets.length };
+    const counts = { 'All Assets': ownerFilteredAssets.length };
     filters.forEach(f => {
       if (f === 'All Assets') return;
-      counts[f] = assets.filter(a => {
+      counts[f] = ownerFilteredAssets.filter(a => {
         if (f === 'Retirement & Pension') {
           return a.Category === 'Retirement & Pension' || a.Category === 'Provident Funds' || (a.Category || '').toLowerCase().includes('retire') || (a.Category || '').toLowerCase().includes('provident');
         }
@@ -110,7 +170,257 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       }).length;
     });
     return counts;
-  }, [assets, filters]);
+  }, [ownerFilteredAssets, filters]);
+
+  // 2. Assets filtered by Category
+  const categoryFilteredAssets = useMemo(() => {
+    if (filter === 'All Assets') return ownerFilteredAssets;
+    return ownerFilteredAssets.filter(a => {
+      if (filter === 'Retirement & Pension') {
+        return a.Category === 'Retirement & Pension' || a.Category === 'Provident Funds' || (a.Category || '').toLowerCase().includes('retire') || (a.Category || '').toLowerCase().includes('provident');
+      }
+      if (filter === 'Life Insurance / LIC' || filter === 'Insurance') {
+        return a.Category === 'Life Insurance / LIC' || a.Category === 'Insurance' || (a.Category || '').toLowerCase().includes('insurance') || (a.Category || '').toLowerCase().includes('lic');
+      }
+      return a.Category === filter;
+    });
+  }, [ownerFilteredAssets, filter]);
+
+  // 3. Assets filtered by Search Query
+  const searchFilteredAssets = useMemo(() => {
+    if (!searchQuery.trim()) return categoryFilteredAssets;
+    const tokens = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return categoryFilteredAssets.filter(asset => {
+      let details = {};
+      try {
+        details = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+      } catch (e) {}
+
+      const searchableStrings = [
+        asset.Name,
+        asset.Category,
+        asset.Owner,
+        asset['Asset ID'],
+        details['Folio Number'],
+        details['Folio'],
+        details['Account Number'],
+        details['Certificate Number'],
+        details['Broker'],
+        details['Demat'],
+        details['DP ID'],
+        details['Scheme Code'],
+        details['Ticker'],
+        details['Symbol'],
+        details['Bank'],
+        details['Bank Name'],
+        details['Institution'],
+        details['Notes'],
+        details['Description'],
+        details['Policy Number'],
+        details['Survey Number'],
+        details['Form Factor']
+      ].map(v => String(v || '').toLowerCase());
+
+      const combined = searchableStrings.join(' ');
+      return tokens.every(token => combined.includes(token));
+    });
+  }, [categoryFilteredAssets, searchQuery]);
+
+  // 4. Sorted Assets
+  const sortedAssets = useMemo(() => {
+    const list = [...searchFilteredAssets];
+    const getPnlPct = (asset) => {
+      let cost = Number(asset.Cost || 0);
+      let det = {};
+      try {
+        det = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+      } catch (e) {}
+      if (asset.Category === 'Equity' && det['Quantity'] && det['Average Buy Price']) {
+        cost = Number(det['Quantity']) * Number(det['Average Buy Price']);
+      } else if (asset.Category === 'Mutual Funds' && det['Units'] && det['Average NAV']) {
+        cost = Number(det['Units']) * Number(det['Average NAV']);
+      }
+      const val = Number(asset['Current Value'] || 0);
+      if (cost > 0 && val > 0) return ((val - cost) / cost) * 100;
+      return -Infinity;
+    };
+
+    switch (sortBy) {
+      case 'value_desc':
+        return list.sort((a, b) => Number(b['Current Value'] || 0) - Number(a['Current Value'] || 0));
+      case 'value_asc':
+        return list.sort((a, b) => Number(a['Current Value'] || 0) - Number(b['Current Value'] || 0));
+      case 'gain_desc':
+        return list.sort((a, b) => getPnlPct(b) - getPnlPct(a));
+      case 'loss_desc':
+        return list.sort((a, b) => getPnlPct(a) - getPnlPct(b));
+      case 'name_asc':
+        return list.sort((a, b) => String(a.Name || '').localeCompare(String(b.Name || '')));
+      case 'recent':
+        return list.sort((a, b) => String(b['Acquisition Date'] || '').localeCompare(String(a['Acquisition Date'] || '')));
+      default:
+        return list;
+    }
+  }, [searchFilteredAssets, sortBy]);
+
+  // Scoped Valuation, Cost, and Returns for the Valuation Ribbon
+  const { totalValuation, totalCost, totalPnl, pnlPct, isGain } = useMemo(() => {
+    const targetSet = filter === 'All Assets' ? ownerFilteredAssets : categoryFilteredAssets;
+    let valSum = 0;
+    let costSum = 0;
+
+    targetSet.forEach(a => {
+      const val = Number(a['Current Value'] || 0);
+      const isLiab = a.Category === 'Liabilities';
+      if (isLiab) {
+        valSum -= val;
+      } else {
+        valSum += val;
+        let det = {};
+        try {
+          det = typeof a['Details JSON'] === 'string' ? JSON.parse(a['Details JSON']) : (a['Details JSON'] || {});
+        } catch (e) {}
+
+        let cost = Number(a.Cost || 0);
+        if (a.Category === 'Equity' && det['Quantity'] && det['Average Buy Price']) {
+          cost = Number(det['Quantity']) * Number(det['Average Buy Price']);
+        } else if (a.Category === 'Mutual Funds' && det['Units'] && det['Average NAV']) {
+          cost = Number(det['Units']) * Number(det['Average NAV']);
+        }
+        if (cost > 0) costSum += cost;
+      }
+    });
+
+    const pnl = costSum > 0 ? valSum - costSum : 0;
+    const pct = costSum > 0 ? (pnl / costSum) * 100 : 0;
+
+    return {
+      totalValuation: valSum,
+      totalCost: costSum,
+      totalPnl: pnl,
+      pnlPct: pct,
+      isGain: pnl >= 0
+    };
+  }, [ownerFilteredAssets, categoryFilteredAssets, filter]);
+
+  // Breakdown data for the mini allocation bar and segment tabs
+  const breakdownData = useMemo(() => {
+    const categoryMap = {};
+    const ownerMap = {};
+    const liquidityMap = {
+      'Liquid & Cash': 0,
+      'Market & Growth': 0,
+      'Retirement & Fixed': 0,
+      'Real Estate & Physical': 0
+    };
+
+    let totalVal = 0;
+
+    ownerFilteredAssets.forEach(a => {
+      const val = Number(a['Current Value'] || 0);
+      const cat = a.Category || 'Other';
+      if (cat === 'Liabilities') return;
+
+      totalVal += val;
+
+      categoryMap[cat] = (categoryMap[cat] || 0) + val;
+
+      const own = a.Owner || 'Self';
+      ownerMap[own] = (ownerMap[own] || 0) + val;
+
+      const lCat = (cat || '').toLowerCase();
+      if (lCat.includes('cash') || lCat.includes('deposit') || lCat.includes('savings') || lCat.includes('fd')) {
+        liquidityMap['Liquid & Cash'] += val;
+      } else if (lCat.includes('equity') || lCat.includes('mutual') || lCat.includes('stock')) {
+        liquidityMap['Market & Growth'] += val;
+      } else if (lCat.includes('retire') || lCat.includes('provident') || lCat.includes('insur') || lCat.includes('lic') || lCat.includes('epf') || lCat.includes('ppf') || lCat.includes('nps')) {
+        liquidityMap['Retirement & Fixed'] += val;
+      } else {
+        liquidityMap['Real Estate & Physical'] += val;
+      }
+    });
+
+    const formatList = (map, colorPalette) => {
+      return Object.entries(map)
+        .filter(([_, amount]) => amount > 0)
+        .map(([name, amount], idx) => ({
+          name,
+          amount,
+          percent: totalVal > 0 ? (amount / totalVal) * 100 : 0,
+          color: colorPalette[idx % colorPalette.length]
+        }))
+        .sort((a, b) => b.amount - a.amount);
+    };
+
+    const categoryColors = ['#6366F1', '#0EA5E9', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+    const ownerColors = ['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#0EA5E9', '#8B5CF6'];
+    const liquidityColors = ['#0EA5E9', '#6366F1', '#10B981', '#F59E0B'];
+
+    return {
+      category: formatList(categoryMap, categoryColors),
+      owner: formatList(ownerMap, ownerColors),
+      liquidity: formatList(liquidityMap, liquidityColors),
+      totalVal
+    };
+  }, [ownerFilteredAssets]);
+
+  // Actionable alerts (FD maturities within 30 days & active insurance grace periods)
+  const actionAlerts = useMemo(() => {
+    const alerts = [];
+    const now = new Date();
+
+    ownerFilteredAssets.forEach(a => {
+      let det = {};
+      try {
+        det = typeof a['Details JSON'] === 'string' ? JSON.parse(a['Details JSON']) : (a['Details JSON'] || {});
+      } catch (e) {}
+
+      const matDate = det['Maturity Date'];
+      if (matDate) {
+        const d = new Date(matDate);
+        if (!isNaN(d.getTime())) {
+          const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0 && diffDays <= 30) {
+            alerts.push({
+              type: 'fd_maturity',
+              title: `${a.Name}: Matures in ${diffDays}d`,
+              asset: a
+            });
+          }
+        }
+      }
+
+      if (isInsuranceAsset(a)) {
+        const polMetrics = calculatePolicyMetrics(a);
+        if (polMetrics.isOverdue) {
+          alerts.push({
+            type: 'insurance_grace',
+            title: `${a.Name}: Grace Period Active`,
+            asset: a
+          });
+        } else if (polMetrics.isDueSoon) {
+          alerts.push({
+            type: 'insurance_due',
+            title: `${a.Name}: Due in ${polMetrics.daysUntilDue}d`,
+            asset: a
+          });
+        }
+      }
+    });
+
+    return alerts;
+  }, [ownerFilteredAssets]);
+
+  const handleCopy = (text, id, e) => {
+    e.stopPropagation();
+    if (!text) return;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(String(text));
+    }
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+    showMessage(`Copied: ${text}`);
+  };
 
   const handleSyncRates = () => {
     setIsSyncingRates(true);
@@ -432,8 +742,8 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   };
 
   return (
-    <div className="space-y-3">
-      {/* Row 1: Title + Three-Dots Actions Menu + Add Asset CTA */}
+    <div className="space-y-3 pb-16">
+      {/* Row 1: Title + AMFI Live Status + ⋮ Actions Menu + + Add Asset CTA */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-typ-title font-bold tracking-tight text-text-primary truncate">Assets & Liabilities</h2>
@@ -445,7 +755,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
           >
             <MoreVertical size={16} />
           </button>
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-typ-footnote text-text-muted">
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-typ-footnote text-text-muted shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-wealth-emerald animate-pulse"></span>
             AMFI Live
           </span>
@@ -462,59 +772,345 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         </div>
       </div>
 
-      {/* Row 2: Category Filter Pills */}
-      <div 
-        className="flex overflow-x-auto gap-2 pb-1 pt-0.5 scrollbar-hide no-swipe"
-        onTouchStart={e => e.stopPropagation()}
-        onTouchMove={e => e.stopPropagation()}
-        onMouseDown={e => e.stopPropagation()}
-        onMouseMove={e => e.stopPropagation()}
-      >
-        {filters.map(f => {
-          const count = assetCounts[f] !== undefined ? assetCounts[f] : 0;
-          const isSelected = f === filter;
-          return (
-            <button 
-              key={f} 
-              type="button"
-              onClick={() => setFilter(f)} 
-              className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 text-typ-label rounded-full transition-all active:scale-95 ${
-                isSelected 
-                  ? 'bg-primary-accent text-white shadow-xs font-semibold' 
-                  : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs font-medium'
-              }`}
-            >
-              <span>{f}</span>
-              <span className={`text-[11px] px-1.5 py-0.2 rounded-full tabular-nums ${
-                isSelected 
-                  ? 'bg-white/20 text-white font-bold' 
-                  : 'bg-surface-layer2 text-text-muted font-medium'
+      {/* Row 2: Family Owner Switcher Carousel */}
+      {availableOwners.length > 1 && (
+        <div 
+          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 no-swipe"
+          onTouchStart={e => e.stopPropagation()}
+          onTouchMove={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+          onMouseMove={e => e.stopPropagation()}
+        >
+          {availableOwners.map(owner => {
+            const isSelected = selectedOwner === owner;
+            const ownerVal = ownerValuations[owner] !== undefined ? ownerValuations[owner] : 0;
+            return (
+              <button
+                key={owner}
+                type="button"
+                onClick={() => setSelectedOwner(owner)}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-typ-label font-medium transition-all active:scale-95 ${
+                  isSelected
+                    ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                    : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs'
+                }`}
+              >
+                <span>{owner === 'All Family' ? '👥 All Family' : `👤 ${owner}`}</span>
+                <span className={`text-typ-micro sm:text-typ-caption px-1.5 py-0.2 rounded-full tabular-nums font-semibold ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-surface-layer2 text-text-muted'
+                }`}>
+                  {formatCurrency(ownerVal)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Row 3: Streamlined Single Valuation Ribbon (No bulky 3 sub-cards) */}
+      <div className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 sm:p-3.5 relative overflow-hidden shadow-sm">
+        <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-wealth-emerald/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        {/* Top: Scoped Valuation & Return Pill */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="text-typ-caption sm:text-typ-footnote text-text-muted uppercase tracking-wider font-medium truncate block">
+              {filter !== 'All Assets' 
+                ? `${filter} Valuation (${selectedOwner === 'All Family' ? 'Family' : selectedOwner})` 
+                : (selectedOwner === 'All Family' ? 'Consolidated Family Valuation' : `${selectedOwner}'s Portfolio Valuation`)}
+            </span>
+            <div className="text-typ-heading sm:text-typ-display font-bold text-text-primary tabular-nums mt-0.5 leading-tight truncate">
+              {formatCurrency(totalValuation)}
+            </div>
+          </div>
+
+          {totalCost > 0 && (
+            <div className="flex flex-col items-end shrink-0 pl-1">
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-typ-footnote sm:text-typ-label font-semibold border ${
+                isGain 
+                  ? 'bg-wealth-emerald/10 text-wealth-emerald border-wealth-emerald/20' 
+                  : 'bg-liability-rose/10 text-liability-rose border-liability-rose/20'
               }`}>
-                {count}
+                {isGain ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                <span>{isGain ? '+' : ''}{formatCurrency(totalPnl)} ({isGain ? '+' : ''}{pnlPct.toFixed(1)}%)</span>
               </span>
-            </button>
-          );
-        })}
-      </div>
-      
-      {/* Asset List */}
-      <div className="space-y-3">
-        {filteredAssets.length === 0 && (
-          <div className="text-center py-10 bg-surface-layer1/40 border border-border-subtle/50 rounded-xl p-6">
-            <p className="text-text-secondary text-typ-body-sm">
-              No assets found in <span className="font-semibold text-text-primary">{filter}</span>.
-            </p>
-            <button
-              type="button"
-              onClick={() => openAddModal(filter !== 'All Assets' ? filter : undefined)}
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-typ-footnote font-semibold rounded-lg bg-primary-accent/15 hover:bg-primary-accent/25 text-primary-accent border border-primary-accent/25 transition-all active:scale-95"
+              <span className="text-typ-micro sm:text-typ-caption text-text-muted mt-0.5 tabular-nums">
+                Cost: {formatCurrency(totalCost)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Slim 6px Multi-Color Allocation Mini-Bar */}
+        {breakdownData[selectedSegment]?.length > 0 && (
+          <div className="mt-2.5">
+            <div className="h-1.5 w-full bg-surface-layer2 rounded-full overflow-hidden flex gap-0.5">
+              {breakdownData[selectedSegment].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="h-full transition-all"
+                  style={{ width: `${Math.max(2, item.percent)}%`, backgroundColor: item.color }}
+                  title={`${item.name}: ${item.percent.toFixed(1)}% (${formatCurrency(item.amount)})`}
+                />
+              ))}
+            </div>
+
+            {/* Segment Switcher & 1-Line Compact Legend */}
+            <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex bg-surface-layer2 p-0.5 rounded-lg border border-border-subtle shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSegment('category')}
+                  className={`px-2 py-0.5 rounded text-typ-micro sm:text-typ-caption font-medium transition-all ${
+                    selectedSegment === 'category'
+                      ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  By Category
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSegment('owner')}
+                  className={`px-2 py-0.5 rounded text-typ-micro sm:text-typ-caption font-medium transition-all ${
+                    selectedSegment === 'owner'
+                      ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  By Owner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSegment('liquidity')}
+                  className={`px-2 py-0.5 rounded text-typ-micro sm:text-typ-caption font-medium transition-all ${
+                    selectedSegment === 'liquidity'
+                      ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  By Liquidity
+                </button>
+              </div>
+
+              {/* 1-Line Compact Distribution Legend */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-typ-micro text-text-secondary flex-1 justify-end min-w-0">
+                {breakdownData[selectedSegment].slice(0, 4).map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (selectedSegment === 'category') {
+                        setFilter(filter === item.name ? 'All Assets' : item.name);
+                      } else if (selectedSegment === 'owner') {
+                        setSelectedOwner(selectedOwner === item.name ? 'All Family' : item.name);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 shrink-0 hover:text-text-primary transition-colors cursor-pointer"
+                    title={`Click to filter by ${item.name}`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <span className="truncate max-w-[80px] sm:max-w-[110px] font-medium">{item.name}</span>
+                    <span className="tabular-nums text-text-muted">{item.percent.toFixed(0)}%</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 1-Line Compact Action Alert Ribbon */}
+        {actionAlerts.length > 0 && (
+          <div className="mt-2.5 pt-2 border-t border-border-subtle/70">
+            <div 
+              onClick={() => {
+                if (actionAlerts[0]?.asset) {
+                  openEditModal(actionAlerts[0].asset);
+                }
+              }}
+              className="bg-bullion-amber/10 hover:bg-bullion-amber/15 border border-bullion-amber/30 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 text-bullion-amber cursor-pointer transition-colors"
             >
-              <Plus size={13} />
-              <span>Add {filter !== 'All Assets' ? filter : 'Asset'}</span>
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <AlertTriangle size={13} className="shrink-0 text-bullion-amber" />
+                <span className="text-typ-micro sm:text-typ-caption font-semibold uppercase tracking-wider shrink-0">
+                  {actionAlerts.length} Action{actionAlerts.length > 1 ? 's' : ''}:
+                </span>
+                <span className="text-typ-caption text-text-primary truncate">
+                  {actionAlerts[0]?.title}
+                  {actionAlerts.length > 1 && ` • +${actionAlerts.length - 1} more`}
+                </span>
+              </div>
+              <ChevronRight size={14} className="shrink-0 text-bullion-amber" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Row 4: Search & Secondary Filters & Category Pills */}
+      <div className="space-y-2">
+        {/* Search Bar + Sort Selector */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted flex items-center pointer-events-none">
+              <Search size={16} />
+            </div>
+            <input 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-surface-layer1 border border-border-subtle focus:border-primary-accent focus:ring-0 rounded-lg pl-9 pr-8 py-1.5 sm:py-2 text-typ-body-sm text-text-primary placeholder:text-text-muted outline-none transition-colors" 
+              placeholder="Search name, folio, ticker, bank, owner..." 
+              type="text"
+            />
+            {searchQuery && (
+              <button 
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5 rounded transition-colors"
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Sort Selector Dropdown */}
+          <div className="relative shrink-0">
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="bg-surface-layer1 border border-border-subtle hover:border-border-prominent rounded-lg px-2.5 py-1.5 sm:py-2 text-typ-footnote text-text-secondary hover:text-text-primary focus:outline-none focus:border-primary-accent transition-colors cursor-pointer"
+            >
+              <option value="value_desc">Valuation ↓</option>
+              <option value="value_asc">Valuation ↑</option>
+              <option value="gain_desc">Top Gainers %</option>
+              <option value="loss_desc">Top Losers %</option>
+              <option value="name_asc">Name (A-Z)</option>
+              <option value="recent">Recently Added</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Category Filter Pills (Scoped to active owner) */}
+        <div 
+          className="flex overflow-x-auto gap-1.5 pb-0.5 scrollbar-hide no-swipe"
+          onTouchStart={e => e.stopPropagation()}
+          onTouchMove={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+          onMouseMove={e => e.stopPropagation()}
+        >
+          {filters.map(f => {
+            const count = assetCounts[f] !== undefined ? assetCounts[f] : 0;
+            const isSelected = f === filter;
+            return (
+              <button 
+                key={f} 
+                type="button"
+                onClick={() => setFilter(f)} 
+                className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 text-typ-label rounded-full transition-all active:scale-95 ${
+                  isSelected 
+                    ? 'bg-primary-accent text-white shadow-xs font-semibold' 
+                    : 'bg-surface-layer1 hover:bg-surface-layer2 text-text-secondary hover:text-text-primary border border-border-subtle shadow-xs font-medium'
+                }`}
+              >
+                <span>{f}</span>
+                <span className={`text-typ-micro sm:text-typ-caption px-1.5 py-0.2 rounded-full tabular-nums ${
+                  isSelected 
+                    ? 'bg-white/20 text-white font-bold' 
+                    : 'bg-surface-layer2 text-text-muted font-medium'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Filter Chips */}
+        {(selectedOwner !== 'All Family' || filter !== 'All Assets' || searchQuery) && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-typ-label">
+            <span className="text-text-muted text-typ-footnote">Filtered:</span>
+            {selectedOwner !== 'All Family' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-accent/15 border border-primary-accent/40 text-primary-accent text-typ-footnote font-medium">
+                <span>Owner: {selectedOwner}</span>
+                <button type="button" onClick={() => setSelectedOwner('All Family')} className="hover:text-text-primary transition-colors" title="Remove owner filter">
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            {filter !== 'All Assets' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-accent/15 border border-primary-accent/40 text-primary-accent text-typ-footnote font-medium">
+                <span>Cat: {filter}</span>
+                <button type="button" onClick={() => setFilter('All Assets')} className="hover:text-text-primary transition-colors" title="Remove category filter">
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-layer2 border border-border-subtle text-text-secondary text-typ-footnote">
+                <span>"{searchQuery}"</span>
+                <button type="button" onClick={() => setSearchQuery('')} className="hover:text-text-primary transition-colors" title="Clear query">
+                  <X size={10} />
+                </button>
+              </span>
+            )}
+            <button 
+              type="button"
+              onClick={() => {
+                setSelectedOwner('All Family');
+                setFilter('All Assets');
+                setSearchQuery('');
+              }}
+              className="text-typ-footnote text-text-muted hover:text-text-primary underline ml-1 transition-colors"
+            >
+              Reset All
             </button>
           </div>
         )}
-        {filteredAssets.map((asset, i) => {
+      </div>
+
+      {/* Asset List */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between text-typ-footnote text-text-muted px-0.5">
+          <span>
+            {sortedAssets.length === 1 ? '1 holding' : `${sortedAssets.length} holdings`}
+            {selectedOwner !== 'All Family' && ` • ${selectedOwner}`}
+          </span>
+          {sortBy !== 'value_desc' && (
+            <span className="text-primary-accent font-medium text-typ-micro uppercase tracking-wider">
+              Sorted by {sortBy.replace('_desc', '').replace('_asc', '')}
+            </span>
+          )}
+        </div>
+
+        {sortedAssets.length === 0 && (
+          <div className="text-center py-10 bg-surface-layer1/40 border border-border-subtle/50 rounded-xl p-6">
+            <p className="text-text-secondary text-typ-body-sm">
+              No assets found matching the current filters.
+            </p>
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedOwner('All Family');
+                  setFilter('All Assets');
+                  setSearchQuery('');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-typ-footnote font-semibold rounded-lg bg-surface-layer2 hover:bg-surface-layer1 text-text-primary border border-border-subtle transition-all active:scale-95"
+              >
+                <span>Reset Filters</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openAddModal(filter !== 'All Assets' ? filter : undefined)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-typ-footnote font-semibold rounded-lg bg-primary-accent/15 hover:bg-primary-accent/25 text-primary-accent border border-primary-accent/25 transition-all active:scale-95"
+              >
+                <Plus size={13} />
+                <span>Add {filter !== 'All Assets' ? filter : 'Asset'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+        {sortedAssets.map((asset, i) => {
           let docCount = 0;
           let det = {};
           try {
@@ -581,16 +1177,18 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
             ? { holdingStr: asset['Holding Period'], cagr: asset['CAGR'], taxTag: asset['Tax Tag'], taxLabel: asset['Tax Label'] }
             : calculatePerformance(effectiveCost, currentVal, asset['Acquisition Date'], asset.Category);
 
+          const displayIdentifier = det['Folio Number'] || det['Folio'] || det['Account Number'] || det['Certificate Number'] || det['Policy Number'];
+
           return (
             <div 
               key={asset['Asset ID'] || i} 
               onClick={() => openEditModal(asset)}
-              className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 shadow-sm cursor-pointer hover:border-primary-accent/50 transition-colors"
+              className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 sm:p-4 shadow-sm cursor-pointer hover:border-primary-accent/50 transition-colors"
             >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-typ-body-sm font-semibold text-text-primary">{asset.Name}</p>
+              <div className="flex justify-between items-start gap-2.5 mb-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-typ-body-sm font-semibold text-text-primary break-words line-clamp-2 leading-snug">{asset.Name}</p>
                     {isLive && (
                       <Badge variant="emerald" dot pulse size="xs">
                         Live
@@ -598,12 +1196,23 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                   </div>
                   
-                  <div className="flex items-center flex-wrap gap-2 mt-0.5">
+                  <div className="flex items-center flex-wrap gap-2 mt-1">
                     <span className="text-typ-label text-text-muted">{asset.Category}</span>
+                    {displayIdentifier && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopy(displayIdentifier, `id-${asset['Asset ID'] || i}`, e)}
+                        className="inline-flex items-center gap-1 text-typ-micro text-text-muted hover:text-text-primary bg-surface-layer2 px-1.5 py-0.2 rounded border border-border-subtle hover:border-border-prominent transition-colors shrink-0"
+                        title={`Copy ${displayIdentifier}`}
+                      >
+                        {copiedId === `id-${asset['Asset ID'] || i}` ? <Check size={10} className="text-wealth-emerald" /> : <Copy size={10} />}
+                        <span className="truncate max-w-[120px] font-mono">{displayIdentifier}</span>
+                      </button>
+                    )}
                     {holdingSummary && (
                       <>
                         <span className="text-text-muted text-typ-caption">•</span>
-                        <span className="text-typ-label text-text-secondary">{holdingSummary}</span>
+                        <span className="text-typ-label text-text-secondary truncate max-w-[200px]">{holdingSummary}</span>
                       </>
                     )}
                     {perf?.holdingStr && perf.holdingStr !== 'Unknown' && (
@@ -637,7 +1246,22 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                     )}
                   </div>
                 </div>
-                <span className="bg-surface-layer2 text-typ-caption px-2 py-1 rounded text-text-secondary border border-border-subtle">{asset.Owner || 'Self'}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const targetOwner = asset.Owner || 'Self';
+                    setSelectedOwner(selectedOwner === targetOwner ? 'All Family' : targetOwner);
+                  }}
+                  className={`text-typ-caption px-2 py-0.5 rounded border transition-colors shrink-0 font-medium ${
+                    selectedOwner === (asset.Owner || 'Self')
+                      ? 'bg-primary-accent text-white border-primary-accent shadow-xs'
+                      : 'bg-surface-layer2 hover:bg-surface-layer1 text-text-secondary hover:text-text-primary border-border-subtle'
+                  }`}
+                  title={`Filter by ${asset.Owner || 'Self'}`}
+                >
+                  {asset.Owner || 'Self'}
+                </button>
               </div>
 
               <div className="flex justify-between items-end border-t border-border-subtle/40 pt-2 mt-2">

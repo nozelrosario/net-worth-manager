@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SCREEN 19: Revamped Assets &amp; Wealth Portfolio Tab</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "text-muted": "#64748B",
+            "error": "#ffb4ab",
+            "warning-amber": "#F59E0B",
+            "tertiary-fixed": "#ffdcc5",
+            "primary-fixed": "#e1e0ff",
+            "inverse-primary": "#494bd6",
+            "primary-container": "#8083ff",
+            "tertiary": "#ffb783",
+            "on-primary-container": "#0d0096",
+            "inverse-surface": "#e4e1ed",
+            "on-tertiary": "#4f2500",
+            "background": "#13131b",
+            "primary": "#c0c1ff",
+            "on-tertiary-fixed-variant": "#703700",
+            "surface": "#13131b",
+            "tertiary-fixed-dim": "#ffb783",
+            "surface-layer-1": "#151C28",
+            "on-secondary-container": "#00311f",
+            "tertiary-container": "#d97721",
+            "on-tertiary-fixed": "#301400",
+            "surface-layer-2": "#1E293B",
+            "secondary-fixed-dim": "#4edea3",
+            "on-surface": "#e4e1ed",
+            "on-tertiary-container": "#452000",
+            "surface-container-highest": "#34343d",
+            "on-secondary": "#003824",
+            "secondary-container": "#00a572",
+            "surface-container-low": "#1b1b23",
+            "on-primary-fixed": "#07006c",
+            "primary-fixed-dim": "#c0c1ff",
+            "error-container": "#93000a",
+            "surface-container": "#1f1f27",
+            "on-background": "#e4e1ed",
+            "on-primary": "#1000a9",
+            "border-prominent": "#334155",
+            "on-error-container": "#ffdad6",
+            "surface-container-high": "#292932",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "border-subtle": "#222F3E",
+            "inverse-on-surface": "#303038",
+            "on-secondary-fixed-variant": "#005236",
+            "surface-dim": "#13131b",
+            "outline-variant": "#464554",
+            "secondary": "#4edea3",
+            "surface-bright": "#393841",
+            "text-secondary": "#94A3B8",
+            "on-secondary-fixed": "#002113",
+            "liability-rose": "#F43F5E",
+            "surface-variant": "#34343d",
+            "background-root": "#0B0F17",
+            "on-error": "#690005",
+            "surface-tint": "#c0c1ff",
+            "text-primary": "#F8FAFC",
+            "surface-container-lowest": "#0d0d15",
+            "secondary-fixed": "#6ffbbe",
+            "profit-emerald": "#10B981",
+            "on-surface-variant": "#c7c4d7",
+            "outline": "#908fa0"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "12px",
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "space-xl": "32px",
+            "space-md": "16px",
+            "space-lg": "24px",
+            "margin": "16px"
+          },
+          "fontFamily": {
+            "headline-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "display-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-sm": ["Inter"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Hide scrollbars for slick mobile carousel */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen flex justify-center selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Viewport Shell (393px × 852px standard canvas container) -->
+<div class="w-full max-w-[393px] min-h-screen bg-background-root relative flex flex-col pb-28 shadow-2xl overflow-x-hidden border-x border-border-subtle/50">
+<!-- Top Status Bar & Header (Sticky) -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-margin pt-3 pb-3 border-b border-border-subtle">
+<!-- System Bar Metrics Dummy -->
+<div class="flex items-center justify-between text-[11px] font-label-md text-text-muted pb-2">
+<span class="font-medium tracking-tight text-text-secondary">9:41</span>
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="material-symbols-outlined text-[14px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[14px]">wifi</span>
+<span class="material-symbols-outlined text-[14px]">battery_full</span>
+</div>
+</div>
+<!-- App Header Nav Row -->
+<div class="flex items-center justify-between mt-1">
+<div class="flex items-center gap-2">
+<h1 class="text-headline-md font-headline-md text-text-primary tracking-tight">Assets &amp; Liabilities</h1>
+<!-- AMFI Live Pulse Badge -->
+<div class="flex items-center gap-1 bg-surface-layer-1 border border-profit-emerald/30 px-2 py-0.5 rounded-full">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-profit-emerald opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-profit-emerald"></span>
+</span>
+<span class="text-[10px] font-semibold text-profit-emerald uppercase tracking-wider">AMFI Live</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Tools / More Button -->
+<button aria-label="More options" class="w-9 h-9 rounded-lg bg-surface-layer-1 border border-border-subtle flex items-center justify-center text-text-secondary active:scale-95 transition-transform hover:text-text-primary" type="button">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+<!-- Indigo Primary CTA -->
+<button class="h-9 px-3 rounded-lg bg-[#6366F1] hover:bg-[#4F46E5] text-white flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="text-label-md font-label-md font-semibold text-white">Add Asset</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin pt-space-md space-y-space-md">
+<!-- SECTION 2: Hero Portfolio Cockpit -->
+<section class="relative rounded-xl bg-surface-layer-1 border border-border-subtle p-4 overflow-hidden">
+<!-- Ambient emerald soft glow background tint -->
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-profit-emerald/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-10 -left-10 w-40 h-40 bg-[#6366F1]/10 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Top Valuation Row -->
+<div class="relative z-10 flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="text-label-md font-label-md text-text-muted flex items-center gap-1.5">
+              Total Portfolio Valuation
+              <button class="text-text-muted hover:text-text-primary flex items-center" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+</span>
+<!-- All-time Return Pill -->
+<div class="flex items-center gap-1 bg-profit-emerald/15 border border-profit-emerald/30 px-2 py-0.5 rounded-full text-profit-emerald">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span class="text-label-sm font-label-sm font-semibold tabular-nums">+₹34.20 L (+18.4%)</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2 mt-0.5">
+<span class="text-display-lg font-display-lg text-text-primary tabular-nums tracking-tight">₹2,48,50,000</span>
+</div>
+</div>
+<!-- 3-Metric Subgrid -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-border-subtle/80">
+<!-- Metric 1: Invested -->
+<div class="bg-surface-layer-2/60 border border-border-subtle rounded-lg p-2.5 flex flex-col">
+<span class="text-[11px] font-label-sm text-text-muted">Invested Cost</span>
+<span class="text-body-md font-body-md font-semibold text-text-primary tabular-nums mt-0.5">₹2,14,30,000</span>
+<span class="text-[10px] text-text-secondary mt-1">Cost Basis</span>
+</div>
+<!-- Metric 2: Unrealized P&L -->
+<div class="bg-surface-layer-2/60 border border-border-subtle rounded-lg p-2.5 flex flex-col">
+<span class="text-[11px] font-label-sm text-text-muted">Unrealized P&amp;L</span>
+<span class="text-body-md font-body-md font-semibold text-profit-emerald tabular-nums mt-0.5">+₹34.20 L</span>
+<span class="text-[9px] font-medium text-profit-emerald/90 bg-profit-emerald/10 border border-profit-emerald/20 px-1 py-0.5 rounded w-max mt-1">82% LTCG</span>
+</div>
+<!-- Metric 3: Live Coverage -->
+<div class="bg-surface-layer-2/60 border border-border-subtle rounded-lg p-2.5 flex flex-col">
+<span class="text-[11px] font-label-sm text-text-muted">Live Coverage</span>
+<span class="text-body-md font-body-md font-semibold text-text-primary tabular-nums mt-0.5">18 Holdings</span>
+<span class="text-[9px] font-medium text-secondary-container text-emerald-300 bg-secondary-container/20 border border-secondary-container/30 px-1 py-0.5 rounded w-max mt-1">12 AMFI Live</span>
+</div>
+</div>
+<!-- Segmented Breakdown Section -->
+<div class="mt-4 pt-3 border-t border-border-subtle/80">
+<!-- Segment Tabs -->
+<div class="flex items-center justify-between pb-2.5">
+<span class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider">Asset Distribution</span>
+<div class="flex bg-surface-layer-2 p-0.5 rounded-lg border border-border-subtle">
+<button class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#6366F1] text-white shadow-xs" type="button">By Category</button>
+<button class="px-2 py-0.5 rounded-md text-[11px] font-medium text-text-secondary hover:text-text-primary" type="button">By Owner</button>
+<button class="px-2 py-0.5 rounded-md text-[11px] font-medium text-text-secondary hover:text-text-primary" type="button">By Liquidity</button>
+</div>
+</div>
+<!-- Segmented Horizontal Stacked Bar -->
+<div class="h-2.5 w-full rounded-full bg-surface-container flex overflow-hidden gap-0.5 mt-1">
+<div class="h-full bg-[#6366F1]" style="width: 48%;" title="Mutual Funds 48%"></div>
+<div class="h-full bg-[#0EA5E9]" style="width: 26%;" title="Equities 26%"></div>
+<div class="h-full bg-profit-emerald" style="width: 18%;" title="Real Estate 18%"></div>
+<div class="h-full bg-warning-amber" style="width: 8%;" title="Gold 8%"></div>
+</div>
+<!-- Micro Legend & Stats -->
+<div class="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-3 text-body-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#6366F1]"></span>
+<span class="text-text-secondary text-[11px]">Mutual Funds</span>
+</div>
+<span class="text-text-primary text-[11px] font-medium tabular-nums">48% <span class="text-text-muted">• ₹1.19 Cr</span></span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#0EA5E9]"></span>
+<span class="text-text-secondary text-[11px]">Equities</span>
+</div>
+<span class="text-text-primary text-[11px] font-medium tabular-nums">26% <span class="text-text-muted">• ₹64.6 L</span></span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-profit-emerald"></span>
+<span class="text-text-secondary text-[11px]">Real Estate</span>
+</div>
+<span class="text-text-primary text-[11px] font-medium tabular-nums">18% <span class="text-text-muted">• ₹45.0 L</span></span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-warning-amber"></span>
+<span class="text-text-secondary text-[11px]">Gold &amp; SGB</span>
+</div>
+<span class="text-text-primary text-[11px] font-medium tabular-nums">8% <span class="text-text-muted">• ₹19.9 L</span></span>
+</div>
+</div>
+</div>
+<!-- Action Alert Box (Institutional Notice) -->
+<div class="mt-3.5 bg-warning-amber/10 border border-warning-amber/30 rounded-lg p-2.5 flex items-center justify-between gap-2.5">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-warning-amber text-[18px] shrink-0 mt-0.5">warning</span>
+<div class="flex flex-col">
+<span class="text-label-md font-semibold text-warning-amber">2 Actions Required</span>
+<span class="text-[11px] text-text-secondary leading-snug">HDFC FD Matures in 14 days • Term Life Grace Period active</span>
+</div>
+</div>
+<button class="p-1 rounded text-warning-amber hover:bg-warning-amber/20 shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- SECTION 3: Search & Advanced Filters Section -->
+<section class="space-y-2.5">
+<!-- Search Field -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-8 bg-surface-layer-1 border border-border-subtle rounded-lg text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-[#6366F1] transition-colors" placeholder="Search asset name, folio, ticker, bank, owner..." type="text"/>
+<button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</button>
+</div>
+<!-- Horizontal Scrollable Category Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+<button class="shrink-0 px-3 py-1.5 rounded-full text-label-md font-medium bg-[#6366F1] text-white flex items-center gap-1.5 shadow-sm" type="button">
+<span>All Assets</span>
+<span class="bg-white/20 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">18</span>
+</button>
+<button class="shrink-0 px-3 py-1.5 rounded-full text-label-md font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5" type="button">
+<span>Mutual Funds</span>
+<span class="bg-surface-layer-2 text-text-muted text-[10px] px-1.5 py-0.2 rounded-full">7</span>
+</button>
+<button class="shrink-0 px-3 py-1.5 rounded-full text-label-md font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5" type="button">
+<span>Equity</span>
+<span class="bg-surface-layer-2 text-text-muted text-[10px] px-1.5 py-0.2 rounded-full">5</span>
+</button>
+<button class="shrink-0 px-3 py-1.5 rounded-full text-label-md font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5" type="button">
+<span>Cash/FD</span>
+<span class="bg-surface-layer-2 text-text-muted text-[10px] px-1.5 py-0.2 rounded-full">3</span>
+</button>
+<button class="shrink-0 px-3 py-1.5 rounded-full text-label-md font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5" type="button">
+<span>Gold</span>
+<span class="bg-surface-layer-2 text-text-muted text-[10px] px-1.5 py-0.2 rounded-full">2</span>
+</button>
+<button class="shrink-0 px-3 py-1.5 rounded-full text-label-md font-medium bg-surface-layer-1 border border-border-subtle text-text-secondary hover:text-text-primary flex items-center gap-1.5" type="button">
+<span>Real Estate</span>
+<span class="bg-surface-layer-2 text-text-muted text-[10px] px-1.5 py-0.2 rounded-full">1</span>
+</button>
+</div>
+<!-- Quick Filter Dropdowns Row -->
+<div class="flex items-center justify-between gap-2 pt-0.5">
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+<button class="h-7 px-2.5 rounded-md bg-surface-layer-1 border border-border-subtle text-text-secondary text-[11px] font-medium flex items-center gap-1 hover:border-border-prominent" type="button">
+<span>Owner: All</span>
+<span class="material-symbols-outlined text-[13px]">expand_more</span>
+</button>
+<button class="h-7 px-2.5 rounded-md bg-surface-layer-1 border border-border-subtle text-text-secondary text-[11px] font-medium flex items-center gap-1 hover:border-border-prominent" type="button">
+<span>Sort: Valuation (High to Low)</span>
+<span class="material-symbols-outlined text-[13px]">expand_more</span>
+</button>
+</div>
+<button class="h-7 w-7 rounded-md bg-surface-layer-1 border border-border-subtle text-[#6366F1] flex items-center justify-center shrink-0" title="Active Filter Presets" type="button">
+<span class="material-symbols-outlined text-[15px]">filter_list</span>
+</button>
+</div>
+</section>
+<!-- SECTION 4: Holdings List -->
+<section class="space-y-3 pt-1">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider">Top Portfolios &amp; Assets</span>
+<span class="text-[11px] font-medium text-text-secondary">Showing 18 of 18</span>
+</div>
+<!-- Card 1: Mutual Fund -->
+<article class="rounded-xl bg-surface-layer-1 border border-border-subtle p-3.5 space-y-2.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-3">
+<div class="flex-1">
+<div class="flex items-center gap-1.5 mb-1 flex-wrap">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/25">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-pulse"></span>
+                  AMFI Live
+                </span>
+<span class="text-[10px] text-text-muted">Folio #10482910/22</span>
+</div>
+<h2 class="text-body-md font-headline-sm text-text-primary font-medium leading-snug">
+                Parag Parikh Flexi Cap Fund - Direct Growth
+              </h2>
+<div class="text-[11px] text-text-muted mt-1 tabular-nums">
+                4,210 units @ NAV ₹84.20
+              </div>
+</div>
+<div class="text-right shrink-0">
+<div class="text-body-lg font-headline-sm text-text-primary font-semibold tabular-nums">
+                ₹3,54,482
+              </div>
+<div class="text-[11px] font-medium text-profit-emerald tabular-nums mt-0.5 flex items-center justify-end gap-0.5">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>
+                +₹68,240 (+23.8%)
+              </div>
+</div>
+</div>
+<!-- Footer Micro-Pills -->
+<div class="pt-2 border-t border-border-subtle/70 flex items-center justify-between text-[10px]">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 text-text-secondary border border-border-subtle">
+                Equity Flexi-cap
+              </span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 text-[#6366F1] border border-[#6366F1]/30 font-medium">
+                Self
+              </span>
+</div>
+<div class="flex items-center gap-1 text-text-muted">
+<span class="material-symbols-outlined text-[12px]">attachment</span>
+<span>2 docs attached</span>
+</div>
+</div>
+</article>
+<!-- Card 2: Equity Card -->
+<article class="rounded-xl bg-surface-layer-1 border border-border-subtle p-3.5 space-y-2.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-3">
+<div class="flex-1">
+<div class="flex items-center gap-1.5 mb-1 flex-wrap">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/25">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+                  NSE Live
+                </span>
+<span class="text-[10px] text-text-muted">Demat Zerodha</span>
+</div>
+<h2 class="text-body-md font-headline-sm text-text-primary font-medium leading-snug">
+                Tata Motors Ltd (TATAMOTORS)
+              </h2>
+<div class="text-[11px] text-text-muted mt-1 tabular-nums">
+                250 shares @ ₹945 CMP
+              </div>
+</div>
+<div class="text-right shrink-0">
+<div class="text-body-lg font-headline-sm text-text-primary font-semibold tabular-nums">
+                ₹2,36,250
+              </div>
+<div class="text-[11px] font-medium text-profit-emerald tabular-nums mt-0.5 flex items-center justify-end gap-0.5">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>
+                +₹66,250 (+38.9%)
+              </div>
+</div>
+</div>
+<!-- Footer Micro-Pills -->
+<div class="pt-2 border-t border-border-subtle/70 flex items-center justify-between text-[10px]">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 text-text-secondary border border-border-subtle">
+                LTCG (Sec 112A)
+              </span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 text-[#6366F1] border border-[#6366F1]/30 font-medium">
+                Self
+              </span>
+</div>
+<div class="flex items-center gap-1 text-profit-emerald font-medium">
+<span class="material-symbols-outlined text-[12px]">sync</span>
+<span>Auto-synced</span>
+</div>
+</div>
+</article>
+<!-- Card 3: Fixed Deposit Card -->
+<article class="rounded-xl bg-surface-layer-1 border border-border-subtle p-3.5 space-y-2.5 hover:border-border-prominent transition-all">
+<div class="flex items-start justify-between gap-3">
+<div class="flex-1">
+<div class="flex items-center gap-1.5 mb-1 flex-wrap">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-surface-layer-2 text-text-secondary border border-border-subtle">
+                  FD #9402810482
+                </span>
+<span class="inline-flex items-center gap-0.5 text-[10px] text-profit-emerald">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                  Verified
+                </span>
+</div>
+<h2 class="text-body-md font-headline-sm text-text-primary font-medium leading-snug">
+                HDFC Bank Tax Saver FD
+              </h2>
+<div class="text-[11px] text-text-muted mt-1 tabular-nums">
+                7.4% p.a. • Matures: Nov 19, 2026
+              </div>
+</div>
+<div class="text-right shrink-0">
+<div class="text-body-lg font-headline-sm text-text-primary font-semibold tabular-nums">
+                ₹5,00,000
+              </div>
+<div class="text-[11px] font-medium text-text-secondary tabular-nums mt-0.5">
+                Accrued: <span class="text-profit-emerald">+₹37,000</span>
+</div>
+</div>
+</div>
+<!-- Footer Micro-Pills -->
+<div class="pt-2 border-t border-border-subtle/70 flex items-center justify-between text-[10px] flex-wrap gap-1">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-warning-amber/15 text-warning-amber border border-warning-amber/30 font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">schedule</span>
+                Maturity in 14 Days
+              </span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 text-secondary border border-secondary/30 font-medium">
+                Spouse (Priya)
+              </span>
+</div>
+<div class="flex items-center gap-1 text-text-muted">
+<span class="material-symbols-outlined text-[12px]">autorenew</span>
+<span>Auto-Renewal Active</span>
+</div>
+</div>
+</article>
+</section>
+</main>
+<!-- SECTION 5: Shared Component - BottomNavBar (Docked bottom bar) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 border-t border-border-subtle">
+<!-- Item 1: Dashboard (inactive) -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</a>
+<!-- Item 2: Portfolio / Assets (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-[#6366F1] font-medium py-1 active:scale-95 transition-transform duration-150 relative" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<!-- Tiny active dot -->
+<span class="absolute -top-0.5 -right-1 w-1.5 h-1.5 bg-[#6366F1] rounded-full"></span>
+</div>
+<span class="text-label-sm font-label-sm mt-0.5 text-[#6366F1] font-semibold">Portfolio</span>
+</a>
+<!-- Item 3: Cashflow (inactive) -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[22px]">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Cashflow</span>
+</a>
+<!-- Item 4: Family Safe (inactive) -->
+<a class="flex flex-col items-center justify-center text-text-secondary py-1 hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[22px]">shield</span>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</a>
+</nav>
+<!-- Native Mobile Home Indicator Bar -->
+<div class="fixed bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-text-muted/40 rounded-full z-50 pointer-events-none"></div>
+</div>
+</body></html>
