@@ -2077,15 +2077,21 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
     var sanitizedData = {
       netWorth: rebalanceData.netWorth || 0,
       totalGrossAssets: rebalanceData.totalGrossAssets || 0,
+      coreInvestableAssets: rebalanceData.coreInvestableAssets || rebalanceData.totalGrossAssets || 0,
       alignmentScore: rebalanceData.alignmentScore || 0,
+      healthLabel: rebalanceData.healthLabel || 'Aligned',
+      targetProfile: rebalanceData.targetProfile || 'Moderate',
       inflowAmount: rebalanceData.inflowAmount || 0,
       projectedAlignmentScore: rebalanceData.projectedAlignmentScore || 0,
-      cashRunwayMonths: rebalanceData.cashRunwayMonths || 0,
-      excessCashDrag: rebalanceData.excessCashDrag || 0,
-      idleSavingsSurplus: rebalanceData.idleSavingsSurplus || 0,
+      cashRunwayMonths: rebalanceData.cashRunwayMonths || (rebalanceData.cashDrag ? rebalanceData.cashDrag.runwayMonths : 0),
+      totalLiquidCash: rebalanceData.totalLiquidCash || (rebalanceData.cashDrag ? rebalanceData.cashDrag.totalLiquidCash : 0),
+      emergencyReserveTarget: rebalanceData.emergencyReserveTarget || (rebalanceData.cashDrag ? rebalanceData.cashDrag.emergencyReserveTarget : 0),
+      excessCashDrag: rebalanceData.excessCashDrag || (rebalanceData.cashDrag ? rebalanceData.cashDrag.excessCashDrag : 0),
+      idleSavingsSurplus: rebalanceData.idleSavingsSurplus || (rebalanceData.cashDrag ? rebalanceData.cashDrag.idleSavingsSurplus : 0),
       breakdown: (rebalanceData.breakdown || []).map(function(item) {
         return {
           category: item.category,
+          currentValue: item.currentValue || 0,
           currentPct: item.currentPct,
           targetPct: item.targetPct,
           driftPct: item.driftPct,
@@ -2094,6 +2100,11 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
           status: item.status
         };
       }),
+      retirement: rebalanceData.retirement || { totalCorpus: 0, accounts: [] },
+      insurance: rebalanceData.insurance || { policiesCount: 0, totalLifeCover: 0, totalTermCover: 0, totalHealthCover: 0, totalAnnualPremium: 0, totalSurrenderValue: 0, policies: [] },
+      elss: rebalanceData.elss || { totalElssValue: 0, holdings: [] },
+      liabilities: rebalanceData.liabilities || { totalLiabilities: 0, loans: [] },
+      topHoldings: rebalanceData.topHoldings || [],
       concentrationAlerts: (rebalanceData.concentrationAlerts || []).map(function(alert) {
         return {
           category: alert.category,
@@ -2108,27 +2119,77 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
 
     if (apiKey) {
       try {
-        var prompt = "You are a senior SEBI-compliant family office wealth manager and Indian tax optimization strategist. " +
-          "Analyze the following anonymized personal portfolio rebalance simulation and provide concise, high-value strategic guidance.\n\n" +
-          "PORTFOLIO METRICS:\n" +
+        var prompt = "You are a Chief Investment Officer and SEBI-registered Family Office Principal advising an Indian High-Net-Worth family. " +
+          "You have been provided with their COMPLETE financial balance sheet, including discretionary investable assets, sovereign retirement accounts (EPF, PPF, NPS), tax-saving investments (ELSS), life & health insurance policies (LIC, term insurance), liabilities, and cash reserves.\n\n" +
+          "Analyze this comprehensive portfolio holistically and generate a rich, professional, multi-section strategic wealth advisory synthesis formatted in clean GitHub-style markdown.\n\n" +
+          "--- 1. MACRO BALANCE SHEET & TARGET BENCHMARK ---\n" +
           "- Total Net Worth: ₹" + Number(sanitizedData.netWorth).toLocaleString('en-IN') + "\n" +
-          "- Current Alignment Score: " + sanitizedData.alignmentScore + "/100\n" +
-          "- Proposed Fresh Capital Inflow: ₹" + Number(sanitizedData.inflowAmount).toLocaleString('en-IN') + "\n" +
-          "- Projected Score Post-Inflow: " + sanitizedData.projectedAlignmentScore + "/100\n" +
-          "- Liquid Cash Runway: " + sanitizedData.cashRunwayMonths + " months\n" +
-          "- Excess Cash Drag: ₹" + Number(sanitizedData.excessCashDrag).toLocaleString('en-IN') + (sanitizedData.idleSavingsSurplus > 50000 ? " (Idle Savings Surplus: ₹" + Number(sanitizedData.idleSavingsSurplus).toLocaleString('en-IN') + ")" : "") + "\n\n" +
-          "ASSET ALLOCATION DRIFT & PROPOSED FRESH INFLOW DEPLOYMENT:\n" +
+          "- Gross Assets: ₹" + Number(sanitizedData.totalGrossAssets).toLocaleString('en-IN') + "\n" +
+          "- Core Investable Assets: ₹" + Number(sanitizedData.coreInvestableAssets).toLocaleString('en-IN') + "\n" +
+          "- Target Risk Profile: " + sanitizedData.targetProfile + "\n" +
+          "- Current Portfolio Alignment Score: " + sanitizedData.alignmentScore + "/100 (" + sanitizedData.healthLabel + ")\n" +
+          "- Proposed Fresh Inflow: ₹" + Number(sanitizedData.inflowAmount).toLocaleString('en-IN') + " (lifts alignment score to " + sanitizedData.projectedAlignmentScore + "/100 without selling)\n\n" +
+          "--- 2. CORE ASSET ALLOCATION DRIFT & FRESH INFLOW DEPLOYMENT ---\n" +
           JSON.stringify(sanitizedData.breakdown, null, 2) + "\n\n" +
-          "CONCENTRATION ALERTS:\n" +
-          JSON.stringify(sanitizedData.concentrationAlerts, null, 2) + "\n\n" +
-          "GUIDELINES FOR YOUR RESPONSE:\n" +
-          "1. Give an Executive Assessment (1-2 sentences on health and drift).\n" +
-          "2. Fresh Capital Deployment Advice: Why allocating to underweight assets without selling prevents Section 112A/111A capital gains tax.\n" +
-          "3. Tactical Recommendations: Give specific asset class suggestions (e.g. Nifty 50 Index / Flexi Cap for MFs, Callable FD vs Liquid funds for cash, SGB vs Gold ETFs for gold).\n" +
-          "4. Cash Drag & Risk Action: Comment on runway and concentration if any.\n" +
-          "Keep your answer crisp, professional, formatted in clean markdown bullet points, avoiding generic disclaimers.";
+          "--- 3. LIQUID CASH, RUNWAY & CASH DRAG METRICS ---\n" +
+          "- Liquid Cash Runway: " + sanitizedData.cashRunwayMonths + " months\n" +
+          "- Total Liquid Reserves: ₹" + Number(sanitizedData.totalLiquidCash).toLocaleString('en-IN') + "\n" +
+          "- 6-Month Emergency Buffer Target: ₹" + Number(sanitizedData.emergencyReserveTarget).toLocaleString('en-IN') + "\n" +
+          "- Excess Cash Drag (Idle Beyond Buffer): ₹" + Number(sanitizedData.excessCashDrag).toLocaleString('en-IN') + "\n" +
+          "- Idle Savings Account Surplus (Earning ~3% vs 7%+ in FD): ₹" + Number(sanitizedData.idleSavingsSurplus).toLocaleString('en-IN') + "\n\n" +
+          "--- 4. RETIREMENT & SOVEREIGN WEALTH VAULT (EPF, PPF, NPS) ---\n" +
+          (sanitizedData.retirement && sanitizedData.retirement.totalCorpus > 0 ?
+            ("- Total Retirement Corpus: ₹" + Number(sanitizedData.retirement.totalCorpus).toLocaleString('en-IN') + "\n" +
+             "- Accounts: " + JSON.stringify(sanitizedData.retirement.accounts, null, 2)) :
+            "No retirement accounts (EPF/PPF/NPS) currently recorded.") + "\n\n" +
+          "--- 5. TAX-SAVING INVESTMENTS (ELSS MUTUAL FUNDS) ---\n" +
+          (sanitizedData.elss && sanitizedData.elss.totalElssValue > 0 ?
+            ("- Total ELSS Valuation: ₹" + Number(sanitizedData.elss.totalElssValue).toLocaleString('en-IN') + "\n" +
+             "- ELSS Holdings: " + JSON.stringify(sanitizedData.elss.holdings, null, 2)) :
+            "No ELSS tax-saving funds recorded.") + "\n\n" +
+          "--- 6. INSURANCE & PROTECTION AUDIT (LIC, TERM LIFE, HEALTH) ---\n" +
+          (sanitizedData.insurance && sanitizedData.insurance.policiesCount > 0 ?
+            ("- Total Life Insurance Cover: ₹" + Number(sanitizedData.insurance.totalLifeCover).toLocaleString('en-IN') + "\n" +
+             "- Pure Term Life Cover: ₹" + Number(sanitizedData.insurance.totalTermCover).toLocaleString('en-IN') + "\n" +
+             "- Health Insurance Cover: ₹" + Number(sanitizedData.insurance.totalHealthCover).toLocaleString('en-IN') + "\n" +
+             "- Annual Premium Outflow: ₹" + Number(sanitizedData.insurance.totalAnnualPremium).toLocaleString('en-IN') + "/year\n" +
+             "- Accumulated Cash / Surrender Value (Endowment/ULIP/LIC): ₹" + Number(sanitizedData.insurance.totalSurrenderValue).toLocaleString('en-IN') + "\n" +
+             "- Policies: " + JSON.stringify(sanitizedData.insurance.policies, null, 2)) :
+            "No insurance policies logged.") + "\n\n" +
+          "--- 7. LIABILITIES & DEBT ---\n" +
+          (sanitizedData.liabilities && sanitizedData.liabilities.totalLiabilities > 0 ?
+            ("- Total Liabilities: ₹" + Number(sanitizedData.liabilities.totalLiabilities).toLocaleString('en-IN') + "\n" +
+             "- Loans: " + JSON.stringify(sanitizedData.liabilities.loans, null, 2)) :
+            "Zero liabilities logged (Debt-free).") + "\n\n" +
+          "--- 8. TOP INDIVIDUAL HOLDINGS & CONCENTRATION ALERTS ---\n" +
+          "- Top Holdings: " + JSON.stringify(sanitizedData.topHoldings || [], null, 2) + "\n" +
+          "- Concentration Skews: " + JSON.stringify(sanitizedData.concentrationAlerts || [], null, 2) + "\n\n" +
+          "REQUIRED OUTPUT STRUCTURE & GUIDELINES:\n" +
+          "Provide a structured, deep, and actionable wealth advisory report in clean GitHub markdown using exactly the following 6 sections:\n\n" +
+          "### 📊 1. Macro Balance Sheet Architecture & Alignment Health\n" +
+          "Synthesize the client's total net worth, structural alignment score (" + sanitizedData.alignmentScore + "/100), and macro allocation between discretionary liquid assets and locked sovereign retirement wealth.\n\n" +
+          "### 💡 2. Smart Inflow Steering (Zero-Tax Non-Sale Rebalancing)\n" +
+          "Explain how deploying the fresh capital (₹" + Number(sanitizedData.inflowAmount).toLocaleString('en-IN') + ") into underweight assets lifts alignment score to " + sanitizedData.projectedAlignmentScore + "/100 without triggering Section 112A (12.5% LTCG) or Section 111A (20% STCG) tax liabilities compared to selling. Detail exact rupee allocations per category.\n\n" +
+          "### ⚠️ 3. Liquid Buffer, Cash Drag & Yield Arbitrage\n" +
+          "Analyze cash runway (" + sanitizedData.cashRunwayMonths + " months). If there is excess cash drag or idle savings surplus, give precise instructions to eliminate yield loss (e.g. moving idle savings into 7.10%+ callable FDs, liquid funds, or arbitrage funds for 12.5% LTCG taxation).\n\n" +
+          "### 🏛️ 4. Sovereign Retirement & Pension Strategy (EPF, PPF, NPS)\n" +
+          "Analyze the client's EPF, PPF, and NPS holdings. Discuss asset allocation within retirement, risk-adjusted returns (EPF 8.25%, PPF 7.1%), and Section 80CCD(1B) ₹50,000 extra tax deduction for NPS. Explain how this sovereign debt balances out core equity volatility.\n\n" +
+          "### 🛡️ 5. Tax Optimization & Insurance Protection Audit (ELSS & LIC)\n" +
+          "- ELSS Funds: Evaluate existing ELSS holdings, Section 80C 3-year lock-in, and whether to hold or rotate mature units into core flexi-cap index funds.\n" +
+          "- Life Insurance & LIC: Critically evaluate traditional endowment / LIC policies vs pure term insurance. Comment on whether life cover meets Human Life Value (10-15x annual expenses). Discuss Section 10(10D) tax rules and Budget 2023 ₹5 Lakh premium caps.\n" +
+          "- Health Insurance adequacy.\n\n" +
+          "### 🎯 6. Actionable 30-Day Execution Roadmap\n" +
+          "Provide a numbered 1-4 step execution checklist for the next 30 days.\n\n" +
+          "Maintain an authoritative, institutional family-office tone. Use specific numbers and clean bold bullet points. Avoid generic disclaimers.";
 
-        var candidateModels = [resolveGeminiFlashModel(apiKey), "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+        var rawModels = [resolveGeminiFlashModel(apiKey), "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+        var candidateModels = [];
+        for (var cmi = 0; cmi < rawModels.length; cmi++) {
+          if (rawModels[cmi] && candidateModels.indexOf(rawModels[cmi]) === -1) {
+            candidateModels.push(rawModels[cmi]);
+          }
+        }
+
         for (var mi = 0; mi < candidateModels.length; mi++) {
           var model = candidateModels[mi];
           var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(apiKey);
@@ -2137,8 +2198,8 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
               parts: [{ text: prompt }]
             }],
             generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 1000
+              temperature: 0.25,
+              maxOutputTokens: 2500
             }
           };
 
@@ -2187,25 +2248,30 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
  */
 function generateOfflineHeuristicInsights(data) {
   var lines = [];
-  lines.push("### 📊 Portfolio Diagnosis & Health");
+  var netWorthStr = "₹" + Number(data.netWorth || 0).toLocaleString("en-IN");
+  var inflowStr = "₹" + Number(data.inflowAmount || 0).toLocaleString("en-IN");
+
+  // 1. Macro Balance Sheet
+  lines.push("### 📊 1. Macro Balance Sheet Architecture & Alignment Health");
+  lines.push("• **Total Net Worth:** Your audited balance sheet stands at **" + netWorthStr + "** across core investable holdings and sovereign retirement vaults.");
   if (data.alignmentScore >= 80) {
-    lines.push("• **Strong Structural Alignment:** Portfolio health score of **" + data.alignmentScore + "/100**. Your asset mix closely reflects your benchmark risk profile with minor tactical drift.");
+    lines.push("• **Alignment Score (" + data.alignmentScore + "/100):** Excellent structural alignment. Your portfolio closely tracks your **" + (data.targetProfile || "Moderate") + "** risk profile benchmark with disciplined asset diversification.");
   } else if (data.alignmentScore >= 65) {
-    lines.push("• **Moderate Drift Detected:** Portfolio health score is **" + data.alignmentScore + "/100**. Asset distribution has tilted from the target benchmark due to recent market appreciation.");
+    lines.push("• **Alignment Score (" + data.alignmentScore + "/100):** Moderate tactical drift detected. Market momentum has expanded certain sectors beyond their target weights, creating rebalance opportunities.");
   } else {
-    lines.push("• **Significant Drift Warning:** Portfolio health score is **" + data.alignmentScore + "/100**. Substantial skew between actual holdings and target weights requires active capital redirection.");
+    lines.push("• **Alignment Score (" + data.alignmentScore + "/100):** Substantial portfolio drift. Your current allocation diverges meaningfully from your target benchmark, warranting systematic capital steering.");
   }
 
-  lines.push("\n### 💡 Smart Inflow & Tax-Efficient Deployment");
+  // 2. Smart Inflow Steering
+  lines.push("\n### 💡 2. Smart Inflow Steering (Zero-Tax Non-Sale Rebalancing)");
   if (data.inflowAmount > 0) {
-    var gain = Math.max(0, data.projectedAlignmentScore - data.alignmentScore);
-    lines.push("• **Non-Taxable Rebalance:** Deploying ₹" + Number(data.inflowAmount).toLocaleString('en-IN') + " of fresh capital improves alignment score to **" + data.projectedAlignmentScore + "/100** (+" + gain + " pts) **without selling any existing assets**.");
-    lines.push("• **Section 112A / 111A Tax Guard:** By avoiding asset sales to rebalance, you preserve compounding and avoid triggering 12.5% LTCG or 20% STCG liabilities.");
+    var gain = Math.max(0, (data.projectedAlignmentScore || data.alignmentScore) - data.alignmentScore);
+    lines.push("• **Tax-Preserving Capital Injection:** Deploying fresh capital of **" + inflowStr + "** improves your alignment health to **" + data.projectedAlignmentScore + "/100** (+" + gain + " pts) **strictly without selling a single asset**.");
+    lines.push("• **Section 112A & 111A Capital Gains Shield:** By utilizing inflow steering instead of traditional sell-and-rebuy rebalancing, you avoid triggering 12.5% Long-Term Capital Gains (LTCG) and 20% Short-Term Capital Gains (STCG) taxes.");
   } else {
-    lines.push("• **Fresh Inflow Recommendation:** Instead of selling overweight holdings (which incurs 12.5% LTCG or 20% STCG), channel your next monthly savings or lump sum exclusively into underweight categories.");
+    lines.push("• **Inflow Rebalance Advantage:** Rather than redeeming overweight holdings (which incurs 12.5% LTCG above ₹1.25L), channel upcoming fresh income or monthly SIP allocations into underweight asset classes.");
   }
 
-  // Underweight vs Overweight specific guidance
   var underweight = [];
   var overweight = [];
   (data.breakdown || []).forEach(function(b) {
@@ -2214,16 +2280,18 @@ function generateOfflineHeuristicInsights(data) {
   });
 
   if (underweight.length > 0) {
-    lines.push("\n### 🎯 Tactical Asset Allocations");
     underweight.forEach(function(u) {
-      if (u.category === 'Mutual Funds') {
-        lines.push("• **Mutual Funds (-" + Math.abs(u.driftPct) + "%):** Allocate " + (u.allocatedRupees > 0 ? "₹" + Number(u.allocatedRupees).toLocaleString('en-IN') : "fresh SIPs") + " into broad-market Nifty 50 Index or Flexi-Cap funds to establish consistent dollar-cost averaging.");
-      } else if (u.category === 'Cash/FD') {
-        lines.push("• **Cash & Fixed Deposits (-" + Math.abs(u.driftPct) + "%):** Channel " + (u.allocatedRupees > 0 ? "₹" + Number(u.allocatedRupees).toLocaleString('en-IN') : "capital") + " into 7.10%+ multi-year bank FDs or high-grade corporate bond funds to reinforce stability.");
-      } else if (u.category === 'Gold') {
-        lines.push("• **Gold & Precious Metals (-" + Math.abs(u.driftPct) + "%):** Add " + (u.allocatedRupees > 0 ? "₹" + Number(u.allocatedRupees).toLocaleString('en-IN') : "allocation") + " via Sovereign Gold Bonds (SGB) or Gold ETFs to capture inflation hedging.");
-      } else if (u.category === 'Equity') {
-        lines.push("• **Direct Equity (-" + Math.abs(u.driftPct) + "%):** Deploy into undervalued dividend-paying large-cap stocks.");
+      var allocText = u.allocatedRupees > 0 ? "Deploy **₹" + Number(u.allocatedRupees).toLocaleString("en-IN") + "**" : "Channel fresh capital";
+      if (u.category === "Mutual Funds") {
+        lines.push("• **Mutual Funds (" + u.driftPct + "% Underweight):** " + allocText + " into broad-market Nifty 50 Index or Flexi-Cap Direct funds for long-term compound growth.");
+      } else if (u.category === "Cash/FD") {
+        lines.push("• **Cash/FD (" + u.driftPct + "% Underweight):** " + allocText + " into high-yield 7.10%+ callable bank FDs or liquid funds to reinforce safety.");
+      } else if (u.category === "Gold") {
+        lines.push("• **Gold & Bullion (" + u.driftPct + "% Underweight):** " + allocText + " via Sovereign Gold Bonds (SGB) or low-cost Gold ETFs (GOLDBEES) to establish an inflation hedge.");
+      } else if (u.category === "Equity") {
+        lines.push("• **Direct Equity (" + u.driftPct + "% Underweight):** " + allocText + " into resilient large-cap industry leaders.");
+      } else if (u.category === "Real Estate") {
+        lines.push("• **Real Estate (" + u.driftPct + "% Underweight):** Consider fractional REITs or land reserve accumulation.");
       }
     });
   }
@@ -2234,25 +2302,67 @@ function generateOfflineHeuristicInsights(data) {
     });
   }
 
-  // Cash drag guidance
-  if (data.excessCashDrag > 0) {
-    lines.push("\n### ⚠️ Cash Drag & Runway Optimization");
-    lines.push("• **Excess Liquid Buffer:** Total runway is **" + data.cashRunwayMonths + " months**. Approximately ₹" + Number(data.excessCashDrag).toLocaleString('en-IN') + " is idle beyond the recommended 6-month family emergency buffer, causing an estimated ~1.2% - 1.8% annual drag against inflation.");
-  } else if (data.idleSavingsSurplus > 50000) {
-    lines.push("\n### ⚠️ Idle Savings Yield Drag");
-    lines.push("• Approximately ₹" + Number(data.idleSavingsSurplus).toLocaleString('en-IN') + " is sitting idle in standard low-yield savings accounts. Consider moving to auto-sweep FDs or liquid funds to eliminate yield drag.");
-  } else if (data.cashRunwayMonths < 3 && data.cashRunwayMonths > 0) {
-    lines.push("\n### ⚠️ Emergency Buffer Deficit");
-    lines.push("• Total cash runway is only **" + data.cashRunwayMonths + " months**, below the recommended 6-month buffer. Prioritize building emergency liquidity before aggressive equity deployment.");
+  // 3. Liquid Buffer & Cash Drag
+  lines.push("\n### ⚠️ 3. Liquid Buffer, Cash Drag & Yield Arbitrage");
+  var runway = data.cashDrag ? data.cashDrag.runwayMonths : data.cashRunwayMonths || 0;
+  var excess = data.cashDrag ? data.cashDrag.excessCashDrag : data.excessCashDrag || 0;
+  var idle = data.cashDrag ? data.cashDrag.idleSavingsSurplus : data.idleSavingsSurplus || 0;
+  lines.push("• **Liquid Runway:** Your liquid reserves provide **" + runway + " months** of living expenses.");
+  if (excess > 0) {
+    lines.push("• **Excess Cash Drag Alert:** Approximately **₹" + Number(excess).toLocaleString("en-IN") + "** sits idle beyond your recommended 6-month emergency reserve. This capital generates an estimated ~6.5% annual opportunity drag against equities; systematically redeploy surplus into underweight growth assets.");
+  } else if (idle > 50000) {
+    lines.push("• **Savings Yield Drag Alert:** You hold **₹" + Number(idle).toLocaleString("en-IN") + "** in standard low-yield savings accounts earning only ~2.7-3.0%. Sweep this into an auto-sweep FD or Arbitrage Fund to capture an extra ~4.0% net yield.");
+  } else if (runway < 3 && runway > 0) {
+    lines.push("• **Buffer Shortfall:** Your liquid reserve is below the safe 6-month threshold. Pause aggressive illiquid investments until emergency reserves are replenished.");
+  } else {
+    lines.push("• **Emergency Cushion:** Liquid buffer is healthy and meets conservative family emergency requirements.");
   }
 
-  // Concentration alerts
-  if (data.concentrationAlerts && data.concentrationAlerts.length > 0) {
-    lines.push("\n### 🛡️ Concentration Risk Warnings");
-    data.concentrationAlerts.forEach(function(alert) {
-      lines.push("• " + alert.message);
-    });
+  // 4. Retirement & Sovereign Wealth
+  lines.push("\n### 🏛️ 4. Sovereign Retirement & Pension Strategy (EPF, PPF, NPS)");
+  if (data.retirement && data.retirement.totalCorpus > 0) {
+    var retCorpusStr = "₹" + Number(data.retirement.totalCorpus).toLocaleString("en-IN");
+    lines.push("• **Sovereign Retirement Wealth:** Your locked retirement corpus totals **" + retCorpusStr + "** across EPF, PPF, and NPS accounts.");
+    if (data.retirement.accounts && data.retirement.accounts.length > 0) {
+      data.retirement.accounts.forEach(function(acc) {
+        lines.push("  - **" + acc.name + " (" + acc.subType + "):** Current balance ₹" + Number(acc.currentValue).toLocaleString("en-IN") + (acc.interestRate ? " earning " + acc.interestRate + "% guaranteed tax-free return." : "."));
+      });
+    }
+    lines.push("• **Asset Allocation Synergy:** Sovereign retirement funds act as high-quality, zero-default sovereign debt. This risk-free fixed income anchor allows you to take higher equity exposure in your discretionary portfolio.");
+    lines.push("• **Section 80CCD(1B) Optimization:** Ensure you maximize the ₹50,000 exclusive NPS tax deduction under the Old Tax Regime to harvest ~₹15,600 in tax savings.");
+  } else {
+    lines.push("• **Retirement Planning Action:** No formal EPF or NPS accounts are logged. Consider opening an NPS Tier 1 account to capture the exclusive Section 80CCD(1B) ₹50,000 deduction and compound long-term retirement wealth.");
   }
+
+  // 5. Tax Strategy & Insurance
+  lines.push("\n### 🛡️ 5. Tax-Saving & Insurance Protection Audit (ELSS & LIC)");
+  if (data.elss && data.elss.totalElssValue > 0) {
+    lines.push("• **ELSS Tax-Saver Funds:** You hold **₹" + Number(data.elss.totalElssValue).toLocaleString("en-IN") + "** across ELSS mutual funds under Section 80C. Units completed past the 3-year lock-in can be systematically harvested up to the ₹1.25L annual tax-free LTCG threshold or reallocated into broad-market index funds.");
+  } else {
+    lines.push("• **Section 80C ELSS Strategy:** If utilizing the Old Tax Regime, consider ELSS funds for the lowest lock-in period (3 years vs 15 years in PPF) and superior equity compounding.");
+  }
+
+  if (data.insurance && data.insurance.policiesCount > 0) {
+    var termCoverStr = "₹" + Number(data.insurance.totalTermCover).toLocaleString("en-IN");
+    var annualPremStr = "₹" + Number(data.insurance.totalAnnualPremium).toLocaleString("en-IN");
+    var cashValStr = "₹" + Number(data.insurance.totalSurrenderValue).toLocaleString("en-IN");
+    lines.push("• **Protection Coverage:** Pure term life insurance provides **" + termCoverStr + "** of risk cover with an annual premium commitment of **" + annualPremStr + "**.");
+    if (data.insurance.totalSurrenderValue > 0) {
+      lines.push("• **Traditional LIC / Endowment Plans:** You have **" + cashValStr + "** accumulated in endowment/traditional policies. Traditional plans typically yield only 4.5% to 5.5% IRR; ensure premium commitments do not exceed Section 10(10D) limits (₹5 Lakhs annual aggregate cap under Budget 2023).");
+    }
+    if (data.insurance.totalHealthCover > 0) {
+      lines.push("• **Health Insurance:** Family medical cover of **₹" + Number(data.insurance.totalHealthCover).toLocaleString("en-IN") + "** is active, eligible for Section 80D deductions.");
+    }
+  } else {
+    lines.push("• **Family Protection Priority:** No active term life or health policies logged. Secure a pure term life cover of 10-15x annual family living expenses and comprehensive health insurance before expanding illiquid assets.");
+  }
+
+  // 6. Actionable 30-Day Roadmap
+  lines.push("\n### 🎯 6. Actionable 30-Day Execution Roadmap");
+  lines.push("1. **Direct Fresh Capital:** Allocate proposed inflow of " + inflowStr + " strictly into underweight segments to lift alignment score to " + (data.projectedAlignmentScore || data.alignmentScore) + "/100.");
+  lines.push("2. **Eliminate Cash Drag:** Sweep low-yield savings balance exceeding 1.5 months of expenses into 7.10%+ callable fixed deposits or arbitrage funds.");
+  lines.push("3. **Retirement & Tax Audit:** Review ELSS mature units for tax-loss harvesting and ensure NPS ₹50,000 contribution is utilized.");
+  lines.push("4. **Maintain Pure Protection:** Verify pure term life coverage is at least 10x annual expenses without commingling insurance with investments.");
 
   return lines.join("\n");
 }
@@ -2553,7 +2663,7 @@ function generateOfflineProductIntelligence(rebalanceData) {
  * using ListModels, preventing 404 errors when specific version aliases are sunset.
  */
 function resolveGeminiFlashModel(apiKey) {
-  if (!apiKey) return "gemini-3.8-flash";
+  if (!apiKey) return "gemini-2.5-flash";
   try {
     var listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + encodeURIComponent(apiKey);
     var res = UrlFetchApp.fetch(listUrl, { muteHttpExceptions: true });
@@ -2564,8 +2674,8 @@ function resolveGeminiFlashModel(apiKey) {
         var m = models[i];
         var methods = m.supportedGenerationMethods || [];
         var name = (m.name || "").toLowerCase();
-        // Target active Gemini 3.x Flash models, ignoring sunsetted 1.5 and 2.0 generations
-        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1 && name.indexOf("3.") !== -1) {
+        // Target active Gemini Flash models (e.g. gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash)
+        if (methods.indexOf("generateContent") !== -1 && name.indexOf("flash") !== -1) {
           return m.name.replace(/^models\//, "");
         }
       }
@@ -2573,5 +2683,5 @@ function resolveGeminiFlashModel(apiKey) {
   } catch (e) {
     Logger.log("Failed to list Gemini models: " + e.message);
   }
-  return "gemini-3.8-flash";
+  return "gemini-2.5-flash";
 }

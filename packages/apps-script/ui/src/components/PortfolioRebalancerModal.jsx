@@ -20,8 +20,36 @@ import {
   calculateTaxArbitrageOpportunity,
   getCuratedProductRecommendations
 } from '../utils/portfolioMath';
+import { calculateRetirementPortfolio, isRetirementAsset } from '../utils/retirementMath';
+import { calculateConsolidatedInsurance, isInsuranceAsset } from '../utils/insuranceMath';
+import RichTextRenderer from './RichTextRenderer';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { Badge } from './Badge';
+
+/**
+ * Checks whether an asset is an ELSS tax saver fund
+ */
+export function isElssAsset(asset) {
+  if (!asset) return false;
+  const name = String(asset.Name || '').toLowerCase();
+  const cat = String(asset.Category || '').toLowerCase();
+  const det = asset['Details JSON'];
+  let subType = '';
+  try {
+    const d = typeof det === 'string' ? JSON.parse(det) : (det || {});
+    subType = String(d['Sub-Type'] || asset['Sub-Type'] || '').toLowerCase();
+  } catch (e) {
+    subType = String(asset['Sub-Type'] || '').toLowerCase();
+  }
+  return (
+    name.includes('elss') ||
+    name.includes('tax saver') ||
+    name.includes('tax saving') ||
+    name.includes('tax plan') ||
+    subType.includes('elss') ||
+    (cat.includes('mutual') && (name.includes('elss') || name.includes('tax saver')))
+  );
+}
 
 export default function PortfolioRebalancerModal({ 
   isOpen, 
@@ -141,24 +169,89 @@ export default function PortfolioRebalancerModal({
     if (isLoadingAI) return;
     setIsLoadingAI(true);
 
+    const retirementSummary = calculateRetirementPortfolio(assets);
+    const insuranceSummary = calculateConsolidatedInsurance(assets);
+    const elssAssets = assets.filter(isElssAsset);
+    const liabilitiesAssets = assets.filter(a => a.Category === 'Liabilities' || (a.Category || '').toLowerCase().includes('loan'));
+    const topHoldings = assets
+      .filter(a => !isRetirementAsset(a) && !isInsuranceAsset(a) && a.Category !== 'Liabilities')
+      .sort((a, b) => (Number(b['Current Value']) || 0) - (Number(a['Current Value']) || 0))
+      .slice(0, 10)
+      .map(a => ({
+        name: a.Name,
+        category: a.Category,
+        currentValue: Number(a['Current Value'] || 0)
+      }));
+
     const rebalancePayload = {
       netWorth: simulation.netWorth,
       totalGrossAssets: simulation.totalGrossAssets,
+      coreInvestableAssets: simulation.coreInvestableAssets,
       alignmentScore: simulation.alignmentScore,
+      healthLabel: simulation.healthLabel,
+      targetProfile: selectedProfile,
       inflowAmount: simulation.inflowAmount,
       projectedAlignmentScore: simulation.projectedAlignmentScore,
       cashRunwayMonths: cashDrag.runwayMonths,
+      totalLiquidCash: cashDrag.totalLiquidCash,
+      emergencyReserveTarget: cashDrag.emergencyReserveTarget,
       excessCashDrag: cashDrag.excessCashDrag,
       idleSavingsSurplus: cashDrag.idleSavingsSurplus,
+      annualOpportunityCost: cashDrag.annualOpportunityCost,
       breakdown: simulation.projectedBreakdown.map(b => ({
         category: b.category,
+        currentValue: b.currentValue,
         currentPct: b.currentPct,
         targetPct: b.targetPct,
         driftPct: b.projectedDrift,
         allocatedRupees: b.allocatedRupees,
         projectedPct: b.projectedPct,
-        status: b.status
+        status: b.status,
+        tacticalNote: b.tacticalNote
       })),
+      retirement: {
+        totalCorpus: retirementSummary.totalRetirementCorpus,
+        accountsCount: retirementSummary.accounts.length,
+        accounts: retirementSummary.accounts.map(a => ({
+          name: a.name,
+          subType: a.subType,
+          currentValue: a.currentValue,
+          interestRate: a.interestRate || null
+        }))
+      },
+      insurance: {
+        policiesCount: insuranceSummary.policiesCount,
+        totalLifeCover: insuranceSummary.totalLifeCover,
+        totalTermCover: insuranceSummary.totalTermCover,
+        totalHealthCover: insuranceSummary.totalHealthCover,
+        totalAnnualPremium: insuranceSummary.totalAnnualPremium,
+        totalSurrenderValue: insuranceSummary.totalSurrenderValue,
+        policies: insuranceSummary.policies.map(p => ({
+          name: p.name,
+          insurer: p.insurer,
+          policyType: p.policyType,
+          isInvestment: p.isInvestment,
+          sumAssured: p.sumAssured,
+          annualPremium: p.annualPremium,
+          currentValue: p.currentValue
+        }))
+      },
+      elss: {
+        totalElssValue: elssAssets.reduce((s, a) => s + (Number(a['Current Value']) || 0), 0),
+        holdings: elssAssets.map(a => ({
+          name: a.Name,
+          currentValue: Number(a['Current Value'] || 0),
+          cost: Number(a.Cost || 0)
+        }))
+      },
+      liabilities: {
+        totalLiabilities: simulation.totalLiabilities,
+        loans: liabilitiesAssets.map(a => ({
+          name: a.Name,
+          currentBalance: Number(a['Current Value'] || 0)
+        }))
+      },
+      topHoldings,
       concentrationAlerts: concentration.alerts.map(a => ({
         category: a.category,
         percentage: a.percentage,
@@ -191,32 +284,37 @@ export default function PortfolioRebalancerModal({
       setTimeout(() => {
         setIsLoadingAI(false);
         const gain = Math.max(0, simulation.projectedAlignmentScore - simulation.alignmentScore);
-        
-        let cashAdvice = '';
-        if (cashDrag.totalLiquidCash === 0) {
-          cashAdvice = `• **Liquid Cushion:** No liquid cash accounts currently recorded. Recommend establishing a 6-month living expense reserve before aggressive allocations.`;
-        } else if (cashDrag.excessCashDrag > 0) {
-          cashAdvice = `• **Runway & Drag:** Liquid reserves provide **${cashDrag.runwayMonths} months** of runway. Excess cash of ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')} beyond the 6-month buffer causes an estimated ~₹${Number(cashDrag.excessCashOpportunityCost).toLocaleString('en-IN')}/year opportunity drag; deploy surplus into underweight growth assets.`;
-        } else if (cashDrag.idleSavingsSurplus > 50000) {
-          cashAdvice = `• **Savings Yield Drag:** Liquid reserves provide **${cashDrag.runwayMonths} months** of runway. However, ₹${Number(cashDrag.idleSavingsSurplus).toLocaleString('en-IN')} is idle in low-interest savings accounts; move to auto-sweep FDs or liquid funds to eliminate ~₹${Number(cashDrag.savingsYieldLoss).toLocaleString('en-IN')}/year yield drag.`;
-        } else if (cashDrag.runwayMonths < 3) {
-          cashAdvice = `• **Emergency Cushion:** Liquid runway is **${cashDrag.runwayMonths} months** (under recommended 6-month buffer of ₹${Number(cashDrag.emergencyReserveTarget).toLocaleString('en-IN')}). Prioritize building liquid reserves.`;
-        } else {
-          cashAdvice = `• **Runway:** Total liquid reserves provide **${cashDrag.runwayMonths} months** of runway (₹${Number(cashDrag.totalLiquidCash).toLocaleString('en-IN')}), maintaining a healthy emergency cushion with zero cash drag.`;
-        }
 
-        const text = `### 📊 Portfolio Diagnosis & Health
-• **Structural Alignment:** Portfolio health score is **${simulation.alignmentScore}/100**. Your asset distribution aligns with your **${selectedProfile}** benchmark with tactical drift in high-growth segments.
+        const text = `### 📊 1. Macro Balance Sheet Architecture & Alignment Health
+• **Total Net Worth:** Your audited balance sheet stands at **₹${Number(simulation.netWorth).toLocaleString('en-IN')}** across core investable holdings and sovereign retirement vaults.
+• **Alignment Score (${simulation.alignmentScore}/100):** Portfolio health reflects your **${selectedProfile}** target benchmark with disciplined asset diversification.
 
-### 💡 Smart Inflow & Tax-Efficient Deployment
-• **Non-Taxable Rebalance:** Deploying ₹${Number(inflowAmount).toLocaleString('en-IN')} of fresh capital lifts your alignment score to **${simulation.projectedAlignmentScore}/100** (+${gain} pts) **without selling any existing holdings**.
-• **Tax Protection:** Avoiding asset sales preserves capital compounding and sidesteps Section 112A (12.5% LTCG) and Section 111A (20% STCG) liabilities.
+### 💡 2. Smart Inflow Steering (Zero-Tax Non-Sale Rebalancing)
+• **Tax-Preserving Capital Injection:** Deploying fresh capital of **₹${Number(inflowAmount).toLocaleString('en-IN')}** improves your alignment health to **${simulation.projectedAlignmentScore}/100** (+${gain} pts) **strictly without selling a single asset**.
+• **Section 112A & 111A Capital Gains Shield:** By utilizing inflow steering instead of traditional sell-and-rebuy rebalancing, you avoid triggering 12.5% Long-Term Capital Gains (LTCG) and 20% Short-Term Capital Gains (STCG) taxes.
+${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `• **${b.category} (${b.projectedDrift < 0 ? `${b.projectedDrift}% Underweight` : `Target: ${b.targetPct}%`}):** Deploy **₹${Number(b.allocatedRupees).toLocaleString('en-IN')}**. ${b.tacticalNote}`).join('\n')}
 
-### 🎯 Tactical Asset Allocations
-${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `• **${b.category}:** Allocate ₹${Number(b.allocatedRupees).toLocaleString('en-IN')} (Target: ${b.targetPct}%). ${b.tacticalNote}`).join('\n')}
+### ⚠️ 3. Liquid Buffer, Cash Drag & Yield Arbitrage
+• **Liquid Runway:** Your liquid reserves provide **${cashDrag.runwayMonths} months** of living expenses (₹${Number(cashDrag.totalLiquidCash).toLocaleString('en-IN')}).
+${cashDrag.excessCashDrag > 0 ? `• **Excess Cash Drag Alert:** Approximately **₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')}** sits idle beyond your recommended 6-month emergency reserve (~₹${Number(cashDrag.emergencyReserveTarget).toLocaleString('en-IN')}). Systematically deploy this surplus into underweight growth assets to eliminate ~₹${Number(cashDrag.excessCashOpportunityCost).toLocaleString('en-IN')}/year in opportunity drag.` : cashDrag.idleSavingsSurplus > 50000 ? `• **Savings Yield Drag Alert:** You hold **₹${Number(cashDrag.idleSavingsSurplus).toLocaleString('en-IN')}** in standard low-yield savings accounts earning only ~2.7-3.0%. Move this to auto-sweep FDs or Arbitrage Funds to capture an extra ~₹${Number(cashDrag.savingsYieldLoss).toLocaleString('en-IN')}/year net yield.` : `• **Emergency Cushion:** Liquid buffer is healthy and fulfills family emergency requirements.`}
 
-### ⚠️ Cash Drag & Runway Optimization
-${cashAdvice}`;
+### 🏛️ 4. Sovereign Retirement & Pension Strategy (EPF, PPF, NPS)
+${retirementSummary.totalRetirementCorpus > 0 ? `• **Sovereign Retirement Wealth:** Your locked retirement corpus totals **₹${Number(retirementSummary.totalRetirementCorpus).toLocaleString('en-IN')}** across sovereign accounts.
+${retirementSummary.accounts.map(a => `  - **${a.name} (${a.subType}):** Current balance ₹${Number(a.currentValue).toLocaleString('en-IN')}${a.interestRate ? ` earning ${a.interestRate}% guaranteed tax-free return.` : '.'}`).join('\n')}
+• **Asset Allocation Synergy:** Sovereign retirement funds act as high-quality, zero-default sovereign debt. This risk-free fixed income anchor allows you to take higher equity exposure in your discretionary portfolio.
+• **Section 80CCD(1B) Optimization:** Ensure you maximize the ₹50,000 exclusive NPS tax deduction under the Old Tax Regime to harvest ~₹15,600 in tax savings.` : `• **Retirement Planning Action:** No formal EPF or NPS accounts are logged. Consider opening an NPS Tier 1 account to capture the exclusive Section 80CCD(1B) ₹50,000 deduction and compound long-term retirement wealth.`}
+
+### 🛡️ 5. Tax-Saving & Insurance Protection Audit (ELSS & LIC)
+${elssAssets.length > 0 ? `• **ELSS Tax-Saver Funds:** You hold **₹${Number(elssAssets.reduce((s, a) => s + (Number(a['Current Value']) || 0), 0)).toLocaleString('en-IN')}** across ELSS mutual funds under Section 80C. Units completed past the 3-year lock-in can be systematically harvested up to the ₹1.25L annual tax-free LTCG threshold or reallocated into broad-market index funds.` : `• **Section 80C ELSS Strategy:** If utilizing the Old Tax Regime, consider ELSS funds for the lowest lock-in period (3 years vs 15 years in PPF) and superior equity compounding.`}
+${insuranceSummary.policiesCount > 0 ? `• **Protection Coverage:** Pure term life insurance provides **₹${Number(insuranceSummary.totalTermCover).toLocaleString('en-IN')}** of risk cover with an annual premium commitment of **₹${Number(insuranceSummary.totalAnnualPremium).toLocaleString('en-IN')}**.
+${insuranceSummary.totalSurrenderValue > 0 ? `• **Traditional LIC / Endowment Plans:** You have **₹${Number(insuranceSummary.totalSurrenderValue).toLocaleString('en-IN')}** accumulated in endowment/traditional policies. Traditional plans typically yield only 4.5% to 5.5% IRR; ensure premium commitments do not exceed Section 10(10D) limits (₹5 Lakhs annual aggregate cap under Budget 2023).` : ''}
+${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medical cover of **₹${Number(insuranceSummary.totalHealthCover).toLocaleString('en-IN')}** is active, eligible for Section 80D deductions.` : ''}` : `• **Family Protection Priority:** No active term life or health policies logged. Secure a pure term life cover of 10-15x annual family living expenses and comprehensive health insurance before expanding illiquid assets.`}
+
+### 🎯 6. Actionable 30-Day Execution Roadmap
+1. **Direct Fresh Capital:** Allocate proposed inflow of ₹${Number(inflowAmount).toLocaleString('en-IN')} strictly into underweight segments to lift alignment score to ${simulation.projectedAlignmentScore}/100.
+2. **Eliminate Cash Drag:** Sweep low-yield savings balance exceeding 1.5 months of expenses into 7.10%+ callable fixed deposits or arbitrage funds.
+3. **Retirement & Tax Audit:** Review ELSS mature units for tax-loss harvesting and ensure NPS ₹50,000 contribution is utilized.
+4. **Maintain Pure Protection:** Verify pure term life coverage is at least 10x annual expenses without commingling insurance with investments.`;
 
         setAiInsights(text);
         setAiModelUsed('Preview Heuristics Advisor');
@@ -952,8 +1050,8 @@ ${cashAdvice}`;
                 <p className="text-typ-label">Analyzing portfolio & tax dynamics...</p>
               </div>
             ) : aiInsights ? (
-              <div className="text-typ-footnote leading-relaxed text-text-secondary space-y-2 whitespace-pre-line">
-                {aiInsights}
+              <div className="p-3.5 rounded-xl bg-surface-layer2/40 border border-white/[0.06] shadow-inner">
+                <RichTextRenderer content={aiInsights} />
               </div>
             ) : (
               <div className="py-4 text-center">

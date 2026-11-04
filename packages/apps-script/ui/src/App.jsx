@@ -365,6 +365,48 @@ export default function App() {
                'P&L %': 0,
                'Owner': 'Self',
                'Details JSON': JSON.stringify({ 'Sub-Type': 'Fixed Deposit (FD)', 'Interest Rate': 7.1, 'Maturity Date': '2027-03-31' })
+             },
+             {
+               'Asset ID': 'mock-ret-1',
+               Category: 'Retirement & Pension',
+               Name: 'EPFO Employee Provident Fund',
+               Cost: 350000,
+               'Current Value': 420000,
+               'Live Price': 1,
+               'Day Change %': 0,
+               'Is Live': false,
+               'P&L': 70000,
+               'P&L %': 20.0,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Retirement Type': 'EPF', 'Interest Rate': 8.25 })
+             },
+             {
+               'Asset ID': 'mock-elss-1',
+               Category: 'Mutual Funds',
+               Name: 'Mirae Asset ELSS Tax Saver Fund',
+               Cost: 100000,
+               'Current Value': 125000,
+               'Live Price': 1,
+               'Day Change %': 0.4,
+               'Is Live': false,
+               'P&L': 25000,
+               'P&L %': 25.0,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Sub-Type': 'ELSS', 'Scheme Code': '119551' })
+             },
+             {
+               'Asset ID': 'mock-ins-1',
+               Category: 'Life Insurance / LIC',
+               Name: 'HDFC Life Click 2 Protect Term',
+               Cost: 16000,
+               'Current Value': 0,
+               'Live Price': 0,
+               'Day Change %': 0,
+               'Is Live': false,
+               'P&L': 0,
+               'P&L %': 0,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Policy Type': 'Pure Term Insurance', 'Sum Assured': 10000000, 'Premium Amount': 16000 })
              }
            ],
            marketQuotesMap: mockQuotesMap,
