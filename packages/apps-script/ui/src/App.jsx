@@ -678,6 +678,7 @@ export default function App() {
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
             onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
+            onOpenNotifications={() => setShowNotifications(true)}
           />
         )}
         {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
