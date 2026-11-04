@@ -20,8 +20,36 @@ import {
   calculateTaxArbitrageOpportunity,
   getCuratedProductRecommendations
 } from '../utils/portfolioMath';
+import { calculateRetirementPortfolio, isRetirementAsset } from '../utils/retirementMath';
+import { calculateConsolidatedInsurance, isInsuranceAsset } from '../utils/insuranceMath';
+import RichTextRenderer from './RichTextRenderer';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { Badge } from './Badge';
+
+/**
+ * Checks whether an asset is an ELSS tax saver fund
+ */
+export function isElssAsset(asset) {
+  if (!asset) return false;
+  const name = String(asset.Name || '').toLowerCase();
+  const cat = String(asset.Category || '').toLowerCase();
+  const det = asset['Details JSON'];
+  let subType = '';
+  try {
+    const d = typeof det === 'string' ? JSON.parse(det) : (det || {});
+    subType = String(d['Sub-Type'] || asset['Sub-Type'] || '').toLowerCase();
+  } catch (e) {
+    subType = String(asset['Sub-Type'] || '').toLowerCase();
+  }
+  return (
+    name.includes('elss') ||
+    name.includes('tax saver') ||
+    name.includes('tax saving') ||
+    name.includes('tax plan') ||
+    subType.includes('elss') ||
+    (cat.includes('mutual') && (name.includes('elss') || name.includes('tax saver')))
+  );
+}
 
 export default function PortfolioRebalancerModal({ 
   isOpen, 
@@ -141,23 +169,89 @@ export default function PortfolioRebalancerModal({
     if (isLoadingAI) return;
     setIsLoadingAI(true);
 
+    const retirementSummary = calculateRetirementPortfolio(assets);
+    const insuranceSummary = calculateConsolidatedInsurance(assets);
+    const elssAssets = assets.filter(isElssAsset);
+    const liabilitiesAssets = assets.filter(a => a.Category === 'Liabilities' || (a.Category || '').toLowerCase().includes('loan'));
+    const topHoldings = assets
+      .filter(a => !isRetirementAsset(a) && !isInsuranceAsset(a) && a.Category !== 'Liabilities')
+      .sort((a, b) => (Number(b['Current Value']) || 0) - (Number(a['Current Value']) || 0))
+      .slice(0, 10)
+      .map(a => ({
+        name: a.Name,
+        category: a.Category,
+        currentValue: Number(a['Current Value'] || 0)
+      }));
+
     const rebalancePayload = {
       netWorth: simulation.netWorth,
       totalGrossAssets: simulation.totalGrossAssets,
+      coreInvestableAssets: simulation.coreInvestableAssets,
       alignmentScore: simulation.alignmentScore,
+      healthLabel: simulation.healthLabel,
+      targetProfile: selectedProfile,
       inflowAmount: simulation.inflowAmount,
       projectedAlignmentScore: simulation.projectedAlignmentScore,
       cashRunwayMonths: cashDrag.runwayMonths,
+      totalLiquidCash: cashDrag.totalLiquidCash,
+      emergencyReserveTarget: cashDrag.emergencyReserveTarget,
       excessCashDrag: cashDrag.excessCashDrag,
+      idleSavingsSurplus: cashDrag.idleSavingsSurplus,
+      annualOpportunityCost: cashDrag.annualOpportunityCost,
       breakdown: simulation.projectedBreakdown.map(b => ({
         category: b.category,
+        currentValue: b.currentValue,
         currentPct: b.currentPct,
         targetPct: b.targetPct,
         driftPct: b.projectedDrift,
         allocatedRupees: b.allocatedRupees,
         projectedPct: b.projectedPct,
-        status: b.status
+        status: b.status,
+        tacticalNote: b.tacticalNote
       })),
+      retirement: {
+        totalCorpus: retirementSummary.totalRetirementCorpus,
+        accountsCount: retirementSummary.accounts.length,
+        accounts: retirementSummary.accounts.map(a => ({
+          name: a.name,
+          subType: a.subType,
+          currentValue: a.currentValue,
+          interestRate: a.interestRate || null
+        }))
+      },
+      insurance: {
+        policiesCount: insuranceSummary.policiesCount,
+        totalLifeCover: insuranceSummary.totalLifeCover,
+        totalTermCover: insuranceSummary.totalTermCover,
+        totalHealthCover: insuranceSummary.totalHealthCover,
+        totalAnnualPremium: insuranceSummary.totalAnnualPremium,
+        totalSurrenderValue: insuranceSummary.totalSurrenderValue,
+        policies: insuranceSummary.policies.map(p => ({
+          name: p.name,
+          insurer: p.insurer,
+          policyType: p.policyType,
+          isInvestment: p.isInvestment,
+          sumAssured: p.sumAssured,
+          annualPremium: p.annualPremium,
+          currentValue: p.currentValue
+        }))
+      },
+      elss: {
+        totalElssValue: elssAssets.reduce((s, a) => s + (Number(a['Current Value']) || 0), 0),
+        holdings: elssAssets.map(a => ({
+          name: a.Name,
+          currentValue: Number(a['Current Value'] || 0),
+          cost: Number(a.Cost || 0)
+        }))
+      },
+      liabilities: {
+        totalLiabilities: simulation.totalLiabilities,
+        loans: liabilitiesAssets.map(a => ({
+          name: a.Name,
+          currentBalance: Number(a['Current Value'] || 0)
+        }))
+      },
+      topHoldings,
       concentrationAlerts: concentration.alerts.map(a => ({
         category: a.category,
         percentage: a.percentage,
@@ -190,18 +284,37 @@ export default function PortfolioRebalancerModal({
       setTimeout(() => {
         setIsLoadingAI(false);
         const gain = Math.max(0, simulation.projectedAlignmentScore - simulation.alignmentScore);
-        const text = `### 📊 Portfolio Diagnosis & Health
-• **Structural Alignment:** Portfolio health score is **${simulation.alignmentScore}/100**. Your asset distribution aligns with your **${selectedProfile}** benchmark with tactical drift in high-growth segments.
 
-### 💡 Smart Inflow & Tax-Efficient Deployment
-• **Non-Taxable Rebalance:** Deploying ₹${Number(inflowAmount).toLocaleString('en-IN')} of fresh capital lifts your alignment score to **${simulation.projectedAlignmentScore}/100** (+${gain} pts) **without selling any existing holdings**.
-• **Tax Protection:** Avoiding asset sales preserves capital compounding and sidesteps Section 112A (12.5% LTCG) and Section 111A (20% STCG) liabilities.
+        const text = `### 📊 1. Macro Balance Sheet Architecture & Alignment Health
+• **Total Net Worth:** Your audited balance sheet stands at **₹${Number(simulation.netWorth).toLocaleString('en-IN')}** across core investable holdings and sovereign retirement vaults.
+• **Alignment Score (${simulation.alignmentScore}/100):** Portfolio health reflects your **${selectedProfile}** target benchmark with disciplined asset diversification.
 
-### 🎯 Tactical Asset Allocations
-${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `• **${b.category}:** Allocate ₹${Number(b.allocatedRupees).toLocaleString('en-IN')} (Target: ${b.targetPct}%). ${b.tacticalNote}`).join('\n')}
+### 💡 2. Smart Inflow Steering (Zero-Tax Non-Sale Rebalancing)
+• **Tax-Preserving Capital Injection:** Deploying fresh capital of **₹${Number(inflowAmount).toLocaleString('en-IN')}** improves your alignment health to **${simulation.projectedAlignmentScore}/100** (+${gain} pts) **strictly without selling a single asset**.
+• **Section 112A & 111A Capital Gains Shield:** By utilizing inflow steering instead of traditional sell-and-rebuy rebalancing, you avoid triggering 12.5% Long-Term Capital Gains (LTCG) and 20% Short-Term Capital Gains (STCG) taxes.
+${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `• **${b.category} (${b.projectedDrift < 0 ? `${b.projectedDrift}% Underweight` : `Target: ${b.targetPct}%`}):** Deploy **₹${Number(b.allocatedRupees).toLocaleString('en-IN')}**. ${b.tacticalNote}`).join('\n')}
 
-### ⚠️ Cash Drag & Runway Optimization
-• **Runway:** Total liquid reserves provide **${cashDrag.runwayMonths} months** of runway. Excess cash of ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')} beyond the 6-month buffer can be productively redeployed into high-yielding debt or index funds.`;
+### ⚠️ 3. Liquid Buffer, Cash Drag & Yield Arbitrage
+• **Liquid Runway:** Your liquid reserves provide **${cashDrag.runwayMonths} months** of living expenses (₹${Number(cashDrag.totalLiquidCash).toLocaleString('en-IN')}).
+${cashDrag.excessCashDrag > 0 ? `• **Excess Cash Drag Alert:** Approximately **₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')}** sits idle beyond your recommended 6-month emergency reserve (~₹${Number(cashDrag.emergencyReserveTarget).toLocaleString('en-IN')}). Systematically deploy this surplus into underweight growth assets to eliminate ~₹${Number(cashDrag.excessCashOpportunityCost).toLocaleString('en-IN')}/year in opportunity drag.` : cashDrag.idleSavingsSurplus > 50000 ? `• **Savings Yield Drag Alert:** You hold **₹${Number(cashDrag.idleSavingsSurplus).toLocaleString('en-IN')}** in standard low-yield savings accounts earning only ~2.7-3.0%. Move this to auto-sweep FDs or Arbitrage Funds to capture an extra ~₹${Number(cashDrag.savingsYieldLoss).toLocaleString('en-IN')}/year net yield.` : `• **Emergency Cushion:** Liquid buffer is healthy and fulfills family emergency requirements.`}
+
+### 🏛️ 4. Sovereign Retirement & Pension Strategy (EPF, PPF, NPS)
+${retirementSummary.totalRetirementCorpus > 0 ? `• **Sovereign Retirement Wealth:** Your locked retirement corpus totals **₹${Number(retirementSummary.totalRetirementCorpus).toLocaleString('en-IN')}** across sovereign accounts.
+${retirementSummary.accounts.map(a => `  - **${a.name} (${a.subType}):** Current balance ₹${Number(a.currentValue).toLocaleString('en-IN')}${a.interestRate ? ` earning ${a.interestRate}% guaranteed tax-free return.` : '.'}`).join('\n')}
+• **Asset Allocation Synergy:** Sovereign retirement funds act as high-quality, zero-default sovereign debt. This risk-free fixed income anchor allows you to take higher equity exposure in your discretionary portfolio.
+• **Section 80CCD(1B) Optimization:** Ensure you maximize the ₹50,000 exclusive NPS tax deduction under the Old Tax Regime to harvest ~₹15,600 in tax savings.` : `• **Retirement Planning Action:** No formal EPF or NPS accounts are logged. Consider opening an NPS Tier 1 account to capture the exclusive Section 80CCD(1B) ₹50,000 deduction and compound long-term retirement wealth.`}
+
+### 🛡️ 5. Tax-Saving & Insurance Protection Audit (ELSS & LIC)
+${elssAssets.length > 0 ? `• **ELSS Tax-Saver Funds:** You hold **₹${Number(elssAssets.reduce((s, a) => s + (Number(a['Current Value']) || 0), 0)).toLocaleString('en-IN')}** across ELSS mutual funds under Section 80C. Units completed past the 3-year lock-in can be systematically harvested up to the ₹1.25L annual tax-free LTCG threshold or reallocated into broad-market index funds.` : `• **Section 80C ELSS Strategy:** If utilizing the Old Tax Regime, consider ELSS funds for the lowest lock-in period (3 years vs 15 years in PPF) and superior equity compounding.`}
+${insuranceSummary.policiesCount > 0 ? `• **Protection Coverage:** Pure term life insurance provides **₹${Number(insuranceSummary.totalTermCover).toLocaleString('en-IN')}** of risk cover with an annual premium commitment of **₹${Number(insuranceSummary.totalAnnualPremium).toLocaleString('en-IN')}**.
+${insuranceSummary.totalSurrenderValue > 0 ? `• **Traditional LIC / Endowment Plans:** You have **₹${Number(insuranceSummary.totalSurrenderValue).toLocaleString('en-IN')}** accumulated in endowment/traditional policies. Traditional plans typically yield only 4.5% to 5.5% IRR; ensure premium commitments do not exceed Section 10(10D) limits (₹5 Lakhs annual aggregate cap under Budget 2023).` : ''}
+${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medical cover of **₹${Number(insuranceSummary.totalHealthCover).toLocaleString('en-IN')}** is active, eligible for Section 80D deductions.` : ''}` : `• **Family Protection Priority:** No active term life or health policies logged. Secure a pure term life cover of 10-15x annual family living expenses and comprehensive health insurance before expanding illiquid assets.`}
+
+### 🎯 6. Actionable 30-Day Execution Roadmap
+1. **Direct Fresh Capital:** Allocate proposed inflow of ₹${Number(inflowAmount).toLocaleString('en-IN')} strictly into underweight segments to lift alignment score to ${simulation.projectedAlignmentScore}/100.
+2. **Eliminate Cash Drag:** Sweep low-yield savings balance exceeding 1.5 months of expenses into 7.10%+ callable fixed deposits or arbitrage funds.
+3. **Retirement & Tax Audit:** Review ELSS mature units for tax-loss harvesting and ensure NPS ₹50,000 contribution is utilized.
+4. **Maintain Pure Protection:** Verify pure term life coverage is at least 10x annual expenses without commingling insurance with investments.`;
 
         setAiInsights(text);
         setAiModelUsed('Preview Heuristics Advisor');
@@ -392,7 +505,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         `• ${b.category}: +₹${Number(b.allocatedRupees).toLocaleString('en-IN')} (Target: ${b.targetPct}% | Proj: ${b.projectedPct}%)`
       ),
       ``,
-      `Cash Runway: ${cashDrag.runwayMonths} months (Excess Drag: ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')})`
+      `Cash Runway: ${cashDrag.runwayMonths} months (${cashDrag.excessCashDrag > 0 ? `Excess Drag: ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')}` : cashDrag.idleSavingsSurplus > 50000 ? `Idle Savings Drag: ₹${Number(cashDrag.idleSavingsSurplus).toLocaleString('en-IN')}` : 'Buffer Healthy'})`
     ];
     navigator.clipboard.writeText(lines.join('\n'));
     setCopied(true);
@@ -492,16 +605,59 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 <div className="text-typ-heading font-bold text-text-primary tabular-nums tracking-tight">
                   {formatCurrency(simulation.netWorth)}
                 </div>
-                {simulation.maxOverweight && (
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-liability-rose/10 border border-liability-rose/25 text-liability-rose text-typ-caption font-medium">
-                    <AlertTriangle size={11} />
-                    <span>+{simulation.maxOverweight.drift.toFixed(1)}% {simulation.maxOverweight.name} Overweight</span>
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {/* Maximum Overweight Segment Pill */}
+                  {simulation.maxOverweight && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-liability-rose/10 border border-liability-rose/25 text-liability-rose text-typ-caption font-medium">
+                      <AlertTriangle size={11} />
+                      <span>+{simulation.maxOverweight.drift.toFixed(1)}% {simulation.maxOverweight.name} Overweight</span>
+                    </div>
+                  )}
+
+                  {/* Cash Drift Pill */}
+                  {simulation.cashItem && simulation.cashItem.status === 'overweight' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
+                      <TrendingUp size={11} />
+                      <span>+{simulation.cashItem.driftPct}% Cash Drift</span>
+                    </div>
+                  )}
+                  {simulation.cashItem && simulation.cashItem.status === 'underweight' && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-400 text-typ-caption font-medium">
+                      <TrendingDown size={11} />
+                      <span>{simulation.cashItem.driftPct}% Cash Shortfall</span>
+                    </div>
+                  )}
+                  {simulation.cashItem && simulation.cashItem.status === 'aligned' && simulation.cashItem.currentValue > 0 && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wealth-emerald/10 border border-wealth-emerald/25 text-wealth-emerald text-typ-caption font-medium">
+                      <CheckCircle2 size={11} />
+                      <span>Cash Aligned ({simulation.cashItem.targetPct}%)</span>
+                    </div>
+                  )}
+
+                  {/* Cash Drag Pill */}
+                  {cashDrag.excessCashDrag > 0 && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
+                      <Flame size={11} />
+                      <span>{formatCurrency(cashDrag.excessCashDrag)} Cash Drag</span>
+                    </div>
+                  )}
+                  {cashDrag.excessCashDrag === 0 && cashDrag.idleSavingsSurplus > 50000 && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
+                      <Flame size={11} />
+                      <span>{formatCurrency(cashDrag.idleSavingsSurplus)} Idle Savings Drag</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Alignment Score Gauge Dial (Refined non-overflowing circle with clean status badge) */}
-              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div 
+                className="flex flex-col items-center gap-1 flex-shrink-0"
+                title={`Portfolio Alignment Health Score: ${simulation.alignmentScore}/100 against ${selectedProfile} risk profile target`}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                  Health Score
+                </span>
                 <div className={`relative flex flex-col items-center justify-center w-[74px] h-[74px] rounded-full bg-surface-layer2/90 border-2 transition-all ${
                   simulation.alignmentScore >= 80 
                     ? 'border-wealth-emerald/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
@@ -732,12 +888,12 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                       {/* Status Tag */}
                       {isUnder && (
                         <Badge variant="sky" size="xs">
-                          {item.currentPct - item.targetPct}% Underweight
+                          {Math.abs(item.currentPct - item.targetPct).toFixed(1)}% Underweight
                         </Badge>
                       )}
                       {isOver && (
                         <Badge variant="rose" size="xs">
-                          +{item.currentPct - item.targetPct}% Overweight
+                          +{Math.abs(item.currentPct - item.targetPct).toFixed(1)}% Overweight
                         </Badge>
                       )}
                       {!isUnder && !isOver && (
@@ -800,13 +956,25 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 </p>
               </div>
 
-              {cashDrag.hasCashDrag ? (
+              {cashDrag.totalLiquidCash === 0 ? (
+                <div className="mt-2 text-typ-caption bg-surface-layer2 border border-white/[0.08] text-text-muted p-1.5 rounded font-medium">
+                  ℹ️ No liquid cash assets logged. Add a savings or FD account to audit runway.
+                </div>
+              ) : cashDrag.excessCashDrag > 0 ? (
                 <div className="mt-2 text-typ-caption bg-bullion-amber/10 border border-bullion-amber/20 text-bullion-amber p-1.5 rounded font-medium">
-                  ⚠️ {formatCurrency(cashDrag.excessCashDrag)} excess idle cash drag identified (~1.4% annual drag).
+                  ⚠️ {formatCurrency(cashDrag.excessCashDrag)} excess idle cash drag identified beyond 6-month buffer (~{formatCurrency(cashDrag.excessCashOpportunityCost)}/yr opportunity cost).
+                </div>
+              ) : cashDrag.idleSavingsSurplus > 50000 ? (
+                <div className="mt-2 text-typ-caption bg-bullion-amber/10 border border-bullion-amber/20 text-bullion-amber p-1.5 rounded font-medium">
+                  ⚠️ {formatCurrency(cashDrag.idleSavingsSurplus)} idle in low-yield savings (~{formatCurrency(cashDrag.savingsYieldLoss)}/yr yield loss). Move to auto-sweep FD or liquid fund.
+                </div>
+              ) : cashDrag.isLowBuffer ? (
+                <div className="mt-2 text-typ-caption bg-liability-rose/10 border border-liability-rose/20 text-liability-rose p-1.5 rounded font-medium">
+                  ⚠️ Low reserve: {cashDrag.runwayMonths} mos runway (Goal: 6 mos / {formatCurrency(cashDrag.emergencyReserveTarget)}).
                 </div>
               ) : (
                 <div className="mt-2 text-typ-caption bg-wealth-emerald/10 border border-wealth-emerald/20 text-wealth-emerald p-1.5 rounded font-medium">
-                  ✓ Healthy liquid emergency cushion maintained.
+                  ✓ Healthy liquid emergency cushion maintained ({cashDrag.runwayMonths} mos runway).
                 </div>
               )}
             </div>
@@ -882,8 +1050,8 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 <p className="text-typ-label">Analyzing portfolio & tax dynamics...</p>
               </div>
             ) : aiInsights ? (
-              <div className="text-typ-footnote leading-relaxed text-text-secondary space-y-2 whitespace-pre-line">
-                {aiInsights}
+              <div className="p-3.5 rounded-xl bg-surface-layer2/40 border border-white/[0.06] shadow-inner">
+                <RichTextRenderer content={aiInsights} />
               </div>
             ) : (
               <div className="py-4 text-center">
