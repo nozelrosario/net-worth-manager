@@ -2082,6 +2082,7 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
       projectedAlignmentScore: rebalanceData.projectedAlignmentScore || 0,
       cashRunwayMonths: rebalanceData.cashRunwayMonths || 0,
       excessCashDrag: rebalanceData.excessCashDrag || 0,
+      idleSavingsSurplus: rebalanceData.idleSavingsSurplus || 0,
       breakdown: (rebalanceData.breakdown || []).map(function(item) {
         return {
           category: item.category,
@@ -2115,7 +2116,7 @@ function generatePortfolioInsights(rebalanceData, userApiKey, sessionToken) {
           "- Proposed Fresh Capital Inflow: ₹" + Number(sanitizedData.inflowAmount).toLocaleString('en-IN') + "\n" +
           "- Projected Score Post-Inflow: " + sanitizedData.projectedAlignmentScore + "/100\n" +
           "- Liquid Cash Runway: " + sanitizedData.cashRunwayMonths + " months\n" +
-          "- Excess Cash Drag: ₹" + Number(sanitizedData.excessCashDrag).toLocaleString('en-IN') + "\n\n" +
+          "- Excess Cash Drag: ₹" + Number(sanitizedData.excessCashDrag).toLocaleString('en-IN') + (sanitizedData.idleSavingsSurplus > 50000 ? " (Idle Savings Surplus: ₹" + Number(sanitizedData.idleSavingsSurplus).toLocaleString('en-IN') + ")" : "") + "\n\n" +
           "ASSET ALLOCATION DRIFT & PROPOSED FRESH INFLOW DEPLOYMENT:\n" +
           JSON.stringify(sanitizedData.breakdown, null, 2) + "\n\n" +
           "CONCENTRATION ALERTS:\n" +
@@ -2237,6 +2238,12 @@ function generateOfflineHeuristicInsights(data) {
   if (data.excessCashDrag > 0) {
     lines.push("\n### ⚠️ Cash Drag & Runway Optimization");
     lines.push("• **Excess Liquid Buffer:** Total runway is **" + data.cashRunwayMonths + " months**. Approximately ₹" + Number(data.excessCashDrag).toLocaleString('en-IN') + " is idle beyond the recommended 6-month family emergency buffer, causing an estimated ~1.2% - 1.8% annual drag against inflation.");
+  } else if (data.idleSavingsSurplus > 50000) {
+    lines.push("\n### ⚠️ Idle Savings Yield Drag");
+    lines.push("• Approximately ₹" + Number(data.idleSavingsSurplus).toLocaleString('en-IN') + " is sitting idle in standard low-yield savings accounts. Consider moving to auto-sweep FDs or liquid funds to eliminate yield drag.");
+  } else if (data.cashRunwayMonths < 3 && data.cashRunwayMonths > 0) {
+    lines.push("\n### ⚠️ Emergency Buffer Deficit");
+    lines.push("• Total cash runway is only **" + data.cashRunwayMonths + " months**, below the recommended 6-month buffer. Prioritize building emergency liquidity before aggressive equity deployment.");
   }
 
   // Concentration alerts

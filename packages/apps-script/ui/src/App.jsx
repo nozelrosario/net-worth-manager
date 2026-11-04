@@ -337,10 +337,43 @@ export default function App() {
                'P&L %': 12.14,
                'Owner': 'Self',
                'Details JSON': JSON.stringify({ 'Form Factor': 'Gold Coins/Bars', 'Purity': '24K (99.9% - Bullion / Coins / Bars / Digital)', 'Weight (Grams)': 20, 'Live Tracking': true })
+             },
+             {
+               'Asset ID': 'mock-cash-1',
+               Category: 'Cash/FD',
+               Name: 'HDFC Bank Salary Account',
+               Cost: 250000,
+               'Current Value': 250000,
+               'Live Price': 1,
+               'Day Change %': 0,
+               'Is Live': false,
+               'P&L': 0,
+               'P&L %': 0,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Sub-Type': 'Savings Account', 'Interest Rate': 3.0 })
+             },
+             {
+               'Asset ID': 'mock-cash-2',
+               Category: 'Cash/FD',
+               Name: 'SBI 1-Year Callable FD',
+               Cost: 200000,
+               'Current Value': 200000,
+               'Live Price': 1,
+               'Day Change %': 0,
+               'Is Live': false,
+               'P&L': 0,
+               'P&L %': 0,
+               'Owner': 'Self',
+               'Details JSON': JSON.stringify({ 'Sub-Type': 'Fixed Deposit (FD)', 'Interest Rate': 7.1, 'Maturity Date': '2027-03-31' })
              }
            ],
            marketQuotesMap: mockQuotesMap,
-           transactions: [], familyProfiles: [], events: [], settings: []
+           transactions: [
+             { 'Txn ID': 'txn-1', Type: 'Income', Amount: 150000, Category: 'Salary', Date: '2026-10-01', 'Account/Card': 'HDFC Salary' },
+             { 'Txn ID': 'txn-2', Type: 'Expense', Amount: 32000, Category: 'Rent', Date: '2026-10-03', 'Account/Card': 'HDFC Salary' },
+             { 'Txn ID': 'txn-3', Type: 'Expense', Amount: 14500, Category: 'Groceries', Date: '2026-10-10', 'Account/Card': 'HDFC Salary' },
+             { 'Txn ID': 'txn-4', Type: 'Expense', Amount: 8500, Category: 'Utilities', Date: '2026-10-15', 'Account/Card': 'HDFC Salary' }
+           ], familyProfiles: [], events: [], settings: []
          });
          setLoading(false);
          setTimeout(() => showMessage("Live Market Valuation Active (v2.5)", false), 500);

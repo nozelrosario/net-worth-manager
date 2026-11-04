@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight, Landmark, HeartPulse } from 'lucide-react';
-import { calculatePortfolioAlignment, RISK_PROFILES } from '../utils/portfolioMath';
+import { calculatePortfolioAlignment, calculateCashDrag, isCashCategory, RISK_PROFILES } from '../utils/portfolioMath';
 import { Badge } from '../components/Badge';
 import { calculateConsolidatedInsurance, formatInLakhsOrCrores } from '../utils/insuranceMath';
 
@@ -31,7 +31,7 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
   const mf = assets.filter(a => a.Category === 'Mutual Funds').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const property = assets.filter(a => a.Category === 'Real Estate').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const gold = assets.filter(a => a.Category === 'Gold').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
-  const cash = assets.filter(a => a.Category === 'Cash/FD').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
+  const cash = assets.filter(a => isCashCategory(a.Category)).reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const retirement = assets.filter(a => 
     a.Category === 'Retirement & Pension' || 
     a.Category === 'Provident Funds' ||
@@ -70,6 +70,10 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
   const totalLivePnlPct = totalLiveCost > 0 ? (totalLivePnl / totalLiveCost) * 100 : 0;
 
   const txns = data?.transactions || [];
+  const cashDrag = useMemo(() => {
+    return calculateCashDrag(assets, txns);
+  }, [assets, txns]);
+
   const totalExpense = txns.filter(t => t.Type === 'Expense').reduce((sum, t) => sum + Number(t.Amount || 0), 0);
   const totalIncome = txns.filter(t => t.Type === 'Income').reduce((sum, t) => sum + Number(t.Amount || 0), 0);
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
@@ -269,12 +273,30 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
           className={`bg-surface-layer1 border border-white/[0.08] rounded-xl p-4 shadow-sm ${onOpenRebalancer ? 'cursor-pointer hover:border-bullion-amber/30 transition-all active:scale-[0.98]' : ''}`}
         >
           <p className="text-typ-label text-text-secondary mb-1">Liquid Buffer & Drag</p>
-          <p className="text-typ-subtitle font-bold text-text-primary tabular-nums">{formatCurrency(cash)}</p>
-          <p className="text-typ-footnote text-text-muted mt-0.5">{totalExpense > 0 ? (cash / (totalExpense/12)).toFixed(1) : 0} Mos Runway</p>
+          <p className="text-typ-subtitle font-bold text-text-primary tabular-nums">{formatCurrency(cashDrag.totalLiquidCash)}</p>
+          <p className="text-typ-footnote text-text-muted mt-0.5">{cashDrag.runwayMonths} Mos Runway</p>
           <div className="mt-3">
-            <Badge variant="amber" dot size="xs">
-              Check Cash Drag
-            </Badge>
+            {cashDrag.excessCashDrag > 0 ? (
+              <Badge variant="amber" dot size="xs">
+                ⚠️ {formatCurrency(cashDrag.excessCashDrag)} Drag
+              </Badge>
+            ) : cashDrag.idleSavingsSurplus > 50000 ? (
+              <Badge variant="amber" dot size="xs">
+                ⚠️ Low Yield Drag
+              </Badge>
+            ) : cashDrag.runwayMonths < 3 && cashDrag.totalLiquidCash > 0 ? (
+              <Badge variant="rose" dot size="xs">
+                Low Buffer ({cashDrag.runwayMonths}m)
+              </Badge>
+            ) : cashDrag.totalLiquidCash === 0 ? (
+              <Badge variant="neutral" size="xs">
+                No Cash Logged
+              </Badge>
+            ) : (
+              <Badge variant="emerald" dot size="xs">
+                ✓ Buffer Healthy
+              </Badge>
+            )}
           </div>
         </div>
         <div className="bg-surface-layer1 border border-white/[0.08] rounded-xl p-4 shadow-sm">

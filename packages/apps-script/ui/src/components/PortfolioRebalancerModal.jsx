@@ -149,6 +149,7 @@ export default function PortfolioRebalancerModal({
       projectedAlignmentScore: simulation.projectedAlignmentScore,
       cashRunwayMonths: cashDrag.runwayMonths,
       excessCashDrag: cashDrag.excessCashDrag,
+      idleSavingsSurplus: cashDrag.idleSavingsSurplus,
       breakdown: simulation.projectedBreakdown.map(b => ({
         category: b.category,
         currentPct: b.currentPct,
@@ -190,6 +191,20 @@ export default function PortfolioRebalancerModal({
       setTimeout(() => {
         setIsLoadingAI(false);
         const gain = Math.max(0, simulation.projectedAlignmentScore - simulation.alignmentScore);
+        
+        let cashAdvice = '';
+        if (cashDrag.totalLiquidCash === 0) {
+          cashAdvice = `• **Liquid Cushion:** No liquid cash accounts currently recorded. Recommend establishing a 6-month living expense reserve before aggressive allocations.`;
+        } else if (cashDrag.excessCashDrag > 0) {
+          cashAdvice = `• **Runway & Drag:** Liquid reserves provide **${cashDrag.runwayMonths} months** of runway. Excess cash of ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')} beyond the 6-month buffer causes an estimated ~₹${Number(cashDrag.excessCashOpportunityCost).toLocaleString('en-IN')}/year opportunity drag; deploy surplus into underweight growth assets.`;
+        } else if (cashDrag.idleSavingsSurplus > 50000) {
+          cashAdvice = `• **Savings Yield Drag:** Liquid reserves provide **${cashDrag.runwayMonths} months** of runway. However, ₹${Number(cashDrag.idleSavingsSurplus).toLocaleString('en-IN')} is idle in low-interest savings accounts; move to auto-sweep FDs or liquid funds to eliminate ~₹${Number(cashDrag.savingsYieldLoss).toLocaleString('en-IN')}/year yield drag.`;
+        } else if (cashDrag.runwayMonths < 3) {
+          cashAdvice = `• **Emergency Cushion:** Liquid runway is **${cashDrag.runwayMonths} months** (under recommended 6-month buffer of ₹${Number(cashDrag.emergencyReserveTarget).toLocaleString('en-IN')}). Prioritize building liquid reserves.`;
+        } else {
+          cashAdvice = `• **Runway:** Total liquid reserves provide **${cashDrag.runwayMonths} months** of runway (₹${Number(cashDrag.totalLiquidCash).toLocaleString('en-IN')}), maintaining a healthy emergency cushion with zero cash drag.`;
+        }
+
         const text = `### 📊 Portfolio Diagnosis & Health
 • **Structural Alignment:** Portfolio health score is **${simulation.alignmentScore}/100**. Your asset distribution aligns with your **${selectedProfile}** benchmark with tactical drift in high-growth segments.
 
@@ -201,7 +216,7 @@ export default function PortfolioRebalancerModal({
 ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `• **${b.category}:** Allocate ₹${Number(b.allocatedRupees).toLocaleString('en-IN')} (Target: ${b.targetPct}%). ${b.tacticalNote}`).join('\n')}
 
 ### ⚠️ Cash Drag & Runway Optimization
-• **Runway:** Total liquid reserves provide **${cashDrag.runwayMonths} months** of runway. Excess cash of ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')} beyond the 6-month buffer can be productively redeployed into high-yielding debt or index funds.`;
+${cashAdvice}`;
 
         setAiInsights(text);
         setAiModelUsed('Preview Heuristics Advisor');
@@ -392,7 +407,7 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
         `• ${b.category}: +₹${Number(b.allocatedRupees).toLocaleString('en-IN')} (Target: ${b.targetPct}% | Proj: ${b.projectedPct}%)`
       ),
       ``,
-      `Cash Runway: ${cashDrag.runwayMonths} months (Excess Drag: ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')})`
+      `Cash Runway: ${cashDrag.runwayMonths} months (${cashDrag.excessCashDrag > 0 ? `Excess Drag: ₹${Number(cashDrag.excessCashDrag).toLocaleString('en-IN')}` : cashDrag.idleSavingsSurplus > 50000 ? `Idle Savings Drag: ₹${Number(cashDrag.idleSavingsSurplus).toLocaleString('en-IN')}` : 'Buffer Healthy'})`
     ];
     navigator.clipboard.writeText(lines.join('\n'));
     setCopied(true);
@@ -492,12 +507,26 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 <div className="text-typ-heading font-bold text-text-primary tabular-nums tracking-tight">
                   {formatCurrency(simulation.netWorth)}
                 </div>
-                {simulation.maxOverweight && (
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-liability-rose/10 border border-liability-rose/25 text-liability-rose text-typ-caption font-medium">
-                    <AlertTriangle size={11} />
-                    <span>+{simulation.maxOverweight.drift.toFixed(1)}% {simulation.maxOverweight.name} Overweight</span>
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  {simulation.maxOverweight && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-liability-rose/10 border border-liability-rose/25 text-liability-rose text-typ-caption font-medium">
+                      <AlertTriangle size={11} />
+                      <span>+{simulation.maxOverweight.drift.toFixed(1)}% {simulation.maxOverweight.name} Overweight</span>
+                    </div>
+                  )}
+                  {cashDrag.excessCashDrag > 0 && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
+                      <Flame size={11} />
+                      <span>{formatCurrency(cashDrag.excessCashDrag)} Cash Drag</span>
+                    </div>
+                  )}
+                  {cashDrag.excessCashDrag === 0 && cashDrag.idleSavingsSurplus > 50000 && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bullion-amber/10 border border-bullion-amber/25 text-bullion-amber text-typ-caption font-medium">
+                      <Flame size={11} />
+                      <span>{formatCurrency(cashDrag.idleSavingsSurplus)} Idle Savings Drag</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Alignment Score Gauge Dial (Refined non-overflowing circle with clean status badge) */}
@@ -800,13 +829,25 @@ ${simulation.projectedBreakdown.filter(b => b.allocatedRupees > 0).map(b => `•
                 </p>
               </div>
 
-              {cashDrag.hasCashDrag ? (
+              {cashDrag.totalLiquidCash === 0 ? (
+                <div className="mt-2 text-typ-caption bg-surface-layer2 border border-white/[0.08] text-text-muted p-1.5 rounded font-medium">
+                  ℹ️ No liquid cash assets logged. Add a savings or FD account to audit runway.
+                </div>
+              ) : cashDrag.excessCashDrag > 0 ? (
                 <div className="mt-2 text-typ-caption bg-bullion-amber/10 border border-bullion-amber/20 text-bullion-amber p-1.5 rounded font-medium">
-                  ⚠️ {formatCurrency(cashDrag.excessCashDrag)} excess idle cash drag identified (~1.4% annual drag).
+                  ⚠️ {formatCurrency(cashDrag.excessCashDrag)} excess idle cash drag identified beyond 6-month buffer (~{formatCurrency(cashDrag.excessCashOpportunityCost)}/yr opportunity cost).
+                </div>
+              ) : cashDrag.idleSavingsSurplus > 50000 ? (
+                <div className="mt-2 text-typ-caption bg-bullion-amber/10 border border-bullion-amber/20 text-bullion-amber p-1.5 rounded font-medium">
+                  ⚠️ {formatCurrency(cashDrag.idleSavingsSurplus)} idle in low-yield savings (~{formatCurrency(cashDrag.savingsYieldLoss)}/yr yield loss). Move to auto-sweep FD or liquid fund.
+                </div>
+              ) : cashDrag.isLowBuffer ? (
+                <div className="mt-2 text-typ-caption bg-liability-rose/10 border border-liability-rose/20 text-liability-rose p-1.5 rounded font-medium">
+                  ⚠️ Low reserve: {cashDrag.runwayMonths} mos runway (Goal: 6 mos / {formatCurrency(cashDrag.emergencyReserveTarget)}).
                 </div>
               ) : (
                 <div className="mt-2 text-typ-caption bg-wealth-emerald/10 border border-wealth-emerald/20 text-wealth-emerald p-1.5 rounded font-medium">
-                  ✓ Healthy liquid emergency cushion maintained.
+                  ✓ Healthy liquid emergency cushion maintained ({cashDrag.runwayMonths} mos runway).
                 </div>
               )}
             </div>

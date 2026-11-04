@@ -123,17 +123,114 @@ export const CATEGORY_COLORS = {
 };
 
 /**
+ * Safely parses any numeric input from Google Sheets or user inputs,
+ * stripping commas (e.g. '2,50,000'), currency symbols, and whitespace.
+ */
+export function parseNumeric(val, fallback = 0) {
+  if (typeof val === 'number') return isNaN(val) ? fallback : val;
+  if (!val) return fallback;
+  const cleaned = String(val).replace(/[^0-9.-]/g, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? fallback : parsed;
+}
+
+/**
+ * Normalizes user-entered category strings to canonical portfolio asset categories.
+ */
+export function normalizeCategoryName(category = '') {
+  const cat = String(category || '').trim();
+  const lower = cat.toLowerCase();
+  
+  if (
+    lower === 'cash/fd' ||
+    lower === 'cash / fd' ||
+    lower === 'cash' ||
+    lower === 'bank' ||
+    lower === 'savings' ||
+    lower.includes('fixed deposit') ||
+    lower.includes('cash & bank') ||
+    lower.includes('cash in hand') ||
+    lower.includes('deposit')
+  ) {
+    return 'Cash/FD';
+  }
+  if (lower === 'equity' || lower === 'stocks' || lower === 'shares' || lower === 'direct equity') {
+    return 'Equity';
+  }
+  if (lower === 'mutual funds' || lower === 'mutual fund' || lower === 'mf' || lower === 'mfs') {
+    return 'Mutual Funds';
+  }
+  if (lower === 'gold' || lower === 'sgb' || lower === 'bullion' || lower.includes('gold')) {
+    return 'Gold';
+  }
+  if (lower === 'real estate' || lower === 'property' || lower === 'land' || lower.includes('real estate')) {
+    return 'Real Estate';
+  }
+  if (lower.includes('retire') || lower.includes('provident') || lower.includes('epf') || lower.includes('ppf') || lower.includes('nps')) {
+    return 'Retirement & Pension';
+  }
+  if (lower.includes('insurance') || lower.includes('lic')) {
+    return 'Life Insurance / LIC';
+  }
+  if (lower === 'liabilities' || lower === 'liability' || lower === 'loan' || lower.includes('debt') || lower.includes('loan')) {
+    return 'Liabilities';
+  }
+  return cat;
+}
+
+/**
+ * Checks whether an asset or category belongs to Cash / Bank / Fixed Deposits.
+ */
+export function isCashCategory(category = '') {
+  return normalizeCategoryName(category) === 'Cash/FD';
+}
+
+/**
+ * Identifies whether a cash asset is a term deposit (FD/RD) or operational savings.
+ */
+export function isTermDepositAsset(asset = {}) {
+  let det = {};
+  try {
+    det = typeof asset['Details JSON'] === 'string' ? JSON.parse(asset['Details JSON']) : (asset['Details JSON'] || {});
+  } catch (e) {}
+
+  const subType = String(det['Sub-Type'] || asset['Sub-Type'] || asset.SubType || '').toLowerCase();
+  const name = String(asset.Name || '').toLowerCase();
+  const formFactor = String(det['Form Factor'] || '').toLowerCase();
+
+  return (
+    subType.includes('fixed deposit') ||
+    subType.includes('recurring deposit') ||
+    subType.includes('term deposit') ||
+    subType === 'fd' ||
+    subType === 'rd' ||
+    formFactor.includes('fixed deposit') ||
+    Boolean(det['Maturity Date']) ||
+    Boolean(asset['Maturity Date']) ||
+    name.includes(' fixed deposit') ||
+    name.includes('recurring deposit') ||
+    name.includes('term deposit') ||
+    name.includes(' fd ') ||
+    name.endsWith(' fd') ||
+    name.startsWith('fd ') ||
+    name.includes(' rd ') ||
+    name.endsWith(' rd') ||
+    name.startsWith('rd ')
+  );
+}
+
+/**
  * Normalizes custom target allocations to sum to 100%
  */
 export function normalizeTargetAllocation(targetMap) {
   if (!targetMap) return { ...RISK_PROFILES.Moderate.target };
   const keys = Object.keys(targetMap);
-  const total = keys.reduce((s, k) => s + (Number(targetMap[k]) || 0), 0);
+  const total = keys.reduce((s, k) => s + (parseNumeric(targetMap[k]) || 0), 0);
   if (total <= 0) return { ...RISK_PROFILES.Moderate.target };
   
   const normalized = {};
   keys.forEach(k => {
-    normalized[k] = Math.round(((Number(targetMap[k]) || 0) / total) * 100);
+    normalized[k] = Math.round(((parseNumeric(targetMap[k]) || 0) / total) * 100);
   });
   return normalized;
 }
@@ -151,12 +248,15 @@ export function calculatePortfolioAlignment(assets = [], targetAllocation = RISK
   let totalLiabilities = 0;
 
   assets.forEach(a => {
-    const cat = a.Category;
-    const val = Number(a['Current Value'] || 0);
+    const rawCat = a.Category;
+    const cat = normalizeCategoryName(rawCat);
+    const val = parseNumeric(a['Current Value']);
     if (cat === 'Liabilities') {
       totalLiabilities += val;
     } else if (currentValues[cat] !== undefined) {
       currentValues[cat] += val;
+    } else if (currentValues[rawCat] !== undefined) {
+      currentValues[rawCat] += val;
     } else {
       totalOther += val;
     }
@@ -340,7 +440,13 @@ export function simulateInflowRebalancing(assets = [], targetAllocation = RISK_P
     if (cat === 'Mutual Funds') {
       tacticalNote = allocated > 0 ? 'Deploy via SIP / Lumpsum into Flexi-Cap or Nifty 50 Index' : 'Hold existing SIPs; avoid new lumpsum';
     } else if (cat === 'Cash/FD') {
-      tacticalNote = allocated > 0 ? 'Deploy into high-yield 7.10% Callable FD or Liquid Fund' : 'Maintain emergency reserve buffer';
+      if (allocated > 0) {
+        tacticalNote = 'Deploy into high-yield 7.10% Callable FD or Liquid Fund';
+      } else if (item && item.status === 'overweight') {
+        tacticalNote = 'Overweight liquid cash drag: Pause cash additions and redeploy surplus beyond emergency reserves into growth assets';
+      } else {
+        tacticalNote = 'Maintain emergency reserve buffer';
+      }
     } else if (cat === 'Gold') {
       tacticalNote = allocated > 0 ? 'Purchase SGB tranche or low-cost Gold ETF (GOLDBEES)' : 'Hold physical and digital gold bullion';
     } else if (cat === 'Equity') {
@@ -377,67 +483,103 @@ export function simulateInflowRebalancing(assets = [], targetAllocation = RISK_P
 }
 
 /**
- * Calculates cash drag against family living expenses
+ * Calculates cash drag against family living expenses and liquid buffer health
  */
 export function calculateCashDrag(assets = [], transactions = []) {
-  const cashAssets = assets.filter(a => a.Category === 'Cash/FD');
-  const totalLiquidCash = cashAssets.reduce((sum, a) => sum + Number(a['Current Value'] || 0), 0);
+  const cashAssets = assets.filter(a => isCashCategory(a.Category));
+  const totalLiquidCash = cashAssets.reduce((sum, a) => sum + parseNumeric(a['Current Value']), 0);
 
   let operationalSavingsCash = 0;
   let termDepositCash = 0;
 
   cashAssets.forEach(a => {
-    let det = {};
-    try {
-      det = typeof a['Details JSON'] === 'string' ? JSON.parse(a['Details JSON']) : (a['Details JSON'] || {});
-    } catch (e) {}
-
-    const isTermDeposit =
-      det['Sub-Type'] === 'Fixed Deposit (FD)' ||
-      det['Sub-Type'] === 'Recurring Deposit (RD)' ||
-      Boolean(det['Maturity Date']);
-
-    const val = Number(a['Current Value'] || 0);
-    if (isTermDeposit) {
+    const val = parseNumeric(a['Current Value']);
+    if (isTermDepositAsset(a)) {
       termDepositCash += val;
     } else {
       operationalSavingsCash += val;
     }
   });
 
-  // Compute average monthly expenses
-  const expenseTxns = transactions.filter(t => t.Type === 'Expense');
-  const totalExpense = expenseTxns.reduce((sum, t) => sum + Number(t.Amount || 0), 0);
-  
-  // Estimate monthly burn (use transactions sum / 12 or minimum 30,000 for realistic family safety)
-  let avgMonthlyExpense = totalExpense > 0 ? Math.round(totalExpense / 12) : 50000;
-  if (avgMonthlyExpense < 25000) avgMonthlyExpense = 50000;
+  // Exclude transfers to calculate true family living expense burn rate
+  const expenseTxns = transactions.filter(t => {
+    if (t.Type !== 'Expense') return false;
+    const isTransfer =
+      t['Is Transfer'] === 'TRUE' ||
+      t['Is Transfer'] === true ||
+      String(t.Category || '').trim().toLowerCase().includes('transfer');
+    return !isTransfer;
+  });
 
-  const runwayMonths = avgMonthlyExpense > 0 ? (totalLiquidCash / avgMonthlyExpense) : 0;
-  const operationalRunwayMonths = avgMonthlyExpense > 0 ? (operationalSavingsCash / avgMonthlyExpense) : 0;
-  const emergencyReserveTarget = avgMonthlyExpense * 6; // Recommended 6-month buffer
+  // Calculate monthly expenses grouped by distinct month
+  const monthlyExpenses = {};
+  let totalExpense = 0;
+  expenseTxns.forEach(t => {
+    const amt = parseNumeric(t.Amount);
+    if (amt <= 0) return;
+    totalExpense += amt;
+    const dateStr = String(t.Date || '');
+    const monthKey = dateStr.length >= 7 ? dateStr.substring(0, 7) : 'default';
+    monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + amt;
+  });
+
+  const monthCount = Object.keys(monthlyExpenses).length;
+  let avgMonthlyExpense = 0;
+  if (monthCount > 0) {
+    avgMonthlyExpense = Math.round(totalExpense / monthCount);
+  }
+
+  // Realistic family living safety floor:
+  // If no transactions exist or burn rate is unusually low (< ₹20,000), default to baseline ₹50,000
+  if (avgMonthlyExpense < 20000) {
+    avgMonthlyExpense = 50000;
+  }
+
+  // Emergency Buffer: Recommended 6 months of family living expenses
+  const emergencyReserveTarget = avgMonthlyExpense * 6;
+  const runwayMonths = avgMonthlyExpense > 0 ? Number((totalLiquidCash / avgMonthlyExpense).toFixed(1)) : 0;
+  const operationalRunwayMonths = avgMonthlyExpense > 0 ? Number((operationalSavingsCash / avgMonthlyExpense).toFixed(1)) : 0;
+
+  // 1. Total Liquidity Drag: Cash sitting idle BEYOND the full 6-month emergency reserve
   const excessCashDrag = Math.max(0, totalLiquidCash - emergencyReserveTarget);
 
-  // Idle cash surplus in low-yield savings accounts (> 1.5x monthly expenses)
+  // 2. Idle Savings Yield Drag: Operational savings buffer target is 1.5 months living expenses
   const operationalBufferTarget = Math.round(avgMonthlyExpense * 1.5);
   const idleSavingsSurplus = Math.max(0, operationalSavingsCash - operationalBufferTarget);
 
-  // Approximate opportunity cost drag (assuming ~6.5% p.a. difference between cash and diversified portfolio)
-  const annualOpportunityCost = Math.round(excessCashDrag * 0.065);
+  // Buffer shortfall (if reserves are under 6 months)
+  const bufferShortfall = Math.max(0, emergencyReserveTarget - totalLiquidCash);
+
+  // Opportunity cost calculations:
+  // a) Excess cash opportunity cost: ~6.5% p.a. equity/multi-asset risk premium over cash
+  const excessCashOpportunityCost = Math.round(excessCashDrag * 0.065);
+  // b) Savings yield drag: ~4.0% p.a. yield loss of holding low-interest savings account (~3%) vs callable FD/liquid fund (~7%)
+  const savingsYieldLoss = Math.round(idleSavingsSurplus * 0.04);
+  // Total annual opportunity cost drag
+  const annualOpportunityCost = excessCashOpportunityCost + (excessCashDrag === 0 ? savingsYieldLoss : 0);
+
+  // Effective cash drag amount (for unified display so it never prints 0 when drag is flagged!)
+  const effectiveCashDrag = excessCashDrag > 0 ? excessCashDrag : (idleSavingsSurplus > 50000 ? idleSavingsSurplus : 0);
+  const hasCashDrag = excessCashDrag > 50000 || idleSavingsSurplus > 50000;
 
   return {
     totalLiquidCash,
     operationalSavingsCash,
     termDepositCash,
     avgMonthlyExpense,
-    runwayMonths: Number(runwayMonths.toFixed(1)),
-    operationalRunwayMonths: Number(operationalRunwayMonths.toFixed(1)),
+    runwayMonths,
+    operationalRunwayMonths,
     emergencyReserveTarget,
     operationalBufferTarget,
     excessCashDrag,
     idleSavingsSurplus,
-    hasCashDrag: excessCashDrag > 100000 || idleSavingsSurplus > 50000,
-    annualOpportunityCost
+    bufferShortfall,
+    effectiveCashDrag,
+    hasCashDrag,
+    annualOpportunityCost,
+    excessCashOpportunityCost,
+    savingsYieldLoss,
+    isLowBuffer: runwayMonths < 3 && totalLiquidCash > 0
   };
 }
 
@@ -445,19 +587,20 @@ export function calculateCashDrag(assets = [], transactions = []) {
  * Audits portfolio for single-asset concentration risks
  */
 export function auditConcentrationRisk(assets = []) {
-  const totalGross = assets.reduce((sum, a) => sum + (a.Category !== 'Liabilities' ? Number(a['Current Value'] || 0) : 0), 0);
-  const equityAssets = assets.filter(a => a.Category === 'Equity');
-  const totalEquity = equityAssets.reduce((sum, a) => sum + Number(a['Current Value'] || 0), 0);
+  const totalGross = assets.reduce((sum, a) => sum + (normalizeCategoryName(a.Category) !== 'Liabilities' ? parseNumeric(a['Current Value']) : 0), 0);
+  const equityAssets = assets.filter(a => normalizeCategoryName(a.Category) === 'Equity');
+  const totalEquity = equityAssets.reduce((sum, a) => sum + parseNumeric(a['Current Value']), 0);
 
   const alerts = [];
 
   assets.forEach(a => {
-    if (a.Category === 'Liabilities') return;
-    const val = Number(a['Current Value'] || 0);
+    const cat = normalizeCategoryName(a.Category);
+    if (cat === 'Liabilities') return;
+    const val = parseNumeric(a['Current Value']);
     const overallPct = totalGross > 0 ? (val / totalGross) * 100 : 0;
 
     // Flag any single non-real-estate asset exceeding 15% of total wealth
-    if (a.Category !== 'Real Estate' && overallPct >= 15) {
+    if (cat !== 'Real Estate' && overallPct >= 15) {
       alerts.push({
         assetId: a['Asset ID'],
         name: a.Name,
@@ -470,7 +613,7 @@ export function auditConcentrationRisk(assets = []) {
     }
 
     // Flag any single stock exceeding 20% of the equity portfolio
-    if (a.Category === 'Equity' && totalEquity > 0) {
+    if (cat === 'Equity' && totalEquity > 0) {
       const equityPct = (val / totalEquity) * 100;
       if (equityPct >= 20) {
         alerts.push({
@@ -497,8 +640,11 @@ export function auditConcentrationRisk(assets = []) {
  * Analyzes mutual fund and equity holdings for underlying overlap, sector skews, and market-cap tilt
  */
 export function analyzePortfolioLookThrough(assets = []) {
-  const equityHoldings = assets.filter(a => a.Category === 'Equity' || a.Category === 'Mutual Funds');
-  const totalEquityValue = equityHoldings.reduce((sum, a) => sum + Number(a['Current Value'] || 0), 0);
+  const equityHoldings = assets.filter(a => {
+    const norm = normalizeCategoryName(a.Category);
+    return norm === 'Equity' || norm === 'Mutual Funds';
+  });
+  const totalEquityValue = equityHoldings.reduce((sum, a) => sum + parseNumeric(a['Current Value']), 0);
   
   // Identify potential fund overlap based on scheme keywords
   const schemeNames = equityHoldings.map(a => a.Name || '');
@@ -548,8 +694,8 @@ export function analyzePortfolioLookThrough(assets = []) {
  * Calculates tax and yield arbitrage opportunity for high-tax-bracket investors shifting from Bank FDs to Arbitrage Funds
  */
 export function calculateTaxArbitrageOpportunity(assets = [], taxBracketRate = 0.312) {
-  const cashAssets = assets.filter(a => a.Category === 'Cash/FD');
-  const totalLiquidCash = cashAssets.reduce((sum, a) => sum + Number(a['Current Value'] || 0), 0);
+  const cashAssets = assets.filter(a => isCashCategory(a.Category));
+  const totalLiquidCash = cashAssets.reduce((sum, a) => sum + parseNumeric(a['Current Value']), 0);
 
   // Benchmarks
   const fdPreTaxYield = 7.0; // 7.0% p.a.
