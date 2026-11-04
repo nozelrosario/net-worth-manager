@@ -25,7 +25,8 @@ import {
   Search,
   Users,
   Copy,
-  Check
+  Check,
+  Bell
 } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
@@ -48,7 +49,16 @@ const getSafeCategoryForAsset = (assetCategory) => {
   return 'Finance';
 };
 
-export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
+export default function AssetsTab({ 
+  formatCurrency, 
+  data, 
+  onRefresh, 
+  showMessage, 
+  onOpenRebalancer, 
+  onOpenRetirementPlanner, 
+  onOpenInsuranceHub,
+  onOpenNotifications 
+}) {
   const [filter, setFilter] = useState('All Assets');
   const [selectedOwner, setSelectedOwner] = useState('All Family');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +77,7 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
   const [showCasModal, setShowCasModal] = useState(false);
   const [showToolsModal, setShowToolsModal] = useState(false);
   const [showSmsModal, setShowSmsModal] = useState(false);
+  const [showActionItemsModal, setShowActionItemsModal] = useState(false);
 
   useEffect(() => {
     if (!showToolsModal) return;
@@ -79,12 +90,27 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showToolsModal]);
 
+  useEffect(() => {
+    if (!showActionItemsModal) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowActionItemsModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showActionItemsModal]);
+
   useModalBack(showAddModal, () => {
     if (deleteConfirmAsset) {
       setDeleteConfirmAsset(null);
     } else {
       setShowAddModal(false);
     }
+  });
+
+  useModalBack(showActionItemsModal, () => {
+    setShowActionItemsModal(false);
   });
 
   const assets = data?.assets || [];
@@ -364,10 +390,11 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
     };
   }, [ownerFilteredAssets]);
 
-  // Actionable alerts (FD maturities within 30 days & active insurance grace periods)
+  // Actionable alerts (FD maturities within 30 days & overdue, active insurance grace periods & upcoming dues, zero valuation)
   const actionAlerts = useMemo(() => {
     const alerts = [];
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
 
     ownerFilteredAssets.forEach(a => {
       let det = {};
@@ -379,11 +406,24 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
       if (matDate) {
         const d = new Date(matDate);
         if (!isNaN(d.getTime())) {
+          d.setHours(0, 0, 0, 0);
           const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           if (diffDays >= 0 && diffDays <= 30) {
             alerts.push({
               type: 'fd_maturity',
-              title: `${a.Name}: Matures in ${diffDays}d`,
+              severity: diffDays <= 7 ? 'danger' : 'warning',
+              badge: diffDays === 0 ? 'Matures Today' : `Matures in ${diffDays}d`,
+              title: `${a.Name} matures in ${diffDays}d`,
+              desc: `Fixed deposit matures on ${d.toLocaleDateString()}. Action needed to reinvest or withdraw.`,
+              asset: a
+            });
+          } else if (diffDays < 0) {
+            alerts.push({
+              type: 'fd_matured',
+              severity: 'danger',
+              badge: 'Matured',
+              title: `${a.Name} has matured`,
+              desc: `Matured on ${d.toLocaleDateString()} (${Math.abs(diffDays)}d ago). Please update status or reinvest.`,
               asset: a
             });
           }
@@ -395,21 +435,41 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
         if (polMetrics.isOverdue) {
           alerts.push({
             type: 'insurance_grace',
+            severity: 'danger',
+            badge: 'Grace Period Active',
             title: `${a.Name}: Grace Period Active`,
+            desc: `Premium payment is overdue. Policy is currently at risk during active grace period!`,
             asset: a
           });
         } else if (polMetrics.isDueSoon) {
           alerts.push({
             type: 'insurance_due',
-            title: `${a.Name}: Due in ${polMetrics.daysUntilDue}d`,
+            severity: 'warning',
+            badge: `Due in ${polMetrics.daysUntilDue}d`,
+            title: `${a.Name}: Premium Due Soon`,
+            desc: `Renewal premium of ${polMetrics.premiumAmount ? formatCurrency(polMetrics.premiumAmount) : 'due amount'} is due on ${polMetrics.nextDueDate || 'upcoming date'}.`,
             asset: a
           });
         }
       }
+
+      // Check for zero or missing valuation when cost > 0
+      const curVal = Number(a['Current Value'] || 0);
+      const cost = Number(a.Cost || 0);
+      if (curVal === 0 && cost > 0 && a.Category !== 'Liabilities') {
+        alerts.push({
+          type: 'zero_val',
+          severity: 'warning',
+          badge: 'Unpriced Asset',
+          title: `${a.Name}: ₹0 Valuation`,
+          desc: `Invested cost is ${formatCurrency(cost)}, but current value is ₹0. Please sync market prices or update valuation.`,
+          asset: a
+        });
+      }
     });
 
     return alerts;
-  }, [ownerFilteredAssets]);
+  }, [ownerFilteredAssets, formatCurrency]);
 
   const handleCopy = (text, id, e) => {
     e.stopPropagation();
@@ -848,100 +908,125 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
               {breakdownData[selectedSegment].map((item, idx) => (
                 <div
                   key={idx}
-                  className="h-full transition-all"
+                  className="h-full transition-all cursor-pointer hover:opacity-80"
                   style={{ width: `${Math.max(2, item.percent)}%`, backgroundColor: item.color }}
+                  onClick={() => {
+                    if (selectedSegment === 'category') {
+                      setFilter(filter === item.name ? 'All Assets' : item.name);
+                    } else if (selectedSegment === 'owner') {
+                      setSelectedOwner(selectedOwner === item.name ? 'All Family' : item.name);
+                    }
+                  }}
                   title={`${item.name}: ${item.percent.toFixed(1)}% (${formatCurrency(item.amount)})`}
                 />
               ))}
             </div>
 
-            {/* Segment Switcher & 1-Line Compact Legend */}
-            <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex bg-surface-layer2 p-0.5 rounded-lg border border-border-subtle shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSegment('category')}
-                  className={`px-2 py-0.5 rounded text-typ-micro sm:text-typ-caption font-medium transition-all ${
-                    selectedSegment === 'category'
-                      ? 'bg-primary-accent text-white shadow-xs font-semibold'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  By Category
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSegment('owner')}
-                  className={`px-2 py-0.5 rounded text-typ-micro sm:text-typ-caption font-medium transition-all ${
-                    selectedSegment === 'owner'
-                      ? 'bg-primary-accent text-white shadow-xs font-semibold'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  By Owner
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSegment('liquidity')}
-                  className={`px-2 py-0.5 rounded text-typ-micro sm:text-typ-caption font-medium transition-all ${
-                    selectedSegment === 'liquidity'
-                      ? 'bg-primary-accent text-white shadow-xs font-semibold'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  By Liquidity
-                </button>
+            {/* Segment Switcher & Allocation Legend */}
+            <div className="mt-2.5 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex bg-surface-layer2 p-0.5 rounded-lg border border-border-subtle shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSegment('category')}
+                    className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded text-typ-micro font-medium transition-all ${
+                      selectedSegment === 'category'
+                        ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    By Category
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSegment('owner')}
+                    className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded text-typ-micro font-medium transition-all ${
+                      selectedSegment === 'owner'
+                        ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    By Owner
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSegment('liquidity')}
+                    className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded text-typ-micro font-medium transition-all ${
+                      selectedSegment === 'liquidity'
+                        ? 'bg-primary-accent text-white shadow-xs font-semibold'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    By Liquidity
+                  </button>
+                </div>
+
+                <span className="text-typ-micro text-text-muted hidden sm:inline-block">
+                  Click tag to filter
+                </span>
               </div>
 
-              {/* 1-Line Compact Distribution Legend */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-typ-micro text-text-secondary flex-1 justify-end min-w-0">
-                {breakdownData[selectedSegment].slice(0, 4).map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      if (selectedSegment === 'category') {
-                        setFilter(filter === item.name ? 'All Assets' : item.name);
-                      } else if (selectedSegment === 'owner') {
-                        setSelectedOwner(selectedOwner === item.name ? 'All Family' : item.name);
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 shrink-0 hover:text-text-primary transition-colors cursor-pointer"
-                    title={`Click to filter by ${item.name}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="truncate max-w-[80px] sm:max-w-[110px] font-medium">{item.name}</span>
-                    <span className="tabular-nums text-text-muted">{item.percent.toFixed(0)}%</span>
-                  </button>
-                ))}
+              {/* Responsive Legend Tags: flex-wrap ensures all items are visible without horizontal cutoff */}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-typ-micro">
+                {breakdownData[selectedSegment].map((item, idx) => {
+                  const isSelected = 
+                    (selectedSegment === 'category' && filter === item.name) ||
+                    (selectedSegment === 'owner' && selectedOwner === item.name);
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        if (selectedSegment === 'category') {
+                          setFilter(filter === item.name ? 'All Assets' : item.name);
+                        } else if (selectedSegment === 'owner') {
+                          setSelectedOwner(selectedOwner === item.name ? 'All Family' : item.name);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-typ-micro transition-all cursor-pointer ${
+                        isSelected 
+                          ? 'bg-primary-accent/15 border-primary-accent/40 text-primary-accent font-semibold shadow-xs' 
+                          : 'bg-surface-layer2/80 border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-prominent'
+                      }`}
+                      title={`Filter by ${item.name}`}
+                    >
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                      <span className="font-medium whitespace-nowrap">{item.name}</span>
+                      <span className="tabular-nums font-semibold text-text-primary ml-0.5">
+                        {item.percent < 1 ? '<1%' : `${item.percent.toFixed(0)}%`}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
 
-        {/* 1-Line Compact Action Alert Ribbon */}
+        {/* Compact Action Alert Ribbon */}
         {actionAlerts.length > 0 && (
           <div className="mt-2.5 pt-2 border-t border-border-subtle/70">
-            <div 
-              onClick={() => {
-                if (actionAlerts[0]?.asset) {
-                  openEditModal(actionAlerts[0].asset);
-                }
-              }}
-              className="bg-bullion-amber/10 hover:bg-bullion-amber/15 border border-bullion-amber/30 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 text-bullion-amber cursor-pointer transition-colors"
+            <button
+              type="button"
+              onClick={() => setShowActionItemsModal(true)}
+              className="w-full text-left bg-bullion-amber/10 hover:bg-bullion-amber/15 border border-bullion-amber/30 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 text-bullion-amber cursor-pointer transition-colors group"
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <AlertTriangle size={13} className="shrink-0 text-bullion-amber" />
+                <AlertTriangle size={14} className="shrink-0 text-bullion-amber" />
                 <span className="text-typ-micro sm:text-typ-caption font-semibold uppercase tracking-wider shrink-0">
-                  {actionAlerts.length} Action{actionAlerts.length > 1 ? 's' : ''}:
+                  {actionAlerts.length} Action{actionAlerts.length > 1 ? 's' : ''} Needed:
                 </span>
                 <span className="text-typ-caption text-text-primary truncate">
                   {actionAlerts[0]?.title}
                   {actionAlerts.length > 1 && ` • +${actionAlerts.length - 1} more`}
                 </span>
               </div>
-              <ChevronRight size={14} className="shrink-0 text-bullion-amber" />
-            </div>
+              <div className="flex items-center gap-1 shrink-0 text-bullion-amber font-medium text-typ-caption">
+                <span className="text-typ-micro uppercase tracking-wider hidden xs:inline">Review All</span>
+                <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </button>
           </div>
         )}
       </div>
@@ -1646,6 +1731,156 @@ export default function AssetsTab({ formatCurrency, data, onRefresh, showMessage
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Items List Modal */}
+      {showActionItemsModal && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowActionItemsModal(false)}
+        >
+          <div 
+            className="bg-surface-layer1 border border-border-subtle rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+            style={{ backgroundColor: 'var(--surface-layer1)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Grab handle on mobile */}
+            <div className="w-12 h-1 rounded-full bg-border-prominent mx-auto mt-2 mb-1 sm:hidden"></div>
+
+            {/* Modal Header */}
+            <div className="p-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-surface-layer2/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-bullion-amber/15 text-bullion-amber flex items-center justify-center shrink-0">
+                  <AlertTriangle size={18} />
+                </div>
+                <div>
+                  <h3 className="text-typ-subtitle font-bold text-text-primary">Actionable Portfolio Alerts</h3>
+                  <p className="text-typ-micro text-text-muted">
+                    {actionAlerts.length} holding{actionAlerts.length > 1 ? 's' : ''} requiring review or action
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowActionItemsModal(false)}
+                className="text-text-muted hover:text-text-primary p-1.5 rounded-lg hover:bg-surface-layer2 transition-colors"
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Action Items List */}
+            <div className="p-4 overflow-y-auto space-y-2.5 flex-1 no-scrollbar">
+              {actionAlerts.length === 0 ? (
+                <div className="text-center py-8 text-text-muted text-typ-body-sm">
+                  No actionable alerts found for this owner selection.
+                </div>
+              ) : (
+                actionAlerts.map((alert, idx) => {
+                  const isDanger = alert.severity === 'danger';
+                  return (
+                    <div 
+                      key={idx}
+                      onClick={() => {
+                        setShowActionItemsModal(false);
+                        openEditModal(alert.asset);
+                      }}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                        isDanger 
+                          ? 'bg-liability-rose/5 border-liability-rose/30 hover:border-liability-rose/60 hover:bg-liability-rose/10' 
+                          : 'bg-bullion-amber/5 border-bullion-amber/30 hover:border-bullion-amber/60 hover:bg-bullion-amber/10'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`px-2 py-0.5 rounded text-typ-micro font-bold uppercase tracking-wider shrink-0 ${
+                            isDanger 
+                              ? 'bg-liability-rose/20 text-liability-rose' 
+                              : 'bg-bullion-amber/20 text-bullion-amber'
+                          }`}>
+                            {alert.badge || 'Action'}
+                          </span>
+                          <span className="text-typ-label font-bold text-text-primary truncate">
+                            {alert.asset?.Name}
+                          </span>
+                        </div>
+                        {alert.asset?.['Current Value'] ? (
+                          <span className="text-typ-caption font-semibold text-text-primary tabular-nums shrink-0">
+                            {formatCurrency(alert.asset['Current Value'])}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className="text-typ-caption text-text-secondary leading-snug mb-2.5">
+                        {alert.desc}
+                      </p>
+
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-subtle/50">
+                        <div className="flex items-center gap-2 text-typ-micro text-text-muted truncate">
+                          <span>{alert.asset?.Category}</span>
+                          {alert.asset?.Owner && (
+                            <>
+                              <span>•</span>
+                              <span>Owner: {alert.asset.Owner}</span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                          {isInsuranceAsset(alert.asset) && onOpenInsuranceHub && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowActionItemsModal(false);
+                                onOpenInsuranceHub();
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-typ-micro font-medium text-primary-accent hover:bg-primary-accent/10 transition-colors"
+                            >
+                              Insurance Hub
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowActionItemsModal(false);
+                              openEditModal(alert.asset);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-typ-micro font-medium text-text-primary transition-colors flex items-center gap-1 shadow-xs"
+                          >
+                            <span>Edit</span>
+                            <ChevronRight size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer with Reminders Bridge */}
+            {onOpenNotifications && (
+              <div className="p-3 bg-surface-layer2/40 border-t border-border-subtle flex items-center justify-between shrink-0">
+                <span className="text-typ-micro text-text-muted">
+                  Looking for all scheduled reminders?
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowActionItemsModal(false);
+                    onOpenNotifications();
+                  }}
+                  className="text-typ-caption text-primary-accent hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  <Bell size={13} />
+                  <span>Open Reminders Drawer</span>
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

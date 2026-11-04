@@ -254,29 +254,35 @@
 <!-- Gold 8% (Amber) -->
 <div class="h-full bg-warning-amber" style="width: 8%;" title="Gold 8%"></div>
 </div>
-<!-- Allocation Interactive Segment Selector & Micro Legend -->
-<div class="flex items-center justify-between text-[10px] pt-0.5">
+<!-- Allocation Interactive Segment Selector & Responsive Wrapped Legend -->
+<div class="flex flex-col gap-1.5 pt-1">
+<div class="flex items-center justify-between text-[10px]">
 <div class="flex items-center gap-1">
-<span class="px-1.5 py-0.5 rounded bg-surface-layer-2 text-text-primary font-medium border border-border-subtle">By Asset</span>
-<span class="px-1.5 py-0.5 rounded text-text-muted hover:text-text-secondary cursor-pointer">By Owner</span>
-<span class="px-1.5 py-0.5 rounded text-text-muted hover:text-text-secondary cursor-pointer">By Liquidity</span>
+<span class="px-2 py-0.5 rounded bg-surface-layer-2 text-text-primary font-medium border border-border-subtle cursor-pointer">By Asset</span>
+<span class="px-2 py-0.5 rounded text-text-muted hover:text-text-secondary cursor-pointer">By Owner</span>
+<span class="px-2 py-0.5 rounded text-text-muted hover:text-text-secondary cursor-pointer">By Liquidity</span>
 </div>
-<div class="text-text-secondary font-medium tracking-tight tabular-nums flex items-center gap-1.5">
-<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 mr-0.5"></span>MF 48%</span>
-<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 mr-0.5"></span>EQ 26%</span>
-<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-profit-emerald mr-0.5"></span>RE 18%</span>
-<span><span class="inline-block w-1.5 h-1.5 rounded-full bg-warning-amber mr-0.5"></span>Au 8%</span>
+<span class="text-[9px] text-text-muted">Click tag to filter</span>
+</div>
+<div class="flex flex-wrap items-center gap-1.5 text-[10px] text-text-secondary font-medium">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-layer-2/80 border border-border-subtle cursor-pointer hover:border-primary/50"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Mutual Funds <strong class="text-text-primary tabular-nums">48%</strong></span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-layer-2/80 border border-border-subtle cursor-pointer hover:border-primary/50"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>Equities <strong class="text-text-primary tabular-nums">26%</strong></span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-layer-2/80 border border-border-subtle cursor-pointer hover:border-primary/50"><span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>Real Estate <strong class="text-text-primary tabular-nums">18%</strong></span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-layer-2/80 border border-border-subtle cursor-pointer hover:border-primary/50"><span class="w-1.5 h-1.5 rounded-full bg-warning-amber"></span>Gold <strong class="text-text-primary tabular-nums">8%</strong></span>
 </div>
 </div>
 </div>
-<!-- Integrated Action Alert Ribbon (Compact 1-Liner Inside Ribbon) -->
-<div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-warning-amber/10 border border-warning-amber/25 text-warning-amber text-[11px] font-medium mt-0.5">
+<!-- Integrated Action Alert Ribbon (Opens Action Items Modal) -->
+<button class="w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-warning-amber/10 border border-warning-amber/25 text-warning-amber text-[11px] font-medium mt-0.5 hover:bg-warning-amber/15 transition-colors cursor-pointer group">
 <div class="flex items-center gap-1.5 truncate">
 <span class="material-symbols-outlined text-xs shrink-0">warning</span>
-<span class="truncate"><strong class="font-semibold">2 Actions:</strong> HDFC FD Matures in 14d • LIC Grace active</span>
+<span class="truncate"><strong class="font-semibold uppercase tracking-wider text-[10px]">2 Actions:</strong> HDFC FD Matures in 14d • +1 more</span>
 </div>
-<span class="material-symbols-outlined text-xs shrink-0 ml-1">chevron_right</span>
+<div class="flex items-center gap-0.5 text-[10px] font-semibold text-warning-amber shrink-0">
+<span>Review All</span>
+<span class="material-symbols-outlined text-xs group-hover:translate-x-0.5 transition-transform">chevron_right</span>
 </div>
+</button>
 </section>
 <!-- SEARCH & CATEGORY FILTER SUITE -->
 <section class="flex flex-col gap-2">
