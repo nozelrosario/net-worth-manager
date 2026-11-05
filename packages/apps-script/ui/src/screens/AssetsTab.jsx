@@ -26,7 +26,8 @@ import {
   Users,
   Copy,
   Check,
-  Bell
+  Bell,
+  Eye
 } from 'lucide-react';
 import { isInsuranceAsset, calculatePolicyMetrics } from "../utils/insuranceMath";
 import CasSyncModal from "../components/CasSyncModal";
@@ -57,7 +58,11 @@ export default function AssetsTab({
   onOpenRebalancer, 
   onOpenRetirementPlanner, 
   onOpenInsuranceHub,
-  onOpenNotifications 
+  onOpenNotifications,
+  targetAssetFocus,
+  onClearTargetAssetFocus,
+  targetCategoryFilter,
+  onClearTargetCategoryFilter
 }) {
   const [filter, setFilter] = useState('All Assets');
   const [selectedOwner, setSelectedOwner] = useState('All Family');
@@ -65,6 +70,7 @@ export default function AssetsTab({
   const [sortBy, setSortBy] = useState('value_desc');
   const [selectedSegment, setSelectedSegment] = useState('category'); // 'category' | 'owner' | 'liquidity'
   const [copiedId, setCopiedId] = useState(null);
+  const [focusedAssetId, setFocusedAssetId] = useState(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
@@ -541,6 +547,116 @@ export default function AssetsTab({
       openAddModal(prefill);
     }
   }, []);
+
+  // React to external category navigation (e.g. from HomeTab allocation chips or Rebalancer)
+  useEffect(() => {
+    if (!targetCategoryFilter?.category) return;
+    setFilter(targetCategoryFilter.category);
+    if (onClearTargetCategoryFilter) onClearTargetCategoryFilter();
+  }, [targetCategoryFilter]);
+
+  // React to external asset cross-link focus & scroll (e.g. from Reminders, Retirement Hub, Rebalancer, Insurance Hub)
+  useEffect(() => {
+    if (!targetAssetFocus?.assetId) return;
+    const { assetId, action } = targetAssetFocus;
+
+    const target = assets.find(a => 
+      String(a['Asset ID']) === String(assetId) ||
+      String(a.ID) === String(assetId) ||
+      String(a.Name).toLowerCase() === String(assetId).toLowerCase()
+    );
+
+    if (!target) {
+      if (onClearTargetAssetFocus) onClearTargetAssetFocus();
+      return;
+    }
+
+    const actualAssetId = target['Asset ID'] || target.ID || target.Name;
+
+    // Ensure asset is visible in list by adjusting filters if needed
+    if (filter !== 'All Assets' && filter !== target.Category) {
+      setFilter('All Assets');
+    }
+    if (selectedOwner !== 'All Family' && target.Owner && selectedOwner !== target.Owner) {
+      setSelectedOwner('All Family');
+    }
+    if (searchQuery) {
+      setSearchQuery('');
+    }
+
+    setFocusedAssetId(actualAssetId);
+
+    // Scroll to the card element with a retry mechanism
+    let attempts = 0;
+    const maxAttempts = 20;
+    const interval = setInterval(() => {
+      attempts++;
+      const el = document.getElementById(`asset-card-${actualAssetId}`);
+      if (el) {
+        clearInterval(interval);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (action === 'edit') {
+          setTimeout(() => {
+            openEditModal(target);
+          }, 350);
+        }
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        if (action === 'edit') {
+          openEditModal(target);
+        }
+      }
+    }, 60);
+
+    const timer = setTimeout(() => {
+      setFocusedAssetId(null);
+      if (onClearTargetAssetFocus) onClearTargetAssetFocus();
+    }, 3800);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, [targetAssetFocus, assets]);
+
+  const handleSelectActionAlert = (alert, action = 'view') => {
+    setShowActionItemsModal(false);
+    const target = alert.asset;
+    if (!target) return;
+    const actualAssetId = target['Asset ID'] || target.ID || target.Name;
+
+    if (filter !== 'All Assets' && filter !== target.Category) {
+      setFilter('All Assets');
+    }
+    if (selectedOwner !== 'All Family' && target.Owner && selectedOwner !== target.Owner) {
+      setSelectedOwner('All Family');
+    }
+    if (searchQuery) {
+      setSearchQuery('');
+    }
+
+    setFocusedAssetId(actualAssetId);
+
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      const el = document.getElementById(`asset-card-${actualAssetId}`);
+      if (el) {
+        clearInterval(interval);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (action === 'edit') {
+          setTimeout(() => openEditModal(target), 300);
+        }
+      } else if (attempts >= 20) {
+        clearInterval(interval);
+        if (action === 'edit') openEditModal(target);
+      }
+    }, 60);
+
+    setTimeout(() => {
+      setFocusedAssetId(null);
+    }, 3800);
+  };
 
   const openEditModal = (asset) => {
     setEditingAssetId(asset['Asset ID']);
@@ -1264,16 +1380,28 @@ export default function AssetsTab({
 
           const displayIdentifier = det['Folio Number'] || det['Folio'] || det['Account Number'] || det['Certificate Number'] || det['Policy Number'];
 
+          const isFocused = String(focusedAssetId) === String(asset['Asset ID'] || asset.ID || asset.Name);
+
           return (
             <div 
+              id={`asset-card-${asset['Asset ID'] || asset.ID || asset.Name || i}`}
               key={asset['Asset ID'] || i} 
               onClick={() => openEditModal(asset)}
-              className="bg-surface-layer1 border border-border-subtle rounded-xl p-3 sm:p-4 shadow-sm cursor-pointer hover:border-primary-accent/50 transition-colors"
+              className={`bg-surface-layer1 border rounded-xl p-3 sm:p-4 shadow-sm cursor-pointer transition-all duration-500 relative ${
+                isFocused 
+                  ? 'border-primary-accent ring-2 ring-primary-accent/80 ring-offset-2 ring-offset-background-root shadow-[0_0_24px_rgba(99,102,241,0.35)] bg-primary-accent/[0.08] scale-[1.015]' 
+                  : 'border-border-subtle hover:border-primary-accent/50'
+              }`}
             >
               <div className="flex justify-between items-start gap-2.5 mb-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-typ-body-sm font-semibold text-text-primary break-words line-clamp-2 leading-snug">{asset.Name}</p>
+                    {isFocused && (
+                      <span className="inline-flex items-center gap-1 text-typ-micro font-bold text-primary-accent bg-primary-accent/15 px-2 py-0.5 rounded-full border border-primary-accent/30 animate-pulse shrink-0">
+                        <Sparkles size={11} /> Focused
+                      </span>
+                    )}
                     {isLive && (
                       <Badge variant="emerald" dot pulse size="xs">
                         Live
@@ -1784,10 +1912,7 @@ export default function AssetsTab({
                   return (
                     <div 
                       key={idx}
-                      onClick={() => {
-                        setShowActionItemsModal(false);
-                        openEditModal(alert.asset);
-                      }}
+                      onClick={() => handleSelectActionAlert(alert, 'view')}
                       className={`p-3 rounded-xl border transition-all cursor-pointer ${
                         isDanger 
                           ? 'bg-liability-rose/5 border-liability-rose/30 hover:border-liability-rose/60 hover:bg-liability-rose/10' 
@@ -1844,10 +1969,16 @@ export default function AssetsTab({
                           )}
                           <button
                             type="button"
-                            onClick={() => {
-                              setShowActionItemsModal(false);
-                              openEditModal(alert.asset);
-                            }}
+                            onClick={() => handleSelectActionAlert(alert, 'view')}
+                            className="px-2.5 py-1 rounded-lg bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-typ-micro font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1 shadow-xs"
+                            title="Scroll to asset in list"
+                          >
+                            <Eye size={12} className="text-primary-accent" />
+                            <span>View</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectActionAlert(alert, 'edit')}
                             className="px-2.5 py-1 rounded-lg bg-surface-layer2 hover:bg-surface-layer1 border border-border-subtle text-typ-micro font-medium text-text-primary transition-colors flex items-center gap-1 shadow-xs"
                           >
                             <span>Edit</span>

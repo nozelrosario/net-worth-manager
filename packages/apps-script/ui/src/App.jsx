@@ -22,6 +22,8 @@ const TABS = ['home', 'assets', 'spends', 'safe', 'settings'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const [targetAssetFocus, setTargetAssetFocus] = useState(null);
+  const [targetCategoryFilter, setTargetCategoryFilter] = useState(null);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(getSafeStorage('nwm_session_token')));
@@ -30,6 +32,42 @@ export default function App() {
   
   const [showNotifications, setShowNotifications] = useState(false);
   // useModalBack removed for notifications
+
+  const handleNavigateToAsset = (assetOrId, action = 'view') => {
+    if (!assetOrId) return;
+    const assetId = typeof assetOrId === 'object'
+      ? (assetOrId['Asset ID'] || assetOrId.id || assetOrId.ID || assetOrId.assetId || assetOrId.Name)
+      : assetOrId;
+    if (!assetId) return;
+
+    setShowNotifications(false);
+    setShowRebalancerModal(false);
+    setShowRetirementModal(false);
+    setShowInsuranceHubModal(false);
+    setShowSecurityModal(false);
+
+    setActiveTab('assets');
+    setTargetAssetFocus({
+      assetId: String(assetId),
+      action: action || 'view',
+      timestamp: Date.now()
+    });
+  };
+
+  const handleNavigateToCategory = (category) => {
+    if (!category) return;
+    setShowNotifications(false);
+    setShowRebalancerModal(false);
+    setShowRetirementModal(false);
+    setShowInsuranceHubModal(false);
+    setShowSecurityModal(false);
+
+    setActiveTab('assets');
+    setTargetCategoryFilter({
+      category,
+      timestamp: Date.now()
+    });
+  };
 
   const getUpcomingReminders = (assets) => {
     if (!assets) return [];
@@ -667,6 +705,8 @@ export default function App() {
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
             onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
+            onNavigateToCategory={handleNavigateToCategory}
+            onNavigateToAsset={handleNavigateToAsset}
           />
         )}
         {activeTab === 'assets' && (
@@ -679,6 +719,10 @@ export default function App() {
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
             onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
             onOpenNotifications={() => setShowNotifications(true)}
+            targetAssetFocus={targetAssetFocus}
+            onClearTargetAssetFocus={() => setTargetAssetFocus(null)}
+            targetCategoryFilter={targetCategoryFilter}
+            onClearTargetCategoryFilter={() => setTargetCategoryFilter(null)}
           />
         )}
         {activeTab === 'spends' && <SpendsTab formatCurrency={formatCurrency} data={data} onRefresh={refreshData} showMessage={showMessage} />}
@@ -720,16 +764,25 @@ export default function App() {
                     <p className="text-typ-label text-text-primary mb-2 leading-relaxed">{rem.body}</p>
                     <div className="flex justify-between items-center mt-2">
                        <span className="bg-surface-layer1 text-text-secondary text-typ-caption px-2 py-1 rounded border border-border-subtle">{rem.address}</span>
-                       <button onClick={() => { 
-                         setShowNotifications(false); 
-                         if (rem.isInsurance) {
-                           setShowInsuranceHubModal(true);
-                         } else {
-                           setActiveTab('assets'); 
-                         }
-                       }} className="text-typ-label text-primary-accent hover:text-primary-accent/80 font-medium">
-                         {rem.isInsurance ? 'View in Insurance Hub →' : 'View Asset →'}
-                       </button>
+                       <div className="flex items-center gap-2">
+                         {rem.isInsurance && (
+                           <button 
+                             onClick={() => { 
+                               setShowNotifications(false); 
+                               setShowInsuranceHubModal(true);
+                             }} 
+                             className="text-typ-caption text-text-muted hover:text-text-primary px-2 py-1 rounded bg-surface-layer1 border border-border-subtle transition-colors"
+                           >
+                             Insurance Hub
+                           </button>
+                         )}
+                         <button 
+                           onClick={() => handleNavigateToAsset(rem.assetId, 'view')} 
+                           className="text-typ-label text-primary-accent hover:text-primary-accent/80 font-medium flex items-center gap-0.5"
+                         >
+                           View Asset →
+                         </button>
+                       </div>
                     </div>
                   </div>
                 ))
@@ -794,6 +847,8 @@ export default function App() {
         formatCurrency={formatCurrency}
         showMessage={showMessage}
         onRefresh={refreshData}
+        onNavigateToAsset={handleNavigateToAsset}
+        onNavigateToCategory={handleNavigateToCategory}
       />
 
       {/* Retirement & Pension Hub Modal */}
@@ -807,6 +862,7 @@ export default function App() {
           setShowRetirementModal(false);
           setActiveTab('assets');
         }}
+        onNavigateToAsset={handleNavigateToAsset}
       />
 
       {/* Insurance & Protection Hub Modal */}
@@ -822,9 +878,9 @@ export default function App() {
           sessionStorage.setItem('nwm_prefill_asset_category', category || 'Life Insurance / LIC');
         }}
         onOpenEditAsset={(asset) => {
-          setShowInsuranceHubModal(false);
-          setActiveTab('assets');
+          handleNavigateToAsset(asset, 'edit');
         }}
+        onNavigateToAsset={handleNavigateToAsset}
         onRefresh={refreshData}
         onNavigateToSafe={() => {
           setShowInsuranceHubModal(false);

@@ -827,11 +827,19 @@ export function analyzePortfolioLookThrough(assets = []) {
     smallCap: 10
   };
 
+  const overlappingHoldings = equityHoldings.slice(0, 2).map(a => ({
+    assetId: a['Asset ID'] || a.ID,
+    name: a.Name,
+    category: a.Category,
+    currentValue: parseNumeric(a['Current Value'])
+  }));
+
   return {
     totalEquityValue,
     equityHoldingsCount: equityHoldings.length,
     overlapPercentage,
     overlappingPair,
+    overlappingHoldings,
     commonHoldings,
     hasHighOverlap: overlapPercentage >= 40,
     sectorExposure,
