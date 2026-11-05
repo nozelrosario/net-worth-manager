@@ -4,7 +4,7 @@ import {
   ArrowLeft, Sparkles, Sliders, AlertTriangle, TrendingUp, TrendingDown, 
   CheckCircle2, Info, Copy, Check, RefreshCw, X, Shield, ChevronRight, 
   HelpCircle, ExternalLink, Flame, DollarSign, Wallet, Radar, Compass,
-  Layers, Zap, BarChart3, PieChart, ArrowUpRight, Key
+  Layers, Zap, BarChart3, PieChart, ArrowUpRight, Key, Eye
 } from 'lucide-react';
 import GeminiApiKeyModal from './GeminiApiKeyModal';
 import { 
@@ -57,7 +57,9 @@ export default function PortfolioRebalancerModal({
   data, 
   formatCurrency, 
   showMessage,
-  onRefresh 
+  onRefresh,
+  onNavigateToAsset,
+  onNavigateToCategory
 }) {
   useModalBack(isOpen, onClose);
 
@@ -883,6 +885,20 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2.5 h-2.5 rounded-full ${conf.bgClass}`}></span>
                         <span className="text-typ-label font-semibold text-text-primary">{item.category}</span>
+                        {onNavigateToCategory && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              onNavigateToCategory(item.category);
+                            }}
+                            className="text-typ-micro text-text-muted hover:text-primary-accent ml-1 transition-colors flex items-center gap-0.5 cursor-pointer"
+                            title={`View ${item.category} assets`}
+                          >
+                            <span>Assets</span>
+                            <ArrowUpRight size={10} />
+                          </button>
+                        )}
                       </div>
 
                       {/* Status Tag */}
@@ -977,6 +993,22 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
                   ✓ Healthy liquid emergency cushion maintained ({cashDrag.runwayMonths} mos runway).
                 </div>
               )}
+
+              {onNavigateToCategory && cashDrag.totalLiquidCash > 0 && (
+                <div className="mt-2 pt-1 border-t border-white/[0.04] text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onNavigateToCategory('Cash/FD');
+                    }}
+                    className="text-typ-micro text-bullion-amber hover:underline font-semibold inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <span>View Cash/FD Assets</span>
+                    <ArrowUpRight size={10} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Concentration Risk Card */}
@@ -1000,8 +1032,21 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
               </div>
 
               {concentration.alerts.length > 0 ? (
-                <div className="mt-2 text-typ-caption bg-liability-rose/10 border border-liability-rose/20 text-liability-rose p-1.5 rounded font-medium">
-                  ⚠️ {concentration.alerts[0].name} exceeds threshold ({concentration.alerts[0].percentage}%).
+                <div className="mt-2 text-typ-caption bg-liability-rose/10 border border-liability-rose/20 text-liability-rose p-1.5 rounded font-medium flex items-center justify-between gap-1.5">
+                  <span className="truncate">⚠️ {concentration.alerts[0].name} exceeds threshold ({concentration.alerts[0].percentage}%).</span>
+                  {onNavigateToAsset && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onNavigateToAsset(concentration.alerts[0].assetId || concentration.alerts[0].name, 'view');
+                      }}
+                      className="text-typ-caption font-bold text-primary-accent hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <span>View Asset</span>
+                      <ArrowUpRight size={11} />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="mt-2 text-typ-caption bg-wealth-emerald/10 border border-wealth-emerald/20 text-wealth-emerald p-1.5 rounded font-medium">
@@ -1163,6 +1208,26 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
                 <p className="text-typ-footnote text-text-secondary leading-relaxed">
                   <strong className="text-text-primary">{productIntelligence?.overlapAnalysis?.schemePair || localLookThrough.overlappingPair}</strong> share common heavyweights in <span className="text-text-primary">{localLookThrough.commonHoldings.slice(0, 4).join(', ')}</span>.
                 </p>
+                {localLookThrough.overlappingHoldings?.length > 0 && onNavigateToAsset && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-typ-micro text-text-muted">Focus in Assets:</span>
+                    {localLookThrough.overlappingHoldings.map((h, hIdx) => (
+                      <button
+                        key={h.assetId || hIdx}
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onNavigateToAsset(h.assetId || h.name, 'view');
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-typ-micro font-medium bg-surface-layer1 hover:bg-primary-accent hover:text-white border border-white/[0.08] text-primary-accent transition-colors cursor-pointer"
+                        title={`View ${h.name} in Assets tab`}
+                      >
+                        <Eye size={10} />
+                        <span className="truncate max-w-[130px]">{h.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="text-typ-micro text-text-muted pt-1 border-t border-white/[0.04]">
                   💡 {productIntelligence?.overlapAnalysis?.note || "Allocate fresh capital to non-overlapping market-cap segments."}
                 </div>

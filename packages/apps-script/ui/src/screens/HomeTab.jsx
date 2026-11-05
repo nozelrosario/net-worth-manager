@@ -4,7 +4,15 @@ import { calculatePortfolioAlignment, calculateCashDrag, isCashCategory, RISK_PR
 import { Badge } from '../components/Badge';
 import { calculateConsolidatedInsurance, formatInLakhsOrCrores } from '../utils/insuranceMath';
 
-export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpenRetirementPlanner, onOpenInsuranceHub }) {
+export default function HomeTab({ 
+  formatCurrency, 
+  data, 
+  onOpenRebalancer, 
+  onOpenRetirementPlanner, 
+  onOpenInsuranceHub,
+  onNavigateToCategory,
+  onNavigateToAsset
+}) {
   const assets = data?.assets || [];
   const settings = data?.settings || [];
 
@@ -97,7 +105,11 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
 
         {/* Live Market Portfolio Return Ribbon */}
         {liveAssets.length > 0 && totalLiveCost > 0 && (
-          <div className="mb-3 flex items-center gap-2 text-typ-label">
+          <div 
+            onClick={() => onNavigateToCategory && onNavigateToCategory('Equity')}
+            className={`mb-3 flex items-center gap-2 text-typ-label ${onNavigateToCategory ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            title="View equity portfolio in Assets tab"
+          >
             <span className="text-text-muted">Market Portfolio Gain:</span>
             <span className={`font-semibold tabular-nums flex items-center gap-1 ${totalLivePnl >= 0 ? 'text-wealth-emerald' : 'text-liability-rose'}`}>
               {totalLivePnl >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
@@ -106,25 +118,87 @@ export default function HomeTab({ formatCurrency, data, onOpenRebalancer, onOpen
           </div>
         )}
         
-        {/* Progress bar */}
+        {/* Progress bar with category cross-linking */}
         <div className="h-2 w-full bg-surface-layer2 rounded-full overflow-hidden flex mb-3">
-          <div className="bg-primary-accent" style={{width: `${ePct}%`}} title={`Equity: ${ePct.toFixed(1)}%`}></div>
-          <div className="bg-indigo-400" style={{width: `${mfPct}%`}} title={`Mutual Funds: ${mfPct.toFixed(1)}%`}></div>
-          <div className="bg-teal-500" style={{width: `${pPct}%`}} title={`Property: ${pPct.toFixed(1)}%`}></div>
-          <div className="bg-bullion-amber" style={{width: `${gPct}%`}} title={`Gold: ${gPct.toFixed(1)}%`}></div>
-          <div className="bg-wealth-emerald" style={{width: `${cPct}%`}} title={`Cash/FD: ${cPct.toFixed(1)}%`}></div>
-          {retPct > 0 && <div className="bg-sky-500" style={{width: `${retPct}%`}} title={`Retirement: ${retPct.toFixed(1)}%`}></div>}
-          {oPct > 0 && <div className="bg-purple-500" style={{width: `${oPct}%`}} title={`Other: ${oPct.toFixed(1)}%`}></div>}
+          <div onClick={() => onNavigateToCategory && onNavigateToCategory('Equity')} className="bg-primary-accent hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${ePct}%`}} title={`Equity: ${ePct.toFixed(1)}% (Click to view)`}></div>
+          <div onClick={() => onNavigateToCategory && onNavigateToCategory('Mutual Funds')} className="bg-indigo-400 hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${mfPct}%`}} title={`Mutual Funds: ${mfPct.toFixed(1)}% (Click to view)`}></div>
+          <div onClick={() => onNavigateToCategory && onNavigateToCategory('Real Estate')} className="bg-teal-500 hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${pPct}%`}} title={`Property: ${pPct.toFixed(1)}% (Click to view)`}></div>
+          <div onClick={() => onNavigateToCategory && onNavigateToCategory('Gold')} className="bg-bullion-amber hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${gPct}%`}} title={`Gold: ${gPct.toFixed(1)}% (Click to view)`}></div>
+          <div onClick={() => onNavigateToCategory && onNavigateToCategory('Cash/FD')} className="bg-wealth-emerald hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${cPct}%`}} title={`Cash/FD: ${cPct.toFixed(1)}% (Click to view)`}></div>
+          {retPct > 0 && <div onClick={() => onNavigateToCategory && onNavigateToCategory('Retirement & Pension')} className="bg-sky-500 hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${retPct}%`}} title={`Retirement: ${retPct.toFixed(1)}% (Click to view)`}></div>}
+          {oPct > 0 && <div onClick={() => onNavigateToCategory && onNavigateToCategory('All Assets')} className="bg-purple-500 hover:opacity-80 transition-opacity cursor-pointer" style={{width: `${oPct}%`}} title={`Other: ${oPct.toFixed(1)}% (Click to view)`}></div>}
         </div>
         
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-typ-label">
-          <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary-accent"></span><span className="text-text-secondary">Equity: {formatCurrency(equity)}</span></div>
-          {mf > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-400"></span><span className="text-text-secondary">Mutual Funds: {formatCurrency(mf)}</span></div>}
-          <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-bullion-amber"></span><span className="text-text-secondary">Gold: {formatCurrency(gold)}</span></div>
-          <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500"></span><span className="text-text-secondary">Property: {formatCurrency(property)}</span></div>
-          <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-wealth-emerald"></span><span className="text-text-secondary">Cash/FD: {formatCurrency(cash)}</span></div>
-          {retirement > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-500"></span><span className="text-text-secondary">Retirement: {formatCurrency(retirement)}</span></div>}
-          {liabilities > 0 && <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-liability-rose"></span><span className="text-liability-rose">Liabilities: -{formatCurrency(liabilities)}</span></div>}
+          <button 
+            type="button" 
+            onClick={() => onNavigateToCategory && onNavigateToCategory('Equity')}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+            title="View Equity assets"
+          >
+            <span className="w-2 h-2 rounded-full bg-primary-accent group-hover:scale-125 transition-transform"></span>
+            <span className="text-text-secondary group-hover:text-text-primary">Equity: {formatCurrency(equity)}</span>
+          </button>
+          {mf > 0 && (
+            <button 
+              type="button" 
+              onClick={() => onNavigateToCategory && onNavigateToCategory('Mutual Funds')}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+              title="View Mutual Fund assets"
+            >
+              <span className="w-2 h-2 rounded-full bg-indigo-400 group-hover:scale-125 transition-transform"></span>
+              <span className="text-text-secondary group-hover:text-text-primary">Mutual Funds: {formatCurrency(mf)}</span>
+            </button>
+          )}
+          <button 
+            type="button" 
+            onClick={() => onNavigateToCategory && onNavigateToCategory('Gold')}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+            title="View Gold assets"
+          >
+            <span className="w-2 h-2 rounded-full bg-bullion-amber group-hover:scale-125 transition-transform"></span>
+            <span className="text-text-secondary group-hover:text-text-primary">Gold: {formatCurrency(gold)}</span>
+          </button>
+          <button 
+            type="button" 
+            onClick={() => onNavigateToCategory && onNavigateToCategory('Real Estate')}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+            title="View Property assets"
+          >
+            <span className="w-2 h-2 rounded-full bg-teal-500 group-hover:scale-125 transition-transform"></span>
+            <span className="text-text-secondary group-hover:text-text-primary">Property: {formatCurrency(property)}</span>
+          </button>
+          <button 
+            type="button" 
+            onClick={() => onNavigateToCategory && onNavigateToCategory('Cash/FD')}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+            title="View Cash/FD assets"
+          >
+            <span className="w-2 h-2 rounded-full bg-wealth-emerald group-hover:scale-125 transition-transform"></span>
+            <span className="text-text-secondary group-hover:text-text-primary">Cash/FD: {formatCurrency(cash)}</span>
+          </button>
+          {retirement > 0 && (
+            <button 
+              type="button" 
+              onClick={() => onNavigateToCategory && onNavigateToCategory('Retirement & Pension')}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+              title="View Retirement assets"
+            >
+              <span className="w-2 h-2 rounded-full bg-sky-500 group-hover:scale-125 transition-transform"></span>
+              <span className="text-text-secondary group-hover:text-text-primary">Retirement: {formatCurrency(retirement)}</span>
+            </button>
+          )}
+          {liabilities > 0 && (
+            <button 
+              type="button" 
+              onClick={() => onNavigateToCategory && onNavigateToCategory('Liabilities')}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer group text-left"
+              title="View Liabilities"
+            >
+              <span className="w-2 h-2 rounded-full bg-liability-rose group-hover:scale-125 transition-transform"></span>
+              <span className="text-liability-rose">Liabilities: -{formatCurrency(liabilities)}</span>
+            </button>
+          )}
         </div>
       </div>
 

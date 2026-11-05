@@ -104,7 +104,8 @@ export function processRetirementAccount(asset) {
 
     return {
       subType,
-      id: asset?.ID || asset?.Name,
+      id: asset?.['Asset ID'] || asset?.ID || asset?.Name,
+      assetId: asset?.['Asset ID'] || asset?.ID || asset?.Name,
       name: asset?.Name || 'EPFO Provident Fund',
       institution: asset?.['Institution/Location'] || 'EPFO',
       identifier: uan,
@@ -172,7 +173,8 @@ export function processRetirementAccount(asset) {
 
     return {
       subType,
-      id: asset?.ID || asset?.Name,
+      id: asset?.['Asset ID'] || asset?.ID || asset?.Name,
+      assetId: asset?.['Asset ID'] || asset?.ID || asset?.Name,
       name: asset?.Name || (subType === 'NPS Tier 1' ? 'National Pension System' : 'NPS Tier 2 Voluntary'),
       institution: pfm,
       identifier: pran,
@@ -219,7 +221,8 @@ export function processRetirementAccount(asset) {
 
     return {
       subType,
-      id: asset?.ID || asset?.Name,
+      id: asset?.['Asset ID'] || asset?.ID || asset?.Name,
+      assetId: asset?.['Asset ID'] || asset?.ID || asset?.Name,
       name: asset?.Name || 'Public Provident Fund',
       institution: bank,
       identifier: acctNum,
@@ -242,7 +245,8 @@ export function processRetirementAccount(asset) {
   // Superannuation or Gratuity
   return {
     subType,
-    id: asset?.ID || asset?.Name,
+    id: asset?.['Asset ID'] || asset?.ID || asset?.Name,
+    assetId: asset?.['Asset ID'] || asset?.ID || asset?.Name,
     name: asset?.Name || subType,
     institution: asset?.['Institution/Location'] || 'Corporate Trust',
     identifier: asset?.Identifiers || '—',

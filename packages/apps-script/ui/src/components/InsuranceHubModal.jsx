@@ -4,7 +4,8 @@ import {
   ArrowLeft, Shield, Sparkles, CheckCircle2, AlertCircle, 
   Copy, Check, Plus, Sliders, ChevronRight, FolderLock, ExternalLink, 
   Calendar, RefreshCw, Award, PieChart, Heart, HeartPulse, Stethoscope, 
-  Car, Home, FileText, X, AlertTriangle, ArrowUpRight, Clock, DollarSign, Wallet
+  Car, Home, FileText, X, AlertTriangle, ArrowUpRight, Clock, DollarSign, Wallet,
+  Eye
 } from 'lucide-react';
 import { 
   calculateConsolidatedInsurance, 
@@ -23,6 +24,7 @@ export default function InsuranceHubModal({
   showMessage,
   onOpenAddAsset,
   onOpenEditAsset,
+  onNavigateToAsset,
   onRefresh,
   onNavigateToSafe
 }) {
@@ -589,12 +591,27 @@ export default function InsuranceHubModal({
                           <span>Safe PDF</span>
                         </button>
                       )}
+                      {onNavigateToAsset && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onNavigateToAsset(policy.assetId || policy.rawAsset?.['Asset ID'], 'view');
+                          }}
+                          className="hover:text-text-primary flex items-center gap-1 transition-colors cursor-pointer"
+                          title="View in Assets Tab"
+                        >
+                          <Eye size={13} className="text-primary-accent" />
+                          <span>View</span>
+                        </button>
+                      )}
                       <button 
                         onClick={() => {
                           onClose();
                           if (onOpenEditAsset) onOpenEditAsset(policy.rawAsset);
                         }}
-                        className="hover:text-text-primary flex items-center gap-1 transition-colors"
+                        className="hover:text-text-primary flex items-center gap-1 transition-colors cursor-pointer"
+                        title="Edit Policy"
                       >
                         <Sliders size={13} />
                         <span>Edit</span>
