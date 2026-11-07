@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tactical Fresh Inflow Simulator - Net Worth Manager</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "border-subtle": "#222F3E",
+            "surface-variant": "#34343d",
+            "on-primary-fixed": "#07006c",
+            "on-secondary-fixed": "#002113",
+            "border-prominent": "#334155",
+            "on-secondary-container": "#00311f",
+            "primary-container": "#8083ff",
+            "surface-container-low": "#1b1b23",
+            "on-tertiary-fixed-variant": "#703700",
+            "on-secondary-fixed-variant": "#005236",
+            "surface-container-highest": "#34343d",
+            "primary": "#c0c1ff",
+            "on-tertiary-fixed": "#301400",
+            "inverse-primary": "#494bd6",
+            "on-background": "#e4e1ed",
+            "primary-fixed": "#e1e0ff",
+            "warning-amber": "#F59E0B",
+            "tertiary-fixed": "#ffdcc5",
+            "tertiary": "#ffb783",
+            "on-error": "#690005",
+            "inverse-surface": "#e4e1ed",
+            "tertiary-container": "#d97721",
+            "surface-bright": "#393841",
+            "secondary-fixed": "#6ffbbe",
+            "surface-layer-2": "#1E293B",
+            "on-surface": "#e4e1ed",
+            "on-secondary": "#003824",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "background": "#13131b",
+            "profit-emerald": "#10B981",
+            "error-container": "#93000a",
+            "primary-fixed-dim": "#c0c1ff",
+            "background-root": "#0B0F17",
+            "on-tertiary-container": "#452000",
+            "on-primary-container": "#0d0096",
+            "text-secondary": "#94A3B8",
+            "surface-container-high": "#292932",
+            "on-primary": "#1000a9",
+            "inverse-on-surface": "#303038",
+            "surface-container": "#1f1f27",
+            "surface-layer-1": "#151C28",
+            "outline-variant": "#464554",
+            "text-muted": "#64748B",
+            "on-surface-variant": "#c7c4d7",
+            "tertiary-fixed-dim": "#ffb783",
+            "secondary": "#4edea3",
+            "outline": "#908fa0",
+            "surface-dim": "#13131b",
+            "surface-container-lowest": "#0d0d15",
+            "liability-rose": "#F43F5E",
+            "surface": "#13131b",
+            "surface-tint": "#c0c1ff",
+            "error": "#ffb4ab",
+            "on-tertiary": "#4f2500",
+            "secondary-fixed-dim": "#4edea3",
+            "text-primary": "#F8FAFC",
+            "on-error-container": "#ffdad6",
+            "secondary-container": "#00a572"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "12px",
+            "space-xs": "4px",
+            "space-lg": "24px",
+            "margin": "16px",
+            "space-xl": "32px",
+            "space-sm": "8px",
+            "space-md": "16px"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen flex justify-center selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Viewport Container (393px native OLED frame standard) -->
+<main class="w-full max-w-[393px] min-h-screen bg-background-root flex flex-col relative pb-32">
+<!-- 1. Top App Bar / Navigation Header (Task-Focused: Close/Dismiss intent, bottom nav suppressed per hierarchy) -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-margin py-space-sm border-b border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Back" class="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-text-primary tracking-tight">Tactical Inflow Simulator</h1>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-label-sm text-label-sm text-text-muted">Dual Momentum &amp; Macro Overlay v4.2</span>
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-pulse"></span>
+              AI Active
+            </span>
+</div>
+</div>
+</div>
+<button aria-label="Close" class="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</header>
+<!-- Scrollable Content Canvas -->
+<div class="px-margin pt-space-md space-y-gutter flex-1">
+<!-- 2. Mode Toggle Pill -->
+<section aria-label="Allocation Engine Mode">
+<div class="p-1 rounded-xl bg-surface-layer-1 border border-border-subtle grid grid-cols-2 gap-1">
+<button class="py-2 px-space-xs rounded-lg text-center font-label-md text-label-md text-text-secondary hover:text-text-primary transition-all" type="button">
+            Strategic Baseline
+          </button>
+<button class="py-2 px-space-xs rounded-lg text-center font-label-md text-label-md font-semibold text-text-primary bg-surface-layer-2 border border-border-prominent shadow-sm flex items-center justify-center gap-1 text-primary" type="button">
+<span>Tactical Macro Overlay</span>
+<span class="text-xs">✨</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-2 px-1 flex items-start gap-1.5">
+<span class="material-symbols-outlined text-text-muted text-[14px] mt-0.5">info</span>
+<span>Tactical mode dynamically shifts inflow tranches using 200 EMA trend filters &amp; macro regime multipliers.</span>
+</p>
+</section>
+<!-- 3. Inflow Input & Quick Chips -->
+<section class="bg-surface-layer-1 rounded-xl p-space-md border border-border-subtle space-y-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-text-secondary uppercase tracking-wider">Fresh Liquidity Injection</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-text-muted">
+<span class="material-symbols-outlined text-[12px]">account_balance_wallet</span>
+            Liquid INR
+          </span>
+</div>
+<!-- Prominent Input Display -->
+<div class="bg-surface-layer-2 rounded-xl p-space-md border border-border-prominent flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-text-muted block">Simulated Inflow Amount</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-lg text-headline-lg text-primary font-bold">₹</span>
+<span class="font-display-lg text-display-lg font-bold text-text-primary tabular-nums tracking-tight">1,00,000</span>
+</div>
+</div>
+<button aria-label="Edit Amount" class="w-10 h-10 rounded-lg bg-surface-layer-1 hover:bg-surface-bright border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+<!-- Preset Chips -->
+<div class="grid grid-cols-4 gap-2">
+<button class="py-2 px-1 rounded-lg bg-surface-layer-2 hover:bg-surface-bright border border-border-subtle text-center font-label-md text-label-md text-text-secondary hover:text-text-primary tabular-nums active:scale-95 transition-all" type="button">
+            ₹25,000
+          </button>
+<button class="py-2 px-1 rounded-lg bg-surface-layer-2 hover:bg-surface-bright border border-border-subtle text-center font-label-md text-label-md text-text-secondary hover:text-text-primary tabular-nums active:scale-95 transition-all" type="button">
+            ₹50,000
+          </button>
+<button class="py-2 px-1 rounded-lg bg-primary-container/20 border border-primary text-center font-label-md text-label-md font-semibold text-text-primary tabular-nums flex items-center justify-center gap-0.5 active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-primary text-[14px]">check</span>
+            ₹1,00,000
+          </button>
+<button class="py-2 px-1 rounded-lg bg-surface-layer-2 hover:bg-surface-bright border border-border-subtle text-center font-label-md text-label-md text-text-secondary hover:text-text-primary tabular-nums active:scale-95 transition-all" type="button">
+            ₹2,50,000
+          </button>
+</div>
+</section>
+<!-- 4. Macro & Momentum Overlay Signal Banner -->
+<section class="bg-surface-layer-1 rounded-xl p-space-md border border-profit-emerald/30 shadow-[0_0_20px_rgba(16,185,129,0.06)] space-y-space-sm">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-profit-emerald text-[18px] shrink-0 mt-0.5">bolt</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-text-primary leading-tight">
+              Signal: Equity Momentum Strong
+            </h2>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5">
+              Price &gt; 200 EMA • Gold Bullish (Gold/Silver 82 ratio)
+            </p>
+</div>
+</div>
+<!-- Tactical Routing Badges -->
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-profit-emerald/10 border border-profit-emerald/20 text-profit-emerald font-label-sm text-label-sm font-semibold tabular-nums">
+            Equity: 1.25x (+₹15,000 tilt)
+          </span>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-surface-layer-2 border border-border-prominent text-text-secondary font-label-sm text-label-sm tabular-nums">
+            Cash/FD: 0.6x (Protected)
+          </span>
+<span class="inline-flex items-center px-2 py-1 rounded-md bg-warning-amber/10 border border-warning-amber/20 text-warning-amber font-label-sm text-label-sm font-semibold tabular-nums">
+            Gold: 1.1x
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-muted border-t border-border-subtle/80 pt-2 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-text-muted">psychology</span>
+<span>Overweighting momentum leaders while harvesting liquid cash into yield vehicles.</span>
+</p>
+</section>
+<!-- 5. Before vs After Allocation Projection -->
+<section class="space-y-2">
+<div class="flex items-center justify-between px-1">
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Tranche Deployment Breakdown</h2>
+<span class="font-label-sm text-label-sm text-text-muted uppercase">5 Asset Classes</span>
+</div>
+<div class="space-y-2">
+<!-- Card 1: Direct Equity -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="font-headline-sm text-headline-sm text-text-primary">Direct Equity</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30 tabular-nums">
+                +₹48,000 (+48%)
+              </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1 font-body-sm text-body-sm tabular-nums">
+<div>
+<span class="text-text-muted block font-label-sm text-label-sm">Current</span>
+<span class="text-text-secondary font-medium">₹35.20L</span>
+<span class="text-text-muted text-[11px] block">(35.2%)</span>
+</div>
+<div class="text-center">
+<span class="text-text-muted block font-label-sm text-label-sm">Target</span>
+<span class="text-text-secondary font-medium">35.0%</span>
+<span class="text-profit-emerald text-[11px] block">+0.8% tilt</span>
+</div>
+<div class="text-right">
+<span class="text-text-muted block font-label-sm text-label-sm">Projected</span>
+<span class="text-text-primary font-semibold">₹35.68L</span>
+<span class="text-profit-emerald text-[11px] block font-semibold">(35.8%)</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-layer-2 h-1.5 rounded-full overflow-hidden flex">
+<div class="bg-text-secondary h-full" style="width: 35.2%"></div>
+<div class="bg-profit-emerald h-full" style="width: 0.6%"></div>
+</div>
+</div>
+<!-- Card 2: Mutual Funds -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-headline-sm text-headline-sm text-text-primary">Mutual Funds</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30 tabular-nums">
+                +₹28,000 (+28%)
+              </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1 font-body-sm text-body-sm tabular-nums">
+<div>
+<span class="text-text-muted block font-label-sm text-label-sm">Current</span>
+<span class="text-text-secondary font-medium">₹24.80L</span>
+<span class="text-text-muted text-[11px] block">(24.8%)</span>
+</div>
+<div class="text-center">
+<span class="text-text-muted block font-label-sm text-label-sm">Target</span>
+<span class="text-text-secondary font-medium">25.0%</span>
+<span class="text-profit-emerald text-[11px] block">+0.1% tilt</span>
+</div>
+<div class="text-right">
+<span class="text-text-muted block font-label-sm text-label-sm">Projected</span>
+<span class="text-text-primary font-semibold">₹25.08L</span>
+<span class="text-profit-emerald text-[11px] block font-semibold">(25.1%)</span>
+</div>
+</div>
+<div class="w-full bg-surface-layer-2 h-1.5 rounded-full overflow-hidden flex">
+<div class="bg-text-secondary h-full" style="width: 24.8%"></div>
+<div class="bg-profit-emerald h-full" style="width: 0.3%"></div>
+</div>
+</div>
+<!-- Card 3: Gold & SGB -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-warning-amber"></span>
+<span class="font-headline-sm text-headline-sm text-text-primary">Gold &amp; SGB</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30 tabular-nums">
+                +₹14,000 (+14%)
+              </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1 font-body-sm text-body-sm tabular-nums">
+<div>
+<span class="text-text-muted block font-label-sm text-label-sm">Current</span>
+<span class="text-text-secondary font-medium">₹8.50L</span>
+<span class="text-text-muted text-[11px] block">(8.5%)</span>
+</div>
+<div class="text-center">
+<span class="text-text-muted block font-label-sm text-label-sm">Target</span>
+<span class="text-text-secondary font-medium">10.0%</span>
+<span class="text-warning-amber text-[11px] block">Underweight</span>
+</div>
+<div class="text-right">
+<span class="text-text-muted block font-label-sm text-label-sm">Projected</span>
+<span class="text-text-primary font-semibold">₹8.64L</span>
+<span class="text-profit-emerald text-[11px] block font-semibold">(8.7%)</span>
+</div>
+</div>
+<div class="w-full bg-surface-layer-2 h-1.5 rounded-full overflow-hidden flex">
+<div class="bg-text-secondary h-full" style="width: 8.5%"></div>
+<div class="bg-profit-emerald h-full" style="width: 0.2%"></div>
+</div>
+</div>
+<!-- Card 4: Cash & Arbitrage -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-fixed"></span>
+<span class="font-headline-sm text-headline-sm text-text-primary">Cash &amp; Arbitrage</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-profit-emerald/15 text-profit-emerald font-label-sm text-label-sm font-semibold border border-profit-emerald/30 tabular-nums">
+                +₹10,000 (+10%)
+              </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1 font-body-sm text-body-sm tabular-nums">
+<div>
+<span class="text-text-muted block font-label-sm text-label-sm">Current</span>
+<span class="text-text-secondary font-medium">₹18.00L</span>
+<span class="text-text-muted text-[11px] block">(18.0%)</span>
+</div>
+<div class="text-center">
+<span class="text-text-muted block font-label-sm text-label-sm">Target</span>
+<span class="text-text-secondary font-medium">15.0%</span>
+<span class="text-text-muted text-[11px] block">Overweight</span>
+</div>
+<div class="text-right">
+<span class="text-text-muted block font-label-sm text-label-sm">Projected</span>
+<span class="text-text-primary font-semibold">₹18.10L</span>
+<span class="text-text-secondary text-[11px] block font-semibold">(17.8%)</span>
+</div>
+</div>
+<div class="w-full bg-surface-layer-2 h-1.5 rounded-full overflow-hidden flex">
+<div class="bg-text-secondary h-full" style="width: 17.8%"></div>
+<div class="bg-profit-emerald h-full" style="width: 0.2%"></div>
+</div>
+</div>
+<!-- Card 5: Real Estate -->
+<div class="bg-surface-layer-1 border border-border-subtle rounded-xl p-space-md space-y-2 opacity-85">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-text-muted"></span>
+<span class="font-headline-sm text-headline-sm text-text-primary">Real Estate</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-layer-2 text-text-muted font-label-sm text-label-sm font-semibold border border-border-subtle tabular-nums">
+                ₹0 (Illiquid)
+              </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1 font-body-sm text-body-sm tabular-nums">
+<div>
+<span class="text-text-muted block font-label-sm text-label-sm">Current</span>
+<span class="text-text-secondary font-medium">₹13.50L</span>
+<span class="text-text-muted text-[11px] block">(13.5%)</span>
+</div>
+<div class="text-center">
+<span class="text-text-muted block font-label-sm text-label-sm">Target</span>
+<span class="text-text-secondary font-medium">15.0%</span>
+<span class="text-text-muted text-[11px] block">Static</span>
+</div>
+<div class="text-right">
+<span class="text-text-muted block font-label-sm text-label-sm">Projected</span>
+<span class="text-text-secondary font-semibold">₹13.50L</span>
+<span class="text-text-muted text-[11px] block font-semibold">(13.3%)</span>
+</div>
+</div>
+<div class="w-full bg-surface-layer-2 h-1.5 rounded-full overflow-hidden flex">
+<div class="bg-text-muted h-full" style="width: 13.3%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. Portfolio Alignment Score Boost Preview -->
+<section class="bg-surface-layer-2 rounded-xl p-space-md border border-border-prominent space-y-space-md">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider block">Target Alignment Index</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-headline-md text-headline-md font-bold text-text-secondary tabular-nums">74</span>
+<span class="text-text-muted text-xs">/ 100</span>
+<span class="text-text-muted font-label-sm text-label-sm">→</span>
+<span class="font-headline-lg text-headline-lg font-bold text-profit-emerald tabular-nums">88</span>
+<span class="text-profit-emerald text-xs">/ 100 (Optimal)</span>
+</div>
+</div>
+<div class="px-2.5 py-1.5 rounded-lg bg-profit-emerald/20 border border-profit-emerald/30 text-profit-emerald font-label-md text-label-md font-bold flex items-center gap-1 tabular-nums shadow-sm">
+<span>+14 pts Boost</span>
+<span>🔥</span>
+</div>
+</div>
+<!-- Section 112A/111A Tax Shield Note -->
+<div class="bg-surface-layer-1 rounded-lg p-2.5 border border-border-subtle flex items-start gap-2.5">
+<span class="material-symbols-outlined text-profit-emerald text-[20px] shrink-0 mt-0.5" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shield</span>
+<div>
+<div class="font-label-md text-label-md text-text-primary font-semibold">Zero Tax Drag Engine</div>
+<p class="font-body-sm text-body-sm text-text-muted mt-0.5 leading-relaxed">
+              ₹1,00,000 deployed without triggering capital gains taxes (<span class="text-text-secondary font-medium">Section 112A LTCG</span> / <span class="text-text-secondary font-medium">Section 111A STCG</span> preserved intact).
+            </p>
+</div>
+</div>
+</section>
+</div>
+<!-- 7. Sticky Bottom CTA (Focused Linear Action Canvas) -->
+<footer class="fixed bottom-0 max-w-[393px] w-full z-50 bg-background-root/95 backdrop-blur-md px-margin py-3 border-t border-border-subtle shadow-2xl">
+<button class="w-full min-h-[48px] py-3 px-space-md rounded-xl bg-[#6366F1] hover:bg-[#5558E6] active:scale-95 transition-transform duration-150 text-white font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#6366F1]/20" type="button">
+<span>Execute Rebalance Plan &amp; Log Inflows</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center gap-1.5 mt-2">
+<span class="material-symbols-outlined text-text-muted text-[12px]">lock</span>
+<span class="font-label-sm text-label-sm text-text-muted text-center">
+          Simulated order bundle formatted for 1-click execution • Client-side local encryption
+        </span>
+</div>
+</footer>
+</main>
+</body></html>

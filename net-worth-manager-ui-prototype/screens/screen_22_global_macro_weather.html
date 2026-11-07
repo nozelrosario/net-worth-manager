@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Global Macro Weather Dashboard &amp; Regime Panel</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Inter Google Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "profit-emerald": "#10B981",
+            "text-secondary": "#94A3B8",
+            "surface-layer-1": "#151C28",
+            "surface": "#13131b",
+            "secondary": "#4edea3",
+            "primary": "#c0c1ff",
+            "border-prominent": "#334155",
+            "on-tertiary": "#4f2500",
+            "on-background": "#e4e1ed",
+            "text-primary": "#F8FAFC",
+            "outline": "#908fa0",
+            "on-tertiary-fixed-variant": "#703700",
+            "tertiary": "#ffb783",
+            "inverse-surface": "#e4e1ed",
+            "on-primary": "#1000a9",
+            "on-error-container": "#ffdad6",
+            "on-secondary-container": "#00311f",
+            "tertiary-container": "#d97721",
+            "secondary-fixed-dim": "#4edea3",
+            "on-surface": "#e4e1ed",
+            "surface-container": "#1f1f27",
+            "primary-fixed": "#e1e0ff",
+            "surface-layer-2": "#1E293B",
+            "border-subtle": "#222F3E",
+            "tertiary-fixed-dim": "#ffb783",
+            "on-secondary-fixed": "#002113",
+            "surface-bright": "#393841",
+            "error-container": "#93000a",
+            "error": "#ffb4ab",
+            "outline-variant": "#464554",
+            "inverse-on-surface": "#303038",
+            "tertiary-fixed": "#ffdcc5",
+            "liability-rose": "#F43F5E",
+            "surface-container-low": "#1b1b23",
+            "primary-container": "#8083ff",
+            "text-muted": "#64748B",
+            "secondary-fixed": "#6ffbbe",
+            "on-secondary-fixed-variant": "#005236",
+            "surface-dim": "#13131b",
+            "background": "#13131b",
+            "background-root": "#0B0F17",
+            "on-primary-container": "#0d0096",
+            "surface-container-highest": "#34343d",
+            "on-primary-fixed": "#07006c",
+            "on-tertiary-fixed": "#301400",
+            "on-secondary": "#003824",
+            "surface-variant": "#34343d",
+            "surface-container-lowest": "#0d0d15",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "secondary-container": "#00a572",
+            "on-surface-variant": "#c7c4d7",
+            "surface-tint": "#c0c1ff",
+            "on-error": "#690005",
+            "surface-container-high": "#292932",
+            "inverse-primary": "#494bd6",
+            "on-tertiary-container": "#452000",
+            "warning-amber": "#F59E0B"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "gutter": "12px",
+            "space-lg": "24px",
+            "margin": "16px",
+            "space-sm": "8px",
+            "space-xl": "32px",
+            "space-md": "16px"
+          },
+          "fontFamily": {
+            "body-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "display-lg": ["Inter"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Numeric tabular styling */
+    .tabular-numbers {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    /* Subtle pulse animation for live macro sync */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .animate-pulse-live {
+      animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Smooth collapse animation helper */
+    .macro-panel-content {
+      transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in-out;
+    }
+    .macro-panel-content.is-collapsed {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border: none !important;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary antialiased min-h-screen flex justify-center selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Viewport Wrapper (Max 393px width for Native OLED Simulation) -->
+<div class="w-full max-w-[393px] bg-background-root min-h-screen flex flex-col relative pb-32">
+<!-- Top App Bar / Modal Rebalance Header -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-margin py-space-sm border-b border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Back" class="w-8 h-8 rounded-lg bg-surface-layer-1 border border-border-subtle flex items-center justify-center text-text-secondary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+</button>
+<div>
+<div class="flex items-center gap-1.5">
+<h1 class="text-headline-sm font-headline-sm text-text-primary tracking-tight">AI Portfolio Advisor</h1>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-primary-container/20 text-primary border border-primary/30">
+              v4.2
+            </span>
+</div>
+<p class="text-label-sm font-label-sm text-text-muted">Net Worth Suite • Dynamic Rebalancer</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm font-medium bg-surface-layer-2 text-text-secondary border border-border-prominent flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-warning-amber"></span>
+          Moderate
+        </span>
+<button aria-label="Settings" class="w-8 h-8 rounded-lg bg-surface-layer-1 border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-margin pt-space-md space-y-space-md flex-1">
+<!-- Portfolio Summary Metric Card -->
+<section class="bg-surface-layer-1 rounded-lg border border-border-subtle p-space-md relative overflow-hidden">
+<div class="absolute -right-6 -top-6 w-28 h-28 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="text-label-sm font-label-sm text-text-muted block">TOTAL MANAGED WEALTH</span>
+<div class="flex items-baseline gap-2 mt-0.5">
+<span class="text-headline-lg font-headline-lg tabular-numbers tracking-tight text-text-primary font-bold">
+                ₹1,24,50,000
+              </span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-profit-emerald/10 border border-profit-emerald/30 text-profit-emerald text-label-sm font-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+              82/100 Healthy
+            </span>
+<span class="text-[10px] text-text-muted mt-1 tabular-numbers">Target Variance: <span class="text-warning-amber font-medium">+7.4% Eq</span></span>
+</div>
+</div>
+<div class="mt-space-sm pt-space-sm border-t border-border-subtle/60 flex items-center justify-between text-body-sm font-body-sm">
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="material-symbols-outlined text-profit-emerald text-[16px]">trending_up</span>
+<span class="text-text-muted">Overweight Bias:</span>
+<span class="text-profit-emerald font-medium tabular-numbers">+7.4% Equity Overweight</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary flex items-center cursor-pointer hover:underline">
+            Audit logs
+            <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</span>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- FEATURE SECTION (PRIMARY FOCUS): GLOBAL MACRO WEATHER & REGIME PANEL     -->
+<!-- ========================================================================= -->
+<section class="space-y-space-xs">
+<!-- COLLAPSED / TOGGLE HEADER BAR (Preview & Quick Assessment) -->
+<div class="cursor-pointer bg-surface-layer-1 hover:bg-surface-layer-2/80 transition-colors rounded-lg border border-border-subtle p-3 flex items-center justify-between group select-none" id="macroAccordionHeader" onclick="toggleMacroPanel()">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-layer-2 border border-border-prominent flex items-center justify-center text-profit-emerald relative">
+<span class="material-symbols-outlined text-[20px]">sunny</span>
+<span class="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-profit-emerald opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-profit-emerald"></span>
+</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-sm font-label-sm text-text-muted">MACRO REGIME</span>
+<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/25 tracking-wide">
+                  Risk-On Expansion
+                </span>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary mt-0.5">Global Liquidity Positive • High SIP Tilt</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Progress Pill Badge -->
+<div class="flex items-center gap-1.5 bg-surface-layer-2/90 border border-border-subtle px-2 py-1 rounded">
+<svg class="w-4 h-4 transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
+<path class="text-profit-emerald" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="78, 100" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<span class="text-label-md font-label-md font-semibold text-text-primary tabular-numbers">78/100</span>
+</div>
+<!-- Chevron Indicator -->
+<div class="w-6 h-6 flex items-center justify-center text-text-muted transition-transform duration-300" id="chevronIcon">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_up</span>
+</div>
+</div>
+</div>
+<!-- EXPANDED REGIME CARD PANEL (HERO) -->
+<div class="macro-panel-content bg-surface-layer-1 rounded-lg border border-border-subtle overflow-hidden relative shadow-lg" id="macroPanelContent">
+<!-- Subtle Top Border Glow Accent -->
+<div class="h-0.5 w-full bg-gradient-to-r from-profit-emerald via-primary to-profit-emerald"></div>
+<!-- Section Subheader & Live Sync Status -->
+<div class="p-space-md pb-space-sm border-b border-border-subtle/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">public</span>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-text-primary flex items-center gap-1.5">
+                  Global Macro Weather
+                </h2>
+<p class="text-label-sm font-label-sm text-text-muted">Algorithmic macro climate &amp; asset allocation impact</p>
+</div>
+</div>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-layer-2 border border-border-prominent">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald animate-pulse-live"></span>
+<span class="text-[9px] font-semibold tracking-wider text-text-secondary uppercase">Live Sync</span>
+</div>
+</div>
+<!-- 6 Macro Indicator Tiles (2x3 Bento Grid) -->
+<div class="p-space-md grid grid-cols-2 gap-gutter">
+<!-- TILE 1: US 10Y Treasury (TNX) -->
+<div class="bg-surface-layer-2/80 rounded-lg p-2.5 border border-border-subtle flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div class="flex items-center justify-between text-text-muted">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-liability-rose">query_stats</span>
+<span class="text-label-sm font-label-sm">US 10Y Yield</span>
+</div>
+<span class="text-[9px] px-1 py-0.2 rounded bg-surface-layer-1 text-text-muted border border-border-subtle font-mono">TNX</span>
+</div>
+<div class="my-1.5">
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">
+                  4.32%
+                </div>
+<div class="flex items-center gap-1 text-[11px] text-warning-amber font-medium">
+<span class="material-symbols-outlined text-[13px] text-liability-rose">north</span>
+<span>FII Outflow Watch</span>
+</div>
+</div>
+<div class="text-[9px] text-text-muted border-t border-border-subtle/50 pt-1 flex items-center justify-between">
+<span>Threshold: &gt;4.50%</span>
+<span class="w-1.5 h-1.5 rounded-full bg-warning-amber"></span>
+</div>
+</div>
+<!-- TILE 2: USD/INR -->
+<div class="bg-surface-layer-2/80 rounded-lg p-2.5 border border-border-subtle flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div class="flex items-center justify-between text-text-muted">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-warning-amber">currency_exchange</span>
+<span class="text-label-sm font-label-sm">USD / INR</span>
+</div>
+<span class="text-[9px] px-1 py-0.2 rounded bg-surface-layer-1 text-text-muted border border-border-subtle font-mono">FOREX</span>
+</div>
+<div class="my-1.5">
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">
+                  ₹83.42
+                </div>
+<div class="flex items-center gap-1 text-[11px] text-warning-amber font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-warning-amber"></span>
+<span>+0.12% 1W (Import Watch)</span>
+</div>
+</div>
+<div class="text-[9px] text-text-muted border-t border-border-subtle/50 pt-1 flex items-center justify-between">
+<span>RBI Defense Band: 83.6</span>
+<span class="text-[9px] text-text-secondary font-mono">Stable</span>
+</div>
+</div>
+<!-- TILE 3: Brent Crude Oil -->
+<div class="bg-surface-layer-2/80 rounded-lg p-2.5 border border-border-subtle flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div class="flex items-center justify-between text-text-muted">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-profit-emerald">water_drop</span>
+<span class="text-label-sm font-label-sm">Brent Crude</span>
+</div>
+<span class="text-[9px] px-1 py-0.2 rounded bg-surface-layer-1 text-text-muted border border-border-subtle font-mono">BBL</span>
+</div>
+<div class="my-1.5">
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">
+                  $78.50<span class="text-body-sm font-normal text-text-muted">/bbl</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-profit-emerald font-medium">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Safe Zone (&lt;$90)</span>
+</div>
+</div>
+<div class="text-[9px] text-text-muted border-t border-border-subtle/50 pt-1 flex items-center justify-between">
+<span>Fiscal Deficit Buffer</span>
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+</div>
+</div>
+<!-- TILE 4: India VIX (with mini sparkline) -->
+<div class="bg-surface-layer-2/80 rounded-lg p-2.5 border border-border-subtle flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div class="flex items-center justify-between text-text-muted">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-profit-emerald">ecg_heart</span>
+<span class="text-label-sm font-label-sm">India VIX</span>
+</div>
+<!-- Mini inline sparkline -->
+<svg class="w-10 h-3 text-profit-emerald" fill="none" viewbox="0 0 40 12">
+<path d="M1 9 L8 7 L15 10 L22 4 L29 7 L36 2 L39 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="my-1.5">
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">
+                  13.80
+                </div>
+<div class="flex items-center gap-1 text-[11px] text-profit-emerald font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+<span>Normal (Low Vol)</span>
+</div>
+</div>
+<div class="text-[9px] text-text-muted border-t border-border-subtle/50 pt-1 flex items-center justify-between">
+<span class="text-primary">Trigger: &gt;22 Panic Buy</span>
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+</div>
+</div>
+<!-- TILE 5: Gold / Silver Ratio -->
+<div class="bg-surface-layer-2/80 rounded-lg p-2.5 border border-border-subtle flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div class="flex items-center justify-between text-text-muted">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-warning-amber">scale</span>
+<span class="text-label-sm font-label-sm">Au/Ag Ratio</span>
+</div>
+<span class="text-[9px] px-1 py-0.2 rounded bg-surface-layer-1 text-text-muted border border-border-subtle font-mono">RATIO</span>
+</div>
+<div class="my-1.5">
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">
+                  82.4
+                </div>
+<div class="flex items-center gap-1 text-[11px] text-warning-amber font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-warning-amber"></span>
+<span>Neutral • Bullion Hold</span>
+</div>
+</div>
+<div class="text-[9px] text-text-muted border-t border-border-subtle/50 pt-1 flex items-center justify-between">
+<span>Mean Reversion: 75.0</span>
+<span class="text-[9px] text-text-muted font-mono">10% Wgt</span>
+</div>
+</div>
+<!-- TILE 6: Nifty 50 vs 200 EMA -->
+<div class="bg-surface-layer-2/80 rounded-lg p-2.5 border border-border-subtle flex flex-col justify-between hover:border-border-prominent transition-colors">
+<div class="flex items-center justify-between text-text-muted">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-profit-emerald">show_chart</span>
+<span class="text-label-sm font-label-sm">Nifty vs 200 EMA</span>
+</div>
+<span class="text-[9px] px-1 py-0.2 rounded bg-surface-layer-1 text-text-muted border border-border-subtle font-mono">TREND</span>
+</div>
+<div class="my-1.5">
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">
+                  Above 200 EMA
+                </div>
+<div class="flex items-center gap-1 text-[11px] text-profit-emerald font-medium">
+<span class="material-symbols-outlined text-[13px]">arrow_upward</span>
+<span>+4.2% Cushion</span>
+</div>
+</div>
+<div class="text-[9px] text-text-muted border-t border-border-subtle/50 pt-1 flex items-center justify-between">
+<span>Bull Market Support</span>
+<span class="w-1.5 h-1.5 rounded-full bg-profit-emerald"></span>
+</div>
+</div>
+</div>
+<!-- COMPOSITE SCORE FOOTER INSIDE EXPANDED CARD -->
+<div class="px-space-md pb-space-md pt-space-xs bg-surface-layer-1">
+<div class="p-3 rounded-lg bg-surface-layer-2 border border-border-subtle space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-text-secondary uppercase tracking-wider">Composite Macro Climate</span>
+<span class="text-label-md font-label-md font-bold text-profit-emerald tabular-numbers">78 / 100</span>
+</div>
+<!-- Animated Progress Bar -->
+<div class="relative w-full h-2 rounded-full bg-surface-layer-1 overflow-hidden border border-border-subtle">
+<div class="h-full bg-gradient-to-r from-secondary-container to-profit-emerald rounded-full" style="width: 78%;"></div>
+</div>
+<!-- Tactical Guidance Callout Box -->
+<div class="p-2.5 rounded bg-surface-layer-1 border border-border-subtle flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">psychology</span>
+<p class="text-body-sm font-body-sm text-text-secondary leading-snug">
+                  Macro backdrop strongly supports equity deployment with staggered monthly SIPs. FII outflows cushioned by domestic DII inflows.
+                </p>
+</div>
+<!-- Metadata & Source attribution -->
+<div class="flex items-center justify-between text-[10px] text-text-muted pt-1">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">schedule</span>
+                  Last synced: 2 hours ago via Google Finance
+                </span>
+<span class="text-text-secondary font-medium">US Open Refreshes</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- Asset Allocation Drift Bar -->
+<section class="bg-surface-layer-1 rounded-lg border border-border-subtle p-space-md space-y-space-sm">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary">Current Asset Allocation</h3>
+<p class="text-label-sm font-label-sm text-text-muted">Target model vs real-time ledger</p>
+</div>
+<span class="text-label-sm font-label-sm text-primary font-medium cursor-pointer hover:underline">Rebalance Matrix</span>
+</div>
+<!-- Segmented Stacked Bar -->
+<div class="w-full h-3 rounded-full bg-surface-layer-2 overflow-hidden flex border border-border-subtle">
+<div class="bg-indigo-500 h-full transition-all" style="width: 35%;" title="Equity 35%"></div>
+<div class="bg-sky-500 h-full transition-all" style="width: 25%;" title="MFs 25%"></div>
+<div class="bg-amber-400 h-full transition-all" style="width: 10%;" title="Gold 10%"></div>
+<div class="bg-emerald-500 h-full transition-all" style="width: 15%;" title="Debt 15%"></div>
+<div class="bg-purple-400 h-full transition-all" style="width: 15%;" title="RE 15%"></div>
+</div>
+<!-- Legend Pills -->
+<div class="grid grid-cols-3 gap-y-2 gap-x-2 text-label-sm font-label-sm pt-1">
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+<span>Equity: <b class="text-text-primary tabular-numbers">35%</b></span>
+</div>
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-sky-500"></span>
+<span>MFs: <b class="text-text-primary tabular-numbers">25%</b></span>
+</div>
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-amber-400"></span>
+<span>Gold: <b class="text-text-primary tabular-numbers">10%</b></span>
+</div>
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span>Debt: <b class="text-text-primary tabular-numbers">15%</b></span>
+</div>
+<div class="flex items-center gap-1.5 text-text-secondary">
+<span class="w-2 h-2 rounded-full bg-purple-400"></span>
+<span>Real Estate: <b class="text-text-primary tabular-numbers">15%</b></span>
+</div>
+<div class="flex items-center gap-1 text-profit-emerald font-medium">
+<span class="material-symbols-outlined text-[13px]">check</span>
+<span>Macro Aligned</span>
+</div>
+</div>
+</section>
+<!-- Fresh Capital Deployment Simulator -->
+<section class="bg-surface-layer-1 rounded-lg border border-border-subtle p-space-md space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-surface-layer-2 border border-border-prominent flex items-center justify-center text-text-primary">
+<span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-text-primary">Fresh Inflow Deployment</h3>
+<p class="text-label-sm font-label-sm text-text-muted">Direct fresh cash to eliminate rebalance taxes</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/20 font-bold">
+            0% STCG
+          </span>
+</div>
+<div class="p-3 rounded-lg bg-surface-layer-2 border border-border-subtle flex items-center justify-between">
+<div>
+<span class="text-label-sm font-label-sm text-text-muted">Simulated Cash Injection</span>
+<div class="text-headline-md font-headline-md tabular-numbers text-text-primary font-bold">₹1,00,000</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-primary">Algorithm Strategy</span>
+<div class="text-body-sm font-body-sm text-text-secondary font-medium">70% Nifty 50 • 30% Gold</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Fixed Action Bar (Zero Tax Impact CTA) -->
+<div class="fixed bottom-[58px] left-0 right-0 z-40 max-w-[393px] mx-auto px-margin py-2.5 bg-surface-layer-1/95 backdrop-blur-md border-t border-border-subtle flex items-center gap-3">
+<div class="flex-1">
+<div class="flex items-center gap-1.5">
+<span class="text-label-sm font-label-sm text-text-muted">Tax Efficiency</span>
+<span class="inline-flex items-center px-1 py-0.2 rounded text-[9px] font-semibold bg-profit-emerald/15 text-profit-emerald border border-profit-emerald/30">
+            Optimal
+          </span>
+</div>
+<p class="text-[11px] text-text-secondary tabular-numbers font-medium">Zero capital gains tax impact</p>
+</div>
+<button class="px-4 py-2.5 rounded-lg bg-[#6366F1] hover:bg-indigo-600 active:scale-95 text-text-primary font-semibold text-body-sm font-body-sm flex items-center gap-1.5 shadow-md shadow-indigo-500/20 transition-all">
+<span>Apply Rebalance Plan</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<!-- SHARED BOTTOM NAVIGATION BAR -->
+<!-- Destination count: 4, Labels: Dashboard, Portfolio, Cashflow, Family Safe -->
+<!-- Active Destination: Portfolio -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 dark:bg-surface-layer-1 border-t border-border-subtle dark:border-border-subtle max-w-[393px] right-0 mx-auto">
+<!-- 1. Dashboard (Inactive) -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</a>
+<!-- 2. Portfolio (ACTIVE per context & authority rules) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary font-medium py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="text-label-sm font-label-sm mt-0.5 font-semibold">Portfolio</span>
+</a>
+<!-- 3. Cashflow (Inactive) -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Cashflow</span>
+</a>
+<!-- 4. Family Safe (Inactive) -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</a>
+</nav>
+</div>
+<!-- Inline Script for Accordion & Interactive State -->
+<script>
+    let isExpanded = true;
+
+    function toggleMacroPanel() {
+      const panel = document.getElementById('macroPanelContent');
+      const chevron = document.getElementById('chevronIcon');
+      
+      isExpanded = !isExpanded;
+
+      if (isExpanded) {
+        panel.classList.remove('is-collapsed');
+        chevron.style.transform = 'rotate(0deg)';
+      } else {
+        panel.classList.add('is-collapsed');
+        chevron.style.transform = 'rotate(180deg)';
+      }
+    }
+  </script>
+</body></html>

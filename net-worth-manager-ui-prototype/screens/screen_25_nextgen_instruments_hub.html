@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Next-Gen Capital Markets Hub - Product Discovery</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Inter Google Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-high": "#292932",
+            "background": "#13131b",
+            "on-tertiary-fixed-variant": "#703700",
+            "on-error-container": "#ffdad6",
+            "surface-variant": "#34343d",
+            "profit-emerald": "#10B981",
+            "error-container": "#93000a",
+            "secondary-fixed": "#6ffbbe",
+            "on-tertiary-container": "#452000",
+            "on-secondary-fixed-variant": "#005236",
+            "on-secondary-fixed": "#002113",
+            "inverse-primary": "#494bd6",
+            "primary-fixed-dim": "#c0c1ff",
+            "primary-container": "#8083ff",
+            "on-surface-variant": "#c7c4d7",
+            "warning-amber": "#F59E0B",
+            "border-prominent": "#334155",
+            "outline-variant": "#464554",
+            "text-secondary": "#94A3B8",
+            "on-primary-container": "#0d0096",
+            "on-surface": "#e4e1ed",
+            "primary": "#c0c1ff",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "secondary-container": "#00a572",
+            "surface-dim": "#13131b",
+            "surface-tint": "#c0c1ff",
+            "surface-layer-2": "#1E293B",
+            "outline": "#908fa0",
+            "on-error": "#690005",
+            "surface-bright": "#393841",
+            "on-secondary": "#003824",
+            "secondary": "#4edea3",
+            "on-tertiary-fixed": "#301400",
+            "surface": "#13131b",
+            "surface-container": "#1f1f27",
+            "on-background": "#e4e1ed",
+            "text-muted": "#64748B",
+            "tertiary-fixed-dim": "#ffb783",
+            "background-root": "#0B0F17",
+            "on-primary-fixed": "#07006c",
+            "surface-container-highest": "#34343d",
+            "surface-layer-1": "#151C28",
+            "tertiary-fixed": "#ffdcc5",
+            "liability-rose": "#F43F5E",
+            "primary-fixed": "#e1e0ff",
+            "on-tertiary": "#4f2500",
+            "on-secondary-container": "#00311f",
+            "secondary-fixed-dim": "#4edea3",
+            "error": "#ffb4ab",
+            "inverse-surface": "#e4e1ed",
+            "surface-container-lowest": "#0d0d15",
+            "on-primary": "#1000a9",
+            "text-primary": "#F8FAFC",
+            "tertiary": "#ffb783",
+            "inverse-on-surface": "#303038",
+            "border-subtle": "#222F3E",
+            "tertiary-container": "#d97721",
+            "surface-container-low": "#1b1b23"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-md": "16px",
+            "gutter": "12px",
+            "space-lg": "24px",
+            "space-xl": "32px",
+            "margin": "16px",
+            "space-xs": "4px",
+            "space-sm": "8px"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #0B0F17;
+      color: #F8FAFC;
+      font-family: 'Inter', sans-serif;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+    }
+    .num-tabular {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Hide scrollbar for clean chip rail */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-root text-text-primary min-h-screen flex justify-center">
+<!-- Mobile Viewport Container: 393px width lock -->
+<div class="w-full max-w-[393px] bg-background-root min-h-screen flex flex-col relative pb-28 select-none">
+<!-- TOP NAVIGATION BAR -->
+<header class="sticky top-0 z-40 bg-background-root/95 backdrop-blur-md px-space-md py-space-sm border-b border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Go Back" class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_back">arrow_back</span>
+</button>
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-text-primary">Asset Discovery</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-layer-1 border border-border-subtle">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-profit-emerald opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-profit-emerald"></span>
+</span>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-text-secondary">LIVE FEED</span>
+</div>
+<button aria-label="Filter Markets" class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-layer-1 transition-colors duration-150 ml-1 active:scale-95">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</div>
+</header>
+<!-- HUB HEADER / VALUE PROPOSITION SECTION -->
+<section class="px-space-md pt- space-md pb-space-xs mt-3">
+<!-- Institutional Grade Tag -->
+<div class="flex items-center gap-1.5 mb-2.5">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-layer-2 border border-border-prominent">
+<span class="h-1.5 w-1.5 rounded-full bg-profit-emerald"></span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-primary font-semibold">INSTITUTIONAL GRADE</span>
+</div>
+<span class="text-label-sm font-label-sm text-text-muted">Issue #75 Phase 4</span>
+</div>
+<!-- Main Headline with Compass Icon -->
+<div class="flex items-center gap-2 mb-1.5">
+<span class="material-symbols-outlined text-primary text-[24px]" data-icon="explore">explore</span>
+<h1 class="text-headline-md font-headline-md font-bold tracking-tight text-text-primary">
+          Next-Gen Capital Markets Hub
+        </h1>
+</div>
+<p class="text-body-sm font-body-sm text-text-secondary leading-relaxed">
+        Institutional-grade instruments tailored to replace low-yield FDs and illiquid property.
+      </p>
+</section>
+<!-- HORIZONTAL FILTER CHIPS -->
+<div class="px-space-md py-space-sm mt-1 overflow-x-auto no-scrollbar flex items-center gap-2">
+<button class="shrink-0 px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary-container text-label-md font-label-md font-semibold shadow-sm transition-transform active:scale-95">
+        All (5)
+      </button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary hover:border-border-prominent transition-colors active:scale-95">
+        REITs &amp; InvITs
+      </button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary hover:border-border-prominent transition-colors active:scale-95">
+        Target Maturity (TMF)
+      </button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary hover:border-border-prominent transition-colors active:scale-95">
+        SGB Arbitrage
+      </button>
+<button class="shrink-0 px-3.5 py-1.5 rounded-full bg-surface-layer-1 border border-border-subtle text-text-secondary text-label-md font-label-md hover:text-text-primary hover:border-border-prominent transition-colors active:scale-95">
+        Smart Beta ETFs
+      </button>
+</div>
+<!-- MAIN INSTRUMENTS CONTAINER -->
+<main class="px-space-md space-y-3.5 mt-2">
+<!-- CARD A: REITs & InvITs (High Cash Yield) -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:border-border-prominent transition-all">
+<!-- Badge and Status -->
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-label-sm bg-profit-emerald/10 text-profit-emerald border border-profit-emerald/20 font-medium">
+            7.8% Cash Yield • Real Estate Proxy
+          </span>
+<span class="flex items-center gap-1 text-label-sm font-label-sm text-profit-emerald font-semibold">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+            Q4 Dist.
+          </span>
+</div>
+<!-- Asset Title & Ticker -->
+<div>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">
+            Nexus Select Trust / Embassy REIT
+          </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="text-label-sm font-label-sm text-text-muted num-tabular font-medium">NSE: EMBASSY</span>
+<span class="material-symbols-outlined text-[14px] text-profit-emerald" data-icon="verified">verified</span>
+<span class="text-label-sm font-label-sm text-text-muted">• Hybrid Real Estate</span>
+</div>
+</div>
+<!-- 2x2 Key Metrics Grid in Layer 2 Container -->
+<div class="bg-surface-layer-2 border border-border-subtle rounded-lg p-2.5 grid grid-cols-2 gap-2.5">
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Net Distribution Yield</div>
+<div class="text-headline-sm font-headline-sm font-bold text-profit-emerald num-tabular mt-0.5">
+              7.65% <span class="text-label-sm font-normal text-text-secondary">p.a.</span>
+</div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Quarterly payout cycle</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Tax Status</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary mt-0.5">
+              Sec 10(23FD) Exempt
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Zero tax on interest repayment</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Loan-to-Value (LTV)</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary num-tabular mt-0.5">
+              31%
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Conservative debt cushion</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Minimum Ticket</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary num-tabular mt-0.5">
+              ~₹380
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">1 Unit on NSE/BSE</div>
+</div>
+</div>
+<!-- Institutional Insight Callout -->
+<div class="bg-surface-layer-2/60 border-l-2 border-profit-emerald pl-2.5 py-1.5 rounded-r">
+<p class="text-body-sm font-body-sm text-on-surface-variant italic leading-snug">
+            "Replaces illiquid physical flat rental yields (2.5%) with prime commercial rental distributions."
+          </p>
+</div>
+<!-- Action Row -->
+<div class="grid grid-cols-2 gap-2 pt-0.5">
+<button class="w-full py-2 px-3 rounded-lg bg-primary-container text-on-primary-container text-label-md font-label-md font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]" data-icon="calculate">calculate</span>
+            Simulate Cashflow
+          </button>
+<button class="w-full py-2 px-3 rounded-lg bg-surface-layer-2 border border-border-prominent text-text-primary text-label-md font-label-md font-medium hover:border-text-secondary flex items-center justify-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]" data-icon="radar">radar</span>
+            Add to Radar
+          </button>
+</div>
+</article>
+<!-- CARD B: Target Maturity Debt Funds (FD Replacements) -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:border-border-prominent transition-all">
+<!-- Badge and Status -->
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-label-sm bg-primary/10 text-primary border border-primary/20 font-medium">
+            7.42% Locked YTM • Zero Credit Risk
+          </span>
+<span class="flex items-center gap-1 text-label-sm font-label-sm text-text-secondary">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="lock">lock</span>
+            Fixed Maturity
+          </span>
+</div>
+<!-- Asset Title & Ticker -->
+<div>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">
+            BHARAT Bond ETF / Edelweiss SDL 2028
+          </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="text-label-sm font-label-sm text-text-muted num-tabular font-medium">NSE: BHARATBOND28</span>
+<span class="material-symbols-outlined text-[14px] text-profit-emerald" data-icon="verified">verified</span>
+<span class="text-label-sm font-label-sm text-text-muted">• Target Maturity</span>
+</div>
+</div>
+<!-- 2x2 Key Metrics Grid in Layer 2 Container -->
+<div class="bg-surface-layer-2 border border-border-subtle rounded-lg p-2.5 grid grid-cols-2 gap-2.5">
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Locked Maturity Yield</div>
+<div class="text-headline-sm font-headline-sm font-bold text-text-primary num-tabular mt-0.5">
+              7.42% <span class="text-label-sm font-normal text-text-secondary">p.a.</span>
+</div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Zero roll-down duration drag</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Target Maturity Date</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary mt-0.5">
+              April 2028
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Pre-defined liquidity date</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Credit Quality</div>
+<div class="text-body-sm font-body-sm font-semibold text-primary mt-0.5">
+              AAA / Sovereign G-Sec
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Implicit quasi-sovereign backstop</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Tax Advantage</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary mt-0.5">
+              No TDS Deductions
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Zero withholding tax at source</div>
+</div>
+</div>
+<!-- Institutional Insight Callout -->
+<div class="bg-surface-layer-2/60 border-l-2 border-primary pl-2.5 py-1.5 rounded-r">
+<p class="text-body-sm font-body-sm text-on-surface-variant italic leading-snug">
+            "Locks in peak interest rates without credit risk or early withdrawal FD penalty."
+          </p>
+</div>
+<!-- Action Row -->
+<div>
+<button class="w-full py-2 px-3 rounded-lg bg-surface-layer-2 border border-border-prominent text-text-primary text-label-md font-label-md font-semibold hover:border-primary flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="compare_arrows">compare_arrows</span>
+            FD Yield Comparison &amp; Tax Audit
+          </button>
+</div>
+</article>
+<!-- CARD C: Sovereign Gold Bond (SGB) Secondary Arbitrage -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:border-border-prominent transition-all">
+<!-- Badge and Status -->
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-label-sm bg-warning-amber/15 text-warning-amber border border-warning-amber/30 font-medium">
+            100% Capital Gains Free • 3.2% Discount
+          </span>
+<span class="flex items-center gap-1 text-label-sm font-label-sm text-warning-amber font-semibold">
+<span class="material-symbols-outlined text-[14px]" data-icon="price_check">price_check</span>
+            Secondary Spread
+          </span>
+</div>
+<!-- Asset Title & Ticker -->
+<div>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">
+            SGB 2031-32 Series Secondary Market
+          </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="text-label-sm font-label-sm text-text-muted num-tabular font-medium">NSE: SGBNOV31</span>
+<span class="material-symbols-outlined text-[14px] text-profit-emerald" data-icon="verified">verified</span>
+<span class="text-label-sm font-label-sm text-text-muted">• Sovereign Bullion</span>
+</div>
+</div>
+<!-- 2x2 Key Metrics Grid in Layer 2 Container -->
+<div class="bg-surface-layer-2 border border-border-subtle rounded-lg p-2.5 grid grid-cols-2 gap-2.5">
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Traded Discount</div>
+<div class="text-headline-sm font-headline-sm font-bold text-warning-amber num-tabular mt-0.5">
+              -3.2% <span class="text-label-sm font-normal text-text-secondary">vs Spot</span>
+</div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Save ₹240/gm below RBI fix</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Semi-Annual Interest</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary num-tabular mt-0.5">
+              2.50% p.a.
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Direct sovereign coupon credit</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">GST Savings</div>
+<div class="text-body-sm font-body-sm font-semibold text-profit-emerald num-tabular mt-0.5">
+              0% GST
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">vs 3% on physical bullion</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Capital Gains Tax</div>
+<div class="text-body-sm font-body-sm font-semibold text-profit-emerald mt-0.5">
+              100% Tax-Exempt
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Redemption exempt under Sec 47</div>
+</div>
+</div>
+<!-- Institutional Insight Callout -->
+<div class="bg-surface-layer-2/60 border-l-2 border-warning-amber pl-2.5 py-1.5 rounded-r">
+<p class="text-body-sm font-body-sm text-on-surface-variant italic leading-snug">
+            "Acquire physical gold parity at wholesale institutional discounts with zero storage frictions."
+          </p>
+</div>
+<!-- Action Row -->
+<div>
+<button class="w-full py-2 px-3 rounded-lg bg-surface-layer-2 border border-warning-amber/40 text-warning-amber hover:bg-warning-amber/10 text-label-md font-label-md font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="query_stats">query_stats</span>
+            View Arbitrage Spread Tracker
+          </button>
+</div>
+</article>
+<!-- CARD D: Smart Beta Factor ETF -->
+<article class="bg-surface-layer-1 border border-border-subtle rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:border-border-prominent transition-all">
+<!-- Badge and Status -->
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-label-sm font-label-sm bg-primary-container/20 text-primary-fixed-dim border border-primary-container/30 font-medium">
+            Momentum Factor Alpha
+          </span>
+<span class="flex items-center gap-1 text-label-sm font-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[14px]" data-icon="auto_graph">auto_graph</span>
+            Quant Factor
+          </span>
+</div>
+<!-- Asset Title & Ticker -->
+<div>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-text-primary tracking-tight">
+            Nifty 200 Momentum 30 ETF
+          </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="text-label-sm font-label-sm text-text-muted num-tabular font-medium">NSE: MOM30IETFS</span>
+<span class="material-symbols-outlined text-[14px] text-profit-emerald" data-icon="verified">verified</span>
+<span class="text-label-sm font-label-sm text-text-muted">• Smart Beta Equity</span>
+</div>
+</div>
+<!-- 2x2 Key Metrics Grid in Layer 2 Container -->
+<div class="bg-surface-layer-2 border border-border-subtle rounded-lg p-2.5 grid grid-cols-2 gap-2.5">
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Alpha vs Nifty 50</div>
+<div class="text-headline-sm font-headline-sm font-bold text-profit-emerald num-tabular mt-0.5">
+              +4.8% <span class="text-label-sm font-normal text-text-secondary">5Y CAGR</span>
+</div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Normalized cyclical outperformance</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-text-muted">Expense Ratio</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary num-tabular mt-0.5">
+              0.28%
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Low-cost institutional execution</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Strategy</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary mt-0.5">
+              Dual Momentum
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">200 EMA + 6M/12M Rel. Strength</div>
+</div>
+<div class="pt-1.5 border-t border-border-subtle">
+<div class="text-label-sm font-label-sm text-text-muted">Rebalance Frequency</div>
+<div class="text-body-sm font-body-sm font-semibold text-text-primary mt-0.5">
+              Semi-Annual
+            </div>
+<div class="text-[10px] text-text-secondary leading-tight mt-0.5">Systematic rule execution (Jun/Dec)</div>
+</div>
+</div>
+<!-- Institutional Insight Callout -->
+<div class="bg-surface-layer-2/60 border-l-2 border-primary-container pl-2.5 py-1.5 rounded-r">
+<p class="text-body-sm font-body-sm text-on-surface-variant italic leading-snug">
+            "Algorithmic trend filter systematically rotates into momentum leaders while weeding out laggards."
+          </p>
+</div>
+<!-- Action Row -->
+<div class="grid grid-cols-2 gap-2 pt-0.5">
+<button class="w-full py-2 px-3 rounded-lg bg-surface-layer-2 border border-border-prominent text-text-primary text-label-md font-label-md font-semibold hover:border-primary flex items-center justify-center gap-1 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="analytics">analytics</span>
+            Backtest Alpha
+          </button>
+<button class="w-full py-2 px-3 rounded-lg bg-primary-container text-on-primary-container text-label-md font-label-md font-semibold flex items-center justify-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]" data-icon="add_chart">add_chart</span>
+            Allocate Capital
+          </button>
+</div>
+</article>
+</main>
+<!-- FOOTER FIDUCIARY NOTICE -->
+<footer class="px-space-md mt-6 mb-4">
+<div class="p-3 rounded-xl bg-surface-layer-1 border border-border-subtle flex flex-col gap-2">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5" data-icon="shield">shield</span>
+<p class="text-body-sm font-body-sm text-text-secondary leading-relaxed">
+            Curated institutional discovery based on academic risk-return optimization. Zero distributor commissions or affiliate links.
+          </p>
+</div>
+<div class="pt-2 border-t border-border-subtle flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-text-muted">SEBI RIA Disclosure Reg: INA00001842</span>
+<span class="inline-flex items-center gap-1 text-label-sm font-label-sm text-profit-emerald font-medium">
+<span class="h-1.5 w-1.5 rounded-full bg-profit-emerald"></span> Verified Independent
+          </span>
+</div>
+</div>
+</footer>
+<!-- SHARED COMPONENT: BottomNavBar (Docked Bottom Navigation) -->
+<!-- Destination 2: 'Portfolio' is active as requested for Capital Markets Hub Discovery -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-layer-1 dark:bg-surface-layer-1 border-t border-border-subtle dark:border-border-subtle max-w-[393px] left-1/2 -translate-x-1/2">
+<!-- Item 1: Dashboard -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#dashboard">
+<span class="material-symbols-outlined text-[22px]" data-icon="dashboard">dashboard</span>
+<span class="text-label-sm font-label-sm mt-0.5">Dashboard</span>
+</a>
+<!-- Item 2: Portfolio (ACTIVE STATE) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary font-medium py-1 active:scale-95 transition-transform duration-150" href="#portfolio">
+<span class="material-symbols-outlined text-[22px]" data-icon="account_balance" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="text-label-sm font-label-sm mt-0.5">Portfolio</span>
+</a>
+<!-- Item 3: Cashflow -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#cashflow">
+<span class="material-symbols-outlined text-[22px]" data-icon="receipt_long">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Cashflow</span>
+</a>
+<!-- Item 4: Family Safe -->
+<a class="flex flex-col items-center justify-center text-text-secondary dark:text-text-secondary py-1 hover:text-text-primary dark:hover:text-text-primary active:scale-95 transition-transform duration-150" href="#family-safe">
+<span class="material-symbols-outlined text-[22px]" data-icon="shield">shield</span>
+<span class="text-label-sm font-label-sm mt-0.5">Family Safe</span>
+</a>
+</nav>
+</div>
+</body></html>
