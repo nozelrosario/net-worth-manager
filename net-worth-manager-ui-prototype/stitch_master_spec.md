@@ -400,4 +400,66 @@ Maintains security and daily practical convenience in both private and shared en
   * Universal Search Bar & Category Pills with dynamic counts.
   * Holdings Ledger immediately visible in upper fold.
 
+---
+
+### SCREEN 22: Global Macro Weather Dashboard & Regime Panel (Issue #75 Phase 1)
+- Screen Goal: Real-time macro weather bar and expandable regime cockpit providing contrarian signals, liquidity warning flags, and valuation context streamed via native `=GOOGLEFINANCE(...)`.
+- Visual Prototype: `screens/screen_22_global_macro_weather.html` & `exports/screen_22_global_macro_weather.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/cd2847f2d04f4fffb199b3c9465eccd4`
+- Layout:
+  * Collapsible Header Weather Ribbon: Weather icon + "Macro Regime: Risk-On Expansion" badge with composite score ring (78/100) and chevron.
+  * 6-Indicator Quantitative Weather Grid (2x3):
+    - US 10Y Yield (INDEXCBOE:TNX): 4.32% (↑ FII outflow sensitivity tag)
+    - USD/INR (CURRENCY:USDINR): ₹83.42 (Imported inflation / currency depreciation barometer)
+    - Brent Crude: $78.50/bbl (Fiscal deficit & oil sensitivity safe zone <$90)
+    - India VIX (INDEXNSE:INDIAVIX): 13.8 (Volatility gauge & opportunistic dip-buying trigger >22)
+    - Gold / Silver Ratio: 82.4 (Defensive risk sentiment barometer)
+    - Nifty 50 200-Day EMA: "Above 200 EMA" (Dual momentum structural trend filter)
+  * Composite Regime Bar: 78/100 Risk-On Expansion meter with last-sync timestamp.
+
+---
+
+### SCREEN 23: Tactical Fresh Inflow Simulator - Dual Momentum & Macro Overlay (Issue #75 Phase 2)
+- Screen Goal: Dynamic modulation of monthly fresh capital tranches using 200-day trend lines and macro regime multipliers to prevent catching falling knives while avoiding tax-triggering portfolio rebalance sales.
+- Visual Prototype: `screens/screen_23_tactical_inflow_simulator.html` & `exports/screen_23_tactical_inflow_simulator.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/81ee6411aca5467f869a49f0c205d5b6`
+- Layout:
+  * Mode Switcher Toggle: `[ Strategic Baseline ]` vs `[ Tactical Macro Overlay ✨ (Active) ]`.
+  * Inflow Amount Input: Tabular-nums capital input (e.g. ₹1,00,000) with quick chips (`₹25,000`, `₹50,000`, `₹1,00,000`, `₹2,50,000`).
+  * Signal Banner: Live regime triggers ("Price > 200 EMA", "Gold Bullish", "Tactical Multipliers: Equity 1.25x | Cash/FD 0.6x").
+  * Before vs After Allocation Table: Proportional shortfall allocation across Equity, Mutual Funds, Gold, Arbitrage, Real Estate with projected percentages and target gaps.
+  * Alignment Score Boost Card: "Score: 74 → 88 (+14 pts)" with Section 112A/111A zero-tax shield badge.
+  * Sticky Execution CTA: "Execute Rebalance Plan & Log Inflows".
+
+---
+
+### SCREEN 24: Hierarchical Risk Parity (HRP) & CVaR Tail-Risk Stress Test (Issue #75 Phase 3)
+- Screen Goal: Institutional ML-based risk parity diversification without unstable covariance matrix inversion, coupled with automated 95% CVaR tail-risk downside budgeting.
+- Visual Prototype: `screens/screen_24_hrp_cvar_stress_test.html` & `exports/screen_24_hrp_cvar_stress_test.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/23c87a87045c4986b5ddc65adc9da45a`
+- Layout:
+  * Risk Profile Carousel: Moderate, Aggressive, Conservative, All-Weather, and `[ 🧠 ML HRP (Optimal) ]` (with emerald glow).
+  * HRP Cluster Explainer: Tree linkage dendrogram preview explaining correlation-distance metric and recursive bisection advantages over classical Markowitz MVO.
+  * Tail Risk Stress Test Hero Badge:
+    - Expected Max 1-Month Drawdown: "-11.4% (Worst 5% tail scenario: ₹2,85,000)".
+    - Multi-benchmark Risk Gauge: Nifty 50 (-15.8%), Your Portfolio (-11.4%), All-Weather (-6.2%).
+    - Tail Risk Alpha: "Absorbs 28% less tail drawdown than pure equity index".
+  * Side-by-Side Allocation Drift: Current vs ML-Optimized asset class weights.
+
+---
+
+### SCREEN 25: Next-Gen Institutional Instruments & Discovery Hub (Issue #75 Phase 4)
+- Screen Goal: Fiduciary discovery and performance tracking for modern Indian investment vehicles replacing low-yield bank FDs and illiquid residential real estate.
+- Visual Prototype: `screens/screen_25_nextgen_instruments_hub.html` & `exports/screen_25_nextgen_instruments_hub.png`
+- Stitch Screen ID: `projects/7450125667546450685/screens/52e9d4230261428ab21ce49e98db7c28`
+- Layout:
+  * Filter Chips: `[ All (5) ]` `[ REITs & InvITs ]` `[ Target Maturity (TMF) ]` `[ SGB Arbitrage ]` `[ Smart Beta ETFs ]`.
+  * Instrument Feature Cards:
+    - REITs & InvITs (Nexus / Embassy / PowerGrid): 7.65% Net Distribution Yield, Sec 10(23FD) tax-free distributions, 31% LTV.
+    - Target Maturity Debt Funds (BHARAT Bond / Nifty SDL 2028): 7.42% Locked YTM, AAA Sovereign rating, zero credit risk FD replacement.
+    - Sovereign Gold Bond Secondary Arbitrage: Traded at -3.2% discount to spot gold, 2.5% semi-annual coupon, 0% GST, 100% tax-free LTCG at maturity.
+    - Smart Beta Factor ETFs: Nifty 200 Momentum 30 (MOM30IETFS) with dual momentum rule.
+  * Zero-Affiliate Fiduciary Guarantee footer note.
+
+
 
