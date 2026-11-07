@@ -3,6 +3,8 @@ import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, Arro
 import { calculatePortfolioAlignment, calculateCashDrag, isCashCategory, RISK_PROFILES } from '../utils/portfolioMath';
 import { Badge } from '../components/Badge';
 import { calculateConsolidatedInsurance, formatInLakhsOrCrores } from '../utils/insuranceMath';
+import GlobalMacroWeatherBar from '../components/GlobalMacroWeatherBar';
+import { getSafeStorage } from '../utils/storage';
 
 export default function HomeTab({ 
   formatCurrency, 
@@ -34,6 +36,14 @@ export default function HomeTab({
   const insuranceData = useMemo(() => {
     return calculateConsolidatedInsurance(assets);
   }, [assets]);
+
+  const showMacroWeather = useMemo(() => {
+    const s = settings.find(item => item['Setting Key'] === 'EnableMacroWeather');
+    if (s && s['Setting Value'] !== undefined) {
+      return s['Setting Value'] !== 'false';
+    }
+    return getSafeStorage('nwm_enable_macro_weather', 'true') !== 'false';
+  }, [settings]);
   
   const equity = assets.filter(a => a.Category === 'Equity').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const mf = assets.filter(a => a.Category === 'Mutual Funds').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
@@ -201,6 +211,14 @@ export default function HomeTab({
           )}
         </div>
       </div>
+
+      {/* Global Macro Weather Dashboard & Regime Panel (Screen 22) */}
+      {showMacroWeather && (
+        <GlobalMacroWeatherBar 
+          marketQuotes={data?.marketQuotes || data?.marketQuotesMap} 
+          defaultExpanded={false}
+        />
+      )}
 
       {/* Retirement & Pension Hub Banner */}
       {onOpenRetirementPlanner && (

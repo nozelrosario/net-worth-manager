@@ -12,7 +12,10 @@ import {
   CATEGORY_COLORS, 
   CORE_CATEGORIES,
   calculatePortfolioAlignment, 
-  simulateInflowRebalancing, 
+  simulateInflowRebalancing,
+  simulateTacticalInflowRebalancing,
+  calculateCVaR,
+  calculateHRPWeights,
   calculateCashDrag, 
   auditConcentrationRisk,
   normalizeTargetAllocation,
@@ -20,6 +23,7 @@ import {
   calculateTaxArbitrageOpportunity,
   getCuratedProductRecommendations
 } from '../utils/portfolioMath';
+import GlobalMacroWeatherBar from './GlobalMacroWeatherBar';
 import { calculateRetirementPortfolio, isRetirementAsset } from '../utils/retirementMath';
 import { calculateConsolidatedInsurance, isInsuranceAsset } from '../utils/insuranceMath';
 import RichTextRenderer from './RichTextRenderer';
@@ -90,6 +94,23 @@ export default function PortfolioRebalancerModal({
     return s?.['Setting Value'] || getSafeStorage('nwm_gemini_api_key', '');
   }, [settings]);
 
+  // Quantitative Feature Flags (Issue #75 Phase 5)
+  const quantMode = useMemo(() => {
+    const s = settings.find(item => item['Setting Key'] === 'QuantModeEnabled');
+    if (s && s['Setting Value'] !== undefined) {
+      return s['Setting Value'] !== 'false';
+    }
+    return getSafeStorage('nwm_quant_mode', 'true') !== 'false';
+  }, [settings]);
+
+  const tacticalInflowEnabled = useMemo(() => {
+    const s = settings.find(item => item['Setting Key'] === 'EnableTacticalInflow');
+    if (s && s['Setting Value'] !== undefined) {
+      return s['Setting Value'] !== 'false';
+    }
+    return getSafeStorage('nwm_enable_tactical_inflow', 'true') !== 'false';
+  }, [settings]);
+
   const [selectedProfile, setSelectedProfile] = useState(savedProfileName);
   const [targetAllocation, setTargetAllocation] = useState(savedTargetMap);
   const [inflowAmount, setInflowAmount] = useState(50000);
@@ -119,6 +140,14 @@ export default function PortfolioRebalancerModal({
   const [productModelUsed, setProductModelUsed] = useState('');
   const [showDeployGuide, setShowDeployGuide] = useState(false);
 
+  const [inflowMode, setInflowMode] = useState(tacticalInflowEnabled ? 'tactical' : 'strategic'); // 'strategic' | 'tactical' (Issue #75 Phase 2)
+
+  useEffect(() => {
+    if (!tacticalInflowEnabled && inflowMode === 'tactical') {
+      setInflowMode('strategic');
+    }
+  }, [tacticalInflowEnabled]);
+
   // Sync state if settings change from backend
   useEffect(() => {
     setSelectedProfile(savedProfileName);
@@ -127,10 +156,21 @@ export default function PortfolioRebalancerModal({
     setTempTargets({ ...savedTargetMap });
   }, [savedProfileName, savedTargetMap]);
 
-  // Perform continuous deterministic calculations
+  // Perform continuous deterministic calculations with tactical overlay support
   const simulation = useMemo(() => {
-    return simulateInflowRebalancing(assets, targetAllocation, inflowAmount);
-  }, [assets, targetAllocation, inflowAmount]);
+    return simulateTacticalInflowRebalancing(
+      assets, 
+      targetAllocation, 
+      inflowAmount, 
+      inflowMode, 
+      data?.marketQuotes || data?.marketQuotesMap
+    );
+  }, [assets, targetAllocation, inflowAmount, inflowMode, data?.marketQuotes, data?.marketQuotesMap]);
+
+  // CVaR 95% Downside Tail Risk & Diversification Ratio (Issue #75 Phase 3)
+  const cvarData = useMemo(() => {
+    return calculateCVaR(assets, targetAllocation);
+  }, [assets, targetAllocation]);
 
   const cashDrag = useMemo(() => {
     return calculateCashDrag(assets, transactions);
@@ -595,8 +635,141 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
         {/* Scrollable Content Canvas - TAB 1: Allocation Plan */}
         {activeTab === 'rebalance' && (
           <div className="px-4 flex flex-col gap-3.5 pt-2">
-          
-          {/* 2. Portfolio Health & Drift Hero Card */}
+
+          {/* 1. Global Macro Weather Bar (Screen 22) */}
+          <GlobalMacroWeatherBar 
+            marketQuotes={data?.marketQuotes || data?.marketQuotesMap} 
+            defaultExpanded={false}
+          />
+
+          {/* 2. Risk Profile Selector Carousel with ML HRP (Screen 24) */}
+          <section className="bg-surface-layer1 rounded-xl p-3 border border-white/[0.08] flex flex-col gap-2.5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-text-primary">
+                <Sliders size={14} className="text-warning-amber" />
+                <h3 className="text-typ-label font-bold">Allocation Model &amp; Risk Profile</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomizer(true)}
+                className="text-typ-micro text-primary-accent hover:underline flex items-center gap-0.5"
+              >
+                <span>Customize Targets</span>
+                <ChevronRight size={11} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 -mx-1 px-1">
+              {Object.keys(RISK_PROFILES)
+                .filter(k => quantMode || k !== 'ML-HRP')
+                .map(k => {
+                const prof = RISK_PROFILES[k];
+                const isSelected = selectedProfile === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => {
+                      setSelectedProfile(k);
+                      setTargetAllocation({ ...prof.target });
+                    }}
+                    className={`shrink-0 px-2.5 py-1.5 rounded-lg border text-left active:scale-95 transition-all ${
+                      isSelected
+                        ? prof.isML
+                          ? 'border-primary-accent bg-gradient-to-r from-primary-accent/20 to-emerald-500/15 shadow-[0_0_12px_rgba(99,102,241,0.25)] text-text-primary font-semibold'
+                          : 'border-primary-accent/80 bg-primary-accent/20 text-primary-accent font-semibold shadow-sm'
+                        : 'border-white/[0.06] bg-surface-layer2/60 text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="text-typ-label">{k === 'ML-HRP' ? '🧠 ML HRP' : k}</span>
+                      {prof.isML && (
+                        <span className="px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">
+                          OPTIMAL
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-text-muted tabular-nums mt-0.5">
+                      {prof.badge.split('(')[1]?.replace(')', '') || 'Custom'}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 3. CVaR 95% Downside Tail Risk Stress Test Hero Badge (Screen 24) */}
+          {quantMode && (
+            <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] flex flex-col gap-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-warning-amber" />
+                  <div>
+                    <h3 className="text-typ-label font-bold text-text-primary">
+                      CVaR 95% Tail Risk Stress Test
+                    </h3>
+                    <span className="text-typ-micro text-text-muted">Rockafellar &amp; Uryasev (2000) • 1-Month Worst-Case Downside</span>
+                  </div>
+                </div>
+                <Badge variant={cvarData.expectedDrawdownPct > -12 ? 'emerald' : 'amber'} size="xs">
+                  {cvarData.diversificationRatio}x Diversification
+                </Badge>
+              </div>
+
+              {/* Expected Drawdown Hero */}
+              <div className="bg-surface-layer2/80 rounded-xl p-3 border border-white/[0.06] flex items-center justify-between">
+                <div>
+                  <span className="text-typ-micro text-text-muted uppercase font-bold tracking-wider">
+                    Worst 5% 1-Mo Loss Estimate
+                  </span>
+                  <div className="text-typ-heading font-extrabold text-liability-rose tabular-nums mt-0.5">
+                    {cvarData.expectedDrawdownPct}%
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-typ-micro text-text-muted block">Expected Drawdown</span>
+                  <span className="text-typ-body font-bold text-liability-rose tabular-nums">
+                    ≈ {formatCurrency(cvarData.expectedDrawdownRupees)}
+                  </span>
+                </div>
+              </div>
+
+              {/* 3 Benchmark Comparison Badges */}
+              <div className="grid grid-cols-3 gap-1.5">
+                <div className="bg-surface-layer2/50 border border-white/[0.06] rounded-lg p-2 text-center flex flex-col items-center">
+                  <span className="text-[10px] text-text-muted font-medium">Nifty 50 Index</span>
+                  <span className="text-typ-caption font-bold text-liability-rose tabular-nums mt-0.5">
+                    {cvarData.benchmarks.nifty50}%
+                  </span>
+                  <span className="text-[9px] text-text-muted">Pure Equity</span>
+                </div>
+                <div className="bg-surface-layer2 border-2 border-warning-amber/70 rounded-lg p-2 text-center flex flex-col items-center shadow-sm">
+                  <span className="text-[10px] text-text-primary font-bold">Your Portfolio</span>
+                  <span className="text-typ-caption font-black text-warning-amber tabular-nums mt-0.5">
+                    {cvarData.benchmarks.userPortfolio}%
+                  </span>
+                  <span className="text-[9px] text-warning-amber font-semibold">Active Risk</span>
+                </div>
+                <div className="bg-surface-layer2/50 border border-white/[0.06] rounded-lg p-2 text-center flex flex-col items-center">
+                  <span className="text-[10px] text-text-muted font-medium">All-Weather</span>
+                  <span className="text-typ-caption font-bold text-wealth-emerald tabular-nums mt-0.5">
+                    {cvarData.benchmarks.allWeather}%
+                  </span>
+                  <span className="text-[9px] text-wealth-emerald">Max Defense</span>
+                </div>
+              </div>
+
+              {/* Insight Note */}
+              <div className="bg-wealth-emerald/10 border border-wealth-emerald/25 rounded-lg p-2.5 flex items-start gap-2">
+                <CheckCircle2 size={14} className="text-wealth-emerald shrink-0 mt-0.5" />
+                <p className="text-typ-caption text-text-secondary leading-snug">
+                  Your portfolio <strong className="text-wealth-emerald">{cvarData.tailRiskAlphaLabel}</strong> due to non-correlated Gold &amp; Sovereign Cash buffers.
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* 4. Portfolio Health & Drift Hero Card */}
           <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] relative overflow-hidden shadow-sm">
             {/* Ambient Subtle Indigo Glow */}
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-accent/15 rounded-full blur-2xl pointer-events-none"></div>
@@ -805,15 +978,84 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
             </div>
           </section>
 
-          {/* 4. Smart Inflow Rebalance Simulator */}
+          {/* 5. Smart Inflow Rebalance Simulator with Tactical Macro Overlay (Screen 23) */}
           <section className="bg-surface-layer1 rounded-xl p-4 border border-white/[0.08] flex flex-col gap-3 shadow-sm">
+            {/* Mode Switcher Toggle Pill */}
+            {tacticalInflowEnabled ? (
+              <div className="p-1 rounded-xl bg-surface-layer2/80 border border-white/[0.06] grid grid-cols-2 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setInflowMode('strategic')}
+                  className={`py-1.5 px-2 rounded-lg text-center text-typ-footnote font-semibold transition-all ${
+                    inflowMode === 'strategic'
+                      ? 'bg-surface-layer1 text-text-primary border border-white/[0.1] shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Strategic Baseline
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInflowMode('tactical')}
+                  className={`py-1.5 px-2 rounded-lg text-center text-typ-footnote font-semibold flex items-center justify-center gap-1 transition-all ${
+                    inflowMode === 'tactical'
+                      ? 'bg-primary-accent text-white border border-primary-accent shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  <span>Tactical Macro Overlay</span>
+                  <span>✨</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-typ-footnote text-text-muted px-1">
+                <span>Strategic Baseline Allocation</span>
+                <Badge variant="neutral" size="xs">Deterministic</Badge>
+              </div>
+            )}
+
+            {/* Tactical Macro Overlay Signal Banner */}
+            {inflowMode === 'tactical' && simulation.tacticalSignals && (
+              <div className="bg-gradient-to-r from-emerald-500/10 via-primary-accent/10 to-amber-500/10 rounded-xl p-3 border border-emerald-500/25 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Zap size={14} className="text-emerald-400" />
+                    <span className="text-typ-caption font-bold text-text-primary">
+                      Tactical Signal: Momentum &amp; Trend Active
+                    </span>
+                  </div>
+                  <Badge variant="emerald" size="xs">
+                    Adaptive Overlays
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {simulation.tacticalSignals.map((sig, sIdx) => (
+                    <span 
+                      key={sIdx}
+                      className="px-2 py-0.5 rounded-md bg-surface-layer1/90 border border-white/[0.08] text-[10px] text-text-secondary font-medium"
+                    >
+                      <strong className="text-text-primary">{sig.title}:</strong> {sig.detail}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-text-muted leading-tight border-t border-white/[0.06] pt-1.5">
+                  Dynamically shifts fresh inflows into momentum leaders while protecting emergency reserves. Zero selling required.
+                </p>
+              </div>
+            )}
+
             <div>
-              <div className="flex items-center gap-1.5 text-typ-label font-semibold text-text-primary">
-                <Wallet size={14} className="text-primary-accent" />
-                <span>Deploy Fresh Capital</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-typ-label font-semibold text-text-primary">
+                  <Wallet size={14} className="text-primary-accent" />
+                  <span>Fresh Liquidity Inflow (No-Sale Rebalance)</span>
+                </div>
+                <Badge variant="emerald" size="xs">
+                  0% Tax Friction
+                </Badge>
               </div>
               <p className="text-typ-footnote text-text-muted mt-0.5">
-                Rebalance without selling to minimize Section 112A capital gains tax.
+                Bypasses Section 112A LTCG (12.5%) and Section 111A STCG (20%) by routing new savings exclusively to underweight shortfalls.
               </p>
             </div>
 
@@ -1294,31 +1536,50 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
               </p>
             </section>
 
-            {/* 4. Curated Product Recommendations */}
+            {/* 4. Next-Gen Capital Markets Discovery Hub (Screen 25) */}
             <section className="space-y-2">
               <div className="flex items-center justify-between px-1">
                 <div>
-                  <h3 className="text-typ-label font-semibold text-text-primary">Curated Direct Product Recommendations</h3>
-                  <p className="text-typ-caption text-text-muted">Targeted solutions for your underweight shortfall</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold uppercase tracking-wider">
+                      INSTITUTIONAL GRADE
+                    </span>
+                  </div>
+                  <h3 className="text-typ-label font-bold text-text-primary mt-0.5">
+                    Next-Gen Capital Markets Discovery Hub
+                  </h3>
+                  <p className="text-typ-caption text-text-muted">
+                    High-yield REITs, Target Maturity Funds &amp; Secondary SGB Arbitrage
+                  </p>
                 </div>
                 <Badge variant="emerald" size="xs">
-                  Zero Commission Direct
+                  Zero Commission
                 </Badge>
               </div>
 
-              {/* Filter Chips */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {['all', 'Equity', 'Gold', 'Cash/FD', 'Mutual Funds'].map(f => (
+              {/* Filter Chips matching Screen 25 */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                {[
+                  { key: 'all', label: 'All Ideas (7)' },
+                  { key: 'REITs & InvITs', label: 'REITs & InvITs' },
+                  { key: 'Target Maturity (TMF)', label: 'Target Maturity (TMF)' },
+                  { key: 'SGB Arbitrage', label: 'SGB Arbitrage' },
+                  { key: 'Smart Beta ETFs', label: 'Smart Beta ETFs' },
+                  { key: 'Equity', label: 'Equity' },
+                  { key: 'Gold', label: 'Gold' },
+                  { key: 'Cash/FD', label: 'Cash/FD' }
+                ].map(f => (
                   <button
-                    key={f}
-                    onClick={() => setProductFilter(f)}
+                    key={f.key}
+                    type="button"
+                    onClick={() => setProductFilter(f.key)}
                     className={`px-2.5 py-1 rounded-lg text-typ-caption font-semibold transition-all whitespace-nowrap border ${
-                      productFilter === f
+                      productFilter === f.key
                         ? 'bg-primary-accent/20 border-primary-accent/50 text-primary-accent shadow-sm'
                         : 'bg-surface-layer2/80 border-white/[0.06] text-text-secondary hover:text-text-primary'
                     }`}
                   >
-                    {f === 'all' ? 'All Ideas' : f}
+                    {f.label}
                   </button>
                 ))}
               </div>
@@ -1326,7 +1587,14 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
               {/* Product Cards List */}
               <div className="space-y-2.5">
                 {(productIntelligence?.productRecommendations || localProductRecs)
-                  .filter(p => productFilter === 'all' || p.category === productFilter)
+                  .filter(prod => {
+                    if (productFilter === 'all') return true;
+                    if (productFilter === 'REITs & InvITs') return prod.category === 'Real Estate' || (prod.name && prod.name.includes('REIT'));
+                    if (productFilter === 'Target Maturity (TMF)') return prod.name && (prod.name.includes('Bond') || prod.name.includes('SDL') || prod.name.includes('TMF'));
+                    if (productFilter === 'SGB Arbitrage') return prod.name && prod.name.includes('SGB');
+                    if (productFilter === 'Smart Beta ETFs') return prod.name && (prod.name.includes('Momentum') || prod.name.includes('Alpha') || prod.name.includes('Beta'));
+                    return prod.category === productFilter;
+                  })
                   .map(prod => (
                     <div 
                       key={prod.id || prod.name}

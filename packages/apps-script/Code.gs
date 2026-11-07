@@ -464,25 +464,50 @@ function seedDefaultLists(ss) {
 }
 
 /**
- * Seeds default Google Finance live market tracking formulas for Gold
+ * Seeds default Google Finance live market tracking formulas for Gold & Global Macro Indicators
  */
 function seedMarketQuotes(ss) {
   var sheet = ss.getSheetByName('MarketQuotes');
   if (!sheet) return;
-  if (sheet.getLastRow() <= 1) {
-    var gold24Formula = '=IFERROR(ROUND(GOOGLEFINANCE("CURRENCY:XAUINR") / 31.1034768, 2), 0)';
-    var gold22Formula = '=IFERROR(ROUND((GOOGLEFINANCE("CURRENCY:XAUINR") / 31.1034768) * (22 / 24), 2), 0)';
-    var gold18Formula = '=IFERROR(ROUND((GOOGLEFINANCE("CURRENCY:XAUINR") / 31.1034768) * (18 / 24), 2), 0)';
+  
+  var existingSymbols = {};
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < data.length; i++) {
+      var sym = String(data[i][0] || '').trim().toUpperCase();
+      if (sym) existingSymbols[sym] = true;
+    }
+  }
 
-    var defaultRows = [
-      ['GOLD_24K_INR', 'Gold', 'Gold 24K (per gram)', gold24Formula, 0, new Date().toISOString(), 'Google Finance (XAUINR)', 'Base Formula: CURRENCY:XAUINR / 31.1035'],
-      ['GOLD_22K_INR', 'Gold', 'Gold 22K (per gram)', gold22Formula, 0, new Date().toISOString(), 'Google Finance (XAUINR)', 'Base Formula: 24K Rate * (22/24)'],
-      ['GOLD_18K_INR', 'Gold', 'Gold 18K (per gram)', gold18Formula, 0, new Date().toISOString(), 'Google Finance (XAUINR)', 'Base Formula: 24K Rate * (18/24)']
-    ];
+  var gold24Formula = '=IFERROR(ROUND(GOOGLEFINANCE("CURRENCY:XAUINR") / 31.1034768, 2), 0)';
+  var gold22Formula = '=IFERROR(ROUND((GOOGLEFINANCE("CURRENCY:XAUINR") / 31.1034768) * (22 / 24), 2), 0)';
+  var gold18Formula = '=IFERROR(ROUND((GOOGLEFINANCE("CURRENCY:XAUINR") / 31.1034768) * (18 / 24), 2), 0)';
+  var tnxFormula = '=IFERROR(ROUND(GOOGLEFINANCE("INDEXCBOE:TNX"), 2), 4.32)';
+  var usdinrFormula = '=IFERROR(ROUND(GOOGLEFINANCE("CURRENCY:USDINR"), 2), 83.42)';
+  var vixFormula = '=IFERROR(ROUND(GOOGLEFINANCE("INDEXNSE:INDIAVIX"), 2), 13.80)';
+  var niftyFormula = '=IFERROR(ROUND(GOOGLEFINANCE("INDEXNSE:NIFTY_50"), 2), 24200)';
+  var silverFormula = '=IFERROR(ROUND(GOOGLEFINANCE("CURRENCY:XAGINR") / 31.1034768, 2), 95.50)';
+  var crudeFormula = '=IFERROR(ROUND(GOOGLEFINANCE("NYSEARCA:BNO"), 2), 78.50)';
 
-    for (var r = 0; r < defaultRows.length; r++) {
+  var defaultRows = [
+    ['GOLD_24K_INR', 'Gold', 'Gold 24K (per gram)', gold24Formula, 0, new Date().toISOString(), 'Google Finance (XAUINR)', 'Base Formula: CURRENCY:XAUINR / 31.1035'],
+    ['GOLD_22K_INR', 'Gold', 'Gold 22K (per gram)', gold22Formula, 0, new Date().toISOString(), 'Google Finance (XAUINR)', 'Base Formula: 24K Rate * (22/24)'],
+    ['GOLD_18K_INR', 'Gold', 'Gold 18K (per gram)', gold18Formula, 0, new Date().toISOString(), 'Google Finance (XAUINR)', 'Base Formula: 24K Rate * (18/24)'],
+    ['INDEXCBOE:TNX', 'Macro', 'US 10Y Treasury Yield', tnxFormula, 0, new Date().toISOString(), 'Google Finance (TNX)', 'Base Formula: INDEXCBOE:TNX'],
+    ['CURRENCY:USDINR', 'Macro', 'USD / INR Exchange Rate', usdinrFormula, 0, new Date().toISOString(), 'Google Finance (USDINR)', 'Base Formula: CURRENCY:USDINR'],
+    ['INDEXNSE:INDIAVIX', 'Macro', 'India VIX Volatility Index', vixFormula, 0, new Date().toISOString(), 'Google Finance (INDIAVIX)', 'Base Formula: INDEXNSE:INDIAVIX'],
+    ['INDEXNSE:NIFTY_50', 'Macro', 'Nifty 50 Index', niftyFormula, 0, new Date().toISOString(), 'Google Finance (NIFTY_50)', 'Base Formula: INDEXNSE:NIFTY_50'],
+    ['CURRENCY:XAGINR', 'Macro', 'Silver Spot INR (per gram)', silverFormula, 0, new Date().toISOString(), 'Google Finance (XAGINR)', 'Base Formula: CURRENCY:XAGINR / 31.1035'],
+    ['COMMODITY:BRENT_CRUDE', 'Macro', 'Brent Crude Oil Proxy', crudeFormula, 0, new Date().toISOString(), 'Google Finance (BNO)', 'Base Formula: NYSEARCA:BNO']
+  ];
+
+  for (var r = 0; r < defaultRows.length; r++) {
+    var rowSym = String(defaultRows[r][0]).toUpperCase();
+    if (!existingSymbols[rowSym]) {
       sheet.appendRow(defaultRows[r]);
-      sheet.getRange(r + 2, 4).setFormula(defaultRows[r][3]);
+      var newLastRow = sheet.getLastRow();
+      sheet.getRange(newLastRow, 4).setFormula(defaultRows[r][3]);
     }
   }
 }

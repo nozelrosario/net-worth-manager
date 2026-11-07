@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key, BarChart3, Activity, TrendingUp } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
@@ -147,6 +147,55 @@ export default function SettingsTab({
         .upsertSetting('CasLastProcessedDate', '', token);
     } else {
       showMessage('CAS sync watermark reset (preview)');
+    }
+  };
+
+  // Quantitative Portfolio & Global Macro Engine Settings (Issue #75)
+  const savedQuantMode = data?.settings?.find(s => s['Setting Key'] === 'QuantModeEnabled')?.['Setting Value'];
+  const [quantModeEnabled, setQuantModeEnabled] = useState(
+    savedQuantMode !== undefined ? savedQuantMode !== 'false' : getSafeStorage('nwm_quant_mode', 'true') !== 'false'
+  );
+
+  const savedMacroWeather = data?.settings?.find(s => s['Setting Key'] === 'EnableMacroWeather')?.['Setting Value'];
+  const [enableMacroWeather, setEnableMacroWeather] = useState(
+    savedMacroWeather !== undefined ? savedMacroWeather !== 'false' : getSafeStorage('nwm_enable_macro_weather', 'true') !== 'false'
+  );
+
+  const savedTacticalInflow = data?.settings?.find(s => s['Setting Key'] === 'EnableTacticalInflow')?.['Setting Value'];
+  const [enableTacticalInflow, setEnableTacticalInflow] = useState(
+    savedTacticalInflow !== undefined ? savedTacticalInflow !== 'false' : getSafeStorage('nwm_enable_tactical_inflow', 'true') !== 'false'
+  );
+
+  useEffect(() => {
+    if (savedQuantMode !== undefined) setQuantModeEnabled(savedQuantMode !== 'false');
+  }, [savedQuantMode]);
+
+  useEffect(() => {
+    if (savedMacroWeather !== undefined) setEnableMacroWeather(savedMacroWeather !== 'false');
+  }, [savedMacroWeather]);
+
+  useEffect(() => {
+    if (savedTacticalInflow !== undefined) setEnableTacticalInflow(savedTacticalInflow !== 'false');
+  }, [savedTacticalInflow]);
+
+  const handleToggleQuantOption = (key, currentValue, setter, storageKey, label) => {
+    const newValue = !currentValue;
+    setter(newValue);
+    setSafeStorage(storageKey, newValue ? 'true' : 'false');
+    const token = getSafeStorage('nwm_session_token');
+
+    if (window.google?.script?.run?.upsertSetting) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          showMessage(res?.message || `${label} updated!`);
+          if (onRefresh) onRefresh();
+        })
+        .withFailureHandler((err) => {
+          showMessage(`Error updating ${label}: ` + err.message, true);
+        })
+        .upsertSetting(key, newValue ? 'true' : 'false', token);
+    } else {
+      showMessage(`${label} ${newValue ? 'enabled' : 'disabled'} (preview)`);
     }
   };
 
@@ -516,6 +565,114 @@ export default function SettingsTab({
              <span>Insurance &amp; Protection Hub (LIC, Term &amp; Health)</span>
            </button>
          )}
+      </section>
+
+      {/* Quantitative Portfolio & Global Macro Engine (Issue #75) */}
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-text-primary">
+            <BarChart3 size={18} className="text-primary-accent" />
+            <h3 className="font-semibold text-typ-body-sm">Quantitative Engine &amp; Global Macro</h3>
+          </div>
+          <Badge variant="indigo" dot size="xs">Institutional v2</Badge>
+        </div>
+        <p className="text-typ-label text-text-secondary leading-relaxed mb-4">
+          Machine Learning portfolio optimization (HRP), 95% CVaR downside tail-risk stress testing, dual momentum trend overlays, and live global macro weather indicators.
+        </p>
+
+        <div className="space-y-3">
+          {/* Quant Mode Toggle */}
+          <div className="flex items-start justify-between p-3 bg-surface-layer2 rounded-lg border border-border-subtle gap-3">
+            <div className="flex items-start gap-2.5">
+              <Sparkles size={16} className="text-primary-accent shrink-0 mt-0.5" />
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-typ-label font-semibold text-text-primary">ML Hierarchical Risk Parity &amp; CVaR</p>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary-accent/20 text-primary-accent font-semibold">
+                    Optimal Weights
+                  </span>
+                </div>
+                <p className="text-typ-caption text-text-muted mt-0.5">
+                  Computes López de Prado tree-clustering risk allocation and Rockafellar-Uryasev 95% Expected Shortfall (CVaR).
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleToggleQuantOption('QuantModeEnabled', quantModeEnabled, setQuantModeEnabled, 'nwm_quant_mode', 'Quant Mode')}
+              className={`w-10 h-5 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors cursor-pointer shrink-0 ${
+                quantModeEnabled ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'
+              }`}
+            >
+              <div className="w-4 h-4 bg-white rounded-full shadow-xs"></div>
+            </button>
+          </div>
+
+          {/* Global Macro Weather Toggle */}
+          <div className="flex items-start justify-between p-3 bg-surface-layer2 rounded-lg border border-border-subtle gap-3">
+            <div className="flex items-start gap-2.5">
+              <Activity size={16} className="text-sky-400 shrink-0 mt-0.5" />
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-typ-label font-semibold text-text-primary">Global Macro Weather Bar</p>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-400 font-semibold">
+                    Screen 22
+                  </span>
+                </div>
+                <p className="text-typ-caption text-text-muted mt-0.5">
+                  Real-time 6-indicator regime radar (US 10Y Yield, USD/INR, Brent Crude, India VIX, Nifty 200 EMA &amp; Gold/Silver ratio) displayed on Home.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleToggleQuantOption('EnableMacroWeather', enableMacroWeather, setEnableMacroWeather, 'nwm_enable_macro_weather', 'Macro Weather')}
+              className={`w-10 h-5 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors cursor-pointer shrink-0 ${
+                enableMacroWeather ? 'bg-wealth-emerald justify-end' : 'bg-surface-layer3 justify-start'
+              }`}
+            >
+              <div className="w-4 h-4 bg-white rounded-full shadow-xs"></div>
+            </button>
+          </div>
+
+          {/* Tactical Inflow Multipliers Toggle */}
+          <div className="flex items-start justify-between p-3 bg-surface-layer2 rounded-lg border border-border-subtle gap-3">
+            <div className="flex items-start gap-2.5">
+              <TrendingUp size={16} className="text-wealth-emerald shrink-0 mt-0.5" />
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-typ-label font-semibold text-text-primary">Tactical Dual Momentum Inflows</p>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-wealth-emerald/20 text-wealth-emerald font-semibold">
+                    Trend Filter
+                  </span>
+                </div>
+                <p className="text-typ-caption text-text-muted mt-0.5">
+                  Applies Antonacci &amp; Asness dual momentum overlays to fresh capital inflows, dynamically adjusting deployment based on 200 EMA &amp; macro regime.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleToggleQuantOption('EnableTacticalInflow', enableTacticalInflow, setEnableTacticalInflow, 'nwm_enable_tactical_inflow', 'Tactical Inflows')}
+              className={`w-10 h-5 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors cursor-pointer shrink-0 ${
+                enableTacticalInflow ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'
+              }`}
+            >
+              <div className="w-4 h-4 bg-white rounded-full shadow-xs"></div>
+            </button>
+          </div>
+        </div>
+
+        {onOpenRebalancer && (
+          <button
+            type="button"
+            onClick={onOpenRebalancer}
+            className="w-full mt-3 py-2 px-3 rounded-lg bg-surface-layer2 hover:bg-surface-layer2/80 border border-white/[0.08] hover:border-primary-accent/40 text-text-primary text-typ-caption font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.99]"
+          >
+            <Sliders size={13} className="text-primary-accent" />
+            <span>Open Quant Rebalancer &amp; Inflow Simulator</span>
+          </button>
+        )}
       </section>
 
       {/* SMS Expense & Transfer Ingestion Config */}
