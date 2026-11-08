@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import useModalBack from "./hooks/useModalBack";
 import { X } from "lucide-react";
-import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound, ALargeSmall } from 'lucide-react';
+import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound, ALargeSmall, BookOpen } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
 import AssetsTab from './screens/AssetsTab';
@@ -15,6 +15,7 @@ import PrivacyCurtain from './components/PrivacyCurtain';
 import PortfolioRebalancerModal from './components/PortfolioRebalancerModal';
 import RetirementPlannerModal from './components/RetirementPlannerModal';
 import InsuranceHubModal from './components/InsuranceHubModal';
+import MetricsGuideModal from './components/MetricsGuideModal';
 import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
 import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes, clearPinConfig } from './utils/securityUtils';
 
@@ -161,6 +162,7 @@ export default function App() {
   const [showRebalancerModal, setShowRebalancerModal] = useState(false);
   const [showRetirementModal, setShowRetirementModal] = useState(false);
   const [showInsuranceHubModal, setShowInsuranceHubModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [isAppLocked, setIsAppLocked] = useState(() => isPinConfigured());
   const [isCurtainActive, setIsCurtainActive] = useState(false);
   const backgroundTimestampRef = useRef(null);
@@ -580,7 +582,15 @@ export default function App() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-text-secondary">
+          <div className="flex items-center gap-3 text-text-secondary">
+            <button 
+              type="button"
+              onClick={() => setShowGuideModal(true)} 
+              title="Portfolio Metrics & Quant Guide" 
+              className="p-1.5 rounded-full hover:bg-surface-layer1 transition-colors text-text-muted hover:text-primary-accent cursor-pointer"
+            >
+              <BookOpen size={20} />
+            </button>
             <button onClick={() => setIsPrivacyMode(!isPrivacyMode)} className="p-1.5 rounded-full hover:bg-surface-layer1 transition-colors">
               {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -596,6 +606,13 @@ export default function App() {
              <div className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors" onClick={refreshData}>
                <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
                <span>Sync</span>
+             </div>
+             <div 
+               className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors"
+               onClick={() => { setHeaderExpanded(false); setShowGuideModal(true); }}
+             >
+               <BookOpen size={18} />
+               <span>Guide</span>
              </div>
              <div 
                className="flex flex-col items-center gap-1 cursor-pointer hover:text-text-primary transition-colors"
@@ -679,6 +696,14 @@ export default function App() {
                   </button>
                 </div>
               </div>
+              <button 
+                type="button"
+                onClick={() => { setShowUserModal(false); setShowGuideModal(true); }} 
+                className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer"
+              >
+                <BookOpen size={18} className="text-primary-accent" />
+                <span>Portfolio Metrics &amp; Quant Guide</span>
+              </button>
               <div className="w-full flex items-center justify-between p-3 rounded-xl text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDebugMode(!debugMode)}>
                 <div className="flex items-center gap-3"><Bug size={18} className="text-text-secondary" /> Debug Mode</div>
                 <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${debugMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
@@ -705,6 +730,7 @@ export default function App() {
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
             onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
+            onOpenGuide={() => setShowGuideModal(true)}
             onNavigateToCategory={handleNavigateToCategory}
             onNavigateToAsset={handleNavigateToAsset}
           />
@@ -740,6 +766,7 @@ export default function App() {
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
             onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
+            onOpenGuide={() => setShowGuideModal(true)}
           />
         )}
       </main>
@@ -849,6 +876,7 @@ export default function App() {
         onRefresh={refreshData}
         onNavigateToAsset={handleNavigateToAsset}
         onNavigateToCategory={handleNavigateToCategory}
+        onOpenGuide={() => setShowGuideModal(true)}
       />
 
       {/* Retirement & Pension Hub Modal */}
@@ -886,6 +914,12 @@ export default function App() {
           setShowInsuranceHubModal(false);
           setActiveTab('safe');
         }}
+      />
+
+      {/* Portfolio Metrics & Quant Guide Modal */}
+      <MetricsGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
       />
     </div>
   );

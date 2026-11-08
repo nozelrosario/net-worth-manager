@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key, BarChart3, Activity, TrendingUp } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key, BarChart3, Activity, TrendingUp, BookOpen } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
@@ -16,7 +16,8 @@ export default function SettingsTab({
   darkMode,
   onToggleDarkMode,
   textMode = 'standard',
-  onSelectTextMode
+  onSelectTextMode,
+  onOpenGuide
 }) {
   const [teamEmailsText, setTeamEmailsText] = useState('');
   const [teamRole, setTeamRole] = useState('editor');
@@ -671,6 +672,17 @@ export default function SettingsTab({
           >
             <Sliders size={13} className="text-primary-accent" />
             <span>Open Quant Rebalancer &amp; Inflow Simulator</span>
+          </button>
+        )}
+
+        {onOpenGuide && (
+          <button
+            type="button"
+            onClick={onOpenGuide}
+            className="w-full mt-2 py-2 px-3 rounded-lg bg-surface-layer2 hover:bg-surface-layer2/80 border border-border-subtle hover:border-primary-accent/40 text-text-primary text-typ-caption font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.99]"
+          >
+            <BookOpen size={13} className="text-primary-accent" />
+            <span>Portfolio Metrics, Stats &amp; Terminologies Guide</span>
           </button>
         )}
       </section>

@@ -4,7 +4,7 @@ import {
   ArrowLeft, Sparkles, Sliders, AlertTriangle, TrendingUp, TrendingDown, 
   CheckCircle2, Info, Copy, Check, RefreshCw, X, Shield, ChevronRight, 
   HelpCircle, ExternalLink, Flame, DollarSign, Wallet, Radar, Compass,
-  Layers, Zap, BarChart3, PieChart, ArrowUpRight, Key, Eye
+  Layers, Zap, BarChart3, PieChart, ArrowUpRight, Key, Eye, BookOpen
 } from 'lucide-react';
 import GeminiApiKeyModal from './GeminiApiKeyModal';
 import { 
@@ -63,7 +63,8 @@ export default function PortfolioRebalancerModal({
   showMessage,
   onRefresh,
   onNavigateToAsset,
-  onNavigateToCategory
+  onNavigateToCategory,
+  onOpenGuide
 }) {
   useModalBack(isOpen, onClose);
 
@@ -579,6 +580,17 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
           </div>
 
           <div className="flex items-center gap-1.5">
+            {onOpenGuide && (
+              <button 
+                type="button"
+                onClick={onOpenGuide}
+                title="Portfolio Metrics, Math & Terminologies Guide"
+                className="px-2 py-1 rounded-lg bg-surface-layer2/80 hover:bg-surface-layer2 border border-white/[0.1] text-text-secondary hover:text-primary-accent active:scale-95 transition-all flex items-center gap-1 text-[11px] font-semibold"
+              >
+                <BookOpen size={13} />
+                <span className="hidden sm:inline">Guide</span>
+              </button>
+            )}
             <button 
               type="button"
               onClick={() => setShowApiKeyModal(true)}
@@ -640,6 +652,7 @@ ${insuranceSummary.totalHealthCover > 0 ? `• **Health Insurance:** Family medi
           <GlobalMacroWeatherBar 
             marketQuotes={data?.marketQuotes || data?.marketQuotesMap} 
             defaultExpanded={false}
+            onOpenGuide={onOpenGuide}
           />
 
           {/* 2. Risk Profile Selector Carousel with ML HRP (Screen 24) */}

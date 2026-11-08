@@ -9,7 +9,8 @@ import { Badge } from './Badge';
 export default function GlobalMacroWeatherBar({ 
   marketQuotes = [], 
   className = '',
-  defaultExpanded = false 
+  defaultExpanded = false,
+  onOpenGuide
 }) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -112,6 +113,17 @@ export default function GlobalMacroWeatherBar({
               {score}/100
             </span>
           </div>
+
+          {onOpenGuide && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onOpenGuide(); }}
+              className="text-text-muted hover:text-primary-accent p-1 rounded hover:bg-surface-layer2 transition-colors cursor-pointer"
+              title="Understand Macro Stats & Indicators"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          )}
 
           <div className="text-text-muted">
             {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
