@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && cp dist/index.html ../Index.html",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test 'tests/**/*.test.js'"
   },
   "dependencies": {
     "clsx": "^2.1.1",
