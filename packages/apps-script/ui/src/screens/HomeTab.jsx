@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight, Landmark, HeartPulse } from 'lucide-react';
+import { Shield, Sparkles, TrendingUp, TrendingDown, ChevronRight, Sliders, ArrowUpRight, Landmark, HeartPulse, HelpCircle } from 'lucide-react';
 import { calculatePortfolioAlignment, calculateCashDrag, isCashCategory, RISK_PROFILES } from '../utils/portfolioMath';
 import { Badge } from '../components/Badge';
 import { calculateConsolidatedInsurance, formatInLakhsOrCrores } from '../utils/insuranceMath';
+import GlobalMacroWeatherBar from '../components/GlobalMacroWeatherBar';
+import { getSafeStorage } from '../utils/storage';
 
 export default function HomeTab({ 
   formatCurrency, 
@@ -11,7 +13,8 @@ export default function HomeTab({
   onOpenRetirementPlanner, 
   onOpenInsuranceHub,
   onNavigateToCategory,
-  onNavigateToAsset
+  onNavigateToAsset,
+  onOpenGuide
 }) {
   const assets = data?.assets || [];
   const settings = data?.settings || [];
@@ -34,6 +37,14 @@ export default function HomeTab({
   const insuranceData = useMemo(() => {
     return calculateConsolidatedInsurance(assets);
   }, [assets]);
+
+  const showMacroWeather = useMemo(() => {
+    const s = settings.find(item => item['Setting Key'] === 'EnableMacroWeather');
+    if (s && s['Setting Value'] !== undefined) {
+      return s['Setting Value'] !== 'false';
+    }
+    return getSafeStorage('nwm_enable_macro_weather', 'true') !== 'false';
+  }, [settings]);
   
   const equity = assets.filter(a => a.Category === 'Equity').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
   const mf = assets.filter(a => a.Category === 'Mutual Funds').reduce((sum, a) => sum + Number(a["Current Value"] || 0), 0);
@@ -202,6 +213,15 @@ export default function HomeTab({
         </div>
       </div>
 
+      {/* Global Macro Weather Dashboard & Regime Panel (Screen 22) */}
+      {showMacroWeather && (
+        <GlobalMacroWeatherBar 
+          marketQuotes={data?.marketQuotes || data?.marketQuotesMap} 
+          defaultExpanded={false}
+          onOpenGuide={onOpenGuide}
+        />
+      )}
+
       {/* Retirement & Pension Hub Banner */}
       {onOpenRetirementPlanner && (
         <div 
@@ -327,15 +347,27 @@ export default function HomeTab({
               <span className="text-typ-caption text-text-muted">({alignment.healthLabel})</span>
             </div>
 
-            {alignment.maxOverweight ? (
-              <Badge variant="rose" dot size="xs">
-                +{alignment.maxOverweight.drift.toFixed(1)}% {alignment.maxOverweight.name}
-              </Badge>
-            ) : (
-              <Badge variant="emerald" dot size="xs">
-                Balanced
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {alignment.maxOverweight ? (
+                <Badge variant="rose" dot size="xs">
+                  +{alignment.maxOverweight.drift.toFixed(1)}% {alignment.maxOverweight.name}
+                </Badge>
+              ) : (
+                <Badge variant="emerald" dot size="xs">
+                  Balanced
+                </Badge>
+              )}
+              {onOpenGuide && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onOpenGuide(); }}
+                  className="text-text-muted hover:text-primary-accent p-0.5 rounded transition-colors"
+                  title="What does Alignment Score mean?"
+                >
+                  <HelpCircle size={13} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

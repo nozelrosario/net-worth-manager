@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Net Worth Manager — Portfolio Metrics, Quantitative Stats & Investor Guide</title>
+  <style>
+    :root {
+      --bg-root: #0B0F17;
+      --bg-surface1: #151C28;
+      --bg-surface2: #1E2738;
+      --bg-surface3: #2A364F;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366F1;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --accent-indigo: #6366F1;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-rose: #F43F5E;
+      --accent-sky: #0EA5E9;
+      --accent-purple: #A855F7;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-root);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 80px 20px;
+    }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .badge-top {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818CF8;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    p.lead {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 860px;
+    }
+
+    /* Search & Filter Bar */
+    .filter-wrapper {
+      position: sticky;
+      top: 16px;
+      z-index: 100;
+      background: rgba(21, 28, 40, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 32px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--bg-surface2);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .nav-tabs::-webkit-scrollbar { height: 4px; }
+    .nav-tabs::-webkit-scrollbar-thumb { background: var(--bg-surface3); border-radius: 4px; }
+    .nav-btn {
+      background: var(--bg-surface2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover {
+      background: var(--bg-surface3);
+      color: var(--text-primary);
+    }
+    .nav-btn.active {
+      background: var(--accent-indigo);
+      color: #FFFFFF;
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Section Cards */
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 40px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+    }
+
+    /* Metric Card */
+    .metric-card {
+      background: var(--bg-surface1);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.6);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .term-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .term-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tag-emerald { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-amber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-rose { background: rgba(244, 63, 94, 0.15); color: #FB7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .tag-indigo { background: rgba(99, 102, 241, 0.15); color: #A5B4FC; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .tag-sky { background: rgba(14, 165, 233, 0.15); color: #38BDF8; border: 1px solid rgba(14, 165, 233, 0.3); }
+
+    .term-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Info Blocks inside Cards */
+    .info-block {
+      background: var(--bg-surface2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .info-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .info-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .code-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: #E2E8F0;
+      word-break: break-all;
+    }
+
+    /* Actionable Playbook Box */
+    .action-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .action-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .action-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Quick FAQ Accordion */
+    details {
+      background: var(--bg-surface1);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    summary {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text-primary);
+      outline: none;
+    }
+    details[open] summary {
+      color: var(--accent-indigo);
+      margin-bottom: 12px;
+    }
+    details p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 26px; }
+      .container { padding: 20px 14px 60px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge-top">Net Worth Manager Knowledge Hub</div>
+      <h1>Understanding Portfolio Stats, Math &amp; Market Indicators</h1>
+      <p class="lead">
+        A practical, plain-English investor handbook for deciphering every metric, formula, stress test, and macroeconomic trigger in Net Worth Manager — with actionable steps to optimize returns and protect capital.
+      </p>
+    </header>
+
+    <!-- Search & Category Filters -->
+    <div class="filter-wrapper">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search any term, stat or indicator (e.g. CVaR, Alignment Score, Cash Drag, US 10Y Yield, REITs)..." oninput="filterCards()" />
+      <div class="nav-tabs">
+        <button class="nav-btn active" onclick="selectTab('all', this)">All Terms</button>
+        <button class="nav-btn" onclick="selectTab('core', this)">1. Core Health &amp; Drift</button>
+        <button class="nav-btn" onclick="selectTab('macro', this)">2. Global Macro Radar</button>
+        <button class="nav-btn" onclick="selectTab('quant', this)">3. Quant HRP &amp; CVaR Stress</button>
+        <button class="nav-btn" onclick="selectTab('instruments', this)">4. Modern Assets &amp; Yield</button>
+        <button class="nav-btn" onclick="selectTab('protection', this)">5. Retirement &amp; Safe</button>
+      </div>
+    </div>
+
+    <!-- SECTION 1: CORE PORTFOLIO HEALTH & DRIFT -->
+    <div class="category-group" data-category="core">
+      <div class="section-title">
+        <span>🎯</span> 1. Core Portfolio Health &amp; Drift Metrics
+      </div>
+      <p class="section-subtitle">Metrics measuring how closely your current real wealth aligns with your target financial plan.</p>
+
+      <div class="grid">
+        <!-- Portfolio Alignment Score -->
+        <div class="metric-card" data-keywords="alignment score similarity percentage drift health">
+          <div class="card-header">
+            <span class="term-name">Portfolio Alignment Score</span>
+            <span class="term-tag tag-indigo">0% to 100%</span>
+          </div>
+          <p class="term-desc">
+            Measures the mathematical similarity between your current asset weights and your target asset allocation (e.g., Moderate 50/20/15/15).
+          </p>
+          <div class="info-block">
+            <span class="info-label">How It Is Calculated</span>
+            <span class="info-value">
+              Cosine vector similarity &amp; normalized shortfall:
+              <span class="code-box">Score = 100 - (0.5 × Sum of Absolute Category Drifts)</span>
+            </span>
+          </div>
+          <div class="info-block">
+            <span class="info-label">What The Numbers Mean</span>
+            <span class="info-value">
+              • <b>90% – 100%:</b> Optimal Alignment. Portfolio is humming smoothly.<br/>
+              • <b>75% – 89%:</b> Moderate Drift. Minor rebalancing via fresh inflows recommended.<br/>
+              • <b>&lt; 75%:</b> High Drift. Significant deviation from risk tolerance.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Do <b>not</b> sell assets immediately (which triggers 12.5% LTCG tax and exit loads). Instead, use the <b>Inflow Rebalance Simulator</b> to route upcoming monthly SIPs and bonuses into underweighted buckets until the score reaches &gt;90%.
+            </span>
+          </div>
+        </div>
+
+        <!-- Category Drift -->
+        <div class="metric-card" data-keywords="drift underweight overweight percentage delta rebalance">
+          <div class="card-header">
+            <span class="term-name">Category Drift (Δ%)</span>
+            <span class="term-tag tag-amber">Over / Underweight</span>
+          </div>
+          <p class="term-desc">
+            The percentage point difference between what you actually hold in an asset class vs. your targeted risk plan.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Example</span>
+            <span class="info-value">
+              If your target for Equities is <b>50%</b>, but a bull market pushed your equities to <b>62%</b>, your drift is <span class="code-box">+12.0% (Overweight)</span>. If Gold is at 5% vs. 15% target, drift is <span class="code-box">-10.0% (Underweight)</span>.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Negative drift indicates where your portfolio is defensively starved. Direct your fresh capital tranches toward negative drift categories to buy valuable assets at relatively lower valuations.
+            </span>
+          </div>
+        </div>
+
+        <!-- Cash Drag -->
+        <div class="metric-card" data-keywords="cash drag idle cash inflation penalty liquid interest">
+          <div class="card-header">
+            <span class="term-name">Cash Drag (₹ and %)</span>
+            <span class="term-tag tag-rose">Opportunity Cost</span>
+          </div>
+          <p class="term-desc">
+            The invisible annual wealth penalty caused by keeping excess idle cash sitting in low-yield savings accounts (2.7%–3.5%) instead of productive compounding assets.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Formula</span>
+            <span class="info-value">
+              <span class="code-box">Cash Drag = (Excess Cash above 6M Buffer) × (Expected Portfolio Return - 3.0%)</span>
+            </span>
+          </div>
+          <div class="info-block">
+            <span class="info-label">Real World Impact</span>
+            <span class="info-value">
+              Having ₹10 Lakhs idle beyond emergency needs creates a drag of <b>₹70,000 to ₹90,000 every single year</b> against retail inflation.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Keep 6 to 12 months of living expenses in an Emergency Liquid Fund. Move the rest into Target Maturity Funds (TMFs) locking in 7.4% sovereign yields or Arbitrage Funds (yielding ~7.0% with equity tax status).
+            </span>
+          </div>
+        </div>
+
+        <!-- Emergency Runway -->
+        <div class="metric-card" data-keywords="emergency runway runway months liquid buffer survival">
+          <div class="card-header">
+            <span class="term-name">Emergency Runway (Months)</span>
+            <span class="term-tag tag-emerald">Defense Metric</span>
+          </div>
+          <p class="term-desc">
+            How many months your family can maintain their current lifestyle with zero income, relying strictly on immediate liquid cash and savings.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Formula</span>
+            <span class="info-value">
+              <span class="code-box">Runway = Liquid Bank &amp; Savings Balance ÷ Average Monthly Spends</span>
+            </span>
+          </div>
+          <div class="info-block">
+            <span class="info-label">Prudential Target</span>
+            <span class="info-value">
+              • <b>Salaried:</b> 6 to 9 Months.<br/>
+              • <b>Self-Employed / Business:</b> 12 to 18 Months.<br/>
+              • <b>Less than 3 Months:</b> High Vulnerability.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              If your runway is below 6 months, halt all aggressive discretionary equity lump sums until your liquid buffer reaches safe ground.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: GLOBAL MACRO RADAR -->
+    <div class="category-group" data-category="macro">
+      <div class="section-title">
+        <span>🌐</span> 2. Global Macro Weather &amp; Market Regimes
+      </div>
+      <p class="section-subtitle">Real-time indicators streaming via Google Finance that drive tactical inflow adjustments.</p>
+
+      <div class="grid">
+        <!-- Macro Regime Score -->
+        <div class="metric-card" data-keywords="macro regime weather risk on risk off stagflation score">
+          <div class="card-header">
+            <span class="term-name">Composite Macro Regime Score</span>
+            <span class="term-tag tag-sky">0 to 100 Gauge</span>
+          </div>
+          <p class="term-desc">
+            A weighted composite health score evaluating global liquidity, interest rates, currency volatility, and domestic market momentum.
+          </p>
+          <div class="info-block">
+            <span class="info-label">The 4 Macro Regimes</span>
+            <span class="info-value">
+              • <b>Risk-On (70–100):</b> Low volatility, stable yields. Favorable for equities and SIP step-ups.<br/>
+              • <b>Neutral (40–69):</b> Balanced conditions. Follow standard strategic allocation.<br/>
+              • <b>Risk-Off (&lt;40):</b> High stress, spiking volatility. Route fresh capital to Gold &amp; TMFs.<br/>
+              • <b>Stagflation Alert:</b> High crude oil + elevated yields. Overweight commodities and short-duration debt.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Check the Macro Weather Bar on the Home Screen before deploying lump sums. If in "Risk-Off", do not panic sell; simply route new monthly tranches into defensive yields.
+            </span>
+          </div>
+        </div>
+
+        <!-- US 10Y Yield -->
+        <div class="metric-card" data-keywords="us 10y tnx yield treasury bond fii outflow">
+          <div class="card-header">
+            <span class="term-name">US 10Y Treasury Yield (`TNX`)</span>
+            <span class="term-tag tag-amber">Global Hurdle Rate</span>
+          </div>
+          <p class="term-desc">
+            The interest rate paid by the US Government on 10-year bonds. It serves as the baseline "risk-free" hurdle rate for global financial institutions.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Why It Affects Indian Portfolios</span>
+            <span class="info-value">
+              When US yields rise above <b>4.30%–4.50%</b>, Foreign Institutional Investors (FIIs) pull dollars out of emerging markets (India) to earn guaranteed dollar yields, weakening the Rupee and creating domestic equity corrections.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              High US yields mean Indian equities face foreign selling pressure. Take advantage of FII dips by maintaining your automated domestic SIPs.
+            </span>
+          </div>
+        </div>
+
+        <!-- USD / INR Exchange Rate -->
+        <div class="metric-card" data-keywords="usdinr exchange rate dollar currency depreciation rupee">
+          <div class="card-header">
+            <span class="term-name">USD / INR Exchange Rate</span>
+            <span class="term-tag tag-rose">Currency Health</span>
+          </div>
+          <p class="term-desc">
+            How many Indian Rupees are required to buy 1 US Dollar. Over the past 30 years, the INR has depreciated against the USD at an average rate of <b>~3.2% to 3.5% per year</b>.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Portfolio Defense</span>
+            <span class="info-value">
+              A 100% India-denominated portfolio is vulnerable to domestic currency depreciation. Holding <b>Gold</b> and <b>International Feeder ETFs (e.g. Nasdaq 100 / S&amp;P 500)</b> provides a direct structural dollar hedge.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Ensure 10%–15% of your portfolio is allocated to Gold and US index feeder funds to capture long-term currency alpha automatically.
+            </span>
+          </div>
+        </div>
+
+        <!-- India VIX -->
+        <div class="metric-card" data-keywords="india vix volatility index fear gauge crash dip">
+          <div class="card-header">
+            <span class="term-name">India VIX (Volatility Index)</span>
+            <span class="term-tag tag-indigo">Market Fear Gauge</span>
+          </div>
+          <p class="term-desc">
+            Measures expected 30-day volatility in the Nifty 50 options market. Known globally as the "Fear Gauge".
+          </p>
+          <div class="info-block">
+            <span class="info-label">Interpretation</span>
+            <span class="info-value">
+              • <b>VIX &lt; 13:</b> Extreme Complacency. Markets are calm; valuations may be stretched.<br/>
+              • <b>VIX 13 – 18:</b> Healthy Normal Range.<br/>
+              • <b>VIX &gt; 22:</b> Extreme Fear &amp; Panic. Historically represents the most profitable long-term buying opportunities for disciplined wealth builders.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              When VIX spikes above 20, do not stop SIPs. Deploy secondary tranches into diversified index funds while market sentiment is in despair.
+            </span>
+          </div>
+        </div>
+
+        <!-- 200 EMA Trend Filter -->
+        <div class="metric-card" data-keywords="200 ema nifty moving average trend dual momentum">
+          <div class="card-header">
+            <span class="term-name">Nifty 50 vs. 200 EMA</span>
+            <span class="term-tag tag-emerald">Institutional Trend Line</span>
+          </div>
+          <p class="term-desc">
+            The 200-day Exponential Moving Average (EMA) is the definitive boundary between a structural bull market and a structural bear market.
+          </p>
+          <div class="info-block">
+            <span class="info-label">The Golden Rule</span>
+            <span class="info-value">
+              • <b>CMP &gt; 200 EMA:</b> Confirmed Uptrend. Fresh equity capital is approved at full multiplier (1.25x).<br/>
+              • <b>CMP &lt; 200 EMA:</b> Structural Breakdown. The app activates defensive caution (0.50x equity multiplier) to prevent catching falling knives.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              When Nifty trades below its 200 EMA, Net Worth Manager automatically diverts discretionary lump sums into safe Arbitrage / Liquid funds until trend confirmation resumes.
+            </span>
+          </div>
+        </div>
+
+        <!-- Brent Crude Oil -->
+        <div class="metric-card" data-keywords="brent crude oil bno inflation imported deficit">
+          <div class="card-header">
+            <span class="term-name">Brent Crude Oil</span>
+            <span class="term-tag tag-amber">Inflation Trigger</span>
+          </div>
+          <p class="term-desc">
+            Global oil benchmark. Since India imports over 85% of its crude requirements, oil prices directly influence India's inflation and fiscal deficit.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Thresholds</span>
+            <span class="info-value">
+              • <b>&lt; $75/bbl:</b> Favorable tailwind for Indian corporate margins and GDP.<br/>
+              • <b>&gt; $85/bbl:</b> Imported inflation risk, RBI interest rate hikes, and margin compression in automotive, paints, and manufacturing.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Elevated crude oil indicates inflation risks. Balance your holdings with Gold and sovereign fixed-income to protect purchasing power.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: QUANT HRP & CVaR STRESS TESTING -->
+    <div class="category-group" data-category="quant">
+      <div class="section-title">
+        <span>🧠</span> 3. Machine Learning HRP &amp; Downside Risk Stress Testing
+      </div>
+      <p class="section-subtitle">Institutional risk models replacing outdated standard deviation with true black-swan downside protection.</p>
+
+      <div class="grid">
+        <!-- Hierarchical Risk Parity -->
+        <div class="metric-card" data-keywords="hrp hierarchical risk parity lopez de prado machine learning clustering">
+          <div class="card-header">
+            <span class="term-name">ML Hierarchical Risk Parity (HRP)</span>
+            <span class="term-tag tag-indigo">Optimal Weights</span>
+          </div>
+          <p class="term-desc">
+            Invented by Marcos López de Prado (2016), HRP uses machine learning tree clustering to group correlated Indian mutual funds and stocks together, avoiding the dangerous math errors of classical Markowitz models.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Why Markowitz Fails &amp; HRP Wins</span>
+            <span class="info-value">
+              Traditional mean-variance optimization inverts covariance matrices. When two assets are closely correlated (like two Indian large-cap mutual funds), Markowitz produces erratic, hyper-concentrated weights. HRP organizes assets hierarchically like a family tree and distributes risk equally.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Select the <b>🧠 ML HRP</b> preset in the Portfolio Rebalancer. It automatically establishes mathematical multi-asset risk parity tailored for Indian volatility.
+            </span>
+          </div>
+        </div>
+
+        <!-- CVaR 95% Expected Shortfall -->
+        <div class="metric-card" data-keywords="cvar conditional value at risk expected shortfall tail risk black swan drawdown">
+          <div class="card-header">
+            <span class="term-name">CVaR 95% (Expected Shortfall)</span>
+            <span class="term-tag tag-rose">Tail Risk Stress Test</span>
+          </div>
+          <p class="term-desc">
+            Answers the single most important question: <i>"During the worst 5% of monthly market crises (such as 2008 Lehman collapse or March 2020 COVID shock), what is the expected loss in my portfolio?"</i>
+          </p>
+          <div class="info-block">
+            <span class="info-label">Benchmark Comparisons</span>
+            <span class="info-value">
+              • <b>Nifty 50 (Pure Equity):</b> Expected 1-Mo Drawdown: <b>-18.4%</b><br/>
+              • <b>Diversified User Portfolio:</b> Typically <b>-8.5% to -11.5%</b><br/>
+              • <b>All-Weather Defensive:</b> Expected 1-Mo Drawdown: <b>-5.8%</b>
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              The CVaR stress test converts percentages into actual Rupees (e.g. <i>≈ ₹3,80,000 drawdown</i>). If this Rupee figure makes you lose sleep, increase your allocation to Sovereign TMFs and Gold until the projected loss is within your psychological comfort zone.
+            </span>
+          </div>
+        </div>
+
+        <!-- Diversification Ratio -->
+        <div class="metric-card" data-keywords="diversification ratio dr correlation buffer choueifaty">
+          <div class="card-header">
+            <span class="term-name">Diversification Ratio (DR)</span>
+            <span class="term-tag tag-emerald">Institutional Multiplier</span>
+          </div>
+          <p class="term-desc">
+            Measures how effectively non-correlated assets (Gold, Sovereign Debt, Real Estate) cancel out the downside volatility of your stocks.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Formula &amp; Standards</span>
+            <span class="info-value">
+              <span class="code-box">DR = Weighted Individual Volatilities ÷ Total Portfolio Volatility</span><br/>
+              • <b>DR = 1.0x:</b> Zero diversification (e.g. 100% Equity).<br/>
+              • <b>DR &gt; 1.4x:</b> Institutional-grade risk mitigation.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Aim for a DR of <b>1.35x to 1.60x</b>. Every 0.1x increase in DR reduces emotional anxiety during market crashes without sacrificing long-term returns.
+            </span>
+          </div>
+        </div>
+
+        <!-- Dual Momentum Inflow Multiplier -->
+        <div class="metric-card" data-keywords="tactical inflow dual momentum multiplier fresh capital">
+          <div class="card-header">
+            <span class="term-name">Dual Momentum Inflow Multiplier</span>
+            <span class="term-tag tag-amber">Capital Efficiency</span>
+          </div>
+          <p class="term-desc">
+            Formulated by Gary Antonacci (2014) and Cliff Asness (AQR Capital). Rather than allocating fresh capital blindly, this algorithm dynamically weights tranches based on absolute and relative trend strength.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Adaptive Multipliers</span>
+            <span class="info-value">
+              • <b>1.25x (Bullish Momentum):</b> Trend confirmed above 200 EMA with positive macro score. Accelerates allocation into leading assets.<br/>
+              • <b>0.50x (Defensive Breakdown):</b> Asset class in macro distress. Fresh capital is withheld and temporarily stored in liquid yields.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Keep the <b>"Tactical Macro Overlay"</b> toggle ON in the Rebalancer. It automatically adjusts monthly capital deployment to optimize your entry prices.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: MODERN ASSET CLASSES & YIELD -->
+    <div class="category-group" data-category="instruments">
+      <div class="section-title">
+        <span>💎</span> 4. Modern Indian Investment Vehicles &amp; Tax Alpha
+      </div>
+      <p class="section-subtitle">Institutional instruments delivering superior tax-adjusted yields over traditional bank deposits.</p>
+
+      <div class="grid">
+        <!-- Target Maturity Funds -->
+        <div class="metric-card" data-keywords="target maturity funds tmf bharat bond g-sec fixed deposit fd">
+          <div class="card-header">
+            <span class="term-name">Target Maturity Funds (TMFs)</span>
+            <span class="term-tag tag-emerald">Fixed Income Alpha</span>
+          </div>
+          <p class="term-desc">
+            Passive index debt funds holding Central Government G-Secs or AAA Public Sector bonds that mature in a defined target year (e.g., 2028, 2030, 2032).
+          </p>
+          <div class="info-block">
+            <span class="info-label">Why TMFs Beat Traditional Bank FDs</span>
+            <span class="info-value">
+              • <b>Zero Credit Default Risk:</b> 100% Sovereign or AAA Government backed.<br/>
+              • <b>Locked YTM:</b> Locks in peak multi-year yields (e.g. 7.30%–7.50%).<br/>
+              • <b>Roll-Down Duration:</b> As maturity approaches, interest-rate risk drops to zero.<br/>
+              • <b>Liquidity:</b> Redeemable anytime at prevailing NAV with no 1% penalty.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Match your planned liabilities (e.g., child college fee in 2030) with an equivalent TMF maturity year to eliminate reinvestment risk completely.
+            </span>
+          </div>
+        </div>
+
+        <!-- REITs & InvITs -->
+        <div class="metric-card" data-keywords="reits invits real estate commercial nexus embassy brookfield distribution yield">
+          <div class="card-header">
+            <span class="term-name">REITs &amp; InvITs</span>
+            <span class="term-tag tag-sky">Fractional Real Estate</span>
+          </div>
+          <p class="term-desc">
+            SEBI-regulated trusts owning portfolios of commercial Grade-A office tech parks, retail shopping malls (Nexus Select), or power grids (PowerGrid InvIT).
+          </p>
+          <div class="info-block">
+            <span class="info-label">Key Metrics to Track</span>
+            <span class="info-value">
+              • <b>Distribution Yield:</b> Typically <b>6.8% to 8.2% p.a.</b> distributed quarterly.<br/>
+              • <b>LTV Ratio:</b> Loan-to-value leverage ratio (typically conservative &lt;35%).<br/>
+              • <b>Sec 10(23FD) Tax Exemption:</b> Capital repayment portions of distributions are partially tax-exempt.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Replace illiquid, tenant-hassle physical real estate with liquid, publicly traded REIT units offering immediate diversification across hundreds of institutional corporate tenants.
+            </span>
+          </div>
+        </div>
+
+        <!-- Sovereign Gold Bonds Secondary Market -->
+        <div class="metric-card" data-keywords="sgb sovereign gold bonds secondary market discount rbi tax free">
+          <div class="card-header">
+            <span class="term-name">SGB Secondary Market Arbitrage</span>
+            <span class="term-tag tag-amber">Guaranteed Alpha</span>
+          </div>
+          <p class="term-desc">
+            Sovereign Gold Bonds traded on the stock exchange (NSE/BSE) by retail holders seeking early cash liquidity before their 8-year maturity.
+          </p>
+          <div class="info-block">
+            <span class="info-label">The 4-Way Advantage</span>
+            <span class="info-value">
+              1. <b>Traded Discount:</b> Frequently available at a <b>2.0% to 4.5% discount</b> to spot gold prices.<br/>
+              2. <b>Zero GST:</b> Saves the 3.0% GST incurred on physical gold.<br/>
+              3. <b>2.50% Coupon:</b> Earns an annual cash interest paid semi-annually.<br/>
+              4. <b>100% Tax-Free Gains:</b> Capital gains are completely exempt from tax when redeemed with RBI at maturity.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Never buy physical gold coins or digital gold for financial investment. Purchase secondary market SGB series maturing in 2029–2032 directly through your demat account to capture immediate risk-free alpha.
+            </span>
+          </div>
+        </div>
+
+        <!-- Smart Beta & Factor ETFs -->
+        <div class="metric-card" data-keywords="factor etfs smart beta momentum low vol alpha ter fees">
+          <div class="card-header">
+            <span class="term-name">Factor / Smart Beta ETFs</span>
+            <span class="term-tag tag-indigo">Rule-Based Alpha</span>
+          </div>
+          <p class="term-desc">
+            Systematic rule-based ETFs that select stocks based on proven quantitative factors (Momentum, Quality, Low Volatility) rather than pure market capitalization.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Top Indian Factor Indices</span>
+            <span class="info-value">
+              • <b>Nifty 200 Momentum 30 (`MOM30IETFS`):</b> 18%–21% 5Y CAGR.<br/>
+              • <b>Nifty Alpha Low Volatility 30 (`ALPV30IETFS`):</b> High risk-adjusted returns.<br/>
+              • <b>Low Expense Ratio (TER):</b> Only <b>0.20% to 0.35%</b> vs. 1.50%–2.00% charged by active mutual fund managers.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Allocate a portion of your equity satellite portfolio to factor ETFs to generate systematic alpha without active fund manager style drift or high management fees.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: RETIREMENT & PROTECTION -->
+    <div class="category-group" data-category="protection">
+      <div class="section-title">
+        <span>🛡️</span> 5. Retirement, Insurance &amp; Family Safe Metrics
+      </div>
+      <p class="section-subtitle">Pillars protecting your family against mortality, health emergencies, and longevity risks.</p>
+
+      <div class="grid">
+        <!-- EPF & PPF -->
+        <div class="metric-card" data-keywords="epf ppf provident fund retirement eee compounding">
+          <div class="card-header">
+            <span class="term-name">EPF &amp; PPF Compounding (EEE)</span>
+            <span class="term-tag tag-emerald">Sovereign Debt</span>
+          </div>
+          <p class="term-desc">
+            Government-backed statutory retirement engines enjoying full Exempt-Exempt-Exempt (EEE) status.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Current Rates &amp; Characteristics</span>
+            <span class="info-value">
+              • <b>EPF Interest:</b> 8.25% p.a. (Sovereign Guaranteed).<br/>
+              • <b>PPF Interest:</b> 7.10% p.a. (Tax-free under Section 80C &amp; Section 10(11)).<br/>
+              • Unmatched risk-adjusted debt returns in India.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Treat EPF and PPF as the immovable debt bedrock of your overall portfolio. This allows you to take calculated aggressive growth risks in your equity holdings.
+            </span>
+          </div>
+        </div>
+
+        <!-- Human Life Value -->
+        <div class="metric-card" data-keywords="human life value hlv term insurance life cover protection">
+          <div class="card-header">
+            <span class="term-name">Human Life Value (HLV) &amp; Term Cover</span>
+            <span class="term-tag tag-rose">Protection Multiplier</span>
+          </div>
+          <p class="term-desc">
+            The economic present value of future earnings that your family depends upon in the event of an untimely demise.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Prudential Rule of Thumb</span>
+            <span class="info-value">
+              <span class="code-box">Required Term Insurance = (10x to 15x Annual Income) + Outstanding Debts - Liquid Investments</span>
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Avoid traditional endowment and money-back policies (which generate sub-5% returns). Purchase pure term insurance up to age 60–65 and invest the premium difference into equity index funds.
+            </span>
+          </div>
+        </div>
+
+        <!-- Health Coverage -->
+        <div class="metric-card" data-keywords="health insurance super top up medical inflation hospital">
+          <div class="card-header">
+            <span class="term-name">Health Insurance &amp; Super Top-Up</span>
+            <span class="term-tag tag-sky">Net Worth Defense</span>
+          </div>
+          <p class="term-desc">
+            Insulates your invested wealth from medical inflation, which currently compounds at <b>12%–14% annually</b> in Indian private healthcare.
+          </p>
+          <div class="info-block">
+            <span class="info-label">Optimal Structure</span>
+            <span class="info-value">
+              • Base Health Plan: ₹10 Lakhs to ₹15 Lakhs deductible.<br/>
+              • Super Top-Up Plan: ₹50 Lakhs to ₹1 Crore coverage.<br/>
+              • This two-tier structure provides ₹1 Crore protection for less than ₹20,000 to ₹25,000 annual premium.
+            </span>
+          </div>
+          <div class="action-box">
+            <span class="action-title">💡 How to Take Action</span>
+            <span class="action-text">
+              Never rely solely on employer group medical policies. A corporate job transition or retirement leaves your family immediately vulnerable to catastrophic medical bills.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK FAQ & INVESTOR ROADMAP -->
+    <div style="margin-top: 50px;">
+      <div class="section-title">
+        <span>❓</span> Frequently Asked Questions &amp; Investor Playbooks
+      </div>
+
+      <details>
+        <summary>Why doesn't Net Worth Manager recommend selling stocks to rebalance?</summary>
+        <p>
+          Selling profitable equities triggers the new <b>12.5% Long-Term Capital Gains (LTCG) tax</b> (above ₹1.25 Lakhs) or <b>20% Short-Term Capital Gains (STCG)</b>, along with brokerage, STT, and stamp duty. Furthermore, selling prematurely cuts your long-term compounders. Net Worth Manager employs <b>Zero-Sale Smart Inflow Optimization</b>, directing new savings (SIPs, bonuses, dividends) into underweighted categories, achieving alignment without triggering tax friction.
+        </p>
+      </details>
+
+      <details>
+        <summary>How often should I review my portfolio drift and macro weather?</summary>
+        <p>
+          Checking intraday price movements creates unnecessary emotional stress. For personal wealth building, reviewing the <b>Macro Weather Bar once a week</b> and conducting a <b>Rebalancer review once a month</b> (coinciding with your monthly salary or savings deployment) is optimal.
+        </p>
+      </details>
+
+      <details>
+        <summary>What is the difference between Strategic Baseline and Tactical Macro Overlay in the simulator?</summary>
+        <p>
+          <b>Strategic Baseline</b> distributes fresh capital strictly based on underweight percentages. <b>Tactical Macro Overlay</b> adds institutional intelligence: if an asset class is underweight but experiencing a macro breakdown (trading below its 200 EMA during a high-VIX panic regime), the engine slows down fresh deployment (0.5x multiplier) and parks safety tranches into risk-free yields until momentum confirms a structural bottom.
+        </p>
+      </details>
+    </div>
+
+    <footer>
+      <p>Net Worth Manager • Institutional Quantitative Engine v2.0 • Personal Wealth Architecture</p>
+      <p style="margin-top: 6px; font-size: 11px;">Formulated for informational, personal portfolio rebalancing and fiduciary educational purposes.</p>
+    </footer>
+  </div>
+
+  <script>
+    function selectTab(tabKey, element) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      if (element) element.classList.add('active');
+
+      const groups = document.querySelectorAll('.category-group');
+      if (tabKey === 'all') {
+        groups.forEach(g => g.style.display = 'block');
+      } else {
+        groups.forEach(g => {
+          g.style.display = g.getAttribute('data-category') === tabKey ? 'block' : 'none';
+        });
+      }
+    }
+
+    function filterCards() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.metric-card');
+
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const keywords = card.getAttribute('data-keywords') || '';
+        if (!q || text.includes(q) || keywords.includes(q)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

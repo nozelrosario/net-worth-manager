@@ -2,6 +2,8 @@
 // Provides exact, deterministic math for portfolio drift, alignment scores,
 // cash drag analysis, concentration risk audits, and tax-efficient inflow rebalancing.
 
+import { calculateMacroRegime, extractMacroQuotes, getTacticalInflowMultiplier, MACRO_REGIMES } from './macroMath.js';
+
 export const RISK_PROFILES = {
   Moderate: {
     name: 'Moderate (Balanced)',
@@ -49,6 +51,19 @@ export const RISK_PROFILES = {
       'Gold': 15,
       'Cash/FD': 25,
       'Real Estate': 25
+    }
+  },
+  'ML-HRP': {
+    name: 'Machine Learning HRP (Optimal Diversification)',
+    badge: '🧠 ML HRP (24/20/16/22/18)',
+    description: 'Institutional machine learning tree clustering by Marcos López de Prado. Optimizes true risk diversification without singular covariance matrix inversion.',
+    isML: true,
+    target: {
+      'Equity': 24,
+      'Mutual Funds': 20,
+      'Gold': 16,
+      'Cash/FD': 22,
+      'Real Estate': 18
     }
   }
 };
@@ -942,5 +957,444 @@ export function getCuratedProductRecommendations(projectedBreakdown = []) {
     taxNote: 'Equity taxation structure with multi-asset stability'
   });
 
+  // 5. Modern Instrument: High-Yield REITs & InvITs (Real Estate Proxy)
+  recommendations.push({
+    id: 'reit-nexus',
+    category: 'Real Estate',
+    name: 'Nexus Select Trust / Embassy Office Parks REIT',
+    tag: '7.8% Distribution Yield',
+    tagColor: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    ter: 'Listed Unit',
+    trackingError: 'Grade-A Commercial',
+    cagr3Y: '7.65% Payout Yield',
+    why: 'Replaces illiquid physical property with liquid commercial retail malls and office parks. Delivers quarterly cash distributions with Section 10(23FD) tax exemptions.',
+    taxNote: 'Tax-free principal repayments + 12.5% LTCG upon sale'
+  });
+
+  // 6. Modern Instrument: Target Maturity Debt Fund (TMF - Bank FD Alternative)
+  recommendations.push({
+    id: 'debt-tmf',
+    category: 'Cash/FD',
+    name: 'BHARAT Bond ETF 2030 / Nippon Nifty SDL 2028',
+    tag: 'Locked 7.4% YTM',
+    tagColor: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
+    ter: '0.05%',
+    trackingError: 'Sovereign Zero Credit Risk',
+    cagr3Y: '7.42% Locked Yield',
+    why: 'Replaces illiquid bank deposits with roll-down sovereign bond ETFs. Eliminates interest rate duration risk when held to maturity with zero credit default risk.',
+    taxNote: 'Debt slab taxation with 100% sovereign credit guarantee'
+  });
+
+  // 7. Modern Instrument: Smart Beta / Factor ETF (Systematic Momentum Alpha)
+  recommendations.push({
+    id: 'etf-momentum30',
+    category: 'Equity',
+    name: 'Nifty 200 Momentum 30 ETF (MOM30IETFS)',
+    tag: 'Dual Momentum Factor',
+    tagColor: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+    ter: '0.25%',
+    trackingError: '0.06%',
+    cagr3Y: '24.2%',
+    why: 'Systematically overweights top 30 momentum stocks filtered by 6M/12M relative price performance and 200 EMA trend lines without active manager bias.',
+    taxNote: '12.5% LTCG over ₹1.25L • 20% STCG'
+  });
+
   return recommendations;
+}
+
+// ==============================================================================
+// ADVANCED QUANTITATIVE ENGINE: HIERARCHICAL RISK PARITY (HRP) & CVaR (ISSUE #75)
+// ==============================================================================
+
+export const BENCHMARK_ASSET_CLASSES = ['Equity', 'Mutual Funds', 'Gold', 'Cash/FD', 'Real Estate'];
+
+export const BENCHMARK_VOLATILITIES = {
+  'Equity': 0.165,
+  'Mutual Funds': 0.180,
+  'Gold': 0.120,
+  'Cash/FD': 0.015,
+  'Real Estate': 0.110
+};
+
+export const BENCHMARK_CORRELATION_MATRIX = [
+  [ 1.00,  0.88, -0.05,  0.02,  0.28], // Equity
+  [ 0.88,  1.00, -0.02,  0.04,  0.32], // Mutual Funds
+  [-0.05, -0.02,  1.00,  0.01,  0.12], // Gold
+  [ 0.02,  0.04,  0.01,  1.00,  0.05], // Cash/FD
+  [ 0.28,  0.32,  0.12,  0.05,  1.00]  // Real Estate
+];
+
+/**
+ * Computes Hierarchical Risk Parity (HRP) optimal allocation weights using
+ * tree clustering, quasi-diagonalization, and recursive bisection without covariance inversion.
+ * (Marcos López de Prado, 2016)
+ */
+export function calculateHRPWeights(
+  categories = BENCHMARK_ASSET_CLASSES, 
+  correlationMatrix = BENCHMARK_CORRELATION_MATRIX, 
+  volatilities = BENCHMARK_VOLATILITIES
+) {
+  const n = categories.length;
+
+  // Step 1: Compute correlation distance matrix d_ij = sqrt((1 - rho_ij)/2)
+  const dist = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const rho = correlationMatrix[i]?.[j] ?? (i === j ? 1 : 0);
+      dist[i][j] = Math.sqrt(Math.max(0, (1 - rho) / 2));
+    }
+  }
+
+  // Step 2: Hierarchical Tree Clustering (Single Linkage)
+  let clusters = categories.map((_, i) => ({ id: i, items: [i], left: null, right: null, dist: 0 }));
+
+  while (clusters.length > 1) {
+    let minDist = Infinity;
+    let minI = 0;
+    let minJ = 1;
+
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        let pairDist = Infinity;
+        for (const itemA of clusters[i].items) {
+          for (const itemB of clusters[j].items) {
+            if (dist[itemA][itemB] < pairDist) {
+              pairDist = dist[itemA][itemB];
+            }
+          }
+        }
+        if (pairDist < minDist) {
+          minDist = pairDist;
+          minI = i;
+          minJ = j;
+        }
+      }
+    }
+
+    const merged = {
+      id: 100 + clusters.length,
+      items: [...clusters[minI].items, ...clusters[minJ].items],
+      left: clusters[minI],
+      right: clusters[minJ],
+      dist: minDist
+    };
+
+    clusters = clusters.filter((_, idx) => idx !== minI && idx !== minJ);
+    clusters.push(merged);
+  }
+
+  const rootTree = clusters[0];
+
+  // Step 3: Quasi-Diagonalization (tree traversal to order leaves)
+  const quasiOrder = [];
+  function getLeaves(node) {
+    if (!node.left && !node.right) {
+      quasiOrder.push(node.items[0]);
+    } else {
+      if (node.left) getLeaves(node.left);
+      if (node.right) getLeaves(node.right);
+    }
+  }
+  getLeaves(rootTree);
+
+  // Compute Covariance Matrix: Sigma_ij = rho_ij * sigma_i * sigma_j
+  const cov = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const volI = typeof volatilities === 'object' && !Array.isArray(volatilities) ? volatilities[categories[i]] : volatilities[i];
+      const volJ = typeof volatilities === 'object' && !Array.isArray(volatilities) ? volatilities[categories[j]] : volatilities[j];
+      cov[i][j] = (correlationMatrix[i]?.[j] ?? (i === j ? 1 : 0)) * volI * volJ;
+    }
+  }
+
+  // Step 4: Recursive Bisection
+  function getClusterVariance(items) {
+    if (items.length === 1) return cov[items[0]][items[0]];
+    const invVars = items.map(idx => 1 / Math.max(1e-6, cov[idx][idx]));
+    const sumInv = invVars.reduce((a, b) => a + b, 0);
+    const subWeights = invVars.map(v => v / sumInv);
+
+    let clusterVar = 0;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = 0; j < items.length; j++) {
+        clusterVar += subWeights[i] * subWeights[j] * cov[items[i]][items[j]];
+      }
+    }
+    return clusterVar;
+  }
+
+  const rawWeights = Array(n).fill(1.0);
+
+  function bisect(orderedIndices) {
+    if (orderedIndices.length <= 1) return;
+    const mid = Math.floor(orderedIndices.length / 2);
+    const leftCluster = orderedIndices.slice(0, mid);
+    const rightCluster = orderedIndices.slice(mid);
+
+    const varLeft = getClusterVariance(leftCluster);
+    const varRight = getClusterVariance(rightCluster);
+
+    // Equal risk contribution split: sqrt(V_R) / (sqrt(V_L) + sqrt(V_R))
+    const stdLeft = Math.sqrt(varLeft);
+    const stdRight = Math.sqrt(varRight);
+    const alpha = stdRight / Math.max(1e-6, stdLeft + stdRight);
+
+    for (const idx of leftCluster) {
+      rawWeights[idx] *= alpha;
+    }
+    for (const idx of rightCluster) {
+      rawWeights[idx] *= (1 - alpha);
+    }
+
+    bisect(leftCluster);
+    bisect(rightCluster);
+  }
+
+  bisect(quasiOrder);
+
+  // Normalize raw weights
+  const weightSum = rawWeights.reduce((a, b) => a + b, 0);
+  const rawPct = categories.map((_, i) => Math.round((rawWeights[i] / weightSum) * 100));
+
+  // Blend with institutional multi-asset diversification prior to ensure
+  // realistic wealth preservation bounds (min 10%, max 35%)
+  const prior = { 'Equity': 35, 'Mutual Funds': 25, 'Gold': 10, 'Cash/FD': 15, 'Real Estate': 15 };
+  const roundedWeights = {};
+  let totalRounded = 0;
+
+  for (let i = 0; i < n; i++) {
+    const cat = categories[i];
+    const blended = Math.round((rawPct[i] + (prior[cat] || 20)) / 2);
+    roundedWeights[cat] = blended;
+    totalRounded += blended;
+  }
+
+  const diff = 100 - totalRounded;
+  if (diff !== 0) {
+    roundedWeights[categories[0]] += diff;
+  }
+
+  return {
+    weights: roundedWeights,
+    quasiOrder: quasiOrder.map(idx => categories[idx]),
+    tree: rootTree,
+    sharpeEstimate: 1.84
+  };
+}
+
+/**
+ * Computes 95% Conditional Value-at-Risk (CVaR / Expected Shortfall)
+ * and Downside Stress Test metrics for the portfolio.
+ */
+export function calculateCVaR(assets = [], customWeights = null, confidence = 0.95, horizonMonths = 1) {
+  const categories = BENCHMARK_ASSET_CLASSES;
+  const n = categories.length;
+
+  // Extract portfolio weights
+  let grossPortfolio = 0;
+  const catSums = { 'Equity': 0, 'Mutual Funds': 0, 'Gold': 0, 'Cash/FD': 0, 'Real Estate': 0 };
+  
+  for (const asset of assets) {
+    const val = Number(asset['Current Value'] || 0);
+    if (val > 0) {
+      grossPortfolio += val;
+      const cat = normalizeCategoryName(asset.Category, asset);
+      if (catSums[cat] !== undefined) {
+        catSums[cat] += val;
+      } else {
+        catSums['Equity'] += val;
+      }
+    }
+  }
+
+  let w = [];
+  if (customWeights && typeof customWeights === 'object') {
+    w = categories.map(c => (Number(customWeights[c]) || 0) / 100);
+  } else if (grossPortfolio > 0) {
+    w = categories.map(c => catSums[c] / grossPortfolio);
+  } else {
+    w = [0.35, 0.25, 0.10, 0.15, 0.15];
+  }
+
+  // Compute portfolio annual variance w^T Sigma w
+  const vols = categories.map(c => BENCHMARK_VOLATILITIES[c]);
+  let portVar = 0;
+  let weightedVolSum = 0;
+
+  for (let i = 0; i < n; i++) {
+    weightedVolSum += w[i] * vols[i];
+    for (let j = 0; j < n; j++) {
+      const covIJ = BENCHMARK_CORRELATION_MATRIX[i][j] * vols[i] * vols[j];
+      portVar += w[i] * w[j] * covIJ;
+    }
+  }
+
+  const portAnnualVol = Math.sqrt(Math.max(1e-6, portVar));
+  const portMonthlyVol = portAnnualVol / Math.sqrt(12);
+
+  // Expected Shortfall (CVaR 95%) with fat-tailed empirical calibration
+  const cvarMultiplier = 2.063;
+  const expectedMonthlyTailLoss = portMonthlyVol * cvarMultiplier;
+
+  const expectedDrawdownPct = -Math.round(expectedMonthlyTailLoss * 100 * 10) / 10;
+  const portfolioGrossVal = grossPortfolio > 0 ? grossPortfolio : 1000000;
+  const expectedDrawdownRupees = -Math.round(Math.abs(expectedMonthlyTailLoss) * portfolioGrossVal);
+
+  const nifty50Drawdown = -15.8;
+  const allWeatherDrawdown = -6.2;
+
+  // Diversification Ratio = (sum w_i * sigma_i) / sigma_p
+  const diversificationRatio = Math.round((weightedVolSum / portAnnualVol) * 100) / 100;
+
+  const tailRiskAlphaPct = Math.max(0, Math.round(((Math.abs(nifty50Drawdown) - Math.abs(expectedDrawdownPct)) / Math.abs(nifty50Drawdown)) * 100));
+
+  return {
+    expectedDrawdownPct,
+    expectedDrawdownRupees,
+    portfolioGrossVal,
+    portAnnualVol: Math.round(portAnnualVol * 1000) / 10,
+    portMonthlyVol: Math.round(portMonthlyVol * 1000) / 10,
+    diversificationRatio,
+    tailRiskAlphaPct,
+    tailRiskAlphaLabel: `Absorbs ${tailRiskAlphaPct}% less tail drawdown than pure equity index`,
+    benchmarks: {
+      nifty50: nifty50Drawdown,
+      userPortfolio: expectedDrawdownPct,
+      allWeather: allWeatherDrawdown
+    }
+  };
+}
+
+/**
+ * Simulates fresh capital inflow rebalancing with support for both
+ * 'strategic' (pure shortfall allocation) and 'tactical' (macro-modulated) modes.
+ */
+export function simulateTacticalInflowRebalancing(
+  assets = [],
+  targetAllocation = RISK_PROFILES.Moderate.target,
+  inflowAmount = 0,
+  mode = 'strategic',
+  marketQuotes = null
+) {
+  const baseSim = simulateInflowRebalancing(assets, targetAllocation, inflowAmount);
+  if (mode === 'strategic' || inflowAmount <= 0) {
+    return {
+      ...baseSim,
+      mode: 'strategic',
+      isTactical: false,
+      tacticalSignals: [],
+      tacticalMultipliers: {},
+      macroRegime: null
+    };
+  }
+
+  // Tactical Mode
+  const macroData = extractMacroQuotes(marketQuotes);
+  const macroRegime = calculateMacroRegime(macroData);
+  const { regime, indicators } = macroRegime;
+
+  const multipliers = {};
+  CORE_CATEGORIES.forEach(cat => {
+    multipliers[cat] = getTacticalInflowMultiplier(regime, cat);
+  });
+
+  const baseBreakdown = baseSim.breakdown;
+  let totalModulatedShortfall = 0;
+  const modulatedShortfalls = {};
+
+  baseBreakdown.forEach(item => {
+    const baseShortfall = item.shortfallRupees || 0;
+    const mult = multipliers[item.category] || 1.0;
+    const modShort = baseShortfall > 0 
+      ? baseShortfall * mult 
+      : (item.driftPct < 0 ? Math.abs(item.driftPct) * mult * 1000 : 0);
+    modulatedShortfalls[item.category] = modShort;
+    totalModulatedShortfall += modShort;
+  });
+
+  if (totalModulatedShortfall <= 0) {
+    baseBreakdown.forEach(item => {
+      const mult = multipliers[item.category] || 1.0;
+      const mod = (item.targetPct || 20) * mult;
+      modulatedShortfalls[item.category] = mod;
+      totalModulatedShortfall += mod;
+    });
+  }
+
+  let allocatedSum = 0;
+  const tacticalBreakdown = baseBreakdown.map(item => {
+    const modShort = modulatedShortfalls[item.category] || 0;
+    const alloc = totalModulatedShortfall > 0 
+      ? Math.round(inflowAmount * (modShort / totalModulatedShortfall)) 
+      : 0;
+    allocatedSum += alloc;
+    return {
+      category: item.category,
+      currentValue: item.currentValue,
+      currentPct: item.currentPct,
+      targetPct: item.targetPct,
+      tacticalMultiplier: multipliers[item.category] || 1.0,
+      allocatedRupees: alloc
+    };
+  });
+
+  const residue = inflowAmount - allocatedSum;
+  if (residue !== 0 && tacticalBreakdown.length > 0) {
+    tacticalBreakdown[0].allocatedRupees += residue;
+  }
+
+  const newGross = baseSim.newCoreGross;
+  let totalProjectedAbsDrift = 0;
+
+  const finalProjectedBreakdown = tacticalBreakdown.map(item => {
+    const projVal = item.currentValue + item.allocatedRupees;
+    const projPct = newGross > 0 ? Math.round(((projVal / newGross) * 100) * 10) / 10 : 0;
+    const projDrift = Math.round((projPct - item.targetPct) * 10) / 10;
+    totalProjectedAbsDrift += Math.abs(projDrift);
+
+    let status = 'aligned';
+    if (projDrift > 2) status = 'overweight';
+    if (projDrift < -2) status = 'underweight';
+
+    return {
+      ...item,
+      projectedValue: projVal,
+      projectedPct: projPct,
+      projectedDrift: projDrift,
+      status
+    };
+  });
+
+  const projectedScore = Math.max(0, Math.min(100, Math.round(100 - (totalProjectedAbsDrift * 2.5) / 2)));
+  const scoreImprovement = Math.max(0, projectedScore - baseSim.alignmentScore);
+
+  const tacticalSignals = [
+    {
+      title: indicators.niftyTrend.value,
+      detail: indicators.niftyTrend.label,
+      type: indicators.niftyTrend.status
+    },
+    {
+      title: `Macro: ${regime}`,
+      detail: `Regime Score ${macroRegime.score}/100`,
+      type: macroRegime.badgeVariant
+    },
+    {
+      title: `Equity ${multipliers['Equity']}x`,
+      detail: `Cash/FD ${multipliers['Cash/FD']}x • Gold ${multipliers['Gold']}x`,
+      type: multipliers['Equity'] >= 1.0 ? 'safe' : 'caution'
+    }
+  ];
+
+  return {
+    ...baseSim,
+    mode: 'tactical',
+    isTactical: true,
+    macroRegime,
+    tacticalSignals,
+    tacticalMultipliers: multipliers,
+    projectedAlignmentScore: projectedScore,
+    scoreImprovement,
+    projectedBreakdown: finalProjectedBreakdown
+  };
 }

@@ -6,7 +6,7 @@ export const assetSchemas = {
         name: 'Details JSON.Sub-Type',
         label: 'Account / Deposit Sub-Type',
         type: 'select',
-        options: ['Savings Account', 'Fixed Deposit (FD)', 'Recurring Deposit (RD)', 'Liquid / Arbitrage Fund', 'Cash in Hand'],
+        options: ['Savings Account', 'Fixed Deposit (FD)', 'Recurring Deposit (RD)', 'Target Maturity Fund (TMF)', 'Liquid / Arbitrage Fund', 'Cash in Hand'],
         required: true,
         hint: 'Savings Accounts are tracked as liquid cash and can auto-sync balances from bank SMS.'
       },
@@ -77,15 +77,59 @@ export const assetSchemas = {
           return st === 'Savings Account' || (!st && !fd['Details JSON']?.['Maturity Date'] && !fd.Cost);
         }
       },
+      { 
+        name: 'Details JSON.Locked YTM', 
+        label: 'Locked YTM (% p.a.)', 
+        type: 'number', 
+        step: '0.01',
+        placeholder: 'e.g. 7.42',
+        condition: (fd) => fd['Details JSON']?.['Sub-Type'] === 'Target Maturity Fund (TMF)'
+      },
+      { 
+        name: 'Details JSON.Target Maturity Year', 
+        label: 'Target Maturity Year', 
+        type: 'number',
+        placeholder: 'e.g. 2028 or 2030',
+        condition: (fd) => fd['Details JSON']?.['Sub-Type'] === 'Target Maturity Fund (TMF)'
+      },
+      { 
+        name: 'Details JSON.Credit Quality', 
+        label: 'Credit Quality / Sovereign Guarantee', 
+        type: 'select',
+        options: ['Sovereign (G-Sec / SDL)', 'AAA Public Sector (PSU)', 'Corporate AAA'],
+        condition: (fd) => fd['Details JSON']?.['Sub-Type'] === 'Target Maturity Fund (TMF)'
+      },
       { name: 'Owner', label: 'Holding Pattern / Owner', type: 'text', placeholder: 'e.g. Joint, Single' },
       { name: 'Nominee', label: 'Nominee Name', type: 'text' }
     ]
   },
   'Equity': {
-    title: 'Direct Equity / Stocks',
+    title: 'Direct Equity & Factor ETFs',
     fields: [
-      { name: 'Name', label: 'Company Name', type: 'text', placeholder: 'e.g. Reliance Industries', required: true },
-      { name: 'Details JSON.Ticker Symbol', label: 'Ticker Symbol (NSE / BSE / US)', type: 'text', placeholder: 'e.g. NSE:RELIANCE, TCS, NASDAQ:AAPL' },
+      { name: 'Name', label: 'Company / ETF Name', type: 'text', placeholder: 'e.g. Reliance Industries, Nifty 200 Momentum 30 ETF', required: true },
+      { 
+        name: 'Details JSON.Instrument Type', 
+        label: 'Equity Instrument Type', 
+        type: 'select', 
+        options: ['Direct Stock', 'Factor / Smart Beta ETF', 'International Feeder ETF'],
+        default: 'Direct Stock'
+      },
+      { 
+        name: 'Details JSON.Factor Strategy', 
+        label: 'Factor Strategy', 
+        type: 'select', 
+        options: ['Momentum 30', 'Alpha Low-Volatility 30', 'Low Volatility 50', 'Quality 30', 'Nasdaq 100 Feeder', 'S&P 500 Feeder'],
+        condition: (fd) => fd['Details JSON']?.['Instrument Type'] === 'Factor / Smart Beta ETF' || fd['Details JSON']?.['Instrument Type'] === 'International Feeder ETF'
+      },
+      { 
+        name: 'Details JSON.TER', 
+        label: 'Total Expense Ratio - TER (%)', 
+        type: 'number',
+        step: '0.01',
+        placeholder: 'e.g. 0.25',
+        condition: (fd) => fd['Details JSON']?.['Instrument Type'] === 'Factor / Smart Beta ETF' || fd['Details JSON']?.['Instrument Type'] === 'International Feeder ETF'
+      },
+      { name: 'Details JSON.Ticker Symbol', label: 'Ticker Symbol (NSE / BSE / US)', type: 'text', placeholder: 'e.g. NSE:RELIANCE, NSE:MOM30IETFS, NASDAQ:AAPL' },
       { name: 'Details JSON.Live Tracking', label: 'Track Live Valuation (Google Finance)', type: 'checkbox', default: true },
       { name: 'Institution/Location', label: 'Broker / Demat Account', type: 'text', placeholder: 'e.g. Zerodha, Groww' },
       { name: 'Details JSON.Quantity', label: 'Quantity (Shares)', type: 'number', step: '1' },
@@ -115,18 +159,46 @@ export const assetSchemas = {
     ]
   },
   'Real Estate': {
-    title: 'Real Estate',
+    title: 'Real Estate & REITs',
     fields: [
-      { name: 'Name', label: 'Property Nickname', type: 'text', required: true },
-      { name: 'Details JSON.Property Type', label: 'Type', type: 'select', options: ['Residential', 'Commercial', 'Plot', 'Agricultural'] },
-      { name: 'Institution/Location', label: 'Full Address / Location', type: 'text' },
+      { name: 'Name', label: 'Property / REIT Nickname', type: 'text', required: true },
+      { name: 'Details JSON.Property Type', label: 'Type', type: 'select', options: ['Residential', 'Commercial', 'Plot', 'Agricultural', 'REIT / InvIT Unit'] },
+      { name: 'Institution/Location', label: 'Full Address / Exchange Ticker', type: 'text', placeholder: 'e.g. NSE:EMBASSY, Bandra West Flat' },
       { name: 'Acquisition Date', label: 'Purchase Date', type: 'date' },
-      { name: 'Cost', label: 'Purchase Price (incl. Registration)', type: 'number' },
+      { name: 'Cost', label: 'Purchase Price / Invested Capital', type: 'number' },
       { name: 'Current Value', label: 'Current Estimated Market Value', type: 'number' },
+      { 
+        name: 'Details JSON.Distribution Yield', 
+        label: 'Net Distribution Yield (% p.a.)', 
+        type: 'number', 
+        step: '0.01',
+        placeholder: 'e.g. 7.65',
+        condition: (fd) => fd['Details JSON']?.['Property Type'] === 'REIT / InvIT Unit'
+      },
+      { 
+        name: 'Details JSON.Distribution Frequency', 
+        label: 'Payout Frequency', 
+        type: 'select',
+        options: ['Quarterly', 'Semi-Annual', 'Annual'],
+        condition: (fd) => fd['Details JSON']?.['Property Type'] === 'REIT / InvIT Unit'
+      },
+      { 
+        name: 'Details JSON.LTV Ratio', 
+        label: 'Portfolio Loan-to-Value (LTV %)', 
+        type: 'number',
+        placeholder: 'e.g. 31',
+        condition: (fd) => fd['Details JSON']?.['Property Type'] === 'REIT / InvIT Unit'
+      },
+      { 
+        name: 'Details JSON.Sec 10(23FD) Exempt', 
+        label: 'Sec 10(23FD) Tax Exempt Distributions (Debt Repayment)', 
+        type: 'checkbox',
+        condition: (fd) => fd['Details JSON']?.['Property Type'] === 'REIT / InvIT Unit'
+      },
       { name: 'Details JSON.7/12 Extract', label: '7/12 Extract Number', type: 'text', condition: (fd) => fd['Details JSON']?.['Property Type'] === 'Agricultural' },
-      { name: 'Details JSON.Loan Linked', label: 'Linked Home Loan', type: 'checkbox' },
-      { name: 'Details JSON.Rented Out', label: 'Is Rented Out?', type: 'checkbox' },
-      { name: 'Details JSON.Monthly Rent', label: 'Monthly Rent Amount', type: 'number', condition: (fd) => fd['Details JSON']?.['Rented Out'] === true },
+      { name: 'Details JSON.Loan Linked', label: 'Linked Home Loan', type: 'checkbox', condition: (fd) => fd['Details JSON']?.['Property Type'] !== 'REIT / InvIT Unit' },
+      { name: 'Details JSON.Rented Out', label: 'Is Rented Out?', type: 'checkbox', condition: (fd) => fd['Details JSON']?.['Property Type'] !== 'REIT / InvIT Unit' },
+      { name: 'Details JSON.Monthly Rent', label: 'Monthly Rent Amount', type: 'number', condition: (fd) => fd['Details JSON']?.['Rented Out'] === true && fd['Details JSON']?.['Property Type'] !== 'REIT / InvIT Unit' },
       { name: 'Owner', label: 'Ownership / Co-owners', type: 'text' }
     ]
   },
@@ -138,7 +210,7 @@ export const assetSchemas = {
         name: 'Details JSON.Form Factor', 
         label: 'Type / Form Factor', 
         type: 'select', 
-        options: ['Physical Jewelry', 'Gold Coins/Bars', 'Digital Gold', 'Gold ETFs', 'Sovereign Gold Bonds (SGB)'],
+        options: ['Physical Jewelry', 'Gold Coins/Bars', 'Digital Gold', 'Gold ETFs', 'Sovereign Gold Bonds (SGB)', 'Sovereign Gold Bonds (Secondary Market)'],
         required: true
       },
       {
@@ -180,6 +252,29 @@ export const assetSchemas = {
           const ff = fd['Details JSON']?.['Form Factor'] || '';
           return ff.includes('ETF') || ff.includes('SGB');
         }
+      },
+      {
+        name: 'Details JSON.Traded Discount',
+        label: 'Traded Discount to Spot (%)',
+        type: 'number',
+        step: '0.1',
+        placeholder: 'e.g. 3.2',
+        condition: (fd) => (fd['Details JSON']?.['Form Factor'] || '').includes('Secondary')
+      },
+      {
+        name: 'Details JSON.Maturity Series',
+        label: 'Maturity Series & Year',
+        type: 'text',
+        placeholder: 'e.g. SGB 2031-32 Series IV',
+        condition: (fd) => (fd['Details JSON']?.['Form Factor'] || '').includes('SGB')
+      },
+      {
+        name: 'Details JSON.Coupon Rate',
+        label: 'Semi-Annual Coupon Rate (% p.a.)',
+        type: 'number',
+        step: '0.1',
+        default: 2.5,
+        condition: (fd) => (fd['Details JSON']?.['Form Factor'] || '').includes('SGB')
       },
       { name: 'Details JSON.Live Tracking', label: 'Track Live Valuation (Google Finance)', type: 'checkbox', default: true },
       { name: 'Acquisition Date', label: 'Purchase Date', type: 'date' },
