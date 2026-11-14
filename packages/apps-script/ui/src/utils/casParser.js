@@ -7,7 +7,7 @@
  * composite key reconciliation (Folio + ISIN), and live quote valuation sync.
  */
 
-import { getSafeStorage } from './storage';
+import { getSafeStorage } from './storage.js';
 
 /**
  * Dynamically loads PDF.js library from Cloudflare CDN on-demand
@@ -680,7 +680,7 @@ export function reconcileCasWithLedger(
       const schemeCode = existingDetails['Scheme Code'] || h.scheme_code;
 
       // Check if live tracking quote exists
-      const livePrice = quotesMap[schemeCode] || quotesMap[hIsin] || null;
+      const livePrice = quotesMap[schemeCode] || quotesMap[hIsin] || h.live_nav || null;
       const effectiveNav = livePrice && livePrice > 0 ? livePrice : hNav;
       const effectiveCurrentVal = Math.round((hUnits * effectiveNav) * 100) / 100;
 
@@ -694,6 +694,12 @@ export function reconcileCasWithLedger(
       if (hUnits === 0 && oldUnits > 0) {
         status = 'redeemed';
         statusLabel = 'Redeemed / Zero Units';
+      } else if (!existingDetails['Scheme Code'] && (schemeCode || h.scheme_code || hIsin)) {
+        status = 'updated';
+        statusLabel = 'Link AMFI Code';
+      } else if (!existingDetails.ISIN && hIsin) {
+        status = 'updated';
+        statusLabel = 'Link ISIN';
       } else if (unitsDelta > 0.005) {
         status = 'updated';
         statusLabel = 'SIP Credited';
@@ -719,6 +725,7 @@ export function reconcileCasWithLedger(
         institution: matchedAsset['Institution/Location'] || h.institution || 'Mutual Fund AMC',
         folioNumber: hFolio || matchedAsset.Identifiers || '',
         isin: hIsin || existingDetails.ISIN || '',
+        schemeCode: schemeCode || existingDetails['Scheme Code'] || h.scheme_code || '',
         category: matchedAsset.Category || 'Mutual Funds',
         owner: matchedAsset.Owner || detectedOwner || 'Single',
         nominee: matchedAsset.Nominee || '',
@@ -748,7 +755,10 @@ export function reconcileCasWithLedger(
     } else {
       // New Unrecorded Holding
       newCount++;
-      const effectiveCurrentVal = Math.round((hUnits * hNav) * 100) / 100;
+      const schemeCode = h.scheme_code || '';
+      const livePrice = (schemeCode && quotesMap[schemeCode]) || (hIsin && quotesMap[hIsin]) || h.live_nav || null;
+      const effectiveNav = livePrice && livePrice > 0 ? livePrice : hNav;
+      const effectiveCurrentVal = Math.round((hUnits * effectiveNav) * 100) / 100;
       totalValuationDelta += effectiveCurrentVal;
 
       candidates.push({
@@ -759,6 +769,7 @@ export function reconcileCasWithLedger(
         institution: h.institution || 'Mutual Fund AMC',
         folioNumber: hFolio,
         isin: hIsin,
+        schemeCode: schemeCode,
         category: 'Mutual Funds',
         owner: detectedOwner || 'Nozel Rosario',
         nominee: '',
@@ -772,8 +783,8 @@ export function reconcileCasWithLedger(
         // NAV
         oldNav: 0,
         statementNav: hNav,
-        liveNav: null,
-        effectiveNav: hNav,
+        liveNav: livePrice,
+        effectiveNav: effectiveNav,
         // Cost
         oldCost: 0,
         newCost: hCost,
@@ -849,3 +860,125 @@ export function reconcileCasWithLedger(
     }
   };
 }
+
+/**
+ * Deterministically resolves an AMFI scheme code and latest NAV from AMFI master data (NAVAll.txt)
+ * @param {string} amfiMasterText - Raw text of AMFI NAVAll.txt
+ * @param {string} isin - 12-char ISIN code (e.g. INF879O01027)
+ */
+export function resolveAmfiSchemeFromAmfiText(amfiMasterText, isin) {
+  if (!amfiMasterText || !isin) return null;
+  const cleanIsin = String(isin).trim().toUpperCase();
+  if (!/^INF[A-Z0-9]{9}$/i.test(cleanIsin)) return null;
+
+  const lines = amfiMasterText.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || line.indexOf(cleanIsin) === -1) continue;
+    const parts = line.split(';');
+    if (parts.length >= 7) {
+      const col1 = (parts[1] || '').trim().toUpperCase();
+      const col2 = (parts[2] || '').trim().toUpperCase();
+      if (col1 === cleanIsin || col2 === cleanIsin) {
+        return {
+          schemeCode: parts[0].trim(),
+          isin: cleanIsin,
+          isinGrowth: parts[1].trim(),
+          isinReinvest: parts[2].trim(),
+          schemeName: [parts[3], parts[4], parts[5]].filter(Boolean).map(s => s.trim()).join(' '),
+          nav: parseFloat(parts[6]) || 0,
+          date: parts[7] ? parts[7].trim() : ''
+        };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolves an Indian Mutual Fund Scheme Name to AMFI Scheme Code & NAV
+ * from raw AMFI master text (NAVAll.txt).
+ *
+ * @param {string} amfiMasterText - Raw text of AMFI NAVAll.txt
+ * @param {string} schemeName - Fund scheme name (e.g. "Parag Parikh Flexi Cap Fund Direct Growth")
+ */
+export function resolveAmfiSchemeByNameFromAmfiText(amfiMasterText, schemeName) {
+  if (!amfiMasterText || !schemeName || typeof schemeName !== 'string') return null;
+  const cleanInput = schemeName.toLowerCase().replace(/[-–—/(),.]/g, ' ').replace(/\s+/g, ' ').trim();
+  const inputTokens = cleanInput.split(' ').filter(w => w.length >= 2);
+  if (inputTokens.length === 0) return null;
+
+  const isDirect = cleanInput.includes('direct') || cleanInput.includes(' dir ');
+  const isRegular = cleanInput.includes('regular') || cleanInput.includes(' reg ');
+  const isGrowth = cleanInput.includes('growth') || cleanInput.includes(' gr ');
+  const isIdcw = cleanInput.includes('idcw') || cleanInput.includes('dividend') || cleanInput.includes(' div ');
+
+  const stopWords = new Set(['fund', 'mutual', 'plan', 'option', 'scheme', 'india', 'direct', 'regular', 'growth', 'idcw', 'dividend']);
+  const coreTokens = inputTokens.filter(t => !stopWords.has(t) && t.length >= 3);
+
+  const lines = amfiMasterText.split('\n');
+  let bestMatch = null;
+  let highestScore = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || line.indexOf(';') === -1) continue;
+    const parts = line.split(';');
+    if (parts.length < 7) continue;
+
+    const code = parts[0].trim();
+    if (!/^\d+$/.test(code)) continue;
+
+    const col1 = (parts[1] || '').trim().toUpperCase();
+    const col2 = (parts[2] || '').trim().toUpperCase();
+    const fullName = [parts[3], parts[4], parts[5]].filter(Boolean).map(s => s.trim()).join(' ');
+    const normLine = fullName.toLowerCase().replace(/[-–—/(),.]/g, ' ').replace(/\s+/g, ' ');
+
+    let matched = 0;
+    for (const t of coreTokens) {
+      if (normLine.includes(t)) matched++;
+    }
+
+    if (coreTokens.length > 0 && matched === 0) continue;
+    const matchRatio = coreTokens.length > 0 ? (matched / coreTokens.length) : 0;
+    if (coreTokens.length >= 2 && matched < 2 && matchRatio < 0.6) continue;
+
+    let score = matched * 20;
+
+    const lineIsDirect = normLine.includes('direct');
+    const lineIsRegular = normLine.includes('regular');
+    if (isDirect) {
+      if (lineIsDirect) score += 30;
+      else if (lineIsRegular) score -= 40;
+    } else if (isRegular) {
+      if (lineIsRegular) score += 30;
+      else if (lineIsDirect) score -= 40;
+    }
+
+    const lineIsGrowth = normLine.includes('growth');
+    const lineIsIdcw = normLine.includes('idcw') || normLine.includes('dividend');
+    if (isGrowth) {
+      if (lineIsGrowth) score += 30;
+      else if (lineIsIdcw) score -= 40;
+    } else if (isIdcw) {
+      if (lineIsIdcw) score += 30;
+      else if (lineIsGrowth) score -= 40;
+    }
+
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = {
+        schemeCode: code,
+        isin: (col1 && col1 !== '-') ? col1 : ((col2 && col2 !== '-') ? col2 : ''),
+        isinGrowth: col1,
+        isinReinvest: col2,
+        schemeName: fullName,
+        nav: parseFloat(parts[6]) || 0,
+        date: parts[7] ? parts[7].trim() : ''
+      };
+    }
+  }
+
+  return highestScore >= 40 ? bestMatch : null;
+}
+
