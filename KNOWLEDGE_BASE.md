@@ -25,6 +25,20 @@
 ✅ **Privacy Masking**: Implemented one-tap toggle for masking numeric balances.
 ✅ **Branding & Assets**: Injected custom logo and splash screen.
 
+## Feature Update (v4.1) - CAS Mutual Fund AMFI Code Auto-Resolution & ISIN Retention for Live NAV Sync (Issue #93)
+✅ **Deterministic ISIN-to-AMFI Scheme Code Resolution (`resolveAmfiSchemeByIsin`)**:
+  - Ingests official AMFI daily time-series master table (`NAVAll.txt`) to deterministically resolve 12-character ISIN codes (e.g. `INF879O01027`) to their exact numeric 6-digit AMFI Scheme Code (`122639`) and live EOD NAV.
+  - Matches across both Column 1 (Growth / IDCW Payout) and Column 2 (Dividend Reinvestment) with 6-hour Apps Script `CacheService` acceleration.
+  - Features high-throughput batch backend resolution (`resolveAmfiCodesBatch`) and client-side fallback via `api.mfapi.in` search.
+✅ **Strict ISIN Retention on Asset Details & UI**:
+  - Mutual fund assets now persistently store both `Details JSON.ISIN` and `Details JSON['Scheme Code']`.
+  - Added dedicated `ISIN Code` field in `assetSchemas.js` under the `Mutual Funds` schema for seamless viewing and editing in `DynamicForm`.
+  - Displays inline ISIN pill in asset card metadata on `AssetsTab.jsx` and candidate cards in `CasSyncModal.jsx`.
+✅ **Automatic Self-Healing on "Sync Market Rates"**:
+  - `syncLiveValuationsToSheet` in `Code.gs` automatically inspects any mutual fund missing `Scheme Code` that has an `ISIN`, resolves the AMFI code, writes it back into `Details JSON`, registers it under `MarketQuotes`, and updates its live valuation.
+  - Heals legacy `MarketQuotes` rows previously saved with alphanumeric ISINs, converting them into official `AMFI NAV` tracking rows.
+  - Prevents erroneous `=GOOGLEFINANCE(...)` fallback generation for mutual fund holdings.
+
 ## Feature Update (v3.9) - Revamped Assets & Wealth Portfolio Tab with Cockpit Stats, Owner Breakdown & Advanced Filters (Issue #81)
 ✅ **Streamlined Single Valuation Ribbon (Screen 21)**:
   - Eliminated the bulky 3 sub-cards (Invested Cost, Unrealized P&L, Live Coverage) to reclaim ~180px of vertical space.

@@ -145,6 +145,7 @@ export const assetSchemas = {
     fields: [
       { name: 'Name', label: 'Scheme Name', type: 'text', placeholder: 'e.g. Parag Parikh Flexi Cap Fund', required: true },
       { name: 'Details JSON.Scheme Code', label: 'AMFI Scheme Code / Ticker', type: 'text', placeholder: 'e.g. 122639 or search scheme' },
+      { name: 'Details JSON.ISIN', label: 'ISIN Code', type: 'text', placeholder: 'e.g. INF879O01027' },
       { name: 'Details JSON.Live Tracking', label: 'Track Live NAV Valuation', type: 'checkbox', default: true },
       { name: 'Institution/Location', label: 'AMC / Fund House', type: 'text', placeholder: 'e.g. PPFAS Mutual Fund' },
       { name: 'Identifiers', label: 'Folio Number', type: 'text' },
