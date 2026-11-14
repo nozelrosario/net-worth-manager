@@ -494,6 +494,10 @@ export default function DynamicForm({
           if (json.meta?.fund_house) {
             updated = setNestedValue(updated, 'Institution/Location', json.meta.fund_house);
           }
+          const isin = json.meta?.isin_growth || json.meta?.isin_div_reinvestment;
+          if (isin) {
+            updated = setNestedValue(updated, 'Details JSON.ISIN', isin);
+          }
           const units = Number(updated['Details JSON']?.['Units'] || 0);
           if (units > 0 && nav > 0) {
             updated['Current Value'] = Math.round(units * nav * 100) / 100;

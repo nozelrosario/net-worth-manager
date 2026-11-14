@@ -16,6 +16,60 @@ import {
   reconcileCasWithLedger 
 } from '../utils/casParser';
 
+async function resolveAmfiForHoldings(holdings) {
+  if (!Array.isArray(holdings) || holdings.length === 0) return;
+  const token = getSafeStorage('nwm_session_token');
+
+  // 1. Primary: Try Backend Apps Script batch resolution
+  if (window.google?.script?.run?.resolveAmfiCodesBatch && token) {
+    try {
+      const backendRes = await new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(null), 15000);
+        window.google.script.run
+          .withSuccessHandler((res) => { clearTimeout(timeout); resolve(res); })
+          .withFailureHandler((err) => { clearTimeout(timeout); console.warn('resolveAmfiCodesBatch error:', err); resolve(null); })
+          .resolveAmfiCodesBatch(holdings, token);
+      });
+
+      if (backendRes && backendRes.status === 'success' && backendRes.resolved) {
+        for (const h of holdings) {
+          const isinKey = String(h.isin || '').trim().toUpperCase();
+          if (isinKey && backendRes.resolved[isinKey]) {
+            const r = backendRes.resolved[isinKey];
+            h.scheme_code = r.schemeCode;
+            if (r.nav > 0) {
+              h.live_nav = r.nav;
+              h.live_nav_date = r.date;
+            }
+          }
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn('Backend AMFI batch resolution skipped:', e);
+    }
+  }
+
+  // 2. Client-side resolution fallback (preview / dev mode)
+  try {
+    const unmapped = holdings.filter(h => !h.scheme_code && h.name);
+    await Promise.all(unmapped.slice(0, 15).map(async (h) => {
+      try {
+        const cleanName = String(h.name).replace(/[-–—/()]/g, ' ').replace(/\s+/g, ' ').trim();
+        const searchRes = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(cleanName.slice(0, 40))}`);
+        if (searchRes.ok) {
+          const list = await searchRes.json();
+          if (Array.isArray(list) && list.length > 0) {
+            h.scheme_code = String(list[0].schemeCode);
+          }
+        }
+      } catch (e) {}
+    }));
+  } catch (eClient) {
+    console.warn('Client fallback AMFI resolution warning:', eClient);
+  }
+}
+
 export default function CasSyncModal({
   isOpen,
   onClose,
@@ -151,6 +205,10 @@ export default function CasSyncModal({
       if (!geminiResult || !Array.isArray(geminiResult.holdings) || geminiResult.holdings.length === 0) {
         throw new Error('No mutual fund holdings found in the parsed statement. Please verify that the export format was "Summary".');
       }
+
+      // Step 2.5: Auto-resolve AMFI Scheme Codes & Live Rates
+      setProcessingStatusText('Resolving AMFI Scheme Codes & Live Rates...');
+      await resolveAmfiForHoldings(geminiResult.holdings);
 
       // Step 3: Snapshot Reconciliation with existing database
       setProcessingStatusText('Reconciling units, SIPs & live valuations...');
@@ -359,6 +417,9 @@ export default function CasSyncModal({
     const assetsToInsert = [];
 
     for (const item of selectedItems) {
+      const schemeCodeToSave = item.schemeCode || item.existingDetails?.['Scheme Code'] || '';
+      const isinToSave = item.isin || item.existingDetails?.['ISIN'] || '';
+
       if (item.isExisting && item.assetId) {
         assetsToUpdate.push({
           'Asset ID': item.assetId,
@@ -369,7 +430,8 @@ export default function CasSyncModal({
           'Details JSON': {
             'Units': item.newUnits,
             'Average NAV': item.effectiveNav,
-            'ISIN': item.isin,
+            'ISIN': isinToSave,
+            'Scheme Code': schemeCodeToSave,
             'Live Tracking': true,
             'Statement NAV': item.statementNav
           }
@@ -388,7 +450,8 @@ export default function CasSyncModal({
           'Details JSON': {
             'Units': item.newUnits,
             'Average NAV': item.effectiveNav,
-            'ISIN': item.isin,
+            'ISIN': isinToSave,
+            'Scheme Code': schemeCodeToSave,
             'Live Tracking': true,
             'Statement NAV': item.statementNav
           }
@@ -733,6 +796,9 @@ export default function CasSyncModal({
                         )}
                         {item.isin && (
                           <span className="text-[10px] text-text-muted">• {item.isin}</span>
+                        )}
+                        {item.schemeCode && (
+                          <span className="text-[10px] text-primary-accent font-mono font-medium">• AMFI: {item.schemeCode}</span>
                         )}
                       </div>
                       <h2 className="text-xs font-bold text-text-primary line-clamp-2 mt-1 leading-snug">{item.name}</h2>

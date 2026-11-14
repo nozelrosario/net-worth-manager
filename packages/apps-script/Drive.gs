@@ -567,6 +567,15 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
           }
           existingDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
 
+          // Ensure AMFI Scheme Code is resolved if only ISIN exists
+          var targetIsin = existingDetails['ISIN'] || newDetails['ISIN'];
+          if (!existingDetails['Scheme Code'] && targetIsin) {
+            var resolvedU = resolveAmfiSchemeByIsin(targetIsin);
+            if (resolvedU && resolvedU.schemeCode) {
+              existingDetails['Scheme Code'] = resolvedU.schemeCode;
+            }
+          }
+
           // Update Current Value
           if (valCol !== -1 && item['Current Value'] !== undefined) {
             sheet.getRange(rowIdx, valCol + 1).setValue(Number(item['Current Value']) || 0);
@@ -578,6 +587,12 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
           // Update Details JSON
           if (detailsCol !== -1) {
             sheet.getRange(rowIdx, detailsCol + 1).setValue(JSON.stringify(existingDetails));
+          }
+          // Register in MarketQuotes
+          if (existingDetails['Scheme Code']) {
+            try {
+              registerMarketQuote(ss, existingDetails['Scheme Code'], 'Mutual Funds', String(existingRow[nameCol] || item.Name || ''));
+            } catch(eUpQuote) {}
           }
           // Update Identifiers (Folio) if provided and empty
           if (identCol !== -1 && item['Identifiers'] && !existingRow[identCol]) {
@@ -607,6 +622,17 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
         insDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
         if (insDetails['Live Tracking'] === undefined) {
           insDetails['Live Tracking'] = true;
+        }
+
+        // Auto-resolve AMFI Scheme Code from ISIN if not already present
+        var schemeCode = insDetails['Scheme Code'];
+        var isin = insDetails['ISIN'];
+        if (!schemeCode && isin) {
+          var resolvedI = resolveAmfiSchemeByIsin(isin);
+          if (resolvedI && resolvedI.schemeCode) {
+            schemeCode = resolvedI.schemeCode;
+            insDetails['Scheme Code'] = schemeCode;
+          }
         }
 
         for (var h = 0; h < headers.length; h++) {

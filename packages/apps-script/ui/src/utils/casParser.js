@@ -7,7 +7,7 @@
  * composite key reconciliation (Folio + ISIN), and live quote valuation sync.
  */
 
-import { getSafeStorage } from './storage';
+import { getSafeStorage } from './storage.js';
 
 /**
  * Dynamically loads PDF.js library from Cloudflare CDN on-demand
@@ -680,7 +680,7 @@ export function reconcileCasWithLedger(
       const schemeCode = existingDetails['Scheme Code'] || h.scheme_code;
 
       // Check if live tracking quote exists
-      const livePrice = quotesMap[schemeCode] || quotesMap[hIsin] || null;
+      const livePrice = quotesMap[schemeCode] || quotesMap[hIsin] || h.live_nav || null;
       const effectiveNav = livePrice && livePrice > 0 ? livePrice : hNav;
       const effectiveCurrentVal = Math.round((hUnits * effectiveNav) * 100) / 100;
 
@@ -719,6 +719,7 @@ export function reconcileCasWithLedger(
         institution: matchedAsset['Institution/Location'] || h.institution || 'Mutual Fund AMC',
         folioNumber: hFolio || matchedAsset.Identifiers || '',
         isin: hIsin || existingDetails.ISIN || '',
+        schemeCode: schemeCode || existingDetails['Scheme Code'] || h.scheme_code || '',
         category: matchedAsset.Category || 'Mutual Funds',
         owner: matchedAsset.Owner || detectedOwner || 'Single',
         nominee: matchedAsset.Nominee || '',
@@ -748,7 +749,10 @@ export function reconcileCasWithLedger(
     } else {
       // New Unrecorded Holding
       newCount++;
-      const effectiveCurrentVal = Math.round((hUnits * hNav) * 100) / 100;
+      const schemeCode = h.scheme_code || '';
+      const livePrice = (schemeCode && quotesMap[schemeCode]) || (hIsin && quotesMap[hIsin]) || h.live_nav || null;
+      const effectiveNav = livePrice && livePrice > 0 ? livePrice : hNav;
+      const effectiveCurrentVal = Math.round((hUnits * effectiveNav) * 100) / 100;
       totalValuationDelta += effectiveCurrentVal;
 
       candidates.push({
@@ -759,6 +763,7 @@ export function reconcileCasWithLedger(
         institution: h.institution || 'Mutual Fund AMC',
         folioNumber: hFolio,
         isin: hIsin,
+        schemeCode: schemeCode,
         category: 'Mutual Funds',
         owner: detectedOwner || 'Nozel Rosario',
         nominee: '',
@@ -772,8 +777,8 @@ export function reconcileCasWithLedger(
         // NAV
         oldNav: 0,
         statementNav: hNav,
-        liveNav: null,
-        effectiveNav: hNav,
+        liveNav: livePrice,
+        effectiveNav: effectiveNav,
         // Cost
         oldCost: 0,
         newCost: hCost,
@@ -849,3 +854,38 @@ export function reconcileCasWithLedger(
     }
   };
 }
+
+/**
+ * Deterministically resolves an AMFI scheme code and latest NAV from AMFI master data (NAVAll.txt)
+ * @param {string} amfiMasterText - Raw text of AMFI NAVAll.txt
+ * @param {string} isin - 12-char ISIN code (e.g. INF879O01027)
+ */
+export function resolveAmfiSchemeFromAmfiText(amfiMasterText, isin) {
+  if (!amfiMasterText || !isin) return null;
+  const cleanIsin = String(isin).trim().toUpperCase();
+  if (!/^INF[A-Z0-9]{9}$/i.test(cleanIsin)) return null;
+
+  const lines = amfiMasterText.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || line.indexOf(cleanIsin) === -1) continue;
+    const parts = line.split(';');
+    if (parts.length >= 7) {
+      const col1 = (parts[1] || '').trim().toUpperCase();
+      const col2 = (parts[2] || '').trim().toUpperCase();
+      if (col1 === cleanIsin || col2 === cleanIsin) {
+        return {
+          schemeCode: parts[0].trim(),
+          isin: cleanIsin,
+          isinGrowth: parts[1].trim(),
+          isinReinvest: parts[2].trim(),
+          schemeName: [parts[3], parts[4], parts[5]].filter(Boolean).map(s => s.trim()).join(' '),
+          nav: parseFloat(parts[6]) || 0,
+          date: parts[7] ? parts[7].trim() : ''
+        };
+      }
+    }
+  }
+  return null;
+}
+

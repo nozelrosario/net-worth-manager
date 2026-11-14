@@ -541,6 +541,144 @@ function fetchAmfiNav(schemeCode) {
   return null;
 }
 
+/**
+ * Global memory cache for NAVAll.txt during script execution
+ */
+var _cachedAmfiMasterText = null;
+
+function getAmfiNavAllMasterText() {
+  if (_cachedAmfiMasterText) {
+    return _cachedAmfiMasterText;
+  }
+  try {
+    var url = 'https://portal.amfiindia.com/spages/NAVAll.txt';
+    var response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (response.getResponseCode() === 200) {
+      _cachedAmfiMasterText = response.getContentText();
+      return _cachedAmfiMasterText;
+    }
+  } catch (e) {
+    console.error('Error fetching AMFI NAVAll.txt: ' + e);
+  }
+  return null;
+}
+
+/**
+ * Resolves an Indian Mutual Fund ISIN code (e.g. INF879O01027) to its AMFI Scheme Code & latest NAV.
+ * Searches both Column 1 (Growth/Payout) and Column 2 (Reinvestment) in AMFI master data.
+ */
+function resolveAmfiSchemeByIsin(isin) {
+  if (!isin) return null;
+  var cleanIsin = String(isin).trim().toUpperCase();
+  if (!/^INF[A-Z0-9]{9}$/i.test(cleanIsin)) return null;
+
+  // 1. Check ScriptCache for fast resolution
+  try {
+    var cache = CacheService.getScriptCache();
+    var cachedJson = cache.get('AMFI_ISIN_' + cleanIsin);
+    if (cachedJson) {
+      return JSON.parse(cachedJson);
+    }
+  } catch(eCache) {}
+
+  // 2. Search AMFI official master list
+  var text = getAmfiNavAllMasterText();
+  if (text) {
+    var lines = text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (!line || line.indexOf(cleanIsin) === -1) continue;
+      var parts = line.split(';');
+      if (parts.length >= 7) {
+        var col1 = (parts[1] || '').trim().toUpperCase();
+        var col2 = (parts[2] || '').trim().toUpperCase();
+        if (col1 === cleanIsin || col2 === cleanIsin) {
+          var schemeCode = String(parts[0] || '').trim();
+          var nav = parseFloat(parts[6]) || 0;
+          var navDate = parts[7] ? String(parts[7]).trim() : '';
+          var sName = [parts[3], parts[4], parts[5]].filter(Boolean).map(function(s) { return String(s).trim(); }).join(' ');
+
+          var result = {
+            status: 'success',
+            schemeCode: schemeCode,
+            isin: cleanIsin,
+            isinGrowth: col1,
+            isinReinvest: col2,
+            schemeName: sName,
+            nav: nav,
+            date: navDate
+          };
+
+          try {
+            CacheService.getScriptCache().put('AMFI_ISIN_' + cleanIsin, JSON.stringify(result), 21600);
+          } catch(ePut) {}
+
+          return result;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Batch resolves AMFI Scheme Codes & NAVs for an array of CAS holding items
+ */
+function resolveAmfiCodesBatch(items, idToken) {
+  try {
+    var userInfo = getCurrentUserInfo(idToken);
+    if (!userInfo.isAuthorized) {
+      return { status: 'error', message: 'Unauthorized' };
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return { status: 'success', resolved: {} };
+    }
+
+    var resolved = {};
+    // Pre-fetch text so all searches share single network transfer
+    getAmfiNavAllMasterText();
+
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var isin = String(item.isin || '').trim().toUpperCase();
+      if (!isin || !/^INF[A-Z0-9]{9}$/i.test(isin)) continue;
+
+      if (resolved[isin]) continue;
+
+      var match = resolveAmfiSchemeByIsin(isin);
+      if (match) {
+        resolved[isin] = match;
+      } else if (item.name) {
+        try {
+          var cleanName = String(item.name).replace(/[-–—/()]/g, ' ').replace(/\s+/g, ' ').trim();
+          var searchRes = searchAmfiSchemes(cleanName.slice(0, 40));
+          if (searchRes && searchRes.status === 'success' && searchRes.data && searchRes.data.length > 0) {
+            var top = searchRes.data[0];
+            resolved[isin] = {
+              status: 'success',
+              schemeCode: String(top.schemeCode),
+              isin: isin,
+              schemeName: top.schemeName,
+              nav: 0,
+              date: ''
+            };
+          }
+        } catch(eSearch) {}
+      }
+    }
+
+    return {
+      status: 'success',
+      resolved: resolved,
+      count: Object.keys(resolved).length
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
 var STOCK_ALIASES = {
   'RIL': 'NSE:RELIANCE',
   'RELIANCE': 'NSE:RELIANCE',
@@ -1065,6 +1203,17 @@ function registerMarketQuote(ss, symbol, type, displayName) {
   symbol = String(symbol).trim();
   
   var cleanSymbol = (type === 'Equity' || type === 'Gold') ? normalizeStockSymbol(symbol) : symbol;
+
+  // Auto-resolve Mutual Fund ISIN to numeric AMFI Scheme Code
+  if (type === 'Mutual Funds' && /^INF[A-Z0-9]{9}$/i.test(cleanSymbol)) {
+    var resolved = resolveAmfiSchemeByIsin(cleanSymbol);
+    if (resolved && resolved.schemeCode) {
+      cleanSymbol = resolved.schemeCode;
+      if (!displayName && resolved.schemeName) {
+        displayName = resolved.schemeName;
+      }
+    }
+  }
   
   var sheet = ss.getSheetByName('MarketQuotes');
   if (!sheet) {
@@ -1080,11 +1229,13 @@ function registerMarketQuote(ss, symbol, type, displayName) {
     }
   }
   
-  if (type === 'Mutual Funds' && /^\d+$/.test(cleanSymbol)) {
-    var amfi = fetchAmfiNav(cleanSymbol);
-    var navPrice = amfi && amfi.nav ? amfi.nav : 0;
-    var row = [cleanSymbol, type, displayName || (amfi ? amfi.schemeName : cleanSymbol), navPrice, 0, new Date().toISOString(), 'AMFI NAV', amfi ? ('Updated: ' + amfi.date) : ''];
-    sheet.appendRow(row);
+  if (type === 'Mutual Funds') {
+    if (/^\d+$/.test(cleanSymbol)) {
+      var amfi = fetchAmfiNav(cleanSymbol);
+      var navPrice = amfi && amfi.nav ? amfi.nav : 0;
+      var row = [cleanSymbol, type, displayName || (amfi ? amfi.schemeName : cleanSymbol), navPrice, 0, new Date().toISOString(), 'AMFI NAV', amfi ? ('Updated: ' + amfi.date) : ''];
+      sheet.appendRow(row);
+    }
     return;
   }
   
@@ -1842,6 +1993,13 @@ function getDashboardData(idToken) {
           }
         } else if (category === 'Mutual Funds') {
           var sc = details['Scheme Code'] || details['Ticker Symbol'];
+          var isin = details['ISIN'];
+          if (!sc && isin) {
+            var resolvedF = resolveAmfiSchemeByIsin(isin);
+            if (resolvedF && resolvedF.schemeCode) {
+              sc = resolvedF.schemeCode;
+            }
+          }
           if (sc) {
             var cleanSc = String(sc).trim().toUpperCase();
             var mfQuote = quotesMap[cleanSc];
@@ -1949,12 +2107,25 @@ function syncLiveValuationsToSheet(idToken) {
       var price = Number(quotesData[q][3]) || 0;
       var chg = Number(quotesData[q][4]) || 0;
       
-      if (qType === 'Mutual Funds' && /^\d+$/.test(sym)) {
-        var amfi = fetchAmfiNav(sym);
-        if (amfi && amfi.nav) {
-          price = amfi.nav;
-          quotesSheet.getRange(q + 1, 4).setValue(price);
-          quotesSheet.getRange(q + 1, 6).setValue(new Date().toISOString());
+      if (qType === 'Mutual Funds') {
+        if (/^\d+$/.test(sym)) {
+          var amfi = fetchAmfiNav(sym);
+          if (amfi && amfi.nav) {
+            price = amfi.nav;
+            quotesSheet.getRange(q + 1, 4).setValue(price);
+            quotesSheet.getRange(q + 1, 6).setValue(new Date().toISOString());
+          }
+        } else if (/^INF[A-Z0-9]{9}$/i.test(sym)) {
+          // Auto-heal any quote row registered with an ISIN symbol to its numeric AMFI code
+          var resIsin = resolveAmfiSchemeByIsin(sym);
+          if (resIsin && resIsin.schemeCode) {
+            quotesSheet.getRange(q + 1, 1).setValue(resIsin.schemeCode);
+            quotesSheet.getRange(q + 1, 7).setValue('AMFI NAV');
+            sym = resIsin.schemeCode;
+            price = resIsin.nav;
+            quotesSheet.getRange(q + 1, 4).setValue(price);
+            quotesSheet.getRange(q + 1, 6).setValue(new Date().toISOString());
+          }
         }
       }
       
@@ -2032,6 +2203,19 @@ function syncLiveValuationsToSheet(idToken) {
         }
       } else if (category === 'Mutual Funds') {
         var sc = details['Scheme Code'] || details['Ticker Symbol'];
+        var isin = details['ISIN'];
+        // Auto-heal / link AMFI Scheme Code if missing but ISIN is present
+        if (!sc && isin) {
+          var resolvedM = resolveAmfiSchemeByIsin(isin);
+          if (resolvedM && resolvedM.schemeCode) {
+            sc = resolvedM.schemeCode;
+            details['Scheme Code'] = sc;
+            if (detColIdx !== -1) {
+              assetsSheet.getRange(i + 1, detColIdx + 1).setValue(JSON.stringify(details));
+            }
+            registerMarketQuote(ss, sc, 'Mutual Funds', String(assetData[i][headers.indexOf('Name')] || ''));
+          }
+        }
         if (sc) {
           var cleanSc = String(sc).trim().toUpperCase();
           var mfQuote = quotesMap[cleanSc];
@@ -2042,6 +2226,7 @@ function syncLiveValuationsToSheet(idToken) {
             var amfiLive = fetchAmfiNav(cleanSc);
             if (amfiLive && amfiLive.nav > 0) {
               calculatedVal = Math.round(mfUnits * amfiLive.nav * 100) / 100;
+              quotesMap[cleanSc] = { symbol: cleanSc, price: amfiLive.nav, changePct: 0, type: 'Mutual Funds' };
             }
           }
         }

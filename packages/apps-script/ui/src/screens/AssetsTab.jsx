@@ -1422,6 +1422,11 @@ export default function AssetsTab({
                         <span className="truncate max-w-[120px] font-mono">{displayIdentifier}</span>
                       </button>
                     )}
+                    {det['ISIN'] && (
+                      <span className="inline-flex items-center text-typ-micro text-text-muted bg-surface-layer2/80 px-1.5 py-0.2 rounded border border-border-subtle font-mono shrink-0" title={`ISIN: ${det['ISIN']}`}>
+                        {det['ISIN']}
+                      </span>
+                    )}
                     {holdingSummary && (
                       <>
                         <span className="text-text-muted text-typ-caption">•</span>
