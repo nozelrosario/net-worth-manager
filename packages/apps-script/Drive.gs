@@ -567,12 +567,22 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
           }
           existingDetails['Last Synced Date'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
 
-          // Ensure AMFI Scheme Code is resolved if only ISIN exists
+          // Ensure AMFI Scheme Code is resolved if only ISIN exists or via Name
           var targetIsin = existingDetails['ISIN'] || newDetails['ISIN'];
-          if (!existingDetails['Scheme Code'] && targetIsin) {
-            var resolvedU = resolveAmfiSchemeByIsin(targetIsin);
-            if (resolvedU && resolvedU.schemeCode) {
-              existingDetails['Scheme Code'] = resolvedU.schemeCode;
+          if (!existingDetails['Scheme Code']) {
+            if (targetIsin) {
+              var resolvedU = resolveAmfiSchemeByIsin(targetIsin);
+              if (resolvedU && resolvedU.schemeCode) {
+                existingDetails['Scheme Code'] = resolvedU.schemeCode;
+                if (!existingDetails['ISIN'] && resolvedU.isin) existingDetails['ISIN'] = resolvedU.isin;
+              }
+            }
+            if (!existingDetails['Scheme Code'] && (existingRow[nameCol] || item.Name)) {
+              var resolvedByName = resolveAmfiSchemeByName(String(existingRow[nameCol] || item.Name));
+              if (resolvedByName && resolvedByName.schemeCode) {
+                existingDetails['Scheme Code'] = resolvedByName.schemeCode;
+                if (!existingDetails['ISIN'] && resolvedByName.isin) existingDetails['ISIN'] = resolvedByName.isin;
+              }
             }
           }
 
@@ -624,14 +634,25 @@ function batchSyncCasAssets(assetsToUpdate, assetsToInsert, statementDate, idTok
           insDetails['Live Tracking'] = true;
         }
 
-        // Auto-resolve AMFI Scheme Code from ISIN if not already present
+        // Auto-resolve AMFI Scheme Code from ISIN or Scheme Name if not already present
         var schemeCode = insDetails['Scheme Code'];
         var isin = insDetails['ISIN'];
-        if (!schemeCode && isin) {
-          var resolvedI = resolveAmfiSchemeByIsin(isin);
-          if (resolvedI && resolvedI.schemeCode) {
-            schemeCode = resolvedI.schemeCode;
-            insDetails['Scheme Code'] = schemeCode;
+        if (!schemeCode) {
+          if (isin) {
+            var resolvedI = resolveAmfiSchemeByIsin(isin);
+            if (resolvedI && resolvedI.schemeCode) {
+              schemeCode = resolvedI.schemeCode;
+              insDetails['Scheme Code'] = schemeCode;
+              if (!insDetails['ISIN'] && resolvedI.isin) insDetails['ISIN'] = resolvedI.isin;
+            }
+          }
+          if (!schemeCode && ins.Name) {
+            var resolvedIn = resolveAmfiSchemeByName(ins.Name);
+            if (resolvedIn && resolvedIn.schemeCode) {
+              schemeCode = resolvedIn.schemeCode;
+              insDetails['Scheme Code'] = schemeCode;
+              if (!insDetails['ISIN'] && resolvedIn.isin) insDetails['ISIN'] = resolvedIn.isin;
+            }
           }
         }
 

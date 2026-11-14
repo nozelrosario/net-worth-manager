@@ -1,7 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { assetSchemas } from '../src/config/assetSchemas.js';
-import { reconcileCasWithLedger, resolveAmfiSchemeFromAmfiText } from '../src/utils/casParser.js';
+import { 
+  reconcileCasWithLedger, 
+  resolveAmfiSchemeFromAmfiText,
+  resolveAmfiSchemeByNameFromAmfiText 
+} from '../src/utils/casParser.js';
 
 describe('Issue #93: CAS Mutual Fund AMFI Scheme Code & ISIN Retention', () => {
   it('includes ISIN Code and AMFI Scheme Code fields in Mutual Funds schema', () => {
@@ -142,5 +146,72 @@ Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Plan;
     assert.equal(match.schemeCode, '122639', 'Must preserve existing Scheme Code');
     assert.equal(match.isin, 'INF879O01027', 'Must preserve ISIN');
     assert.equal(match.newUnits, 1050);
+  });
+
+  it('marks existing matched asset as actionable with "Link AMFI Code" when existing record lacks Scheme Code', () => {
+    const casData = {
+      statement_holder_name: 'Nozel Rosario',
+      statement_date: '2026-10-31',
+      holdings: [
+        {
+          name: 'Parag Parikh Flexi Cap Fund',
+          institution: 'PPFAS AMC',
+          folio_number: '12345678/90',
+          isin: 'INF879O01027',
+          scheme_code: '122639',
+          units: 1000,
+          nav: 90.0,
+          cost: 80000,
+          current_value: 90000
+        }
+      ]
+    };
+
+    const existingAssets = [
+      {
+        'Asset ID': 'AST_MF_EXISTING_NO_CODE',
+        Name: 'Parag Parikh Flexi Cap Fund',
+        Category: 'Mutual Funds',
+        Identifiers: '12345678/90',
+        Cost: 80000,
+        'Current Value': 90000,
+        'Details JSON': JSON.stringify({
+          // Notice: 'Scheme Code' is missing!
+          'ISIN': 'INF879O01027',
+          Units: 1000,
+          'Average NAV': 80.0
+        })
+      }
+    ];
+
+    const result = reconcileCasWithLedger(casData, existingAssets, []);
+    assert.equal(result.candidates.length, 1);
+    const candidate = result.candidates[0];
+    assert.equal(candidate.isExisting, true);
+    assert.equal(candidate.status, 'updated');
+    assert.equal(candidate.statusLabel, 'Link AMFI Code');
+    assert.equal(candidate.isActionable, true);
+    assert.equal(candidate.schemeCode, '122639');
+    assert.equal(result.stats.updatedCount, 1);
+  });
+
+  it('resolves AMFI scheme code, ISIN, and NAV by fund name keywords from NAVAll.txt', () => {
+    const sampleAmfiText = `
+Scheme Code;ISIN Div Payout/ ISIN Growth;ISIN Div Reinvestment;Scheme Name;Plan;Option;Net Asset Value;Date
+122639;INF879O01027;-;Parag Parikh Flexi Cap Fund;Direct Plan;Growth;94.2594;13-Nov-2026
+122640;INF879O01019;-;Parag Parikh Flexi Cap Fund;Regular Plan;Growth;85.7822;13-Nov-2026
+118989;INF179K01XQ0;-;HDFC Mid Cap Fund;Direct Plan;Growth Option;229.697;13-Nov-2026
+`;
+    const res = resolveAmfiSchemeByNameFromAmfiText(sampleAmfiText, 'Parag Parikh Flexi Cap Fund Direct Growth');
+    assert(res, 'Should resolve scheme by name');
+    assert.equal(res.schemeCode, '122639');
+    assert.equal(res.isin, 'INF879O01027');
+    assert.equal(res.nav, 94.2594);
+
+    const res2 = resolveAmfiSchemeByNameFromAmfiText(sampleAmfiText, 'HDFC Mid Cap Fund Direct Plan Growth Option');
+    assert(res2, 'Should resolve second scheme by name');
+    assert.equal(res2.schemeCode, '118989');
+    assert.equal(res2.isin, 'INF179K01XQ0');
+    assert.equal(res2.nav, 229.697);
   });
 });

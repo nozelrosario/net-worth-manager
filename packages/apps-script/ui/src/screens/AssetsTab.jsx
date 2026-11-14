@@ -1742,7 +1742,7 @@ export default function AssetsTab({
                   </div>
                   <div className="min-w-0">
                     <div className="text-typ-label font-bold text-text-primary group-hover:text-wealth-emerald transition-colors">Sync Market Rates</div>
-                    <div className="text-[11px] text-text-muted truncate">Update latest AMFI NAVs & stock CMPs</div>
+                    <div className="text-[11px] text-text-muted truncate">Update latest AMFI NAVs, link scheme codes & stock CMPs</div>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-text-muted group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0" />

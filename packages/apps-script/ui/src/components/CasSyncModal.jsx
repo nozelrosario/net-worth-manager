@@ -776,18 +776,19 @@ export default function CasSyncModal({
                     <input 
                       type="checkbox"
                       checked={isSelected}
-                      disabled={!item.isActionable}
                       onChange={() => toggleSelectCandidate(item.id)}
-                      className="rounded border-border-subtle text-primary-accent focus:ring-0 w-4 h-4 mt-0.5 bg-surface-layer2 shrink-0 disabled:opacity-40 cursor-pointer"
+                      className="rounded border-border-subtle text-primary-accent focus:ring-0 w-4 h-4 mt-0.5 bg-surface-layer2 shrink-0 cursor-pointer"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold border ${
                           item.status === 'new'
                             ? 'bg-primary-accent/15 text-primary-accent border-primary-accent/25'
-                            : item.unitsDelta > 0.005
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : 'bg-surface-layer2 text-text-muted border-border-subtle'
+                            : item.statusLabel === 'Link AMFI Code'
+                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                              : item.unitsDelta > 0.005
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-surface-layer2 text-text-muted border-border-subtle'
                         }`}>
                           {item.statusLabel}
                         </span>

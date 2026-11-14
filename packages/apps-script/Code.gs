@@ -623,6 +623,145 @@ function resolveAmfiSchemeByIsin(isin) {
 }
 
 /**
+ * Resolves an Indian Mutual Fund Scheme Name to its AMFI Scheme Code, ISIN & latest NAV
+ * using keyword scoring against the official AMFI master list (NAVAll.txt) with fallback to MFAPI.
+ */
+function resolveAmfiSchemeByName(schemeName) {
+  if (!schemeName || typeof schemeName !== 'string') return null;
+  var cleanInput = String(schemeName).toLowerCase().replace(/[-–—/(),.]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (cleanInput.length < 3) return null;
+
+  // 1. Check ScriptCache for fast resolution
+  var cacheKey = 'AMFI_NAME_' + cleanInput.replace(/[^a-z0-9]/g, '_').slice(0, 50);
+  try {
+    var cache = CacheService.getScriptCache();
+    var cachedJson = cache.get(cacheKey);
+    if (cachedJson) {
+      return JSON.parse(cachedJson);
+    }
+  } catch(eCache) {}
+
+  var inputTokens = cleanInput.split(' ').filter(function(w) { return w.length >= 2; });
+  if (inputTokens.length === 0) return null;
+
+  var isDirect = cleanInput.indexOf('direct') !== -1 || cleanInput.indexOf(' dir ') !== -1;
+  var isRegular = cleanInput.indexOf('regular') !== -1 || cleanInput.indexOf(' reg ') !== -1;
+  var isGrowth = cleanInput.indexOf('growth') !== -1 || cleanInput.indexOf(' gr ') !== -1;
+  var isIdcw = cleanInput.indexOf('idcw') !== -1 || cleanInput.indexOf('dividend') !== -1 || cleanInput.indexOf(' div ') !== -1;
+
+  var stopWords = {
+    'fund': 1, 'mutual': 1, 'plan': 1, 'option': 1, 'scheme': 1,
+    'india': 1, 'direct': 1, 'regular': 1, 'growth': 1, 'idcw': 1, 'dividend': 1
+  };
+  var coreTokens = inputTokens.filter(function(t) { return !stopWords[t] && t.length >= 3; });
+
+  // 2. Search AMFI master database (NAVAll.txt)
+  var text = getAmfiNavAllMasterText();
+  if (text) {
+    var lines = text.split('\n');
+    var bestMatch = null;
+    var highestScore = 0;
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (!line || line.indexOf(';') === -1) continue;
+      var parts = line.split(';');
+      if (parts.length < 7) continue;
+
+      var code = String(parts[0] || '').trim();
+      if (!/^\d+$/.test(code)) continue;
+
+      var col1 = (parts[1] || '').trim().toUpperCase();
+      var col2 = (parts[2] || '').trim().toUpperCase();
+      var fullName = [parts[3], parts[4], parts[5]].filter(Boolean).map(function(s) { return String(s).trim(); }).join(' ');
+      var normLine = fullName.toLowerCase().replace(/[-–—/(),.]/g, ' ').replace(/\s+/g, ' ');
+
+      var matched = 0;
+      for (var t = 0; t < coreTokens.length; t++) {
+        if (normLine.indexOf(coreTokens[t]) !== -1) matched++;
+      }
+
+      if (coreTokens.length > 0 && matched === 0) continue;
+      var matchRatio = coreTokens.length > 0 ? (matched / coreTokens.length) : 0;
+      if (coreTokens.length >= 2 && matched < 2 && matchRatio < 0.6) continue;
+
+      var score = matched * 20;
+
+      var lineIsDirect = normLine.indexOf('direct') !== -1;
+      var lineIsRegular = normLine.indexOf('regular') !== -1;
+      if (isDirect) {
+        if (lineIsDirect) score += 30;
+        else if (lineIsRegular) score -= 40;
+      } else if (isRegular) {
+        if (lineIsRegular) score += 30;
+        else if (lineIsDirect) score -= 40;
+      }
+
+      var lineIsGrowth = normLine.indexOf('growth') !== -1;
+      var lineIsIdcw = normLine.indexOf('idcw') !== -1 || normLine.indexOf('dividend') !== -1;
+      if (isGrowth) {
+        if (lineIsGrowth) score += 30;
+        else if (lineIsIdcw) score -= 40;
+      } else if (isIdcw) {
+        if (lineIsIdcw) score += 30;
+        else if (lineIsGrowth) score -= 40;
+      }
+
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = {
+          status: 'success',
+          schemeCode: code,
+          isin: (col1 && col1 !== '-') ? col1 : ((col2 && col2 !== '-') ? col2 : ''),
+          isinGrowth: col1,
+          isinReinvest: col2,
+          schemeName: fullName,
+          nav: parseFloat(parts[6]) || 0,
+          date: parts[7] ? String(parts[7]).trim() : ''
+        };
+      }
+    }
+
+    if (bestMatch && highestScore >= 40) {
+      try {
+        CacheService.getScriptCache().put(cacheKey, JSON.stringify(bestMatch), 21600);
+      } catch(ePut) {}
+      return bestMatch;
+    }
+  }
+
+  // 3. Fallback: search via MFAPI search endpoint
+  try {
+    var searchRes = searchAmfiSchemes(cleanInput.slice(0, 40));
+    if (searchRes && searchRes.status === 'success' && searchRes.data && searchRes.data.length > 0) {
+      for (var s = 0; s < searchRes.data.length; s++) {
+        var item = searchRes.data[s];
+        var sNameNorm = String(item.schemeName || '').toLowerCase();
+        if (isDirect && sNameNorm.indexOf('direct') === -1) continue;
+        if (isRegular && sNameNorm.indexOf('regular') === -1) continue;
+        if (isGrowth && sNameNorm.indexOf('growth') === -1) continue;
+
+        var navInfo = fetchAmfiNav(String(item.schemeCode));
+        var resObj = {
+          status: 'success',
+          schemeCode: String(item.schemeCode),
+          isin: '',
+          schemeName: item.schemeName,
+          nav: navInfo && navInfo.nav ? navInfo.nav : 0,
+          date: navInfo && navInfo.date ? navInfo.date : ''
+        };
+        try {
+          CacheService.getScriptCache().put(cacheKey, JSON.stringify(resObj), 21600);
+        } catch(ePut2) {}
+        return resObj;
+      }
+    }
+  } catch(eSearch) {}
+
+  return null;
+}
+
+/**
  * Batch resolves AMFI Scheme Codes & NAVs for an array of CAS holding items
  */
 function resolveAmfiCodesBatch(items, idToken) {
@@ -651,21 +790,27 @@ function resolveAmfiCodesBatch(items, idToken) {
       if (match) {
         resolved[isin] = match;
       } else if (item.name) {
-        try {
-          var cleanName = String(item.name).replace(/[-–—/()]/g, ' ').replace(/\s+/g, ' ').trim();
-          var searchRes = searchAmfiSchemes(cleanName.slice(0, 40));
-          if (searchRes && searchRes.status === 'success' && searchRes.data && searchRes.data.length > 0) {
-            var top = searchRes.data[0];
-            resolved[isin] = {
-              status: 'success',
-              schemeCode: String(top.schemeCode),
-              isin: isin,
-              schemeName: top.schemeName,
-              nav: 0,
-              date: ''
-            };
-          }
-        } catch(eSearch) {}
+        var nameMatch = resolveAmfiSchemeByName(item.name);
+        if (nameMatch) {
+          if (!nameMatch.isin) nameMatch.isin = isin;
+          resolved[isin] = nameMatch;
+        } else {
+          try {
+            var cleanName = String(item.name).replace(/[-–—/()]/g, ' ').replace(/\s+/g, ' ').trim();
+            var searchRes = searchAmfiSchemes(cleanName.slice(0, 40));
+            if (searchRes && searchRes.status === 'success' && searchRes.data && searchRes.data.length > 0) {
+              var top = searchRes.data[0];
+              resolved[isin] = {
+                status: 'success',
+                schemeCode: String(top.schemeCode),
+                isin: isin,
+                schemeName: top.schemeName,
+                nav: 0,
+                date: ''
+              };
+            }
+          } catch(eSearch) {}
+        }
       }
     }
 
@@ -2138,12 +2283,15 @@ function syncLiveValuationsToSheet(idToken) {
     }
     
     var assetData = assetsSheet.getDataRange().getValues();
-    if (assetData.length <= 1) return { status: 'success', message: 'No assets to sync', updatedCount: 0 };
+    if (assetData.length <= 1) return { status: 'success', message: 'No assets to sync', updatedCount: 0, linkedMfCount: 0 };
     var headers = assetData[0];
     var valColIdx = headers.indexOf('Current Value');
     var catColIdx = headers.indexOf('Category');
     var detColIdx = headers.indexOf('Details JSON');
+    var nameColIdx = headers.indexOf('Name');
+    var idColIdx = headers.indexOf('Identifiers');
     var updatedCount = 0;
+    var linkedMfCount = 0;
     
     for (var i = 1; i < assetData.length; i++) {
       var category = String(assetData[i][catColIdx]);
@@ -2159,7 +2307,7 @@ function syncLiveValuationsToSheet(idToken) {
       var calculatedVal = null;
       
       if (category === 'Equity') {
-        var ticker = details['Ticker Symbol'] || assetData[i][headers.indexOf('Identifiers')];
+        var ticker = details['Ticker Symbol'] || (idColIdx !== -1 ? assetData[i][idColIdx] : '');
         if (ticker) {
           var cleanTicker = normalizeStockSymbol(ticker);
           var quote = quotesMap[cleanTicker.toUpperCase()];
@@ -2202,20 +2350,62 @@ function syncLiveValuationsToSheet(idToken) {
           }
         }
       } else if (category === 'Mutual Funds') {
-        var sc = details['Scheme Code'] || details['Ticker Symbol'];
-        var isin = details['ISIN'];
-        // Auto-heal / link AMFI Scheme Code if missing but ISIN is present
-        if (!sc && isin) {
-          var resolvedM = resolveAmfiSchemeByIsin(isin);
-          if (resolvedM && resolvedM.schemeCode) {
-            sc = resolvedM.schemeCode;
-            details['Scheme Code'] = sc;
-            if (detColIdx !== -1) {
-              assetsSheet.getRange(i + 1, detColIdx + 1).setValue(JSON.stringify(details));
-            }
-            registerMarketQuote(ss, sc, 'Mutual Funds', String(assetData[i][headers.indexOf('Name')] || ''));
+        var rawSc = details['Scheme Code'] || details['Ticker Symbol'];
+        var sc = rawSc && /^\d+$/.test(String(rawSc).trim()) ? String(rawSc).trim() : null;
+        var assetName = nameColIdx !== -1 ? String(assetData[i][nameColIdx] || '').trim() : '';
+        var idVal = idColIdx !== -1 ? String(assetData[i][idColIdx] || '').trim() : '';
+
+        // Extract ISIN from any field if available
+        var isin = details['ISIN'] || details['isin'] || '';
+        if (!isin && rawSc && /^INF[A-Z0-9]{9}$/i.test(String(rawSc).trim())) {
+          isin = String(rawSc).trim().toUpperCase();
+        }
+        if (!isin && idVal && /^INF[A-Z0-9]{9}$/i.test(idVal)) {
+          isin = idVal.toUpperCase();
+        }
+        if (!isin) {
+          var isinMatch = (String(detRaw) + ' ' + assetName).match(/\b(INF[A-Z0-9]{9})\b/i);
+          if (isinMatch) {
+            isin = isinMatch[1].toUpperCase();
           }
         }
+
+        // If AMFI Scheme Code is missing, auto-resolve and link it
+        var detailsModified = false;
+        if (!sc) {
+          var resolvedM = null;
+          // Step 1: Resolve by ISIN if available
+          if (isin) {
+            resolvedM = resolveAmfiSchemeByIsin(isin);
+          }
+          // Step 2: Fallback to token-based scheme name resolution
+          if (!resolvedM && assetName) {
+            resolvedM = resolveAmfiSchemeByName(assetName);
+          }
+
+          if (resolvedM && resolvedM.schemeCode) {
+            sc = String(resolvedM.schemeCode).trim();
+            details['Scheme Code'] = sc;
+            if (!details['ISIN'] && (resolvedM.isin || isin)) {
+              details['ISIN'] = resolvedM.isin || isin;
+            }
+            detailsModified = true;
+            registerMarketQuote(ss, sc, 'Mutual Funds', assetName || resolvedM.schemeName);
+            linkedMfCount++;
+
+            if (resolvedM.nav > 0 && (!quotesMap[sc] || quotesMap[sc].price <= 0)) {
+              quotesMap[sc] = { symbol: sc, price: resolvedM.nav, changePct: 0, type: 'Mutual Funds' };
+            }
+          }
+        } else if (sc && !details['ISIN'] && isin) {
+          details['ISIN'] = isin;
+          detailsModified = true;
+        }
+
+        if (detailsModified && detColIdx !== -1) {
+          assetsSheet.getRange(i + 1, detColIdx + 1).setValue(JSON.stringify(details));
+        }
+
         if (sc) {
           var cleanSc = String(sc).trim().toUpperCase();
           var mfQuote = quotesMap[cleanSc];
@@ -2238,8 +2428,18 @@ function syncLiveValuationsToSheet(idToken) {
       }
     }
     
-    logAudit(ss, auth.userInfo.activeEmail, 'SYNC_LIVE_VALUATIONS', 'All Assets', 'Updated ' + updatedCount + ' assets');
-    return { status: 'success', message: 'Successfully updated ' + updatedCount + ' assets with live valuation.', updatedCount: updatedCount };
+    var syncMessage = 'Successfully updated ' + updatedCount + ' assets with live valuation';
+    if (linkedMfCount > 0) {
+      syncMessage += ' (auto-linked AMFI codes for ' + linkedMfCount + ' mutual funds)';
+    }
+    syncMessage += '.';
+    logAudit(ss, auth.userInfo.activeEmail, 'SYNC_LIVE_VALUATIONS', 'All Assets', syncMessage);
+    return {
+      status: 'success',
+      message: syncMessage,
+      updatedCount: updatedCount,
+      linkedMfCount: linkedMfCount
+    };
   } catch (err) {
     return { status: 'error', message: err.toString() };
   }
