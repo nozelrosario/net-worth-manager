@@ -24,6 +24,15 @@ describe('Distribution Readiness: Source Hygiene & Backend Checks', () => {
     assert.ok(portalHtml.includes('__NWM_IDENTITY__'), 'Identity marker missing in web-portal');
     assert.ok(portalHtml.includes('/config.js'), 'External config.js reference missing');
     assert.ok(portalHtml.includes('/manifest.json'), 'PWA manifest link missing');
+    assert.ok(portalHtml.includes('YOUR_DEPLOYMENT_ID'), 'Default placeholder URL guard missing');
+    assert.ok(portalHtml.includes('endpoints.url'), 'Single-URL web portal config support missing');
+  });
+
+  it('promote-to-dist workflow packages a single-user web portal bundle without UAT templates', () => {
+    const promoteYml = fs.readFileSync(path.join(repoRoot, '.github/workflows/promote-to-dist.yml'), 'utf8');
+    assert.ok(promoteYml.includes('dist-portal-staging'), 'Staging directory for distribution portal missing');
+    assert.ok(promoteYml.includes('delete baseHosting.target'), 'Single-site firebase.json target cleanup missing');
+    assert.ok(promoteYml.includes('YOUR_DEPLOYMENT_ID'), 'Clean single-URL config.example.js generation missing');
   });
 
   it('mobile-app/App.js and app.config.js contain no hardcoded personal URLs or EAS IDs', () => {
