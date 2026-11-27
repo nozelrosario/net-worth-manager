@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import useModalBack from "./hooks/useModalBack";
 import { X } from "lucide-react";
-import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound, ALargeSmall, BookOpen } from 'lucide-react';
+import { Shield, Home, PieChart, Receipt, Vault, Eye, EyeOff, Bell, User, LogOut, RefreshCw, Settings as SettingsIcon, Moon, Bug, KeyRound, ALargeSmall, BookOpen, QrCode } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import HomeTab from './screens/HomeTab';
 import AssetsTab from './screens/AssetsTab';
@@ -16,6 +16,7 @@ import PortfolioRebalancerModal from './components/PortfolioRebalancerModal';
 import RetirementPlannerModal from './components/RetirementPlannerModal';
 import InsuranceHubModal from './components/InsuranceHubModal';
 import MetricsGuideModal from './components/MetricsGuideModal';
+import MobileConnectModal from './components/MobileConnectModal';
 import { getSafeStorage, setSafeStorage, removeSafeStorage } from './utils/storage';
 import { isPinConfigured, getPinConfig, isAppShell, getBrowserIdleTimeoutMinutes, clearPinConfig } from './utils/securityUtils';
 
@@ -163,7 +164,31 @@ export default function App() {
   const [showRetirementModal, setShowRetirementModal] = useState(false);
   const [showInsuranceHubModal, setShowInsuranceHubModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showMobileConnectModal, setShowMobileConnectModal] = useState(false);
+  const [portalUrl, setPortalUrl] = useState(() => {
+    try {
+      const ref = document.referrer || '';
+      if (/^https:\/\/[a-z0-9-]+\.(web\.app|firebaseapp\.com)\//i.test(ref)) {
+        return ref;
+      }
+    } catch (e) {}
+    return '';
+  });
   const [isAppLocked, setIsAppLocked] = useState(() => isPinConfigured());
+
+  useEffect(() => {
+    const handlePortalMessage = (event) => {
+      if (typeof event.data !== 'string') return;
+      try {
+        const parsed = JSON.parse(event.data);
+        if (parsed?.type === 'NWM_PORTAL_INFO' && typeof parsed.portalUrl === 'string' && parsed.portalUrl.startsWith('https://')) {
+          setPortalUrl(parsed.portalUrl);
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('message', handlePortalMessage);
+    return () => window.removeEventListener('message', handlePortalMessage);
+  }, []);
   const [isCurtainActive, setIsCurtainActive] = useState(false);
   const backgroundTimestampRef = useRef(null);
   const lastActivityTimestampRef = useRef(Date.now());
@@ -643,6 +668,13 @@ export default function App() {
               >
                 <Shield size={18} className="text-text-secondary" /> Security & Access Control
               </button>
+              <button 
+                type="button"
+                onClick={() => { setShowUserModal(false); setShowMobileConnectModal(true); }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors"
+              >
+                <QrCode size={18} className="text-wealth-emerald" /> Connect Mobile App (QR / APK)
+              </button>
               <div className="w-full flex items-center justify-between p-3 rounded-xl text-typ-body-sm text-text-primary hover:bg-surface-layer2 transition-colors cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
                 <div className="flex items-center gap-3"><Moon size={18} className="text-text-secondary" /> Dark Mode</div>
                 <div className={`w-8 h-4 rounded-full flex items-center p-0.5 border border-border-subtle transition-colors ${darkMode ? 'bg-primary-accent justify-end' : 'bg-surface-layer3 justify-start'}`}><div className="w-3 h-3 bg-white rounded-full shadow-xs"></div></div>
@@ -766,6 +798,7 @@ export default function App() {
             onOpenRebalancer={() => setShowRebalancerModal(true)} 
             onOpenRetirementPlanner={() => setShowRetirementModal(true)}
             onOpenInsuranceHub={() => setShowInsuranceHubModal(true)}
+            onOpenMobileConnect={() => setShowMobileConnectModal(true)}
             onOpenGuide={() => setShowGuideModal(true)}
           />
         )}
@@ -920,6 +953,15 @@ export default function App() {
       <MetricsGuideModal
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
+      />
+
+      {/* Mobile App QR Pairing Modal */}
+      <MobileConnectModal
+        isOpen={showMobileConnectModal}
+        onClose={() => setShowMobileConnectModal(false)}
+        appUrl={data?.appUrl || ''}
+        portalUrl={portalUrl}
+        showMessage={showMessage}
       />
     </div>
   );

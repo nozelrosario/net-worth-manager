@@ -1,0 +1,145 @@
+name: Promote PROD Release to Distribution Repo
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Source PROD release tag to promote (e.g. v1.1.0)'
+        required: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.release.tag_name, 'uat')
+    permissions:
+      contents: read
+
+    steps:
+      - name: Resolve Release Tag
+        id: meta
+        env:
+          INPUT_TAG: ${{ github.event.inputs.release_tag }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          TAG="${INPUT_TAG:-$EVENT_TAG}"
+          if [ -z "$TAG" ]; then
+            echo "::error::Could not resolve release tag."
+            exit 1
+          fi
+          if [[ "$TAG" == *uat* ]]; then
+            echo "::error::UAT tags ($TAG) cannot be promoted to the public distribution repo."
+            exit 1
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Validate Distribution Repo Token
+        env:
+          DIST_REPO_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+        run: |
+          if [ -z "$DIST_REPO_TOKEN" ]; then
+            echo "::error::Missing DIST_REPO_TOKEN secret. Add a fine-grained PAT with contents:write on nozelrosario/net-worth-manager-releases."
+            exit 1
+          fi
+
+      - name: Checkout Source at Release Tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.meta.outputs.tag }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Fresh Single-File Frontend (Index.html)
+        working-directory: packages/apps-script/ui
+        run: |
+          npm install
+          npm run build
+
+      - name: Collect Release Artifacts
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist-artifacts
+          cp packages/apps-script/Code.gs dist-artifacts/Code.gs
+          cp packages/apps-script/Drive.gs dist-artifacts/Drive.gs
+          cp packages/apps-script/Index.html dist-artifacts/Index.html
+          cp packages/apps-script/appsscript.json dist-artifacts/appsscript.json
+
+          # Package clean web-portal bundle (excluding any personal config.js/.firebaserc)
+          (
+            cd packages/web-portal
+            zip -r ../../dist-artifacts/net-worth-manager-web-portal.zip \
+              index.html config.example.js .firebaserc.example firebase.json manifest.json sw.js icon-192.png icon-512.png
+          )
+
+          # Try downloading Universal APK from the source GitHub release
+          if gh release download "$TAG" --pattern "NetWorthManager-*.apk" --dir dist-artifacts 2>/dev/null; then
+            echo "Downloaded Universal APK from source release $TAG."
+          else
+            echo "No NetWorthManager-*.apk found on source release; flagging fallback build."
+            echo "need_apk_build=true" >> $GITHUB_OUTPUT
+          fi
+        id: collect
+
+      - name: Setup Java & Gradle for Universal APK Fallback
+        if: steps.collect.outputs.need_apk_build == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle (Fallback)
+        if: steps.collect.outputs.need_apk_build == 'true'
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Universal APK (Fallback)
+        if: steps.collect.outputs.need_apk_build == 'true'
+        working-directory: packages/mobile-app
+        env:
+          APP_ENV: distribution
+          APP_VERSION: ${{ steps.meta.outputs.tag }}
+          APP_BUILD_NUMBER: ${{ github.run_number }}
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
+        run: |
+          VERSION_CLEAN="${APP_VERSION#v}"
+          APP_VERSION="$VERSION_CLEAN" npm install
+          APP_VERSION="$VERSION_CLEAN" npx expo prebuild --platform android --clean
+          (cd android && APP_VERSION="$VERSION_CLEAN" ./gradlew assembleRelease --no-daemon)
+          APK_PATH=$(find android/app/build/outputs/apk -type f -name "*.apk" | head -n 1)
+          cp "$APK_PATH" "../../dist-artifacts/NetWorthManager-${APP_VERSION}.apk"
+
+      - name: Verify Clean Artifacts & Generate Checksums
+        run: |
+          if grep -rn "nozelrosario@gmail\.com\|1_0WprD6\|f1189fd3" dist-artifacts/Code.gs dist-artifacts/Drive.gs dist-artifacts/appsscript.json; then
+            echo "::error::Personal configuration detected in distribution artifacts! Aborting promotion."
+            exit 1
+          fi
+          (cd dist-artifacts && sha256sum * > checksums.sha256)
+          ls -lh dist-artifacts/
+
+      - name: Publish Release to Distribution Repository
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: nozelrosario/net-worth-manager-releases
+          token: ${{ secrets.DIST_REPO_TOKEN }}
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Net Worth Manager ${{ steps.meta.outputs.tag }}
+          make_latest: true
+          files: dist-artifacts/*
+          body: |
+            ## Net Worth Manager ${{ steps.meta.outputs.tag }}
+
+            ### Included Files
+            - **`Code.gs`**, **`Drive.gs`**, **`Index.html`**, **`appsscript.json`** — Google Apps Script backend & frontend
+            - **`NetWorthManager-*.apk`** — Universal Android APK (text input + QR code pairing + 3-layer URL security)
+            - **`net-worth-manager-web-portal.zip`** — Optional Firebase Hosting PWA portal wrapper
+            - **`checksums.sha256`** — SHA-256 integrity checksums
+
+            ### Getting Started
+            - New setup? Follow [QUICK-START.md](https://github.com/nozelrosario/net-worth-manager-releases/blob/main/QUICK-START.md)
+            - Upgrading? Follow [UPDATING.md](https://github.com/nozelrosario/net-worth-manager-releases/blob/main/UPDATING.md)

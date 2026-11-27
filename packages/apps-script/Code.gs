@@ -9,7 +9,104 @@
 
 // Global Folder Name for Receipt Storage
 const RECEIPT_FOLDER_NAME = "Net Worth Manager Uploads";
-const DEFAULT_OWNER_EMAIL = "nozelrosario@gmail.com";
+const APP_VERSION = "4.2.0";
+const OWNER_EMAIL_PROPERTY = "OWNER_EMAIL";
+
+/**
+ * Resolves the deployment owner's Google email dynamically without hardcoded personal addresses.
+ * Priority:
+ * 1. Script Property `OWNER_EMAIL` (set automatically on first run or via setOwnerEmail)
+ * 2. `Session.getEffectiveUser().getEmail()` (the Google account executing the deployed web app)
+ * 3. First `admin` email in an already-linked `Team` sheet (for seamless backwards compatibility)
+ */
+function resolveOwnerEmail(ssOverride) {
+  var props = null;
+  try {
+    props = PropertiesService.getScriptProperties();
+    var configured = String(props.getProperty(OWNER_EMAIL_PROPERTY) || '').trim();
+    if (configured && configured.indexOf('@') !== -1) {
+      return configured;
+    }
+  } catch (e) {}
+
+  var effectiveUser = '';
+  try {
+    effectiveUser = String(Session.getEffectiveUser().getEmail() || '').trim();
+  } catch (e) {}
+  if (effectiveUser && effectiveUser.indexOf('@') !== -1) {
+    try {
+      if (props) props.setProperty(OWNER_EMAIL_PROPERTY, effectiveUser);
+    } catch (e) {}
+    return effectiveUser;
+  }
+
+  // Fallback: inspect existing Team sheet if spreadsheet already exists (do not auto-create here)
+  try {
+    var existingSs = ssOverride || null;
+    if (!existingSs) {
+      existingSs = SpreadsheetApp.getActiveSpreadsheet();
+      if (!existingSs && props) {
+        var savedId = props.getProperty('SPREADSHEET_ID');
+        if (savedId) {
+          existingSs = SpreadsheetApp.openById(savedId);
+        }
+      }
+    }
+    if (existingSs) {
+      var teamSheet = existingSs.getSheetByName('Team');
+      if (teamSheet && teamSheet.getLastRow() > 1 && teamSheet.getLastColumn() >= 3) {
+        var rows = teamSheet.getRange(2, 1, teamSheet.getLastRow() - 1, 3).getValues();
+        for (var i = 0; i < rows.length; i++) {
+          var emailsRaw = String(rows[i][1] || '').trim();
+          var rolesRaw = String(rows[i][2] || '').toLowerCase().trim();
+          if (emailsRaw && rolesRaw.indexOf('admin') !== -1) {
+            var firstEmail = emailsRaw.split(',')[0].trim();
+            if (firstEmail && firstEmail.indexOf('@') !== -1) {
+              try {
+                if (props) props.setProperty(OWNER_EMAIL_PROPERTY, firstEmail);
+              } catch (e) {}
+              return firstEmail;
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  return '';
+}
+
+/**
+ * Safely resolves the deployed Apps Script Web App URL.
+ */
+function getWebAppUrl() {
+  try {
+    return String(ScriptApp.getService().getUrl() || '').trim();
+  } catch (e) {
+    return '';
+  }
+}
+
+/**
+ * Ensures first-run database initialization has completed without slowing down normal loads.
+ */
+function ensureFirstRunInitialized() {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var dbInit = props.getProperty('DB_INITIALIZED');
+    var ssId = props.getProperty('SPREADSHEET_ID');
+    if (dbInit === 'true' && ssId) {
+      return;
+    }
+    setupDatabaseSheets();
+    var ss = getSpreadsheet();
+    if (ss) {
+      props.setProperty('DB_INITIALIZED', 'true');
+    }
+  } catch (e) {
+    console.warn('First-run initialization deferred: ' + e);
+  }
+}
 
 /**
  * Serves the HTML Web App UI on GET request
@@ -28,20 +125,19 @@ function doGet() {
 
   // Detect active user and effective user from Google Session
   var activeUser = "";
-  var effectiveUser = "";
   try { activeUser = Session.getActiveUser().getEmail(); } catch (e) {}
-  try { effectiveUser = Session.getEffectiveUser().getEmail(); } catch (e) {}
 
-  var ownerEmail = (effectiveUser && effectiveUser.trim() !== "") ? effectiveUser.trim() : DEFAULT_OWNER_EMAIL;
+  var ownerEmail = resolveOwnerEmail();
+  ensureFirstRunInitialized();
 
   template.activeEmail = activeUser || '';
   template.ownerEmail = ownerEmail;
   
-  // App Owner check: activeUser is owner if matches effectiveUser or DEFAULT_OWNER_EMAIL
+  // App Owner check: activeUser is owner if matches resolved ownerEmail
   var isOwner = false;
-  if (activeUser && activeUser.trim() !== "") {
+  if (activeUser && activeUser.trim() !== "" && ownerEmail && ownerEmail.trim() !== "") {
     var aClean = activeUser.toLowerCase().trim();
-    if (aClean === ownerEmail.toLowerCase().trim() || aClean === DEFAULT_OWNER_EMAIL.toLowerCase().trim()) {
+    if (aClean === ownerEmail.toLowerCase().trim()) {
       isOwner = true;
     }
   }
@@ -201,17 +297,17 @@ function getCurrentUserInfo(sessionToken) {
     }
   }
 
-  var ownerEmail = (effectiveUser && effectiveUser.trim() !== "") ? effectiveUser.trim() : DEFAULT_OWNER_EMAIL;
+  var ownerEmail = resolveOwnerEmail(ss);
+  var teamRoles = ss ? getTeamRolesMap(ss) : {};
 
+  var vClean = verifiedEmail ? verifiedEmail.toLowerCase().trim() : '';
   var isOwner = false;
-  if (verifiedEmail && verifiedEmail.trim() !== "") {
-    var vClean = verifiedEmail.toLowerCase().trim();
-    if (vClean === ownerEmail.toLowerCase().trim() || vClean === DEFAULT_OWNER_EMAIL.toLowerCase().trim()) {
+  if (vClean && ownerEmail && ownerEmail.trim() !== "") {
+    if (vClean === ownerEmail.toLowerCase().trim()) {
       isOwner = true;
     }
   }
 
-  var ss = getSpreadsheet();
   var teamEmails = ss ? getTeamEmailsMap(ss) : {};
   var matchedMemberName = "";
 
@@ -230,27 +326,29 @@ function getCurrentUserInfo(sessionToken) {
     }
   }
 
-    if (isOwner && !matchedMemberName) {
+  var currentEmailLower = (verifiedEmail || activeUser || '').toLowerCase().trim();
+  var isTeamAdmin = Boolean(currentEmailLower && teamRoles[currentEmailLower] === 'admin');
+  var isAdmin = isOwner || isTeamAdmin;
+
+  if (isAdmin && !matchedMemberName) {
     matchedMemberName = 'Admin';
   }
 
-  var isAuthorized = isOwner || Boolean(matchedMemberName);
+  var isAuthorized = isAdmin || Boolean(matchedMemberName);
 
   // Resolve user role: admin bypasses all checks, otherwise look up from Team sheet
   var userRole = 'editor'; // default
-  if (isOwner) {
+  if (isAdmin) {
     userRole = 'admin';
   } else if (matchedMemberName && ss) {
-    var teamRoles = getTeamRolesMap(ss);
-    var currentEmail = verifiedEmail || activeUser || '';
-    userRole = teamRoles[currentEmail] || 'editor';
+    userRole = teamRoles[currentEmailLower] || 'editor';
   }
 
   var result = {
     activeEmail: verifiedEmail || activeUser || '',
     ownerEmail: ownerEmail,
     isOwner: isOwner,
-    isAdmin: isOwner,
+    isAdmin: isAdmin,
     isAuthorized: isAuthorized,
     matchedMemberName: matchedMemberName,
     teamEmails: teamEmails,
@@ -267,24 +365,59 @@ function getCurrentUserInfo(sessionToken) {
  * Authorizes: UrlFetchApp (script.external_request), MailApp, SpreadsheetApp, DriveApp.
  */
 function authorizeScriptPermissions() {
-  Logger.log("1. Checking Spreadsheet access...");
-  var ss = getSpreadsheet();
-  if (ss) Logger.log("Spreadsheet connected: " + ss.getName());
+  Logger.log("1. Resolving Owner Email...");
+  var user = '';
+  try { user = String(Session.getEffectiveUser().getEmail() || '').trim(); } catch (e) {}
+  if (!user) {
+    try { user = String(Session.getActiveUser().getEmail() || '').trim(); } catch (e) {}
+  }
+  if (user && user.indexOf('@') !== -1) {
+    PropertiesService.getScriptProperties().setProperty(OWNER_EMAIL_PROPERTY, user);
+  }
+  Logger.log("Script executing user: " + (user || resolveOwnerEmail() || 'unknown'));
 
-  Logger.log("2. Checking Drive access...");
+  Logger.log("2. Checking Spreadsheet access & initializing database...");
+  setupDatabaseSheets();
+  var ss = getSpreadsheet();
+  if (ss) {
+    PropertiesService.getScriptProperties().setProperty('DB_INITIALIZED', 'true');
+    Logger.log("Spreadsheet connected: " + ss.getName());
+  }
+
+  Logger.log("3. Checking Drive access...");
   var root = DriveApp.getRootFolder();
   if (root) Logger.log("Drive Root Folder: " + root.getName());
 
-  Logger.log("3. Authorizing external HTTP requests (UrlFetchApp)...");
+  Logger.log("4. Authorizing external HTTP requests (UrlFetchApp)...");
   var testResp = UrlFetchApp.fetch("https://www.google.com", { muteHttpExceptions: true });
   Logger.log("UrlFetchApp test status: " + testResp.getResponseCode());
 
-  Logger.log("4. Checking MailApp access...");
-  var user = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || DEFAULT_OWNER_EMAIL;
-  Logger.log("Script executing user: " + user);
-
   Logger.log("All Apps Script permissions authorized successfully!");
   return "All permissions authorized successfully!";
+}
+
+/**
+ * Allows the script owner (from editor or authenticated admin) to explicitly set OWNER_EMAIL.
+ */
+function setOwnerEmail(email, idToken) {
+  var clean = String(email || '').trim().toLowerCase();
+  if (!clean || clean.indexOf('@') === -1) {
+    return { status: 'error', message: 'Please provide a valid email address.' };
+  }
+  var isAuthorizedEditor = false;
+  try {
+    var active = String(Session.getActiveUser().getEmail() || '').trim().toLowerCase();
+    var effective = String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase();
+    if (active && effective && active === effective) isAuthorizedEditor = true;
+  } catch (e) {}
+  if (!isAuthorizedEditor) {
+    var auth = assertWriteAccess(idToken);
+    if (!auth.allowed || auth.userInfo.userRole !== 'admin') {
+      return { status: 'error', message: 'Unauthorized: Only the App Owner or Admin can set owner email.' };
+    }
+  }
+  PropertiesService.getScriptProperties().setProperty(OWNER_EMAIL_PROPERTY, clean);
+  return { status: 'success', ownerEmail: clean };
 }
 
 /**
@@ -328,7 +461,7 @@ function sendVerificationCode(userEmail) {
     if (errStr.indexOf('permission') !== -1 || errStr.indexOf('send_mail') !== -1 || errStr.indexOf('MailApp') !== -1) {
       return { 
         status: 'error', 
-        message: '⚠️ One-Time Mail Permission Required: The Villa Owner needs to open the Google Apps Script editor, select "authorizeEmailPermission" from the top dropdown toolbar, click "Run", and click "Allow". Once authorized, emails will send automatically for everyone!' 
+        message: '⚠️ One-Time Mail Permission Required: The App Owner needs to open the Google Apps Script editor, select "authorizeScriptPermissions" from the top dropdown toolbar, click "Run", and click "Allow". Once authorized, emails will send automatically for everyone!' 
       };
     }
     return { status: 'error', message: 'Failed to send email: ' + errStr };
@@ -368,15 +501,16 @@ function verifyEmailCode(userEmail, enteredCode) {
     // Get full user info (including role) using the new session
     var userInfo = getCurrentUserInfo(sessionToken);
     var isOwner = userInfo.isOwner;
+    var isAdmin = userInfo.isAdmin;
 
     return {
       status: 'success',
       email: userEmail,
       sessionToken: sessionToken,
       isOwner: isOwner,
-      isAdmin: isOwner,
+      isAdmin: isAdmin,
       userRole: userInfo.userRole || 'editor',
-      message: 'Email verified successfully! ' + (isOwner ? '👑 App Owner Admin Mode Activated!' : 'Active session granted for 90 days.')
+      message: 'Email verified successfully! ' + (isAdmin ? '👑 App Owner Admin Mode Activated!' : 'Active session granted for 90 days.')
     };
   } catch (e) {
     return { status: 'error', message: 'Verification error: ' + e.toString() };
@@ -457,9 +591,15 @@ function setupDatabaseSheets() {
 function seedDefaultLists(ss) {
   var teamSheet = ss.getSheetByName('Team');
   if (teamSheet && teamSheet.getLastRow() <= 1) {
-    teamSheet.getRange(2, 1, 1, 3).setValues([
-      ['Admin', 'nozelrosario@gmail.com', 'admin']
-    ]);
+    var ownerEmail = resolveOwnerEmail(ss);
+    if (!ownerEmail) {
+      try { ownerEmail = String(Session.getActiveUser().getEmail() || '').trim(); } catch (e) {}
+    }
+    if (ownerEmail && ownerEmail.indexOf('@') !== -1) {
+      teamSheet.getRange(2, 1, 1, 3).setValues([
+        ['Admin', ownerEmail, 'admin']
+      ]);
+    }
   }
 }
 
@@ -1441,7 +1581,7 @@ function getTeamEmailsMap(ss) {
 }
 
 /**
- * Helper to get mapping of member names to their roles (editor/readonly)
+ * Helper to get mapping of member emails (lowercased) to their roles (admin/editor/readonly)
  */
 function getTeamRolesMap(ss) {
   var sheet = ss.getSheetByName('Team');
@@ -1462,13 +1602,13 @@ function getTeamRolesMap(ss) {
     var rolesRaw = numCols === 3 ? String(values[i][2] || '').toLowerCase().trim() : 'editor';
     
     if (name && emailsRaw) {
-      var emailList = emailsRaw.split(',').map(function(e) { return String(e).trim(); }).filter(Boolean);
+      var emailList = emailsRaw.split(',').map(function(e) { return String(e).toLowerCase().trim(); }).filter(Boolean);
       var roleList = rolesRaw.split(',').map(function(r) { return String(r).trim(); }).filter(Boolean);
       
       for (var j = 0; j < emailList.length; j++) {
         var email = emailList[j];
         var role = roleList[j] || roleList[0] || 'editor'; // default to matching index, or first role, or editor
-        map[email] = (role === 'readonly') ? 'readonly' : 'editor';
+        map[email] = (role === 'readonly') ? 'readonly' : (role === 'admin' ? 'admin' : 'editor');
       }
     }
   }
@@ -1490,6 +1630,21 @@ function getAllTeamEmailsFlat(ss) {
     }
   }
   return flat;
+}
+
+/**
+ * Prevents Google Sheets formula injection on untrusted user strings while preserving numbers and JSON.
+ */
+function sanitizeSheetCellValue(sheetName, val) {
+  if (typeof val !== 'string' || val.length === 0) return val;
+  if (sheetName === 'MarketQuotes') return val;
+  var firstChar = val.charAt(0);
+  if (firstChar === '{' || firstChar === '[') return val;
+  if (firstChar === '-' && /^-?\d+(\.\d+)?$/.test(val.trim())) return val;
+  if (firstChar === '=' || firstChar === '+' || firstChar === '-' || firstChar === '@' || firstChar === '\t' || firstChar === '\r') {
+    return "'" + val;
+  }
+  return val;
 }
 
 /**
@@ -1546,23 +1701,28 @@ function updateTeamMemberEmails(memberName, emailsRaw, rolesRaw, idToken) {
     }
 
     // Normalize role values (store exactly as passed, filtering blanks, comma separated)
-    var rolesList = rolesRaw ? String(rolesRaw).split(',').map(function(r) { 
-      return String(r).toLowerCase().trim() === 'readonly' ? 'readonly' : 'editor'; 
+    var rolesList = rolesRaw ? String(rolesRaw).split(',').map(function(r) {
+      var clean = String(r).toLowerCase().trim();
+      if (clean === 'readonly') return 'readonly';
+      if (clean === 'admin') return 'admin';
+      return 'editor';
     }) : [];
     var finalRolesStr = rolesList.join(', ');
+    var safeMemberName = sanitizeSheetCellValue('Team', String(memberName || '').trim());
+    var safeEmailsRaw = sanitizeSheetCellValue('Team', String(emailsRaw || '').trim());
 
     var lastRow = sheet.getLastRow();
     if (lastRow > 1) {
       var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
       for (var i = 0; i < data.length; i++) {
         if (String(data[i][0]).trim().toLowerCase() === String(memberName).trim().toLowerCase()) {
-          sheet.getRange(i + 2, 2).setValue(emailsRaw);
+          sheet.getRange(i + 2, 2).setValue(safeEmailsRaw);
           sheet.getRange(i + 2, 3).setValue(finalRolesStr);
           return { status: 'success', message: 'Updated Google email(s) and role for ' + memberName };
         }
       }
     }
-    sheet.appendRow([memberName.trim(), emailsRaw, finalRolesStr]);
+    sheet.appendRow([safeMemberName, safeEmailsRaw, finalRolesStr]);
     return { status: 'success', message: 'Added and updated Google email(s) for ' + memberName };
   } catch (e) {
     return { status: 'error', message: e.toString() };
@@ -1598,7 +1758,6 @@ function getFormData(targetBookId, idToken) {
     var teamSheet = ss.getSheetByName('Team');
     var teamData = teamSheet ? teamSheet.getDataRange().getValues() : [];
     var team = [];
-    var numCols = teamSheet ? teamSheet.getLastColumn() : 1;
     for (var i = 1; i < teamData.length; i++) {
       if (teamData[i][0]) {
         team.push(String(teamData[i][0]).trim());
@@ -1616,6 +1775,8 @@ function getFormData(targetBookId, idToken) {
       isOwner: userInfo.isOwner,
       isAdmin: userInfo.isAdmin,
       userRole: userInfo.userRole,
+      appUrl: getWebAppUrl(),
+      appVersion: APP_VERSION,
       team: team,
       teamEmails: teamEmailsMap,
       teamRoles: teamRolesMap
@@ -1690,6 +1851,8 @@ function addRecord(sheetName, recordData, idToken) {
       var val = recordData[headers[i]];
       if (typeof val === 'object' && val !== null) {
         val = JSON.stringify(val);
+      } else if (typeof val === 'string') {
+        val = sanitizeSheetCellValue(sheetName, val);
       }
       newRow.push(val !== undefined ? val : '');
     }
@@ -1806,6 +1969,8 @@ function updateRecord(sheetName, idField, idValue, updateData, idToken) {
              var val = updateData[key];
              if (typeof val === 'object' && val !== null) {
                val = JSON.stringify(val);
+             } else if (typeof val === 'string') {
+               val = sanitizeSheetCellValue(sheetName, val);
              }
              sheet.getRange(i + 1, colIndex + 1).setValue(val);
           }
@@ -1946,20 +2111,22 @@ function upsertSetting(key, value, idToken) {
     
     if (keyCol === -1 || valCol === -1) return { status: 'error', message: 'Invalid Settings sheet format' };
     
+    var safeValue = typeof value === 'string' ? sanitizeSheetCellValue('Settings', value) : value;
+
     for (var i = 1; i < data.length; i++) {
       if (String(data[i][keyCol]) === String(key)) {
-        sheet.getRange(i + 1, valCol + 1).setValue(value);
-        logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_SETTING', key, value);
+        sheet.getRange(i + 1, valCol + 1).setValue(safeValue);
+        logAudit(ss, auth.userInfo.activeEmail, 'UPDATE_SETTING', key, safeValue);
         return { status: 'success', message: 'Setting updated successfully' };
       }
     }
     
     // Not found, append
     var newRow = [];
-    newRow[keyCol] = key;
-    newRow[valCol] = value;
+    newRow[keyCol] = sanitizeSheetCellValue('Settings', String(key));
+    newRow[valCol] = safeValue;
     sheet.appendRow(newRow);
-    logAudit(ss, auth.userInfo.activeEmail, 'ADD_SETTING', key, value);
+    logAudit(ss, auth.userInfo.activeEmail, 'ADD_SETTING', key, safeValue);
     return { status: 'success', message: 'Setting saved successfully' };
     
   } catch (err) {
@@ -2212,6 +2379,8 @@ function getDashboardData(idToken) {
     
     return {
       status: 'success',
+      appUrl: getWebAppUrl(),
+      appVersion: APP_VERSION,
       assets: rawAssets,
       marketQuotes: rawQuotes,
       marketQuotesMap: quotesMap,
@@ -3094,4 +3263,123 @@ function resolveGeminiFlashModel(apiKey) {
     Logger.log("Failed to list Gemini models: " + e.message);
   }
   return "gemini-2.5-flash";
+}
+
+/**
+ * Instance Health Check & Diagnostics Endpoint.
+ * Callable directly from the Apps Script Editor (by the owner) or via authenticated Admin UI.
+ * Verifies Owner resolution, Spreadsheet database & tabs, Drive access, Mail quota, and Gemini API key presence.
+ */
+function doHealthCheck(idToken) {
+  var isAuthorized = false;
+  var activeEmail = '';
+  var effectiveEmail = '';
+  try { activeEmail = String(Session.getActiveUser().getEmail() || '').trim(); } catch (e) {}
+  try { effectiveEmail = String(Session.getEffectiveUser().getEmail() || '').trim(); } catch (e) {}
+
+  if (idToken) {
+    var auth = assertWriteAccess(idToken);
+    if (auth.allowed && auth.userInfo.userRole === 'admin') {
+      isAuthorized = true;
+    }
+  } else if (activeEmail && effectiveEmail && activeEmail.toLowerCase() === effectiveEmail.toLowerCase()) {
+    isAuthorized = true;
+  }
+
+  if (!isAuthorized) {
+    return { status: 'error', message: 'Unauthorized: Admin session or owner editor execution required.' };
+  }
+
+  var checks = {};
+  var hasFailure = false;
+
+  // 1. Owner email
+  var ownerEmail = resolveOwnerEmail();
+  checks.owner = {
+    ok: Boolean(ownerEmail),
+    detail: ownerEmail || 'Not configured (run authorizeScriptPermissions or set OWNER_EMAIL)'
+  };
+  if (!checks.owner.ok) hasFailure = true;
+
+  // 2. Spreadsheet & tabs
+  var requiredTabs = ['_Sessions', 'Team', 'Settings', 'Audit', 'Assets', 'Transactions', 'FamilyProfiles', 'Events', 'Safe', 'MarketQuotes'];
+  try {
+    var ss = getSpreadsheet();
+    if (!ss) {
+      checks.database = { ok: false, detail: 'Unable to open or create database spreadsheet' };
+      hasFailure = true;
+    } else {
+      getOrCreateSessionsSheet(ss);
+      var existingNames = ss.getSheets().map(function(s) { return s.getName(); });
+      var missing = requiredTabs.filter(function(t) { return existingNames.indexOf(t) === -1; });
+      checks.database = {
+        ok: missing.length === 0,
+        detail: missing.length === 0
+          ? ss.getName() + ' (' + existingNames.length + ' tabs)'
+          : 'Missing tabs: ' + missing.join(', ')
+      };
+      if (missing.length > 0) hasFailure = true;
+    }
+  } catch (dbErr) {
+    checks.database = { ok: false, detail: dbErr.toString() };
+    hasFailure = true;
+  }
+
+  // 3. Drive access
+  try {
+    var root = DriveApp.getRootFolder();
+    checks.drive = { ok: Boolean(root), detail: root ? 'Accessible' : 'Unavailable' };
+    if (!root) hasFailure = true;
+  } catch (driveErr) {
+    checks.drive = { ok: false, detail: driveErr.toString() };
+    hasFailure = true;
+  }
+
+  // 4. Mail quota
+  try {
+    var quota = MailApp.getRemainingDailyQuota();
+    checks.mail = { ok: quota > 0, detail: quota + ' daily emails remaining' };
+    if (quota <= 0) hasFailure = true;
+  } catch (mailErr) {
+    checks.mail = { ok: false, detail: mailErr.toString() };
+    hasFailure = true;
+  }
+
+  // 5. Gemini API Key (Optional)
+  try {
+    var hasGemini = Boolean(PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'));
+    if (!hasGemini) {
+      var ssG = getSpreadsheet();
+      var sSheet = ssG ? ssG.getSheetByName('Settings') : null;
+      if (sSheet && sSheet.getLastRow() > 1) {
+        var rows = sSheet.getDataRange().getValues();
+        for (var i = 1; i < rows.length; i++) {
+          if (String(rows[i][0]) === 'GeminiApiKey' && String(rows[i][1] || '').trim()) {
+            hasGemini = true;
+            break;
+          }
+        }
+      }
+    }
+    checks.gemini = { ok: true, detail: hasGemini ? 'Configured' : 'Optional (not set)' };
+  } catch (gemErr) {
+    checks.gemini = { ok: false, detail: gemErr.toString() };
+  }
+
+  // 6. Web App URL
+  var webAppUrl = getWebAppUrl();
+  checks.webApp = {
+    ok: Boolean(webAppUrl),
+    detail: webAppUrl ? 'Deployed' : 'Deploy as Web App to get URL'
+  };
+
+  var report = {
+    status: hasFailure ? 'degraded' : 'healthy',
+    version: APP_VERSION,
+    timestamp: new Date().toISOString(),
+    appUrl: webAppUrl,
+    checks: checks
+  };
+  Logger.log(JSON.stringify(report, null, 2));
+  return report;
 }

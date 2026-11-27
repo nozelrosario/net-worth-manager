@@ -1,16 +1,19 @@
 # Net Worth Manager - Setup Guide
 
-Welcome to your generated monorepo! This repository contains all three layers of your application.
+> **Looking to set up a personal copy for yourself?**
+> Visit the **[Net Worth Manager Distribution & Releases Repository](https://github.com/nozelrosario/net-worth-manager-releases)** for step-by-step Quick Start guides and ready-to-deploy downloads (no source build required).
+
+Welcome to the source monorepo! This repository contains all three layers of your application.
 
 ## Directory Structure
-- `packages/apps-script/`: Google Apps Script backend and HTML views.
-- `packages/web-portal/`: Web wrapper site.
-- `packages/mobile-app/`: Expo React Native app shell.
+- `packages/apps-script/`: Google Apps Script backend, React/Vite UI (`ui/`), and `.clasp.json.example`.
+- `packages/web-portal/`: Optional Firebase Hosting PWA wrapper (`config.example.js`, `.firebaserc.example`).
+- `packages/mobile-app/`: Expo React Native universal app shell (with QR + URL runtime onboarding and 3-layer URL security).
 
 ## 1. Setup Google Apps Script
-1. Go to [script.google.com](https://script.google.com) and create TWO projects (one for PROD, one for UAT).
-2. For each project, copy the Script ID from Project Settings.
-3. In this repo, update `packages/web-portal/index.html` with your new Script IDs.
+1. Go to [script.google.com](https://script.google.com) and create TWO projects (one for PROD, one for UAT) — or just one for personal use.
+2. Copy `packages/apps-script/.clasp.json.example` to `.clasp.json` and fill in your Script ID (from Project Settings).
+3. Update `packages/web-portal/config.example.js` -> `packages/web-portal/config.js` with your deployment URLs (if using Firebase Hosting).
 4. Set up `clasp`:
    ```bash
    yarn global add @google/clasp
@@ -19,64 +22,48 @@ Welcome to your generated monorepo! This repository contains all three layers of
 5. Push code to Apps Script (First Time Only):
    ```bash
    cd packages/apps-script
-   clasp clone <YOUR_PROD_SCRIPT_ID>
    clasp push
    ```
-   *Repeat this for UAT if needed using `clasp clone <YOUR_UAT_SCRIPT_ID>`.*
-6. Deploy each Apps Script manually for the first time from the Google Apps Script Dashboard (Deploy -> New Deployment -> Web App -> Execute as: You, Access: Anyone).
+6. Run `authorizeScriptPermissions` once in the Apps Script Editor to grant permissions, capture your `OWNER_EMAIL` Script Property, and initialize the database spreadsheet (or run `doHealthCheck` anytime to verify setup).
+7. Deploy each Apps Script as a Web App from the Google Apps Script Dashboard (`Deploy -> New Deployment -> Web App -> Execute as: Me, Access: Anyone`).
 
-### Database Auto-Creation
+### Database Auto-Creation & Owner Resolution
 Because your backend runs as a Standalone Apps Script, it doesn't have an attached Google Sheet by default. The code handles this automatically!
-- On the very first web request to your PROD or UAT backend, the script will automatically create a new Google Sheet named `Net Worth Manager Database` directly in your Google Drive root.
-- It saves the ID of this sheet securely to the Script's Properties and seeds it with all necessary tabs (`_Sessions`, `Team`, `Audit`, `Settings`).
-- **PROD vs UAT:** Because PROD and UAT are completely separate Apps Script projects, each one will generate its own isolated Google Sheet. They will both be named `Net Worth Manager Database` initially. *It is highly recommended that you open your Google Drive and rename them to `Net Worth Manager Database PROD` and `Net Worth Manager Database UAT` respectively so you don't confuse them.* (Renaming them will not break the integration, as the app connects via the hidden ID, not the name!).
+- On the first web request (or when running `authorizeScriptPermissions`), the script resolves the owner email dynamically from `OWNER_EMAIL` Script Property or `Session.getEffectiveUser().getEmail()`, creates `Net Worth Manager Database` directly in Google Drive, saves `SPREADSHEET_ID` to Script Properties, and seeds all tabs (`_Sessions`, `Team`, `Audit`, `Settings`, `Assets`, `Transactions`, `FamilyProfiles`, `Events`, `Safe`, `MarketQuotes`).
+- **PROD vs UAT:** Separate Apps Script projects generate isolated Google Sheets. Renaming them in Google Drive to `Net Worth Manager Database PROD` and `Net Worth Manager Database UAT` is recommended and safe (the app connects by Sheet ID).
 
 ### Role-Based Access Control (RBAC)
 The backend automatically enforces access roles based on the `Team` tab in the Google Sheet Database.
-- **Admin**: The email defined as `DEFAULT_OWNER_EMAIL` in `Code.gs` is always an Admin. Other users can be set as `admin` in the sheet.
-- **Editor (Default)**: Team members without a specified role will default to `editor` and have standard write access.
-- **Read-Only**: Members explicitly labeled as `readonly` in the Role column will be blocked by the backend `assertWriteAccess()` function if they attempt to submit or alter data.
+- **Admin**: The deploying owner (resolved via `OWNER_EMAIL` Script Property / `Session.getEffectiveUser()` / `admin` entry in `Team`) always has Admin access.
+- **Editor (Default)**: Team members without a specified role default to `editor` and have standard write access.
+- **Read-Only**: Members explicitly labeled as `readonly` in the Role column are blocked by `assertWriteAccess()` from mutating data.
 
-### Enabling Automated Deployments (Apps Script)
-To allow GitHub Actions to automatically deploy your backend on every push, you must set the following **GitHub Repository Secrets**:
-- `CLASPRC_JSON`: The entire contents of your local `~/.clasprc.json` (generated by `clasp login`).
-- `SCRIPT_ID`: Your PROD Script ID.
-- `SCRIPT_ID_UAT`: Your UAT Script ID.
-- `DEPLOYMENT_ID`: Your PROD Web App Deployment ID.
-- `DEPLOYMENT_ID_UAT`: Your UAT Web App Deployment ID.
+### Enabling Automated Deployments (Apps Script & Promotion)
+To allow GitHub Actions to deploy your backend and promote PROD releases to `nozelrosario/net-worth-manager-releases`, set the following **GitHub Repository Secrets**:
+- `CLASPRC_JSON`: Contents of `~/.clasprc.json` (generated by `clasp login`)
+- `SCRIPT_ID` / `SCRIPT_ID_UAT`: PROD / UAT Apps Script IDs
+- `DEPLOYMENT_ID` / `DEPLOYMENT_ID_UAT`: PROD / UAT Web App Deployment IDs
+- `DIST_REPO_TOKEN`: Fine-grained PAT (`contents: write`) for promoting PROD releases to `net-worth-manager-releases`
 
 ## 2. Firebase Hosting Setup
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a project.
-2. In your terminal, initialize GitHub Actions integration automatically:
-   ```bash
-   cd packages/web-portal
-   yarn global add firebase-tools
-   firebase login
-   firebase init hosting:github
-   ```
-3. Follow the CLI prompts. The Firebase CLI will automatically create a Service Account, bind it to your GitHub repository via Secrets, and generate GitHub Actions workflow files.
-4. **IMPORTANT**: Open the newly generated `.github/workflows/firebase-hosting-*.yml` files and:
-   - Remove the `- run: npm ci && npm run build` step (since the portal is static).
-   - Add `entryPoint: packages/web-portal` under the `with:` section of the `FirebaseExtended/action-hosting-deploy` step.
+2. Copy `packages/web-portal/.firebaserc.example` to `.firebaserc` and `packages/web-portal/config.example.js` to `config.js` with your project/site IDs and Apps Script Web App URLs.
+3. For GitHub Actions deployment, set these **GitHub Repository Secrets**:
+   - `FIREBASE_SERVICE_ACCOUNT_NET_WORTH_MANAGER_AFF0B` (Firebase service account JSON from `firebase init hosting:github`)
+   - `FIREBASE_PROJECT_ID` (your Firebase project ID)
+   - `FIREBASE_SITE_PROD` / `FIREBASE_SITE_UAT` (optional if different from project ID)
+   - `APPS_SCRIPT_URL_PROD` / `APPS_SCRIPT_URL_UAT` (your deployed Apps Script `/exec` URLs)
 
-## 3. Expo Mobile App & EAS Config
+## 3. Expo Mobile App & Universal APK Config
 
-1. Create a project on the [Expo Dashboard](https://expo.dev) or log in via CLI.
-2. Initialize and configure EAS:
+1. **Universal Distribution APK (`APP_ENV=distribution`)** uses `com.networthmanager.app` with runtime URL + QR pairing (`SetupScreen`) and requires no EAS project ID for local Gradle builds.
+2. **Personal Cloud/EAS Builds** (optional) read configuration from environment variables or GitHub Secrets:
+   - `EXPO_TOKEN`, `EAS_PROJECT_ID`, `EXPO_OWNER`, `APP_BUNDLE_ID`, `APP_URL_PROD`, `APP_URL_UAT`.
+3. Install dependencies and run mobile URL security tests:
    ```bash
    cd packages/mobile-app
-   yarn global add eas-cli
-   yarn install
-   eas login
-   eas init --id YOUR_EAS_PROJECT_ID
+   npm test
    ```
-   *(Be sure to update `app.config.js` with your generated `projectId` if `eas init` doesn't do it automatically).*
-3. Generate an Expo Access Token in your Expo account settings and add it as a GitHub Repository Secret named `EXPO_TOKEN`.
-4. **Android Keystore Initialization:** For EAS cloud builds to succeed non-interactively in GitHub Actions, Expo needs an Android Keystore. You must trigger your first build interactively from your terminal to allow EAS to generate and store one:
-   ```bash
-   eas build --platform android --profile uat
-   ```
-   *(Follow the interactive prompts and say "Yes" to generating a new Android Keystore. Once the keystore is saved to your EAS account, you can safely cancel the build in your terminal).*
 
 ## 4. UI Development (React + Vite)
 Because the Apps Script environment only allows single HTML files, we use a custom Vite pipeline with `vite-plugin-singlefile`.

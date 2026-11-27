@@ -5,3 +5,18 @@ node_modules/
 *~
 .DS_Store
 Thumbs.db
+
+# Environment & Local Secrets
+.env
+.env.local
+.env.*.local
+
+# Instance-specific deployment configs (use .example templates)
+packages/apps-script/.clasp.json
+packages/web-portal/.firebaserc
+packages/web-portal/config.js
+
+# Mobile native build artifacts
+packages/mobile-app/android/
+packages/mobile-app/ios/
+packages/mobile-app/builds/

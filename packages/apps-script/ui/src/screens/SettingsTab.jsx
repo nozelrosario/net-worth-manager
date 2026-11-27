@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key, BarChart3, Activity, TrendingUp, BookOpen } from 'lucide-react';
+import { Users, Shield, Save, Settings as SettingsIcon, X, Edit2, Sparkles, Sliders, ExternalLink, CheckCircle2, RefreshCw, Landmark, Cloud, Moon, ALargeSmall, FileText, Eye, EyeOff, Key, BarChart3, Activity, TrendingUp, BookOpen, QrCode, AlertCircle } from 'lucide-react';
 import { getSafeStorage, setSafeStorage } from '../utils/storage';
 import { isPinConfigured, isAppShell } from '../utils/securityUtils';
 import { Badge } from '../components/Badge';
@@ -13,6 +13,7 @@ export default function SettingsTab({
   onOpenRebalancer, 
   onOpenRetirementPlanner, 
   onOpenInsuranceHub,
+  onOpenMobileConnect,
   darkMode,
   onToggleDarkMode,
   textMode = 'standard',
@@ -36,6 +37,45 @@ export default function SettingsTab({
 
   const savedKey = data?.settings?.find(s => s['Setting Key'] === 'GeminiApiKey')?.['Setting Value'] || getSafeStorage('nwm_gemini_api_key', '');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [healthReport, setHealthReport] = useState(null);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+
+  const handleRunHealthCheck = () => {
+    setIsCheckingHealth(true);
+    const token = getSafeStorage('nwm_session_token');
+    if (window.google?.script?.run?.doHealthCheck) {
+      window.google.script.run
+        .withSuccessHandler((res) => {
+          setIsCheckingHealth(false);
+          setHealthReport(res);
+          if (res?.status === 'healthy') {
+            showMessage('All instance health checks passed!');
+          } else {
+            showMessage(res?.message || 'Health check completed with warnings.', res?.status === 'error');
+          }
+        })
+        .withFailureHandler((err) => {
+          setIsCheckingHealth(false);
+          showMessage('Health check failed: ' + (err?.message || err), true);
+        })
+        .doHealthCheck(token);
+    } else {
+      setTimeout(() => {
+        setIsCheckingHealth(false);
+        setHealthReport({
+          status: 'healthy',
+          version: '4.2.0',
+          checks: {
+            owner: { ok: true, detail: 'demo@family.com' },
+            database: { ok: true, detail: '10 tabs ready' },
+            drive: { ok: true, detail: 'Accessible' },
+            mail: { ok: true, detail: 'Quota available' },
+            gemini: { ok: Boolean(savedKey), detail: savedKey ? 'Configured' : 'Optional — not set' }
+          }
+        });
+      }, 300);
+    }
+  };
 
   const savedFolder = data?.settings?.find(s => s['Setting Key'] === 'SmsDriveFolder')?.['Setting Value'] || 'SMSBackupRestore';
   const lastSyncEpochStr = data?.settings?.find(s => s['Setting Key'] === 'SmsLastProcessedDate')?.['Setting Value'] || '0';
@@ -953,6 +993,63 @@ export default function SettingsTab({
                </span>
             </div>
          </div>
+      </section>
+
+      {/* Mobile App Connection & Instance Health Check */}
+      <section className="bg-surface-layer1 border border-border-subtle rounded-xl p-4 space-y-4">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-text-primary">
+               <QrCode size={18} className="text-wealth-emerald" />
+               <h3 className="font-semibold text-typ-body-sm">Mobile App &amp; Diagnostics</h3>
+            </div>
+            <Badge variant="emerald" size="xs">Self-Hosted Ready</Badge>
+         </div>
+
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {onOpenMobileConnect && (
+              <button
+                type="button"
+                onClick={onOpenMobileConnect}
+                className="py-2.5 px-3 rounded-xl bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-primary text-typ-label font-semibold flex items-center justify-center gap-2 transition-colors"
+              >
+                <QrCode size={15} className="text-wealth-emerald" />
+                <span>Pair Mobile App (QR Code)</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleRunHealthCheck}
+              disabled={isCheckingHealth}
+              className="py-2.5 px-3 rounded-xl bg-surface-layer2 hover:bg-surface-layer3 border border-border-subtle text-text-primary text-typ-label font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isCheckingHealth ? <RefreshCw size={15} className="animate-spin text-primary-accent" /> : <Activity size={15} className="text-primary-accent" />}
+              <span>{isCheckingHealth ? 'Running Check...' : 'Run Instance Health Check'}</span>
+            </button>
+         </div>
+
+         {healthReport && (
+           <div className="p-3 rounded-xl bg-surface-layer2/70 border border-border-subtle space-y-2 text-xs">
+             <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+               <span className="font-semibold text-text-primary">
+                 Instance Status: <span className={healthReport.status === 'healthy' ? 'text-wealth-emerald' : 'text-bullion-amber'}>{String(healthReport.status || '').toUpperCase()}</span>
+               </span>
+               {healthReport.version && (
+                 <span className="text-[11px] font-mono text-text-muted">v{healthReport.version}</span>
+               )}
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+               {Object.entries(healthReport.checks || {}).map(([key, item]) => (
+                 <div key={key} className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-surface-layer1 border border-border-subtle">
+                   <span className="capitalize text-text-secondary flex items-center gap-1.5">
+                     {item?.ok ? <CheckCircle2 size={12} className="text-wealth-emerald shrink-0" /> : <AlertCircle size={12} className="text-bullion-amber shrink-0" />}
+                     {key}
+                   </span>
+                   <span className="text-[11px] text-text-muted truncate">{item?.detail || (item?.ok ? 'OK' : 'Check')}</span>
+                 </div>
+               ))}
+             </div>
+           </div>
+         )}
       </section>
 
       {/* Unified Gemini API Key Modal */}
