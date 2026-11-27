@@ -10,10 +10,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check Firebase Secrets & Generate Portal Config
+        id: config
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_SITE_PROD: ${{ secrets.FIREBASE_SITE_PROD }}
+          FIREBASE_SITE_UAT: ${{ secrets.FIREBASE_SITE_UAT }}
+          APPS_SCRIPT_URL_PROD: ${{ secrets.APPS_SCRIPT_URL_PROD }}
+          APPS_SCRIPT_URL_UAT: ${{ secrets.APPS_SCRIPT_URL_UAT }}
+        run: |
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "FIREBASE_PROJECT_ID secret not set; skipping preview deploy."
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "enabled=true" >> $GITHUB_OUTPUT
+          SITE_PROD="${FIREBASE_SITE_PROD:-$FIREBASE_PROJECT_ID}"
+          SITE_UAT="${FIREBASE_SITE_UAT:-${FIREBASE_PROJECT_ID}-uat}"
+          cat > packages/web-portal/.firebaserc <<EOF
+          {
+            "projects": { "default": "$FIREBASE_PROJECT_ID" },
+            "targets": {
+              "$FIREBASE_PROJECT_ID": {
+                "hosting": {
+                  "prod": ["$SITE_PROD"],
+                  "uat": ["$SITE_UAT"]
+                }
+              }
+            }
+          }
+          EOF
+          cat > packages/web-portal/config.js <<EOF
+          window.NWM_CONFIG = {
+            prod: "${APPS_SCRIPT_URL_PROD:-}",
+            uat: "${APPS_SCRIPT_URL_UAT:-}"
+          };
+          EOF
       - uses: FirebaseExtended/action-hosting-deploy@v0
+        if: steps.config.outputs.enabled == 'true'
         with:
           entryPoint: packages/web-portal
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_NET_WORTH_MANAGER_AFF0B }}
-          projectId: net-worth-manager-aff0b
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
           target: uat
