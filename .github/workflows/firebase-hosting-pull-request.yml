@@ -6,11 +6,12 @@ permissions:
   pull-requests: write
 jobs:
   build_and_preview:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && secrets.FIREBASE_PROJECT_ID != '' }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Generate Firebase Config & Portal Endpoints
+      - name: Check Firebase Secrets & Generate Portal Config
+        id: config
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_SITE_PROD: ${{ secrets.FIREBASE_SITE_PROD }}
@@ -18,6 +19,12 @@ jobs:
           APPS_SCRIPT_URL_PROD: ${{ secrets.APPS_SCRIPT_URL_PROD }}
           APPS_SCRIPT_URL_UAT: ${{ secrets.APPS_SCRIPT_URL_UAT }}
         run: |
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "FIREBASE_PROJECT_ID secret not set; skipping preview deploy."
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "enabled=true" >> $GITHUB_OUTPUT
           SITE_PROD="${FIREBASE_SITE_PROD:-$FIREBASE_PROJECT_ID}"
           SITE_UAT="${FIREBASE_SITE_UAT:-${FIREBASE_PROJECT_ID}-uat}"
           cat > packages/web-portal/.firebaserc <<EOF
@@ -40,6 +47,7 @@ jobs:
           };
           EOF
       - uses: FirebaseExtended/action-hosting-deploy@v0
+        if: steps.config.outputs.enabled == 'true'
         with:
           entryPoint: packages/web-portal
           repoToken: ${{ secrets.GITHUB_TOKEN }}

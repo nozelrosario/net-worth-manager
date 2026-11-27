@@ -51,6 +51,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      is_prod: ${{ steps.resolve-env.outputs.build_universal }}
+      release_tag: ${{ steps.resolve-env.outputs.release_tag }}
     defaults:
       run:
         working-directory: packages/mobile-app
@@ -281,3 +284,11 @@ jobs:
             - **Build Engine:** ${{ steps.resolve-env.outputs.build_engine == 'cloud' && 'EAS Cloud' || 'GitHub Local Runner' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  promote:
+    needs: build
+    if: needs.build.outputs.is_prod == 'true'
+    uses: ./.github/workflows/promote-to-dist.yml
+    with:
+      release_tag: ${{ needs.build.outputs.release_tag }}
+    secrets: inherit
