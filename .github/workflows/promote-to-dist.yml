@@ -76,12 +76,64 @@ jobs:
           cp packages/apps-script/Index.html dist-artifacts/Index.html
           cp packages/apps-script/appsscript.json dist-artifacts/appsscript.json
 
-          # Package clean web-portal bundle (excluding any personal config.js/.firebaserc)
+          # Package clean single-user web-portal bundle (strip internal UAT/multi-target templates & personal configs)
+          rm -rf dist-portal-staging
+          mkdir -p dist-portal-staging
+          cp packages/web-portal/index.html packages/web-portal/manifest.json packages/web-portal/sw.js \
+             packages/web-portal/icon-192.png packages/web-portal/icon-512.png dist-portal-staging/
+          node <<'EOF'
+            const fs = require("fs");
+            const indexPath = "dist-portal-staging/index.html";
+            const originalHint = "<p>Copy <code>config.example.js</code> to <code>config.js</code> (or configure your <code>APPS_SCRIPT_URL_PROD</code> / <code>APPS_SCRIPT_URL_UAT</code> GitHub secrets) with your Apps Script Web App URL.</p>";
+            let html = fs.readFileSync(indexPath, "utf8");
+            if (!html.includes(originalHint)) {
+              throw new Error("Expected setup-error hint not found in web-portal/index.html");
+            }
+            html = html.replace(
+              originalHint,
+              "<p>Copy <code>config.example.js</code> to <code>config.js</code> with your Google Apps Script Web App URL.</p>"
+            );
+            const placeholderGuards = /!url\.includes\('YOUR_DEPLOYMENT_ID'\)\s*&&\s*\n\s*!url\.includes\('YOUR_PROD_DEPLOYMENT_ID'\)\s*&&\s*\n\s*!url\.includes\('YOUR_UAT_DEPLOYMENT_ID'\)/;
+            if (!placeholderGuards.test(html)) {
+              throw new Error("Expected placeholder guard lines not found in web-portal/index.html");
+            }
+            html = html.replace(placeholderGuards, "!url.includes('YOUR_DEPLOYMENT_ID')");
+            fs.writeFileSync(indexPath, html);
+
+            const srcFb = JSON.parse(fs.readFileSync("packages/web-portal/firebase.json", "utf8"));
+            const baseHosting = Array.isArray(srcFb.hosting) ? { ...srcFb.hosting[0] } : { ...srcFb.hosting };
+            delete baseHosting.target;
+            fs.writeFileSync(
+              "dist-portal-staging/firebase.json",
+              JSON.stringify({ hosting: baseHosting }, null, 2) + "\n"
+            );
+
+            fs.writeFileSync(
+              "dist-portal-staging/config.example.js",
+              [
+                "// Copy this file to config.js and fill in your Google Apps Script Web App deployment URL.",
+                "window.NWM_CONFIG = {",
+                "  url: \"https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec\"",
+                "};",
+                ""
+              ].join("\n")
+            );
+
+            fs.writeFileSync(
+              "dist-portal-staging/.firebaserc.example",
+              JSON.stringify({ projects: { default: "YOUR_FIREBASE_PROJECT_ID" } }, null, 2) + "\n"
+            );
+          EOF
+          if grep -rn -E "YOUR_UAT_DEPLOYMENT_ID|YOUR_FIREBASE_UAT_SITE_ID|APPS_SCRIPT_URL_UAT|YOUR_PROD_DEPLOYMENT_ID|YOUR_FIREBASE_PROD_SITE_ID" dist-portal-staging/; then
+            echo "::error::Internal multi-environment UAT/PROD template references detected in distribution portal bundle!"
+            exit 1
+          fi
           (
-            cd packages/web-portal
-            zip -r ../../dist-artifacts/net-worth-manager-web-portal.zip \
+            cd dist-portal-staging
+            zip -r ../dist-artifacts/net-worth-manager-web-portal.zip \
               index.html config.example.js .firebaserc.example firebase.json manifest.json sw.js icon-192.png icon-512.png
           )
+          rm -rf dist-portal-staging
 
           # Try downloading Universal APK from the source GitHub release
           if gh release download "$TAG" --pattern "NetWorthManager-*.apk" --dir dist-artifacts 2>/dev/null; then

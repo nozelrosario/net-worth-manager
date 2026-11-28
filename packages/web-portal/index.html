@@ -87,6 +87,7 @@
     function isValidAppsScriptUrl(url) {
       return typeof url === 'string' &&
         /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec(\?.*)?$/i.test(url.trim()) &&
+        !url.includes('YOUR_DEPLOYMENT_ID') &&
         !url.includes('YOUR_PROD_DEPLOYMENT_ID') &&
         !url.includes('YOUR_UAT_DEPLOYMENT_ID');
     }
@@ -111,7 +112,7 @@
         document.title = 'Net Worth Manager (UAT)';
       }
 
-      const rawTarget = isUAT ? endpoints.uat : endpoints.prod;
+      const rawTarget = isUAT ? (endpoints.uat || endpoints.url || endpoints.prod) : (endpoints.url || endpoints.prod);
       if (!isValidAppsScriptUrl(rawTarget)) {
         showSetupError();
         return;
