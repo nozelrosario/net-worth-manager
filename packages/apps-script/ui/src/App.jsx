@@ -175,6 +175,7 @@ export default function App() {
     return '';
   });
   const [isAppLocked, setIsAppLocked] = useState(() => isPinConfigured());
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const handlePortalMessage = (event) => {
@@ -306,20 +307,48 @@ export default function App() {
     }
   };
 
+  const handleDashboardResponse = (res, { isInitial = false } = {}) => {
+    if (!res || res.status === 'error') {
+      const errMsg = res?.message || 'Unable to load your Net Worth ledger from Google Sheets.';
+      setDebugLog(prev => `[${new Date().toLocaleTimeString()}] ERROR: ${errMsg}\n` + prev);
+      if (isInitial) {
+        setLoadError(errMsg);
+      } else {
+        showMessage(errMsg, true);
+      }
+      setIsSyncing(false);
+      setLoading(false);
+      return;
+    }
+
+    setLoadError('');
+    setData(res);
+    setIsSyncing(false);
+    setLoading(false);
+    if (isInitial) {
+      setTimeout(() => showMessage("Net Worth Manager Active (v2.7)", false), 500);
+    }
+  };
+
+  const handleDashboardFailure = (err, { isInitial = false } = {}) => {
+    const errMsg = err?.message || 'Connection failed while loading ledger.';
+    setDebugLog(prev => `[${new Date().toLocaleTimeString()}] ERROR: ${errMsg}\n` + prev);
+    if (isInitial) {
+      setLoadError(errMsg);
+    } else {
+      showMessage(errMsg, true);
+    }
+    setIsSyncing(false);
+    setLoading(false);
+  };
+
   const refreshData = (tokenToUse = sessionToken) => {
     setIsSyncing(true);
+    setLoadError('');
     if (window.google?.script?.run) {
       window.google.script.run
-        .withSuccessHandler((res) => {
-          setData(res);
-          setIsSyncing(false);
-          setLoading(false);
-        })
-        .withFailureHandler((err) => {
-          setDebugLog('App Sync Error: ' + err.message);
-          setIsSyncing(false);
-          setLoading(false);
-        })
+        .withSuccessHandler((res) => handleDashboardResponse(res, { isInitial: !data }))
+        .withFailureHandler((err) => handleDashboardFailure(err, { isInitial: !data }))
         .getDashboardData(tokenToUse);
     } else {
       setTimeout(() => {
@@ -332,21 +361,15 @@ export default function App() {
   useEffect(() => {
     if (!sessionToken) {
       setData({ userInfo: { isAuthorized: false } });
+      setLoadError('');
       setLoading(false);
       return;
     }
 
     if (window.google?.script?.run) {
       window.google.script.run
-        .withSuccessHandler((res) => {
-          setData(res);
-          setLoading(false);
-          setTimeout(() => showMessage("Net Worth Manager Active (v2.7)", false), 500);
-        })
-        .withFailureHandler((err) => {
-          setDebugLog('Initial Load Error: ' + err.message);
-          setLoading(false);
-        })
+        .withSuccessHandler((res) => handleDashboardResponse(res, { isInitial: true }))
+        .withFailureHandler((err) => handleDashboardFailure(err, { isInitial: true }))
         .getDashboardData(sessionToken);
     } else {
       setTimeout(() => {
@@ -489,6 +512,7 @@ export default function App() {
   }, []);
 
   const handleLoginSuccess = (newToken, meta = {}) => {
+    setLoadError('');
     setSessionToken(newToken);
     setLoading(true);
     refreshData(newToken);
@@ -507,6 +531,7 @@ export default function App() {
     } catch (e) {
       console.error('Error during sign out storage cleanup:', e);
     }
+    setLoadError('');
     setSessionToken('');
     setIsAppLocked(false);
     setIsCurtainActive(false);
@@ -576,6 +601,40 @@ export default function App() {
         onUnlockSuccess={() => setIsAppLocked(false)} 
         onForgotPin={handleForgotPin} 
       />
+    );
+  }
+
+  // Avoid rendering an empty ₹0 dashboard if initial ledger fetch returned a backend error
+  if (loadError && !data?.userInfo) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background-root text-text-primary p-6">
+        <div className="w-full max-w-sm bg-surface-layer1 border border-border-subtle rounded-2xl p-6 shadow-2xl text-center space-y-4">
+          <div className="w-12 h-12 bg-liability-rose/15 text-liability-rose rounded-full flex items-center justify-center mx-auto">
+            <Shield size={24} />
+          </div>
+          <h2 className="text-typ-title font-bold">Unable to Load Ledger</h2>
+          <p className="text-typ-body-sm text-text-secondary break-words">{loadError}</p>
+          <div className="flex flex-col gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                refreshData(sessionToken);
+              }}
+              className="w-full py-2.5 bg-primary-accent text-white rounded-lg text-typ-body-sm font-medium hover:bg-primary-accent/90 transition-colors"
+            >
+              Retry Sync
+            </button>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="w-full py-2.5 bg-surface-layer2 border border-border-subtle text-text-secondary hover:text-text-primary rounded-lg text-typ-body-sm font-medium transition-colors"
+            >
+              Sign Out &amp; Re-login
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

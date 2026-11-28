@@ -297,6 +297,7 @@ function getCurrentUserInfo(sessionToken) {
     }
   }
 
+  var ss = getSpreadsheet();
   var ownerEmail = resolveOwnerEmail(ss);
   var teamRoles = ss ? getTeamRolesMap(ss) : {};
 

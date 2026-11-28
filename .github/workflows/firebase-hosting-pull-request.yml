@@ -42,7 +42,7 @@ jobs:
           EOF
           cat > packages/web-portal/config.js <<EOF
           window.NWM_CONFIG = {
-            prod: "${APPS_SCRIPT_URL_PROD:-}",
+            prod: "${APPS_SCRIPT_URL_UAT:-}",
             uat: "${APPS_SCRIPT_URL_UAT:-}"
           };
           EOF

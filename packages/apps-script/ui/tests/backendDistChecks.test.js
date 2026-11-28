@@ -2,12 +2,123 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../../../..');
 
+function createAppsScriptSandbox({ ownerEmail = 'owner@example.com' } = {}) {
+  const propsStore = {
+    SPREADSHEET_ID: 'sheet-uat-123',
+    OWNER_EMAIL: ownerEmail,
+    DB_INITIALIZED: 'true',
+  };
+  const sheetsData = {
+    Team: [
+      ['Member Name', 'Google Account Emails', 'Role'],
+      ['Admin', ownerEmail, 'admin'],
+    ],
+    _Sessions: [['Session Token', 'Email', 'Created At', 'Expires At', 'Last Active']],
+    Assets: [
+      ['Asset ID', 'Type', 'Name', 'Category', 'Owner', 'Status', 'Acquisition Date', 'Cost', 'Current Value', 'Institution/Location', 'Identifiers', 'Nominee', 'Nominee %', 'Details JSON'],
+      ['uat-asset-1', 'Cash/FD', 'UAT Test Savings', 'Cash/FD', 'Admin', 'Active', '2026-01-01', 100000, 100000, 'HDFC', '', '', '', '{}'],
+    ],
+    Transactions: [['Txn ID', 'Date', 'Type', 'Amount', 'Category', 'Account/Card', 'Merchant/Description', 'Tags', 'Is Transfer', 'Split JSON', 'Beneficiary']],
+    FamilyProfiles: [['Profile ID', 'Name', 'Relation', 'Ownership %', 'Notes']],
+    Events: [['Event ID', 'Date', 'Type', 'Title', 'Amount', 'Status', 'Details JSON']],
+    Safe: [['Document ID', 'Name', 'Category', 'Owner', 'Description', 'Files JSON', 'Date Added']],
+    Settings: [['Setting Key', 'Setting Value']],
+    MarketQuotes: [['Symbol', 'Type', 'Display Name', 'Live Price', 'Day Change %', 'Last Updated', 'Source', 'Details']],
+    Audit: [['Audit ID', 'Timestamp', 'Action', 'User', 'Details']],
+  };
+
+  const makeSheet = (name) => {
+    const rows = sheetsData[name];
+    return {
+      getName: () => name,
+      getLastRow: () => rows.length,
+      getLastColumn: () => (rows[0] ? rows[0].length : 0),
+      getDataRange: () => ({ getValues: () => rows.map((r) => [...r]) }),
+      getRange: (r, c, nr = 1, nc = 1) => ({
+        getValues: () => rows.slice(r - 1, r - 1 + nr).map((row) => row.slice(c - 1, c - 1 + nc)),
+        setValues: () => {},
+        setValue: () => {},
+        setFormula: () => {},
+        setFormulas: () => {},
+        setNumberFormat: () => {},
+        setFontWeight: () => ({ setBackground: () => {} }),
+      }),
+      appendRow: (row) => rows.push([...row]),
+      deleteRow: (idx) => rows.splice(idx - 1, 1),
+      setFrozenRows: () => {},
+      hideSheet: () => {},
+    };
+  };
+
+  const mockSs = {
+    getName: () => 'Net Worth Manager Database UAT',
+    getId: () => 'sheet-uat-123',
+    getSheetByName: (name) => (sheetsData[name] ? makeSheet(name) : null),
+    insertSheet: (name) => {
+      sheetsData[name] = [[]];
+      return makeSheet(name);
+    },
+    getSheets: () => Object.keys(sheetsData).map(makeSheet),
+  };
+
+  const sandbox = {
+    console,
+    Logger: { log: () => {} },
+    Utilities: { getUuid: () => '1234-5678-90ab-cdef' },
+    PropertiesService: {
+      getScriptProperties: () => ({
+        getProperty: (k) => (k in propsStore ? propsStore[k] : null),
+        setProperty: (k, v) => { propsStore[k] = String(v); },
+        deleteProperty: (k) => { delete propsStore[k]; },
+      }),
+    },
+    Session: {
+      getActiveUser: () => ({ getEmail: () => '' }),
+      getEffectiveUser: () => ({ getEmail: () => ownerEmail }),
+    },
+    SpreadsheetApp: {
+      getActiveSpreadsheet: () => null,
+      openById: (id) => (id === 'sheet-uat-123' ? mockSs : null),
+      create: () => mockSs,
+    },
+    ScriptApp: {
+      getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/AKfycbTest/exec' }),
+    },
+    MailApp: { sendEmail: () => {}, getRemainingDailyQuota: () => 50 },
+    GmailApp: { sendEmail: () => {} },
+    DriveApp: { getRootFolder: () => ({ getName: () => 'My Drive' }) },
+    UrlFetchApp: { fetch: () => ({ getResponseCode: () => 200, getContentText: () => '{}' }) },
+  };
+
+  const codeGs = fs.readFileSync(path.join(repoRoot, 'packages/apps-script/Code.gs'), 'utf8');
+  vm.runInNewContext(codeGs, sandbox, { filename: 'Code.gs' });
+  return { sandbox, propsStore };
+}
+
 describe('Distribution Readiness: Source Hygiene & Backend Checks', () => {
+  it('Code.gs OTP verification and dashboard loading execute without ReferenceError and authenticate owner', () => {
+    const { sandbox, propsStore } = createAppsScriptSandbox({ ownerEmail: 'owner@example.com' });
+    propsStore['OTP_owner@example.com'] = JSON.stringify({ code: '123456', expires: Date.now() + 60000 });
+
+    const verifyRes = sandbox.verifyEmailCode('owner@example.com', '123456');
+    assert.equal(verifyRes.status, 'success', verifyRes.message);
+    assert.equal(verifyRes.isOwner, true);
+    assert.equal(verifyRes.isAdmin, true);
+    assert.ok(verifyRes.sessionToken.startsWith('vfm_sess_'));
+
+    const dashRes = sandbox.getDashboardData(verifyRes.sessionToken);
+    assert.equal(dashRes.status, 'success', dashRes.message);
+    assert.equal(dashRes.userInfo.isAuthorized, true);
+    assert.equal(dashRes.userInfo.userRole, 'admin');
+    assert.equal(dashRes.assets.length, 1);
+    assert.equal(dashRes.assets[0].Name, 'UAT Test Savings');
+  });
   it('Code.gs contains no hardcoded personal email and exposes distribution helpers', () => {
     const codeGs = fs.readFileSync(path.join(repoRoot, 'packages/apps-script/Code.gs'), 'utf8');
     assert.equal(codeGs.includes('nozelrosario@gmail.com'), false, 'Personal email must not be hardcoded in Code.gs');
